@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/uikit.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/uikit.js"></script>
+    <script src="js/uikit-icons.js"></script>
+
+    <title>Hardware Aimbot</title>
+</head>
+<body>
+<!-- Navigation Bar -->
+    <nav class="uk-navbar-container uk-margin-small-left uk-margin-small-right uk-visible@m uk-margin-xlarge-left uk-margin-xlarge-right" uk-navbar uk-sticky="sel-target: .uk-navbar-container; cls-active: uk-navbar-sticky">
+    
+    <div class="uk-navbar-left">
+        <a href="" class="uk-navbar-item uk-logo uk-light">John O'Donnell & Tobi Alade.</a>
+    </div>
+    <div class="uk-navbar-right">
+
+        <ul class="uk-navbar-nav uk-light">
+            <li><a class="uk-button-text uk-text-capitalize" href="#Demo" uk-scroll>Demo</a></li>
+            <li><a class="uk-button-text uk-text-capitalize" href="#Introduction" uk-scroll>Introduction</a></li>
+            <li><a class="uk-button-text uk-text-capitalize" href="#Design" uk-scroll>Design</a></li>
+            <li><a class="uk-button-text uk-text-capitalize" href="#Refrences" uk-scroll>Refrences</a></li>
+            <li><a class="uk-button-text uk-text-capitalize" href="#Results" uk-scroll>Results</a></li>
+            <li><a class="uk-button-text uk-text-capitalize" href="#Appendix" uk-scroll>Appendix</a></li>
+        </ul>
+
+    </div>
+</nav>
+<!-- Navigation Bar Ends  -->
+
+<!-- Home -->
+<section class="uk-margin-small-left uk-margin-small-right uk-margin-xlarge-top uk-margin-xlarge-bottom">
+    <h1 class="uk-margin-xlarge-left uk-light uk-text-left uk-margin-xlarge-right">We decided to make a Hardware Based Aimbot, <br>Using only the RP2040 .</h1>
+</section>
+<hr class="uk-margin-xlarge-top uk-margin-xlarge-left uk-margin-xlarge-right">
+<!-- Home Ends -->
+
+
+<!-- Demo -->
+<h3 class="uk-margin-xlarge-left uk-light">Demo</h3>
+<a id="Demo"></a>
+<section id="about" class="uk-margin-small-left uk-margin-small-right uk-margin-xlarge-top uk-margin-xlarge-bottom">
+    <div align="center"><iframe width="1020" height="639" src="https://www.youtube.com/embed/QVEiPR61y5Q" frameborder="1px"></iframe></div>
+</section>
+<!-- Demo Ends -->
+
+
+<!-- Introduction Section -->
+<h3 class="uk-margin-xlarge-left uk-light">Introduction</h3>
+<a id="Introduction"></a>
+<!-- Change here to ur paragraph -->
+<p class="uk-margin-xlarge-left uk-margin-xlarge-right">There is a piece of hardware out on the market now that can allow a user to cheat in video games like the Call of Duty franchise. The hardware, known as the Cronus Max, is a USB device placed between the controller and the console. Typically, video game cheating is through injection of malicious cheating files into the games at runtime. Simply put, cheating is usually done through software. Software cheats can be detected easily, and blocked. There are numerous tutorials on how to cheat through software, but not so much on how to make your own hardware cheats. So we thought it would be a challenging and interesting project to implement our own hardware cheats. Specifically we aimed to counter the effects of recoil by injecting mouse movements to autoadjust for recoil through the pico.
+</p>
+<br>
+</section>
+<hr class="uk-margin-xlarge-left uk-margin-xlarge-right">
+</div>
+<!-- Introduction Section Ends -->
+
+
+<!-- Design Section -->
+<h3 class="uk-margin-xlarge-left uk-light">Design</h3>
+<a id="Design"></a>
+
+    <h5 class="uk-margin-xlarge-left uk-light">Hardware:</h5>
+    <p class="uk-margin-xlarge-left uk-margin-xlarge-right"> The hardware for this project was pretty simple. At first it consisted of only a Xbox 360 controller, a USB male to female wire, and the pico itself. The wire was cut apart and soldered in order to be used as an input for the controller USB to the pico in order to establish a connection. Besides that only the control (for input) and a computer (to recieve augemented controller input and run the game) was required. Towards the end as we encountered issues with bidereictional communication (which will be examplined in software) we ended up with even less hardware than before.
+
+    <h5 class="uk-margin-xlarge-left uk-light">USB:</h5>
+    <p class="uk-margin-xlarge-left uk-margin-xlarge-right"> The communication standard we used is USB (Universal Serial Bus). It defines the cable, connector, and communication method between computers and peripherals (like mice or keyboards). This was a pain point in our development as USB is sparsely documented and difficult to work with. Getting the enviornment to build was the biggest blocker in our project. A useful tool we used for detection and communication was wireshark. Being able to detect what the USB was sending over the connection was vital for building out our project
+
+        <p class="uk-margin-xlarge-left uk-margin-xlarge-right">One big issue we ran into was the lack of support for implement bidirectional communication in TinyUSB. This made it so that we were unable to make our aimbot only trigger when the gun is being shot. At the current state the aimbot will always be activated so the gun will dift downwards even when not shooting.
+
+    <h5 class="uk-margin-xlarge-left uk-light">Software:</h5>
+    <p class="uk-margin-xlarge-left uk-margin-xlarge-right"> Our software was broken down into four main tasks:
+        <ul class="uk-margin-xlarge-left uk-margin-xlarge-right">
+            <li>TinyUSB:</li>
+            <p> Our TinyUSB task mounted the USB and defined it to the computer. This was necessary in order to correctly recognize the input data. We used capslock as a toggle to let the pico "listen" for input.
+
+            <li>LED blink:</li>
+            <p> This was a debugging task that allowed us to clearly tell USB was connected by blinking the LED on the pico
+
+            <li>Aimbot:</li>
+            <p> This task was our main aimbot, it works by sending a 4 pixel down input to the mouse every 14ms to counteract recoil
+
+            <li>Data:</li>
+            <p> This task was used to send our Data over USB
+          </ul>
+
+          <p class="uk-margin-xlarge-left uk-margin-xlarge-right">A lot of our process was refrenced from the official TinyUSB repository. We made changes to get the device to work with the Pico and implement the aimbot. Both the game enviornment as well as our aimbot program was very lightweight so not many performance optimizations had to be be made.
+
+          
+
+    <h5 class="uk-margin-xlarge-left uk-light">AssultCube:</h5>
+    <p class="uk-margin-xlarge-left uk-margin-xlarge-right"> We chose to use the open source game "AssultCube". Designed to work on any hardware (minimum pentium III) it is free and low resource so it is very easy to debug and test without fear of being banned off of a more offical game for cheating. In addition to AssultCube we used CheatEngine, a memory debugger for cheating in games, to adjust the game for easier debugging.
+
+
+
+</p>
+<br>
+
+</section>
+<hr class="uk-margin-xlarge-left uk-margin-xlarge-right">
+</div>
+<!-- Design Design Ends -->
+
+<!-- Refences Section -->
+<h3 class="uk-margin-xlarge-left uk-light">Refrences</h3>
+<a id="Refrences"></a>
+<!-- Change here to ur paragraph -->
+<ul class="uk-margin-xlarge-left uk-margin-xlarge-right">
+    <li>For understanding controller data: https://www.partsnotincluded.com/understanding-the-xbox-360-wired-controllers-usb-data/</li>
+    <li>For sending data: https://blog.smittytone.net/2021/10/31/how-to-send-data-to-a-raspberry-pi-pico-via-usb/</li>
+    <li>TinyUSB Repo: https://github.com/hathach/tinyusb</li>
+    <li>Software used to debug connection: https://www.wireshark.org/</li>
+    <li>Software used for help debugging aimbot: https://www.cheatengine.org/</li>
+    <li>Game used as enviornment for aimbot: https://assault.cubers.net/</li>
+  </ul>
+
+    <br>
+
+</section>
+<hr class="uk-margin-xlarge-left uk-margin-xlarge-right">
+</div>
+<!-- Refrence section Ends -->
+
+<!-- Results Section -->
+<h3 class="uk-margin-xlarge-left uk-light">Results</h3>
+<a id="Results"></a>
+<!-- Change here to ur paragraph -->
+<p class="uk-margin-xlarge-left uk-margin-xlarge-right">In the end we got pretty good results. Althought we had trouble with bidereictional communication and USB in general, we had a working project at the end. The aimbot was able to, through hardware, change the input of the player and keep the gun pointed straight through recoil. Knowing what we know now, next time we would have been able to work through getting USB communication quicker and try and implement more features and robustness to our aimbot. Our product does not have any major IP concerns. </p>
+    <br>
+
+</section>
+<hr class="uk-margin-xlarge-left uk-margin-xlarge-right">
+</div>
+<!-- Results Section Ends -->
+
+<!-- Appendix Section -->
+<h3 class="uk-margin-xlarge-left uk-light">Appendix</h3>
+<a id="Appendix"></a>
+<!-- Change here to ur paragraph -->
+<p class="uk-margin-xlarge-left uk-margin-xlarge-right">The group approves this report for inclusion on the course website. <br><br> The group approves the video for inclusion on the course youtube channel. <br><br> John O'Donnell and Tobi both worked on soldering the hardware and implementing USB communication while John continued to work more with getting the aimbot setup for Assult Cube and Tobi worked on documenting and creating the website <br><br> Our code is included here: https://github.com/jodonnell77/ece4760-hardware-aimassist</p>
+    <br>
+
+</section>
+<hr class="uk-margin-xlarge-left uk-margin-xlarge-right">
+</div>
+<!-- Appendix Design Ends -->
+    
+</body>
+</html>
