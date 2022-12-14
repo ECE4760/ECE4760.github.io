@@ -1,0 +1,478 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Program Design | ECE4760</title>
+<meta name="generator" content="Jekyll v3.9.2" />
+<meta property="og:title" content="Program Design" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="ECE4760" />
+<meta property="og:description" content="ECE4760" />
+<link rel="canonical" href="https://mklugherz.github.io./program/" />
+<meta property="og:url" content="https://mklugherz.github.io./program/" />
+<meta property="og:site_name" content="ECE4760" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Program Design" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"ECE4760","headline":"Program Design","publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://mklugherz.github.io./images/steveicon.png"}},"url":"https://mklugherz.github.io./program/"}</script>
+<!-- End Jekyll SEO tag -->
+
+	<link type="application/atom+xml" rel="alternate" href="https://mklugherz.github.io./feed.xml" title="ECE4760" />
+
+	<link rel="stylesheet" href="./css/screen.css">
+	<link rel="icon" type="image/png" href="./images/steveicon.png">
+
+</head>
+
+<body>
+	<header>
+		<div class="container">
+			<div class="company-name"><a href="./index.html"><img src="./images/steveicon.png"
+						width="95" height="33" /></a></div>
+			<nav>
+	<!-- <a class="nav-toggle" id="open-nav" href="#">&#9776;</a> -->
+	<!-- <a class="editor-link btn" href="cloudcannon:collections/_data/navigation.yml" class="btn"><strong>&#9998;</strong>
+		Edit navigation</a> -->
+
+
+
+
+
+	<a href="./hld.html
+" class="" >High Level Design</a>
+
+
+
+
+
+	<a href="./hardware.html
+" class="" >Hardware Design</a>
+
+
+
+
+
+	<a href="./program.html
+" class=" active" >Program Design</a>
+
+
+
+
+
+	<a href="./visual.html
+" class="" >Visual/Level/Sound Design</a>
+
+
+
+
+
+	<a href="./results.html
+" class="" >Results</a>
+
+
+
+
+
+	<a href="./conclusion.html
+" class="" >Conclusion</a>
+
+
+
+
+
+	<a href="./appendix.html
+" class="" >Appendices</a>
+
+</nav>
+		</div>
+		<div class="text-container">
+			<!-- <p>aa</p> -->
+		</div>
+	</header>
+	<div class="content">
+	<section class="page">
+		<div class="container ">
+			<div class="text-container">
+
+  <h1>Program Design</h1>
+
+  <h2>Graphics/Plotting on VGA</h2>
+  <p style="color:black;font-size: 18px">The main constraint with the project was the combination of limited RAM and
+    an enjoyable playing experience. Any asset or level design needed to be coded in flash, but also needed to be
+    written to the VGA screen with minimal RAM or computation. These asset and level designs needed to be detailed to
+    replicate the original NES game, which meant each tile would be 16 x 16 blocks, and each level would contain 16 x 11
+    tiles. To make the game more visually appealing, each block would be 2 x 2 pixels on the VGA screen.
+  </p>
+
+  <figure> <img style="height: 600px" style="width: auto" src="./images/example_tile.png"
+      alt="Example_tile" class="screenshot editable" />
+    <figcaption style="text-align:center">
+      A. Pixel (single pixel on the VGA)
+      B. Block (2 x 2 Pixels for a single color)
+      C. Tile (16 x 16 blocks to be a design)
+    </figcaption>
+  </figure>
+
+  <p style="color:black;font-size: 18px">
+    The framework of the
+    VGA driver developed by V. Hunter Adams and Bruce Land was used as a starting point. The driver interacted with the
+    VGA outputs through a PIO configured on the Pico to send data at the frequency required for the VGA screen, and a
+    DMA was responsible for transferring the correct data to the screen. The data was encoded in an byte array of 320 x
+    240, where every 4 bits represented the color of a single pixel on the screen, with the index being the position on
+    the screen. This effectively created an array where every 4 bits corresponded to the color of a pixel on the screen.
+    The array was one dimensional which meant the index was represented by x_pos + 480 * y_pos. This meant it was easy
+    to access contiguous pixel columns, but moving rows required a jump in the array. </p>
+
+  <p> Writing to the VGA screen one pixel at a time would be far too slow, and the
+    delays and stutters of the background would be significantly more noticeable which meant multiple pixels needed to
+    be changed at a time. This required usage of pointer arithmetic and <code>memcpy()</code> such that memory can be
+    moved without having to be copied to RAM. The designs for each tile were stored in flash as hex values, doubled
+    across each column but computationally duplicated across two rows to create a 2 x 2 block. Memory transfers were
+    limited to 32 bits due to the bus of the Pico, but encoding the design as type <code>long long</code> allowed for
+    the designer to more easily adjust the design of the tile. Each tile is a two dimensional <code>long long</code>
+    array of size 2 x 16. Since a <code>long long</code> is 64 bits, it encoded for 16 pixels, but since a tile is 32
+    pixels across, each row needed to span across two indices. A pointer would traverse the array, copying memory
+    appropriately to where they are supposed to appear on the screen. (For more information, see Visual Design).
+  </p>
+
+  <p>To write the main character, enemies, and entities that sit “on top” of the background, there needs to be a
+    consideration for “transparent blocks”. Since the designs need to be hard coded, there is no way to hardcode
+    transparency since every hex value corresponds to a color, and even if a value were to be assigned, the computation
+    of looking for that value defeats the purpose of using <code>memcpy()</code> for speed. The alternative was to use a
+    “mask” for every transparent design that specified which blocks were “transparent”. This mask would be compared
+    against the existing tile through a bit-wise OR, and inverted to compare against the design to determine which bits
+    needed to be from the background and which from the design, and <code>memcpy()</code> the modified design onto the
+    VGA screen.</p>
+
+  <pre>
+  <code style = "font-size:16px">
+      void drawTop(x, y, *des, *mask)
+      int start_pos = 640 * y + x
+      long long copied_original
+      for (int i = 0; i < 16; i++)         // Repeat for every row
+        // to draw the two sides of the row
+        for (int r = 0; r < 2; r++)        // Repeat to complete row
+
+          // Duplicate mask into hex value equivalet
+          long long full_mask = *mask;
+          full_mask = (full_mask | (full_mask << 28))
+          full_mask = (full_mask | (full_mask << 14)) & 0x3000300030003;
+          full_mask = (full_mask | (full_mask << 7)) & 0x101010101010101;
+          full_mask = (full_mask << 8) - full_mask;
+
+          // Overlay mask over what's currently on the screen
+          memcpy(&copied_original, &vga_data_array[(start_pos + r * 16 + 640 * 2 * i) >> 1], 8);
+          long long masked_screen = full_mask & copied_original;
+          // Overlay design onto original screen
+          long long new_screen = masked_screen | (~full_mask & *des);
+
+          // Print to the screen
+          memcpy(&vga_data_array[(start_pos + r * 16 + 640 * 2 * i) >> 1], &new_screen, 8);
+          memcpy(&vga_data_array[(start_pos + r * 16 + (640 * 2 * i) + 640) >> 1], &new_screen, 8);
+          des += 1;
+          mask += 1;
+  </code>
+  </pre>
+
+  <figure> <img style="height: 100px" style="width: auto" src="./images/transparent.png"
+      alt="Example_tile" class="screenshot editable" />
+    <figcaption style="text-align:center">Character over multiple tiles
+    </figcaption>
+  </figure>
+
+  <p> To store the tiles and use them in flash, the pointer to the start of the design or mask array is in an array.
+    This array of pointers stores the design and mask for the character in any state it might be in. For the main
+    character, this array stores the 2 frames for walking in any direction and the attacking frames in any direction.
+    Enums are used to more easily index into this array. This system was designed like this because for characters such
+    as enemies, there will be multiple enemy types that each have a direction design. This means there will be a pointer
+    to the aforementioned array of pointers, to specify which enemy is being drawn. This creates an array of pointers,
+    whose pointers point to a specific set (array of pointers) of the designs. These are indexed and read through
+    pointer arithmetic, taking advantage of the fact that arrays store memory contiguously. This was implemented to be
+    as conservative with flash memory and RAM as possible, as well as having the flexibility to easily change, add, or
+    delete designs. </p>
+
+  <p> Visual diversity was accomplished through drawing mono-colored tiles. This just involved passing in the color and
+    duplicating it such that the length spans 32 pixels on the screen, and copying it into the VGA array </p>
+
+  <pre>
+    <code>
+      void drawMono(x, y, color)
+        int start_pos = 640 * y + x;
+        long long long_mask = 0;
+
+        // Duplicate color
+        for (int i = 0; i < 16; i++)
+          long_mask |= color << (4 * i);
+
+        // Drawing multiple rows
+        for (int j = 0; j < 32; j += 2)
+          // Draws a full row
+          for (int i = 0; i < 2; i++)
+            memcpy(&vga_data_array[(start_pos + 16 * i + 640 * j) >> 1], &long_mask, 8);
+            memcpy(&vga_data_array[(start_pos + 16 * i + 640 * (j + 1)) >> 1], &long_mask, 8);
+    </code>
+  </pre>
+
+  <p> Additional functions were added to draw the hearts, gems, weapon slot, and weapon to create the interface. To
+    write strings onto the screen, a function from the framework of the original VGA driver was used. This would be used
+    to write “ – LIFE – “, the number of gems, and text that needed to be conveyed to the player. Drawing this interface
+    only happens when someting changes to avoid unnecessary computation. </p>
+
+  <h2>Game Code Structure</h2>
+  <p> The game engine is designed to emulate playing the original game. Since the game is played through a serial
+    monitor, an entire core was used to read the input of the player through <code>protothread_serial</code>. The other
+    core was used for the game logic and graphics in <code>protothread_game</code> and
+    <code>protothread_graphics</code>. An additional thread handles periodic events in
+    <code>protothread_periodic</code>. The game was designed such that the serial thread set flags for the intended
+    actions of the player, while the other core was responsible for any changes to the state of the game.
+  </p>
+
+  <p> Serial input takes such priority because player experience was valued most. A game that is unresponsive or feels
+    inconsistent can ruin the experience regardless of how fun the game is. This design decision was informed by making
+    sure the player had agency over their character and could smoothly handle the character within the constraints of
+    the actual game.</p>
+
+  <img style="height: 300px" style="width: auto" src="./images/game_code.png" alt="block diagram"
+    class="screenshot editable" />
+
+  <p> There are timing constraints on how often/long something happens, which is handled through
+    <code>protothread_periodic</code>. There are specific time cooldown variables that mark the threshold for how much
+    time needs to have passed in order for a conditional to allow the event. This handles cooldowns for attacking, when
+    to move after attacking, updating enemy movements, how fast the game processes serial inputs, and how long to draw
+    tiles like the death cloud for when enemies die.
+  </p>
+
+  <p> The graphics thread was responsible for drawing the background, what was “on top” of the background, the
+    interface, and anything else that needed to appear on the screen. It does not handle computation, and is signaled to
+    redraw the screen every time the <code>protothread_game</code> has finished running. Whenever a character on the
+    screen moves/changes, it does not handle erasing the “shadow” left behind, which means it needs to redraw the
+    background and draw the character on top to give the illusion of movement. Redrawing the screen too often caused
+    flashes of the characters, which is why redrawing the screen is triggered on events. These events can be either a
+    periodic timer or a player input.</p>
+
+  <figure> <img style="height: 300px" style="width: auto" src="./images/flashing1.png" alt="Flashing1"
+      class="screenshot editable" />
+    <img style="height: 285px" style="width: auto" src="./images/flashing2.png" alt="Flashing2"
+      class="screenshot editable" />
+    <figcaption style="text-align:center"> Screen flashing
+    </figcaption>
+  </figure>
+
+  <p> Any item above the background is either an entity or a character. The location is stored as a set
+    of global positions of tiles and local position of blocks. Each character has an index value enum that states which
+    character model is being drawn (for which enemies/if the main character has multiple designs), and an index value
+    enum that states what the state of the character is (for which direction they are walking or attacking). Each
+    character also has a size to determine the hitbox detection, the number of hearts they have, and the block move
+    speed of the character. An additional field for characters is which tiles they can/cannot walk over, and for
+    entities stores miscellaneous information. </p>
+
+  <p>The game state keeps track of which level the game is currently on, which the demo level does not implement but is
+    there for completion, the current screen of the level, the respawn position for when the character dies on a
+    particular screen, as well as flags for the <code>protothread_serial</code> to interact with
+    <code>protothread_game</code> and <code>protothread_graphics</code>. Every enemy, entity, and level transition box
+    is kept in its own array.
+  </p>
+
+  <h2>Game Logic</h2>
+  <p>The major implementations of game logic came in the form of obeying terrain, hitbox/hurtbox detection, and
+    interacting with the environment. There are additional notes on initialization, single sequence events (SSE),
+    game-to-player dialogue, and enemy pathfinding.
+  </p>
+
+  <h3>Terrain Detection</h3>
+  <p> Since there are no set boundaries on which tile designs are walkable and which are not, the character’s movement
+    restrictions cannot be generated from the screen design. Therefore, an additional mask is required to determine
+    which tiles are traversable. The terrain collision is stored through a field that contains information on whether
+    the character can move into a new global tile in each of the cardinal directions. This value is generated by
+    checking the terrain mask with the character’s current position, as well as collisions with entities such as signs,
+    boulders, etc. Since the character’s local position is stored as the top left of the character, there are some
+    corner cases where the new tile location should only be registered as the local position reaches the end of a tile.
+    There is additional logic for enforcing when the
+    character’s physical position spans across two global positions. Entities are bound by the same wall logic, which
+    handles the case of boulders being pushed into other boulders/signs.</p>
+
+  <figure> <img style="height: 500px" style="width: auto" src="./images/cornercase.png"
+      alt="Wall Corner Case" class="screenshot editable" />
+    <figcaption style="text-align:center"> Black square is where the global position is, character crosses into another
+      global square
+    </figcaption>
+  </figure>
+
+  <p>Moving the character involves a function <code>move_char()</code> to check against this terrain detection to see if
+    the movement is valid, and shuffling between the two walking frames to create the illusion of walking. If it is not
+    a
+    valid space the function will return, otherwise it will move the character and adjust the global and local position
+    as needed. Entities are processed the same, but moved only when interacted with.</p>
+
+  <h3>Hitbox and hurtbox detection</h3>
+  <p>Hitboxes and hurtboxes are used to determine when a character gets hit. The hitbox is the “attack”, and will damage
+    a character when it intersects with their hurtbox. The 2D collision detection algorithm is the axis-aligned bounding
+    box, which works particularly well because it is an algorithm used to detect the collision of two rectangles.
+  </p>
+
+  <pre>
+    <code>
+      if (
+        rect1.x < rect2.x + rect2.w && rect1.x + rect1.w > rect2.x &&
+        rect1.y < rect2.y + rect2.h && rect1.h + rect1.y > rect2.y)
+    </code>
+  </pre>
+
+  <p>
+    Every time <code>protothread_game</code> gets updated, it will do a hitbox-hurtbox detection in
+    <code>mc_hitbox_check()</code>
+    for all the
+    enemies on the screen, which will return a nonnegative number to indicate the direction the main character gets hit,
+    or 0 otherwise. To allow the player to react accordingly, the main character gets pushed back a certain
+    number of blocks in the opposite direction they get hit in. Every time the character attacks, a flag will cause a
+    call on <code>attack_hitbox_check()</code>. It uses the location and size of the sword to check against every enemy,
+    and if any
+    of them are alive and the rectangles intersect, it will return the index of the enemy in <code>enemies[]</code>. If
+    not, it will
+    return -1 to indicate nothing happened. <code>protothread_game</code> will decrease the number of hearts of the
+    enemy that
+    corresponds to that index, and determine if the enemy dies or needs to be knocked back from the character. Since
+    enemies do not have a weapon, their hitbox and hurtbox will depend on the size of their character. The main
+    character’s entire model is the hurtbox, and the hitbox is a disjointed sword that adjusts its hurtbox size
+    depending on which direction the player attacks.
+  </p>
+
+  <figure> <img style="height: 200px" style="width: auto" src="./images/hitbox.png" alt="Hitbox"
+      class="screenshot editable" />
+    <figcaption style="text-align:center"> Red Rectangles for Hitboxes/Hurtboxes
+    </figcaption>
+  </figure>
+
+  <h3>Interacting With the Environment</h3>
+
+  <p>
+    There are two ways to interact with the environment: running over passive objects or interacting with active
+    objects. Passive objects are items such as gems and hearts, which only require the player to touch the item to
+    pick it up.
+    Active objects are boulders, signs, and villagers that the player needs to actively interact with to change the
+    state of the game.
+  </p>
+
+  <p>Similar to how the hitbox-hurtbox detection will be run every time
+    <code>protothread_game</code> gets updated, the thread will
+    check for passive objects and screen transition blocks continuously. The function <code>check_environment()</code>
+    will check every entity to see
+    if it is a
+    passive object, and use the axis aligned bounding box algorithm against that entity to see if collision happens. It
+    will return the index of the entity in <code>entities[]</code> that the player makes contact with, and -1 if nothing
+    happens. The function <code>check_level()</code> will see if the character collides with a box that causes the
+    screen
+    to transition, and will return the direction the main character moves on the screen, or -1 if nothing happens. The
+    specific event will be handled by <code>protothread_game</code>. If the item is meant to disappear, the thread will
+    set it to nothing.
+  </p>
+
+  <figure> <img style="height: 200" style="width: auto" src="./images/gem1.png" alt="gem1"
+      class="screenshot editable" />
+    <img style="height: 200" style="width: auto" src="./images/gem2.png" alt="gem2"
+      class="screenshot editable" />
+    <figcaption style="text-align:center"> Gem Disappearing
+    </figcaption>
+  </figure>
+
+  <p>
+    When the player interacts, a flag will cause the function <code>check_front()</code> to see if there is anything
+    interactable in
+    front of the character. If an entity exists right in front of the character and the character is facing the correct
+    direction, it will return the index in <code>entities[]</code>, or -1 if nothing happens.
+    <code>protothread_game</code> will then
+    determine what the entity is, and perform the appropriate action.
+  </p>
+
+  <figure> <img style="height: 200px" style="width: auto" src="./images/boulder1.png" alt="interact1"
+      class="screenshot editable" />
+    <img style="height: 200px" style="width: auto" src="./images/boulder2.png" alt="interact2"
+      class="screenshot editable" />
+    <figcaption style="text-align:center"> Interacting with a Boulder
+    </figcaption>
+  </figure>
+
+  <h3>Additional Notes</h3>
+  <p>
+    Two types of initialization happen. One initialization, <code>init_game()</code> and <code>init_main_char()</code>
+    happens when the game boots up,
+    where all the time values, game state variables, and main character get assigned the proper values. The second
+    initialization, <code>init_screen</code>, happens right after the first initialization,
+    and also
+    upon entering a new screen. This initialization takes all the enemies, entities, signs, etc (stored as
+    interactables), assigned to that certain screen in flash, and places each interactable in the correct array. These
+    interactables are stored in flash such that expandability of the game is maintained, which means all the information
+    to identify
+    and initialize the object is efficiently stored in 4 hex values. The first hex value is to identify what is being
+    placed, the
+    second is to provide additional information, and the last two are the x and y global tile positions
+    respectively.
+    The arrays are first emptied out in order to prevent memory lapses or leftovers from the previous screens, and then
+    each of the interactables are read through in order to determine where they belong. There are additional cases for
+    single sequence events and signs.
+  </p>
+
+  <p>
+    Single sequence events (SSE) are events that will change their state “permanently” after the player has interacted
+    with them. Since interactables are loaded from flash, there is no way to adjust the flash for that individual
+    interactable to make sure they are adjusted appropriately the next time. This is handled in the
+    <code>init_screen()</code>
+    function, where corner cases for specific objects with specific pre and post SSE are hard coded. The SSE for that
+    particular screen is checked, and the objects are initialized appropriately.
+  </p>
+
+  <figure> <img style="height: 200px" style="width: auto" src="./images/sse1.png" alt="sse1"
+      class="screenshot editable" />
+    <img style="height: 200px" style="width: auto" src="./images/sse2.png" alt="sse2"
+      class="screenshot editable" />
+    <img style="height: 200px" style="width: auto" src="./images/sse3.png" alt="sse3"
+      class="screenshot editable" />
+    <figcaption style="text-align:center"> Entering Screen, Taking Sword, Re-Entering Screen
+    </figcaption>
+  </figure>
+
+  <p>
+    Entities such as signs and the villager have dialogue in the form of words that need to be conveyed to the player.
+    This text appears at the top of the screen where the interface is, and should change depending on which sign is
+    being read. This is stored in flash as a different interactable but in the same entities array, where the first
+    value is the indicator for the sign, the second value is an index into a string coded in flash. Whenever the player
+    interacts with a sign, the index for that specific sign is used to find the correct string to write. Upon pressing
+    the interact button again, the text box closes. The villager in the demo is also used as an SSE, where before giving
+    him the
+    gems, it will read a certain text, and after the gems are given the villager will say different things.
+  </p>
+
+  <figure> <img style="height: 200px" style="width: auto" src="./images/sign1.png" alt="sign1"
+      class="screenshot editable" />
+    <img style="height: 200px" style="width: auto" src="./images/sign2.png" alt="sign2"
+      class="screenshot editable" />
+    <figcaption style="text-align:center"> Different Signs
+    </figcaption>
+  </figure>
+  <figure> <img style="height: 200px" style="width: auto" src="./images/guy2.png" alt="guy2"
+      class="screenshot editable" />
+    <img style="height: 200px" style="width: auto" src="./images/guy1.png" alt="guy1"
+      class="screenshot editable" />
+    <figcaption style="text-align:center"> Villager Text Single Sequence Event
+    </figcaption>
+  </figure>
+
+  <p>Enemy pathfinding is partly random, but generally moves towards the player. The distance between the enemy and the
+    main character determines how likely it is that the enemy will move in that direction towards the player whenever
+    the enemy does move. This means that if the enemy is close on the y-axis but far on the x-axis, it is much more
+    likely for the enemy to move towards the player by moving closer in the x-axis direction.</p>
+</div>
+		</div>
+	</section>
+</div>
+	<footer class="inner">
+	</footer>
+</body>
+
+</html>

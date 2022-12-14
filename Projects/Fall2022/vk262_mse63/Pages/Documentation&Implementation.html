@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<link rel="stylesheet" href="../app.css">
+</head>
+<!-- navbar -->
+<header>
+	<nav>
+		<div class="logo">
+			<h4>ECE 5730</h4>
+		</div>
+		<ul class="nav-links">
+			<li><a href="../index.html">Home</a></li>
+			<li><a href="Introduction.html">Introduction</a></li>
+			<li><a href="Design&TestingMethods.html">Design</a></li>
+			<li><a href="Hardware&Software.html">Hardware/Software</a></li>
+			<li><a href="Appendix.html">Appendix</a></li>
+		</ul>
+		<div class="burger">
+			<div class="line1"></div>
+			<div class="line2"></div>
+			<div class="line3"></div>
+		</div>
+	</nav>
+
+	<!-- scroll indicator -->
+	<div class="progress-bar"></div>
+</header>
+
+
+<!-- Body -->
+<br>
+<br>
+<br>
+<br>
+<div class="body-text"><h1><center>Documentation & Implementation</center></h1></div>
+<p><div class="home-card-wrapper2">
+<br>The main.py file on the Pico contains the code for drawing the menu screen on the display. The user can use button inputs to select from a choice of 3 games. When a game is selected, the corresponding python file for that game gets executed. For the 3 games we have 3 separate python scripts namely pong.py, invaders.py and snake.py. All these games use a common structure, although the individual logic of each game is very different. First, the screen is initialised and a framebuffer of 38.4 kB is allocated in the Pico’s RAM to contain information of each pixel on the display. The display is 320x240 pixels and with a 4 bit per pixel colour scheme, we need 38.4 kB (320x240/2 = 38400). After that the objects in the game are initialised:<br>
+	<ul><div class="home-card-wrapper2">
+	<li> In case of pong, the paddle and ball</li>
+	<li> In case of Space Invaders, the aliens and player spaceship</li>
+	<li>  In case of Snake, the snake and the first instance of the food item</li>
+	</div></ul>
+Next, we enter an infinite loop and update the position of different elements in the screen based on game logic and user input. For example, in pong, the paddle moves based on left or right button inputs while in space invaders, the player spaceship moves with user input. At the end of the loop, we clear the screen with the fill(0) method in framebuffer, which essentially fills the entire buffer with 0. Then we use the show() method to draw the display again with updated positions and values for different game elements.<br>
+<br>Within the game loop we also add support for making sounds using a piezo electric buzzer. We control the frequency and duration of sound generated using a Pulse Width Modulated Signal generated from GPIO16 of the Pico. We play tones of different frequencies over very short periods (0.01 seconds) to give the user the impression that a tune is playing. We added logic for generating sound when certain events occur. The most interesting example is in the Space Invaders game when the UFO appears in the Space Invaders game, there is a continuous siren sound playing as long as the UFO does not disappear from the screen.<br>
+<br>Finally, within each game loop, we have exit conditions. These are some conditions or states we are checking to determine if the game is over. In pong, if the ball touches the floor, the game is over. In Space Invaders, if the aliens collide with the spaceship, the game is over. In Snake, if the snake bites itself, the game is over. Once this condition is true, we clear the screen and display a “Game Over” message. From this message screen, by pressing the back button, the user can return to the main menu and select a game again or the user can restart the current game by pressing the select button.<br>
+<br>The original source code utilized an SSD1306 driver for an OLED screen, which helps to produce light as many graphic require  backlight to generate visible output. As a result, this does not need additional background illumination, adding a crucial advantage  of drawing less power to display animations. However, OLED is more of an emissive display versus an ili9341 driver for LCD that presents information through transmissive or transflective methods such as backlight. Besides that, OLED display have a much shorter lifespan, is more expensive, and cannot be subjected to direct sunlight compared to TFT LCDs. As a result, we switched to using a TFT LCD with an ili9341 driver.<br>
+<br>There are existing patents on hand-held video gaming systems. The one we’ve developed would be similar to the oldest version of a video game, which is the U.S. Patent No. 5.184.830 released in 1989<sup>3</sup>. Nintendo was the first to patent in Japan then in 1992 filed at the USPTO<sup>3</sup>. Although we don’t have a gameboy casing similar to the original, what is similar is that the user can grip the system with both hands so that the user’s fingers can rest on the buttons. Similar to the gameboy, we have buttons that are defined and assigned to demonstrate character movements on the LCD. We have start, select and exit buttons to also allow users to select a game mode offered. This device runs on usb plug-into a power supply instead of AA batteries, so it is portable but must need to be plugged in to work. <br>
+</div>
+<center>
+	<img src="https://i.imgur.com/WMyGYlR.png" width="600" height="400">
+	<br>Figure 4. Menu for all games, currently selected on “Pong” (left) and by pressing the “down” button on the (right),  the Pong game starts as seen with the platform and the ball. <br>
+</center>
+
+<center>
+	<br><img src="https://i.imgur.com/iQHEvLd.png" width="400" height="500">
+	<br>Figure 5. The “game over” screen appears when the ball misses the platform .<br>
+</center>
+
+<center>
+	<br><img src="https://i.imgur.com/dFDPNFT.png" width="400" height="600">
+	<br>Figure 6. The same process from Figure 1 is restarted when you press the “quit” button to return to menu and “invaders” was selected instead. <br>
+</center>
+
+<center>
+	<br><img src="https://i.imgur.com/xR0yfkh.png" width="400" height="600">
+	<br>Figure 7. This is the last game, “snake” where the “left/right” buttons as you see will allow the empty box (the snake) to “eat” another box which will “build” the snake. <br>
+</center>
+
+</p>
+ <script src="../app.js"></script>

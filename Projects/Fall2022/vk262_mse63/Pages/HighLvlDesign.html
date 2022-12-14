@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="../app.css">
+</head>
+
+<!-- navbar -->
+<header>
+  <nav>
+    <div class="logo">
+      <h4>ECE 4760</h4>
+    </div>
+    <ul class="nav-links">
+      <li><a class='active' href="../index.html">Home</a></li>
+      <li><a href="HighLvlDesign.html">High Level Design</a></li>
+      <li><a href="Hardware.html">Hardware Design</a></li>
+      <li><a href="ProgramDesign.html">Program Design</a></li>
+      <li><a href="Results.html">Results</a></li>
+      <li><a href="Conclusion.html">Conclusion</a></li>
+      <li><a href="Appendix.html">Appendix</a></li>
+    </ul>
+    <div class="burger">
+      <div class="line1"></div>
+      <div class="line2"></div>
+      <div class="line3"></div>
+    </div>
+  </nav>
+
+  <!-- scroll indicator -->
+  <div class="progress-bar"></div>
+</header>
+
+
+<hr>
+<br>
+<br>
+<br>
+<br>
+<h1 id="high-level-design">High Level Design</h1>
+<p>High-Level Design:
+  Our game is made up of three core components, the display on the VGA, the Frequency input from a microphone, and the
+  logic of the game itself. To help with coherency we combined a lot of the display and logic data together since they
+  were so related. Of course, we were partially inspired by the Game Guitar Hero, and also took advantage Prof. Land’s
+  pseudocode on how to make a cepstrum (FFT of an FFT). We also used a reference table on how musical notes correlate in
+  value to their respective frequencies. </p>
+<br>
+<h2 id="math-involved-">Math Involved:</h2>
+<p>The only math involved in our project is from when we capture frequency information from the instrument data picked
+  up on our microphone. The base of this system is the same FFT code we used from the cricket chirp lab, where the
+  microphone records amplitude data and the code performs an FFT to get the spectrum of frequencies detected. This
+  caused an issue for us though since we were using instruments, as these instruments produce extra frequencies on
+  multiples of the fundamental note frequency that are also picked up on the FFT. We solved this on Prof. Land’s
+  suggestion by applying a cepstrum rather than just an FFT. To do this we applied the FFTfix function from the cricket
+  lab and used the extracted real and imaginary outputs, then combined these to get a real frequency magnitude spectrum.
+  We take the log of this to get into the log power spectrum. By performing another FFT on this dataset and combining
+  the real and imaginary outputs again we get the cepstrum, which only returns fundamental frequencies detected allowing
+  us to use it to detect notes from instruments. The max amplitude fundamental frequency detected corresponded to the
+  pitch we chose as the detected for the game. One additional note is that we added a DC component (zero frequency peak)
+  right before the second FFT to improve the fundamental frequency detection as it made the patterned spacing of the
+  notes easier for the program to detect and correct.</p>
+<br>
+<p>Once the frequency was detected we had to correlate that pitch to the note it was closest to. This is where we
+  applied the table correlating the notes in several octaves to the frequencies they correspond to. We focused on the
+  pitches we were interested in for our game, and made an equation that captured the frequencies in that range and
+  converting them to a 1-24 range corresponding to the 24 notes in the two octaves we were interested in. Since the
+  notes have an exponential relationship to the frequency this model has perfect precision, and is shown below:
+  num = (int)(log(max_frequency / 493.88) / log(1.05946297692) + 0.5)
+  First, the frequency detected is divided by the frequency of the lowest pitch in our two octaves, a C note at 493.88
+  Hz. We take the log of this to convert the exponential relationship to a linear one and divide by log(1.05946297692)
+  to convert it into the correct log base. Finally, we add 0.5 and convert it to an int. This allows us to round to the
+  nearest viable note, where 1 is the lowest registered and 24 is the highest note. Any notes outside this range go
+  unregistered in the game. </p>
+<br>
+<h2 id="core-logic-">Core Logic:</h2>
+<p>Our game is based around a state machine to allow players to select a song and difficulty. The first state
+  corresponds to the home screen where the player can select the song they want from a choice of 3. Buttons attached by
+  GPIO to the RP2040 allow the player to toggle between songs and select the one they want to play. Next, a difficulty
+  page is navigated in the same way. This page has 4 difficulties that alter the speed the notes descend the screen,
+  with each higher difficulty being twice the speed of the last. Once the difficulty is selected the last state is
+  entered where the actual game is run. </p>
+<p><img src="photo/diffscreen.PNG" alt="Diff screen"></p>
+<pre><code>          Image <span class="hljs-keyword">showing </span><span class="hljs-keyword">Difficulty </span>selection <span class="hljs-keyword">screen </span>of game.
+</code></pre>
+<br>
+<p>To start the VGA is updated with the fixed frame of the game and the initial values of accuracy, the internal timer,
+  and the detected note are displayed in the corner. Next, the cepstrum is performed to see if a viable is note
+  detected, which will be displayed on the screen as user input if that is the case. The rest of the data is based on
+  the song selected, whose information is stored in an array that contains the notes in order in the 1-24 notation of
+  the two octaves, their respective timings based on the difficulty, and a zero array that is updated based on user
+  accuracy. The notes are displayed in the column that matches their note value of the 24 available. Their vertical
+  position is based on the difference of the current time to the display time, meaning as the internal clock increments
+  the notes slowly descend the screen as their y value increases. Once they are in a certain range the user input will
+  be checked to see if it matches the note, and if so the value of the correct array corresponding to that note is
+  updated to a 1, meaning correct. If the note passes through the window without being marked as correct, the array
+  value is changed to -1, meaning incorrect. These correctness values are what is used to decide the color of the note
+  when displayed on the VGA, where white is 0 meaning neither correct nor incorrect, green is correct, and red is
+  incorrect. Also, when the correctness array is modified the total notes run as well as the total notes correct are
+  updated, and then used to update the accuracy component displayed in the corner of the VGA.</p>
+<br>
+<p>Once the last note of the song leaves the VGA screen, or if the user hits a configured reset button that only works
+  in the game state, the game will return back to the song selection state. With this, the entire logic of the game is
+  complete.</p>
+<br>
+<h2 id="hardware-software-tradeoffs-">Hardware/software tradeoffs:</h2>
+<p>One tradeoff we decided on was the sample rate of the FFT. A lower value allowed for a faster refresh rate giving
+  more accuracy with respect to time, while more samples gave us a faster accuracy with respect to time. We decided to
+  use the lowest sample rate that consistently detected the notes in our used range correctly, which was 512 samples per
+  FFT and a sample rate of 10kHz. With it, we had sufficient accuracy for time as well since the user inputs felt
+  acknowledged almost immediately so we left it on those parameters.</p>
+<br>
+<p>Another software aspect we tweaked with was when a detected fundamental frequency would be loud enough in amplitude
+  to be used by the game. This tradeoff allowed involved the ability to raise the threshold which reduces noise but can
+  also shut out actual notes. To Identify our desired threshold we set the microphone next to our computer speaker
+  playing a digital piano at a reasonable volume. We started with a high threshold and lowered it until we ended with
+  one that was able to catch the entirety of a piano note, finding that this threshold was suitably resistant to noise.
+</p><br>

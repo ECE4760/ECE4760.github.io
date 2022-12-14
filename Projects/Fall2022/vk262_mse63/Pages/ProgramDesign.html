@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="../app.css">
+</head>
+
+<!-- navbar -->
+<header>
+  <nav>
+    <div class="logo">
+      <h4>ECE 4760</h4>
+    </div>
+    <ul class="nav-links">
+      <li><a class='active' href="../index.html">Home</a></li>
+      <li><a href="HighLvlDesign.html">High Level Design</a></li>
+      <li><a href="Hardware.html">Hardware Design</a></li>
+      <li><a href="ProgramDesign.html">Program Design</a></li>
+      <li><a href="Results.html">Results</a></li>
+      <li><a href="Conclusion.html">Conclusion</a></li>
+      <li><a href="Appendix.html">Appendix</a></li>
+    </ul>
+    <div class="burger">
+      <div class="line1"></div>
+      <div class="line2"></div>
+      <div class="line3"></div>
+    </div>
+  </nav>
+
+  <!-- scroll indicator -->
+  <div class="progress-bar"></div>
+</header>
+
+
+<hr>
+<br>
+<br>
+<br>
+<br>
+<h1 id="program-design">Program Design</h1>
+<p>Our FFT code is based on the cricket FFTfix function applied with Prof. Land’s pseudocode into a cepstrum, from which
+  the peak frequency is picked from a max amplitude check. Once we understood how to implement this from the provided
+  guidance and some research online we were able to successfully make this part work.</p>
+<br>
+<p>The states leading up to the game were also easy to implement. For these, we just changed the display to show the
+  choices of song or difficulty, and used the buttons to update which option was hovered in the state variable and save
+  that choice when it was selected. The song copied a saved array of the song’s notes and timings into a temp variable
+  for the game, and the difficulty selection would modify those timings to make the game faster or slower. From here,
+  all that was left was the game itself.</p>
+<br>
+<p>One of the biggest challenges and also one we ran into towards the beginning of our code was how our notes would
+  descend from the top of the screen and change from user input. We made it so there were 24 vertical channels on the
+  screen, one for each of the 24 notes we used. This aspect used a function we made called coldrop which takes all of
+  the pixels in a column and pulls them down by a desired offset. In these columns, all of the pixels were pulled down
+  each timestep, with the speed of descent varying with difficulty. When the microphone picks up a note it will draw a
+  cyan rectangle on the channel of the respective note, and that will be pulled down the channel so it’s accurate with
+  respect to time. As stated earlier the color of the note boxes changes when correct/incorrect, which is done by
+  overlaying the new color over the old one so the new color is pulled down the channel instead. Now our display was
+  able to keep up with all of the active parts of the game without visual bugs.</p>
+<br>
+<p>With that complete applying input from the microphone involved taking the max pitch and converting in the way
+  mentioned earlier. That value is checked by the game and displayed on screen. </p>
+<br>
+<h2 id="references-">References:</h2>
+<p>We utilized the pseudocode from Bruce Land on how to write a cepstrum, which can be found on this page: <a
+    href="https://people.ece.cornell.edu/land/courses/ece4760/RP2040/index_rp2040_MBED.html">https://people.ece.cornell.edu/land/courses/ece4760/RP2040/index_rp2040_MBED.html</a>
+</p>
+<br>
+<h2 id="future-improvements-">Future Improvements:</h2>
+<p>Something we hoped to try but never got around to was detecting longer notes. We considered ways of modeling them as
+  a continuous sequence of smaller notes, but in the end, we never put it into code. Since we only had access to a
+  digital piano for instruments, we also thought it would be hard to detect the longer notes since piano notes last such
+  a brief amount of time.</p>
+<br>
+<p>Another idea we had tried to flesh out but failed in was detecting chords or multiple notes at the same time. Our
+  code worked by identifying the dominant note, which makes it hard to identify multiple notes at once as you need a
+  consistent threshold that won’t let in noise. It’s also harder for the program to discern notes when more than one is
+  active at the same time which was costing us too much accuracy in the end to go through with.</p><br>

@@ -1,0 +1,158 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Hardware Design | ECE4760</title>
+<meta name="generator" content="Jekyll v3.9.2" />
+<meta property="og:title" content="Hardware Design" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="ECE4760" />
+<meta property="og:description" content="ECE4760" />
+<link rel="canonical" href="https://mklugherz.github.io./hardware/" />
+<meta property="og:url" content="https://mklugherz.github.io./hardware/" />
+<meta property="og:site_name" content="ECE4760" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Hardware Design" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"ECE4760","headline":"Hardware Design","publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://mklugherz.github.io./images/steveicon.png"}},"url":"https://mklugherz.github.io./hardware/"}</script>
+<!-- End Jekyll SEO tag -->
+
+	<link type="application/atom+xml" rel="alternate" href="https://mklugherz.github.io./feed.xml" title="ECE4760" />
+
+	<link rel="stylesheet" href="./css/screen.css">
+	<link rel="icon" type="image/png" href="./images/steveicon.png">
+
+</head>
+
+<body>
+	<header>
+		<div class="container">
+			<div class="company-name"><a href="./index.html"><img src="./images/steveicon.png"
+						width="95" height="33" /></a></div>
+			<nav>
+	<!-- <a class="nav-toggle" id="open-nav" href="#">&#9776;</a> -->
+	<!-- <a class="editor-link btn" href="cloudcannon:collections/_data/navigation.yml" class="btn"><strong>&#9998;</strong>
+		Edit navigation</a> -->
+
+
+
+
+
+	<a href="./hld.html
+" class="" >High Level Design</a>
+
+
+
+
+
+	<a href="./hardware.html
+" class="" >Hardware Design</a>
+
+
+
+
+
+	<a href="./program.html
+" class=" active" >Program Design</a>
+
+
+
+
+
+	<a href="./visual.html
+" class="" >Visual/Level/Sound Design</a>
+
+
+
+
+
+	<a href="./results.html
+" class="" >Results</a>
+
+
+
+
+
+	<a href="./conclusion.html
+" class="" >Conclusion</a>
+
+
+
+
+
+	<a href="./appendix.html
+" class="" >Appendices</a>
+
+</nav>
+		</div>
+		<div class="text-container">
+			<!-- <p>aa</p> -->
+		</div>
+	</header>
+	<div class="content">
+	<section class="page">
+		<div class="container ">
+			<div class="text-container">
+  <h1>Hardware Design</h1>
+  <p style="color:black;font-size: 18px"> For this project, the Raspberry Pi Pico was connected to three external
+    hardware interfaces:
+    a VGA screen to display the game, a speaker, and a UART channel to a serial client. All project-specific hardware
+    was implemented on a breadboard with jumper wires. For the serial interface, two pins on the RP2040 (UART_TX and
+    UART_RX) are connected to a host computer with a USB-serial converter dongle.</p>
+
+  <p style="color:black;font-size: 18px">The VGA screen is connected to the RP2040 with a series of 6 hardware
+    connections: HSYNC,
+    VSYNC, RED, GREEN, BLUE and GND. The HSYNC and VSYNC lines are driven by Professor Hunter-Adams’ VGA driver, but we
+    modified the color connections to the RP2040 to allow for use of 4-bit color, giving us access to a greater suite of
+    colors for our designs. The 4th bit doubles the resolution of the GREEN line, so while each of the RED and BLUE VGA
+    lines have a 330ohm resistor in series (which, in addition to an internal 70 ohm resistor, pulls the color line to a
+    safe voltage), a special resistor divider is required for the GREEN VGA line, pictured below.
+  </p>
+
+  <img style="height: 200px" style="width: auto" src="./images/4bit_res_divider.png"
+    alt="4-bit resistor divider" class="screenshot editable" />
+
+  <p style="color:black;font-size: 18px">We briefly attempted to add fade-to/from-black transitions when moving between
+    levels. Our
+    plan was to use low-passed PWM channels and Schottky diodes to gradually pull the VGA color lines down to ground,
+    creating a fade effect on the VGA screen. This is pictured below. However, two problems arose: the low-pass filter
+    would create an
+    unintended resistor divider and the Schottky diodes could not completely pull the color line to ground. Ultimately,
+    this was not considered for use.
+  </p>
+
+  <img style="height: 200px" style="width: auto" src="./images/fade_in.png"
+    alt="Potential circuit for fade-in" class="screenshot editable" />
+
+  <p style="color:black;font-size: 18px">For the speaker circuit, the following four signals were connected from the
+    serial peripheral
+    on the RP2040 to the DAC IC: serial clock, serial data, latching input, and chip select. Other I/O for the DAC IC
+    included power and ground, and two analog output channels (identified by A and B). Each of these output channels
+    could be wired to a 3.5mm headphone jack receptacle, which allows us to connect a speaker system to the DAC. A full
+    schematic of the hardware, as well as a breadboarding diagram, are pictured below:
+  </p>
+
+  <h2>Hardware Diagram</h2>
+  <img style="width: 90%; height: auto" src="./images/diagram.png" alt="Hardware diagram"
+    class="screenshot editable" />
+
+  <h2>Hardware Schematic</h2>
+  <img style="width: 90%; height: auto" src="./images/schematic.png" alt="Hardware schematic"
+    class="screenshot editable" />
+
+
+</div>
+		</div>
+	</section>
+</div>
+	<footer class="inner">
+	</footer>
+</body>
+
+</html>
