@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ECE 4760 Final Project | A Voice Controlled Machine Learning Model Using the RP2040</title>
+<meta name="generator" content="Jekyll v3.9.2" />
+<meta property="og:title" content="ECE 4760 Final Project" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A Voice Controlled Machine Learning Model Using the RP2040" />
+<meta property="og:description" content="A Voice Controlled Machine Learning Model Using the RP2040" />
+<link rel="canonical" href="http://localhost:4000./" />
+<meta property="og:url" content="http://localhost:4000./" />
+<meta property="og:site_name" content="ECE 4760 Final Project" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ECE 4760 Final Project" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","description":"A Voice Controlled Machine Learning Model Using the RP2040","headline":"ECE 4760 Final Project","name":"ECE 4760 Final Project","url":"http://localhost:4000./"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="./assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000./feed.xml" title="ECE 4760 Final Project" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="./index.html">ECE 4760 Final Project</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="./about/index.html">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="home"><p><img src="example.jpg" alt="" /></p>
+<h1 id="voice-controlled-machine-learning-on-rp2040">Voice Controlled Machine Learning on RP2040</h1>
+<h2 id="by-taylor-stephens-tms279-zack-hatzis-zdh5-and-adam-fofana-adf64">By Taylor Stephens (tms279), Zack Hatzis (zdh5), and Adam Fofana (adf64)</h2>
+<p><img src="./images/preview.jpg" alt="Image of Microphone attached to Circuit" /></p>
+<h2 id="projection-introduction">Projection Introduction</h2>
+<p>The project we decided to design and build was a machine learning voice controlling system that is implemented with a “Stroop Effect” reaction game where the player has to quickly say the font color of the printed text on the computer screen instead of the actual text which is a printed text of a different color.</p>
+
+<p>For the final project, utilizing all the embedded systems skills and knowledge we had picked up from the three labs, particularly the Cricket Synthesis and Synchronization lab, we wanted to delve into a more complex audio-based project.  So we decided to build a Keyword spotting system much like Alexa or Siri. Seeing that Keyword spotting technology is already being extensively used in the world to make online searches and inquries with our smartphones and smart assistant devices easier and more efficient, we were curious in seeing if we could run and deploy a ML model on a low-power microcontoller like the RP2040 in order to build a similar technology.</p>
+
+<p>In order to build such a system, we first acquired over 800 audio samples, extracted the MFCC features from the audio samples, designed and trained a neural network (NN) model using the open-source <strong>Edge Impulse</strong> platform, designed the breadboard circuitry using a electret microphone along with some LEDs, and used the deployed model on the RP2040 to make a fun and challenging reaction game.</p>
+
+<h2 id="high-level-design">High level design</h2>
+<p>Our curiosity and research about deploying a complex ML model that is accurate in classifying and detecting on low-power microcontrollers led us to the little-known field of tinyML. During the building of this project we referenced Gian Marco Lodice’s <strong>TinyML Cookbook</strong> to get ideas about the sort of project we wanted to work on and how to go about doing it.</p>
+
+<h4 id="acquiring-audio-data">Acquiring audio data</h4>
+<p>To collect the audio samples that the ML model would train and test on, we used our smartphones and connected to a free <strong>Edge Impulse</strong> account that we created and simply began recording the sound signals for 7 different color classes. For the colors red, blue, green, yellow, magenta, cyan and white, we collected roughly over 130 audio samples for each and 100 audio samples for the unknown class.</p>
+
+<p>The raw audio waveform is a filtered signal of the smartphone sends over to the <strong>Edge Impulse</strong> platform. The signal represents a quantity that varies over time. Sound signal for example is a variation in air pressure. It represents variations in air pressure over time.</p>
+
+<p>The microphone being a measurement device, measures these variations and generates an electrical signal that represents sound. The microphone much like a speaker is also known as a transducer because it converts our speech signals from one form to another. 
+<img src="./images/wave_form.png" alt="Audio waveform" /></p>
+
+<p><img src="./images/audio_splitting.png" alt="Audio splitting of the color &quot;red&quot;" /></p>
+
+<p>Once the audio signals have been converted and sent over to the <strong>Edge Impulse</strong> platform, we examined the MFCC features used to distinguish the colors from each other so that the model can accurately classify them. Also on the <strong>Edge Impulse</strong>,the signals are passed through two main computational blocks: the processing block, which prepares the samples for the ML algorithm and learning block, which is where the model learn the features of the data samples.</p>
+
+<p>In the processing block, a Discrete Fourier Transform  (DFT) is done on the audo signals to obtain the spectrograms of the audios. Which can be thought of as an audio signal’s image representation. However for audio speech signals in particular, we not only need to obtain the spectograms but we also need to adjust them so that the frequencies are on levels of what humans can perceive and the loudness is also adjusted to scale logarithmically rather than linearly as follows:</p>
+
+<p>a. Scaling the frequency to Mel with the Mel scale filter bank: The Mel scale remaps the frequencies so that they are distinguishable. For instance if we were to play pure tones from 100 Hz to 200 Hz with a 1 Hz step, with such a filter we can hear each frequency step. But if such a filter was used at higher frequencies of 7500 Hz and 7600 Hz, we would barely be able to hear it because such frequencies are simply too high to be of use to the human ears.</p>
+
+<p>The Mel scale is commonly computed using triangular filters overlapped in frequency domain.</p>
+
+<p>b. Scaling the amplitudes using the decibel (dB) scale: The human brain does not register sound amplitude linearly but logarithmically. Therefore we need to scale the amplitudes of audio signals logarithmically.</p>
+
+<p><img src="./images/spectogram.png" alt="Raw waveform to mel spectrogram" /></p>
+
+<p>####  Extracting MFCC 
+From the output of the Mel filter, we can still cut down on the number of componenet features while still keeping the distinctive features that the model can use to acurrately do classification. MFCC aims to extract fewer and highly unrelated coefficients from the Mel spectrogram. The Mel filter bank uses overlapped filters which makes the components highly correlated. We can decorrelate them by applying Discrete Cosine Transform (DCT). The resulting spectogram has fewer frequencies than the mel spectogram.</p>
+
+<p><img src="./images/3d_scatter.png" alt="Feature explorer showing 7 color classes" /></p>
+
+<p>From the feature explorer, we can infer if the input features are distinct and suitable for our problem by being able to see the classes (except the unknown category) well seperated and classfied on the 3D scatter plot above.</p>
+
+<p>Now that we have successfully extracted the minimal number of features that the model can use to train and test on, we can proceed to designing and training the neural network (NN) model.</p>
+
+<p><img src="./images/NN_model.png" alt="Neural Network Architecture" />
+The NN model has two two-dimensional (2D) convolution layers, one dropout layer and a fully connected layer. The network’s input is the MFCC feature extracted from the 1-second audio samples that we split the audio data into.</p>
+<h2 id="program-and-hardware-design">Program and Hardware Design</h2>
+<h3 id="program-design">Program Design</h3>
+<p>Our code largely consists of multiple functions to record from the microphone, classify the audio input based on our ML model, and code to update the VGA display based on what color the user said. We tried to make our program multi-threaded (by offloading the VGA updating to another core) but this introduced problems with the recording of the audio data and the classification of the audio against our ML model so we ultimately decided against it.</p>
+
+<p>When starting up the Raspberry Pi Pico, nothing visually happens. The <code class="language-plaintext highlighter-rouge">int main()</code> function runs which correctly initializes all of the GPIO pins we use, setup the ADC, and initialize the array used to store the raw ADC data. Then, the main thread is scheduled and a basic while loop executes. Before reaching the infinite while loop, the program resets the <code class="language-plaintext highlighter-rouge">streak</code> variable to zero which keeps track of how many colors the user got correct in a row. While the physical button on the board is not pressed, nothing happens and the program keeps cycling through the loop.</p>
+
+<p>When the external button on the board is pressed, the program enters the loop and the VGA display is initialized and the color and word variables are randomized based on how long it has been since the program started executing. This ensures a new random color every time the button is pressed (unless of course the user gets the exact timing the same on each run down to the millisecond).
+  <img src="./images/random.jpg" alt="Random Color and Word Generation" /></p>
+
+<p>After this, the color is displayed on the display and the program sleeps for 700 ms to give the user a small window to process the information on the screen. Next, the <code class="language-plaintext highlighter-rouge">static bool microphone_inference_record(void)</code> function is run. This function essentially sets up a repeating timer to go off for a desired sampling period.
+  <img src="./images/microphone_record.jpg" alt="Microphone Record Function" /></p>
+
+<p>Inside the timer ISR, the sample buffer is filled with audio samples from the ADC. One thing that was tricky here was taking out the bias from microphone amplification. To do this, we had to determine the bias of the amplifier which is <code class="language-plaintext highlighter-rouge">VCC/2</code> and subtract it from each ADC value as shown below.</p>
+
+<p><img src="./images/adc_bias.jpg" alt="Amplifier Bias" /></p>
+
+<p>Once the buffer is full, the repeating timer is cancelled and the program returns to the main thread loop. The microphone buffer is then sent through our machine learning model. All of the machine learning classification is done with a library from <strong>Edge Impulse</strong> which was created based off the model we created on their online platform. The cool thing about Edge Impulse is that the model we created online using voice samples can be outputted as a C++ library which means that all of the machine learning processing can be done on a local machine instead of the cloud. There will be more on this later in the results section. For information about this, see <a href="https://docs.edgeimpulse.com/docs/deployment/running-your-impulse-locally">this link</a>. The <code class="language-plaintext highlighter-rouge">run_classifier</code> function from Edge Impulse takes in a <code class="language-plaintext highlighter-rouge">signal_t</code> type with raw sensor data and returns the result in a custom <code class="language-plaintext highlighter-rouge">ei_impulse_result_t</code> type which contains data such as the classification, the time it took to compute the classification, and any anomalies that occured when doing the classification.</p>
+
+<p>After getting the results, the different color categories are compared against a set classification percentage (in our case, %60) and it is compared against the color displayed on the VGA screen. The VGA screen is then updated. If the user gets the color correct, the streak variable is incremented and a correct message is displayed on the VGA screen. There are also results for if the classification fails and if the user gets it wrong. Below is a snippet of code that demonstrates this. <em>Note: The <code class="language-plaintext highlighter-rouge">correct_display()</code> function handles the updating of the VGA display. This function and the rest of the code will be available in the Appendix.</em></p>
+
+<p><img src="./images/classification_result.jpg" alt="Characterization Based On Classification Result" /></p>
+
+<p>After displaying the results to the user, the loop starts again and waits for the user to press the button to try the game again. If the user gets the answer correct, the <code class="language-plaintext highlighter-rouge">streak</code> variable persists through each game play. If the user gets it wrong or the classification fails, the <code class="language-plaintext highlighter-rouge">streak</code> variable is reset to zero before the loop starts again.</p>
+<h3 id="hardware-design">Hardware Design</h3>
+<p>For the most part, our circuit design was pretty simple. The circuitry consited of wiring for the VGA display, the microphone, three LEDs we used for testing the ML model, and headphone jack circuit with voltage divider.</p>
+
+<p>The VGA display, microphone output, and button were connected to different GPIO pins on the Raspberry Pi Pico. The GPIO connections and outputs are as follows:</p>
+
+<ul>
+  <li>GPIO 16 —&gt; VGA Hsync</li>
+  <li>GPIO 17 —&gt; VGA Vsync</li>
+  <li>GPIO 18 —&gt; 330 ohm resistor —&gt; VGA Red</li>
+  <li>GPIO 19 —&gt; 330 ohm resistor —&gt; VGA Green</li>
+  <li>GPIO 20 —&gt; 330 ohm resistor —&gt; VGA Blue</li>
+  <li>RP2040 GND —&gt; VGA GND, Microphone Ground, Jack Ground, and Button Ground</li>
+  <li>RP2040 3.3V —&gt; Microphone VCC</li>
+  <li>GPIO 26 (ADC) —&gt; Microphone Out</li>
+  <li>GPIO 10 —&gt; Button</li>
+  <li>GPIO 9 —&gt; 330 ohm resistor —&gt; Red LED</li>
+  <li>GPIO 8 —&gt; 330 ohm resistor —&gt; Green LED</li>
+  <li>GPIO 7 —&gt; 330 ohm resistor —&gt; Yellow LED</li>
+</ul>
+
+<p>Besides the voltage divider circuit, the wiring for this project was pretty simple. The voltage divider circuit served to take the output from the headphone jack and send a signal to the Pico that it can use. Professor Adams explained that the headphone jack from a computer outputs non-standard voltage that the Pie cannot use so the divider circuit is meant to scale the voltage so the Pie can read the output. A schematic of the voltage divider circuit is shown below.</p>
+
+<p><img src="./images/divider.jpg" alt="Voltage Divider Schematic" /></p>
+
+<h4 id="hardware-schematic">Hardware Schematic</h4>
+<p><img src="./images/schematic.jpg" alt="Hardware Schematic" /></p>
+
+<h3 id="problems">Problems</h3>
+<p>We originally planned to use the ML model to control the game and a digital LED strip. The LED strip planned to be used was a strip of WS2812B LEDs. The cool thing about these LEDs is that you can individually control each LED. This means that the LEDs take a 24 bit signal to control color rather than sending a specific voltage to the LEDs. Although it it cool to be able to control each LED, it makes sending a signal from the RP2040 very complicated. The LEDs require very specific timing of 0 and 1 bits to set each pixel. The timing requirements are outlined below.</p>
+
+<p><img src="./images/timing.jpg" alt="Table of LED Times" />
+<img src="./images/timing-diagram.jpg" alt="Example Signal" /></p>
+
+<p>As you can see, the timing of the LEDs requires a micro-second period with precise timing specifications. Taylor had previous experience using these LEDs from a past personal project. The method we were thinking of using was to use DMA to change the GPIO registers to send out the specific timings required. This required using three DMA channels, one for the high part of the signal, one for the low part of the signal, and one for the information we actually wanted to convey. Unfortunately, after experimenting with this on the RP2040, we were able to get the LEDs to turn on (meaning a signal with the correct specifications was sent) but they were very finicky. The color programmed wasn’t the correct color and the LEDs would constantly blink meaning that something was slightly off. Without a waveform analyzer present in the lab it would hard to diagnose the specific timing issues. Because of this, we decided to abandon this idea and just continue with the game. A detailed write-up on the planned method and more information can be found on <a href="https://www.tmstweaks.com/post/2021/led-table/#the-leds">Taylor’s website</a>.</p>
+
+<h2 id="results">Results</h2>
+<p>We had very little test data to support our project. Our tests involved saying a color and seeing if the model would detect it and displaying the classification percentages to the serial monitor. There was no hard collection of data to support the accuracy of our results. That being said, from our testing, the project had a decent accuracy.</p>
+
+<p>When detecting a color with perfect audio data, the model would classify it with a higher than 90% percentage which shows that the model was functioning. For example, here was a run where we fed it the audio data for red:</p>
+
+<p><code class="language-plaintext highlighter-rouge">Predictions (DSP: 283 ms., Classification: 82 ms., Anomaly: 10 ms.)</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">98.30, 0.00, 1.70, 0.00, 0.00, 0.00, 0.00, 0.00</code></p>
+
+<p>From this data, you can see that the model detected red with 98.3% confidence and green with 1.70% confidence.</p>
+
+<p>That being said, when feeding the model with imperfect audio data (say from the microphone) the results would often times not be like the result above.</p>
+
+<p><code class="language-plaintext highlighter-rouge">Predictions (DSP: 283 ms., Classification: 233 ms., Anomaly: 10 ms.)</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 100.00</code></p>
+
+<p>A result like this shows that the model was unable to classify the data. The last category displayed here is the <code class="language-plaintext highlighter-rouge">unknown</code> category which means that model was unable to classify our audio against the model correctly. This would happen on every other press of the button, with some words triggering this effect more than others.</p>
+
+<p>For safety, there weren’t many things to consider here. The project itself is relatively safe in nature as the user just needs to press a button and speak into the microphone. That being said, we did not encase our project in anything other than a bare breadboard. If the user were to touch a wire they could receive an electric shock from the electricity running in the wires. Any amount of current above 1 mA can be harmful to a person. While this is true, the resistance created by skin with voltages of 3.3V will not be harmful to a person.</p>
+
+<p>Usability is a hit or miss with this project. Because the machine learning model was trained with our voices, it works best when hearing voices similar to ours. A higher pitched voice may throw off the model or cause it to not work as well. Professor Adams did try our project and was able to get it to classify, however, even though the model was not trained with his voice meaning there is some tolerance in who can use the project.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>Our final project works <em>well</em> but not perfectly due to a few factors.</p>
+
+<p>For one, the machine learning model we used was only trained with our voices and isn’t trained to the level of commercial-grade machine learning models. Because of this, we had some inaccuracies with classifying the colors people were saying. For certain colors, we would get almost perfect detection each time due to the nature of the color. For example, magenta worked almost 100% of the time because the word magenta is very distinct from other colors that people could say. A color like red, for example, is very similar in waveform to other one-syllable words which makes it much harder to detect. A better trained model would help solve this inaccuracy. As seen in our <a href="https://www.youtube.com/watch?v=UYZzhFrJK5I&amp;list=PLDqMkB5cbBA6AwYC_DElkDStUdOsTuIL7&amp;index=36">demo video</a>, we had a hard time classifying some of the colors with complete accuracy. With more time, we could have trained the model with a wider range of audio samples to increase its accuracy.</p>
+
+<p>Secondly, the audio data we received from the microphone was often clipped due to being too loud which caused problems. Speaking too close to the microphone would cause clipping and the project would fail to classify the results. When sending audio data recorded on our phones through the microphone jack we received almost perfect results. This suggests that with a better microphone with a pop filter our project would work much better. With more time, we would likely try and get a better microphone to feed data into the project.</p>
+
+<p>As far as getting the LED strip to work, we failed at implementing this. Due to time constraints, we did not have enough time to generate perfect signals to the LED strip to add that to our implementation. With more time this would not be hard to implement. Despite this, the hard work of the project was to get the ML model to classify so we feel that an absence of the LED strip does not affect the overall success of our project.</p>
+
+<p>For meeting the standards of this project, our project displayed an appropriate level of hardware and software complexity. Making and training the model as well as integrating it with the Pi was complex in nature. There was a lot of struggle even getting the code to compile with the library provided by Edge Impulse. Feeding the audio signal to the model was also challenging and served to be a good test of what we learned in class. The hardware complexity came from wiring up the headphone jack and the microphone which we learned about in class. Professor Adams assisted us with creating the voltage divider circuit for the jack.</p>
+
+<p>Our project specification was rather open ended in nature. Our main goal here was to run audio classification through a ML model which we achieved. We say that we achieved this goal well enough given the time constraint and resources provided to us. The rest of the project we built upon the idea of getting classification to work which allowed us to get creative with what we wanted to do.</p>
+
+<h3 id="intellectual-property-considerations">Intellectual Property Considerations</h3>
+<p>A lot of the inspiration for this project and some of the code we used for this project came from the book <em>TinyML Cookbook: Combine artificial intelligence and ultra-low-power embedded devices to make the world smarter</em> by Gian Marco Iodice. We specifically looked at Chapter 4 to learn about how ML works and how it can be implemented into a low-powered embedded device like the Raspberry Pi Pico.</p>
+
+<p>We also would not be able to do this project without the use of <a href="https://www.edgeimpulse.com/">Edge Impulse</a>, a free development platform for machine learning. Our model was trained entirely with their platform and the code to run the classification locally packaged and created from their tool.</p>
+
+<h2 id="appendicies">Appendicies</h2>
+<h3 id="appendix-a">Appendix A</h3>
+<p>The group approves this report for inclusion on the course website.</p>
+
+<p>The group approves the video for inclusion on the course youtube channel.</p>
+
+<h3 id="appendix-b">Appendix B</h3>
+<p>A complete version of our code can be found <a href="https://github.coecis.cornell.edu/zdh5/ece4760-final-project">here</a>.</p>
+
+<h3 id="appendix-c">Appendix C</h3>
+<p>Breakdown of Responsibility</p>
+<ul>
+  <li>Adam: Write report, assist with coding and development, training model, buying microphone (not used)</li>
+  <li>Taylor: Write report, assist with coding and development, LED strip wiring/programming (not used), training model,</li>
+  <li>Zack: Write report, work on coding and development, developing color game, training model</li>
+</ul>
+
+<h3 id="appendix-d">Appendix D</h3>
+<p>References used:</p>
+<ul>
+  <li><em>TinyML Cookbook: Combine artificial intelligence and ultra-low-power embedded devices to make the world smarter</em> by Gian Marco Iodice</li>
+  <li><a href="https://docs.edgeimpulse.com/docs/">Edge Impulse Documentation</a></li>
+  <li><a href="https://cdn-shop.adafruit.com/datasheets/MAX4465-MAX4469.pdf">MAX4465 Datasheet</a></li>
+</ul>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="./"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">ECE 4760 Final Project</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">ECE 4760 Final Project</li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>A Voice Controlled Machine Learning Model Using the RP2040</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
