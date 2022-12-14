@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>RPiano</title>
+    <meta charset="UTF-8" />
+    <!-- <link rel="stylesheet" href="./css/index.css" /> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Lato"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <style>
+      body {
+        font-family: "Lato", sans-serif;
+      }
+      .mySlides {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <div class="w3-top">
+      <div class="w3-bar w3-black w3-card">
+        <a
+          class="w3-bar-item w3-button w3-padding-large w3-hide-medium w3-hide-large w3-right"
+          href="javascript:void(0)"
+          onclick="myFunction()"
+          title="Toggle Navigation Menu"
+          ><i class="fa fa-bars"></i
+        ></a>
+        <a href="./about.html" class="w3-bar-item w3-button w3-padding-large"
+          >HOME</a
+        >
+        <a
+          href="./features.html"
+          class="w3-bar-item w3-button w3-padding-large w3-hide-small"
+          >FEATURES</a
+        >
+        <a
+          href="./background.html"
+          class="w3-bar-item w3-button w3-padding-large w3-hide-small"
+          >BACKGROUND</a
+        >
+        <a
+          href="./design.html"
+          class="w3-bar-item w3-button w3-padding-large w3-hide-small"
+          >DESIGN</a
+        >
+        <a
+          href="./results.html"
+          class="w3-bar-item w3-button w3-padding-large w3-hide-small"
+          >RESULTS</a
+        >
+        <div class="w3-dropdown-hover w3-hide-small">
+          <a href="./appendix.html"
+            ><button class="w3-padding-large w3-button" title="Appendix">
+              APPENDIX <i class="fa fa-caret-down"></i></button
+          ></a>
+          <!-- todo link these -->
+          <div class="w3-dropdown-content w3-bar-block w3-card-4">
+            <a href="./appendix.html#appendix_a" class="w3-bar-item w3-button"
+              >A: Opt In</a
+            >
+            <a href="./appendix.html#appendix_b" class="w3-bar-item w3-button"
+              >B: Code</a
+            >
+            <a href="./appendix.html#appendix_c" class="w3-bar-item w3-button"
+              >C: Circuit</a
+            >
+            <a href="./appendix.html#appendix_d" class="w3-bar-item w3-button"
+              >C: Contributions</a
+            >
+            <a href="./appendix.html#appendix_e" class="w3-bar-item w3-button"
+              >Datasheets</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- summary -->
+    <div
+      class="w3-container w3-content w3-center w3-padding-64"
+      style="max-width: 800px"
+    >
+      <h2 class="w3-wide">Testing and Accuracy - Physical Keys</h2>
+      <p class="w3-justify">
+        For detecting the physical key presses, we conducted various
+        measurements of voltage values, by printing the voltage value when the
+        key is not pressed and when it is pressed.
+      </p>
+      <p class="w3-justify">
+        The values when not pressed remained consistently above 3v, while the
+        values when not pressed ranged between 0.5V - 1.1V. This left sufficient
+        room for our voltage cutoff to be at 1.2V.
+      </p>
+      <p class="w3-justify">
+        We tested that sensing was accurate by pressing various combinations of
+        keys - multiple keys in succession, multiple keys simultaneously - and
+        ensuring that only the keys pressed were played. This also tested that a
+        press on one key did not affect voltage values on nearby keys enough to
+        make them pressed as well.
+      </p>
+      <p>
+        As described in the software section, our optimal frequency of sound
+        processing was around 27.7kHz, computing a new sample at an interval of
+        36 microseconds. This performed well with playing multiple songs at
+        different speeds. The demo video clearly illustrates all our
+        functionality. In addition, we also recorded the first piece in the demo
+        played at a higher speed, showcasing the synthesizer's ability to play
+        multiple notes at a time, even at a quicker beat.
+      </p>
+
+      <h2 class="w3-wide">Testing and Accuracy - Synthesis</h2>
+      <p class="w3-justify">
+        We tested the synthesis using several different kinds of MIDI files,
+        ranging different kinds of pieces with different rhythms, note ranges
+        etc. Given that it is a project mainly focused on user experience of
+        hearing the sounds, our main form of testing was by ear. We compared the
+        pitch and rhythm by playing the song on a computer and comparing it to
+        the audio output. We tested the physical buttons and keys by checking if
+        the desired sound was heard on press. We also added additional
+        functionality of printing to serial to check that no notes were missed
+        when playing songs and/or pressing the keys.
+      </p>
+      <p class="w3-justify">
+        At each time step the modulating waveform is calculated first, and then
+        it’s amplitude is used to determine how far to step the main waveform
+        along a precalculated sine table. This causes the mainwave to progress
+        through the sinetable at different speeds based on the value of the
+        modulating waveform. This modulated frequency can better simulate many
+        instruments when compared to the single pitch that the basic synthesis
+        algorithm generates.
+      </p>
+      <p>
+        <a href="https://www.youtube.com/watch?v=z0CkNf_g0mQ">Demo Video</a>
+      </p>
+      <p>
+        <a
+          href="https://drive.google.com/file/d/1IIZUa1Go1ySS1E1dWuYGE05hv2Xo4ZLG/view?usp=sharing 
+      "
+          >Recorded Piece</a
+        >
+      </p>
+      <p>
+        <a
+          href="https://www.youtube.com/watch?v=K8dSKNB8vSo&ab_channel=Marioverehrer 
+      "
+          >Piece Played on a Real Piano</a
+        >
+      </p>
+
+      <h2 class="w3-wide">Usability</h2>
+      <p class="w3-justify">
+        As seen from the picture and demo video, we have a simple but intuitive
+        user interface - the buttons are easily accessible on the top of the
+        device, each clearly labeled with the name of the song, and the composer
+        (if applicable).
+      </p>
+      <p class="w3-justify">
+        The physical keyboard exactly models real piano keys, only with a metal
+        tape wrapped around them. The keytops were taken from a real old piano,
+        exactly matching the size and shape that a piano player would be
+        familiar with, to make it a smooth transition to our keyboard. While the
+        spacing is a little more than what would be in a real piano due to
+        having to separate the two conductive pieces, this could not have been
+        avoided.
+      </p>
+
+      <h2 class="w3-wide">Safety</h2>
+      <p class="w3-justify">
+        Our keyboard is safe to use. There are no moving parts that could
+        present a hazard, and the risk associated with exposure to electricity
+        is incredibly minimal, as we cover earlier in the conductive sensing
+        section.
+      </p>
+
+      <h2 class="w3-wide">Conclusions</h2>
+      <p class="w3-justify">
+        Overall, our design meets our expectations. In some areas, it even
+        exceeded our expectations - we did not expect to be able to handle more
+        complicated songs with many chords and quick notes smoothly. In terms of
+        physical design, while wiring the keys with tape and using the
+        breadboard was a quick solution that worked smoothly for the most part,
+        in certain cases the key press would not be registered while testing due
+        to a wire slipping. This can be improved by soldering the wires onto the
+        metal for the keys and onto a board. This would make the design more
+        fool proof and better in the long run.
+      </p>
+      <p class="w3-justify">
+        There are also multiple extensions that we’d planned as stretch goals
+        that we could implement in addition to the existing functionality. For
+        the songs, we did not use the volume information encoded in the MIDI
+        file since we wanted to be consistent with volume across songs and the
+        keyboard. This can further be incorporated into the encoding to even
+        include changes in loudness and effects like piano and forte in sheet
+        music. Another possible feature was adding the three pedals to the piano
+        by generating the sustain effect etc. through modifying FM synthesis
+        parameters when the pedal is pressed. The last extension was allowing
+        the user to change the FM synthesis parameters through a bar using a
+        potentiometer. This would allow users to also change the kinds of sounds
+        produced dynamically, rather than just having 3 different modes.
+      </p>
+    </div>
+
+    <script>
+      // Automatic Slideshow - change image every 4 seconds
+      var myIndex = 0;
+      carousel();
+
+      function carousel() {
+        var i;
+        var x = document.getElementsByClassName("mySlides");
+        for (i = 0; i < x.length; i++) {
+          x[i].style.display = "none";
+        }
+        myIndex++;
+        if (myIndex > x.length) {
+          myIndex = 1;
+        }
+        x[myIndex - 1].style.display = "block";
+        setTimeout(carousel, 4000);
+      }
+
+      // Used to toggle the menu on small screens when clicking on the menu button
+      function myFunction() {
+        var x = document.getElementById("navDemo");
+        if (x.className.indexOf("w3-show") == -1) {
+          x.className += " w3-show";
+        } else {
+          x.className = x.className.replace(" w3-show", "");
+        }
+      }
+
+      // When the user clicks anywhere outside of the modal, close it
+      var modal = document.getElementById("ticketModal");
+      window.onclick = function (event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      };
+    </script>
+  </body>
+</html>

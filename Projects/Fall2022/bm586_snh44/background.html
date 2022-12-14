@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>RPiano</title>
+    <meta charset="UTF-8" />
+    <!-- <link rel="stylesheet" href="./css/index.css" /> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Lato"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <style>
+      body {
+        font-family: "Lato", sans-serif;
+      }
+      .mySlides {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <div class="w3-top">
+      <div class="w3-bar w3-black w3-card">
+        <a
+          class="w3-bar-item w3-button w3-padding-large w3-hide-medium w3-hide-large w3-right"
+          href="javascript:void(0)"
+          onclick="myFunction()"
+          title="Toggle Navigation Menu"
+          ><i class="fa fa-bars"></i
+        ></a>
+        <a href="./about.html" class="w3-bar-item w3-button w3-padding-large"
+          >HOME</a
+        >
+        <a
+          href="./features.html"
+          class="w3-bar-item w3-button w3-padding-large w3-hide-small"
+          >FEATURES</a
+        >
+        <a
+          href="./background.html"
+          class="w3-bar-item w3-button w3-padding-large w3-hide-small"
+          >BACKGROUND</a
+        >
+        <a
+          href="./design.html"
+          class="w3-bar-item w3-button w3-padding-large w3-hide-small"
+          >DESIGN</a
+        >
+        <a
+          href="./results.html"
+          class="w3-bar-item w3-button w3-padding-large w3-hide-small"
+          >RESULTS</a
+        >
+        <div class="w3-dropdown-hover w3-hide-small">
+          <a href="./appendix.html"
+            ><button class="w3-padding-large w3-button" title="Appendix">
+              APPENDIX <i class="fa fa-caret-down"></i></button
+          ></a>
+          <!-- todo link these -->
+          <div class="w3-dropdown-content w3-bar-block w3-card-4">
+            <a href="./appendix.html#appendix_a" class="w3-bar-item w3-button"
+              >A: Opt In</a
+            >
+            <a href="./appendix.html#appendix_b" class="w3-bar-item w3-button"
+              >B: Code</a
+            >
+            <a href="./appendix.html#appendix_c" class="w3-bar-item w3-button"
+              >C: Circuit</a
+            >
+            <a href="./appendix.html#appendix_d" class="w3-bar-item w3-button"
+              >D: Contributions</a
+            >
+            <a href="./appendix.html#appendix_e" class="w3-bar-item w3-button"
+              >Datasheets</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- summary -->
+    <div
+      class="w3-container w3-content w3-center w3-padding-64"
+      style="max-width: 800; margin-top: 46px"
+    >
+      <h3 class="w3-justify">Logical Structure</h3>
+      <p class="w3-justify">
+        At a high-level, our project structure is shown in the following block
+        diagram. There are 3 different types of inputs: Physical key presses,
+        song button presses, and instrument button presses. Each of these modify
+        either the notes to be played (stored in the notes buffer), or the
+        parameters used in FM synthesis. The FM Synthesis generates a final
+        output wave that is sent to the speakers through the DAC.
+      </p>
+      <img src="./images/logic.png" />
+
+      <h2 class="w3-wide">Basic Sound Synthesis</h2>
+      <p class="w3-justify">
+        In our project, digitally producing the instrument sounds is based on
+        Frequency Modulation Synthesis to compute amplitude values for a note at
+        a particular frequency, using additive synthesis to combine notes at
+        different frequencies into a single output waveform.
+      </p>
+
+      <h2 class="w3-wide">FM Sound Synthesis</h2>
+      <p class="w3-justify">
+        Frequency Modulation (FM) synthesis is a more complicated method of
+        sound synthesis which involves modulating a waveform using another
+        waveform. Two waveforms are generated, and one is used to modulate the
+        other. Each of the waveforms is controlled by a logic structure which
+        sets them differently based on how long the note has been played, and
+        the relevant attack,sustain, and decay parameters.
+      </p>
+      <p class="w3-justify">
+        At each time step the modulating waveform is calculated first, and then
+        it’s amplitude is used to determine how far to step the main waveform
+        along a precalculated sine table. This causes the mainwave to progress
+        through the sinetable at different speeds based on the value of the
+        modulating waveform. This modulated frequency can better simulate many
+        instruments when compared to the single pitch that the basic synthesis
+        algorithm generates.
+      </p>
+
+      <h2 class="w3-wide">Playing Multiple Notes</h2>
+      <p class="w3-justify">
+        To make playing multiple notes simultaneously possible, and to avoid
+        needing to constantly recalculate certain values we initialize a variety
+        of arrays to handle all of the possible notes. Each pitch that can be
+        played is represented by a singular index. This makes it easy to save
+        the appropriate parameters for each note’s wave form between
+        calculations, and also means that we synthesize multiple output signals.
+        We use additive synthesis to combine these signals into one output
+        signal to send to the DAC. To improve efficiency we also included a
+        buffer array which holds the indexes of the currently active notes. This
+        allows us to skip iterating over notes which are not currently being
+        played.
+      </p>
+
+      <h2 class="w3-wide">Additive Sound Synthesis</h2>
+      <p class="w3-justify">
+        For playing notes at the same time, we used the principle of additive
+        synthesis to add together all of the amplitude values to create a sound
+        comprising all the frequencies (for example, for playing a chord). This
+        is simple, and only requires that at each time step we sum the
+        amplitudes of every note that is playing. We then divide by the number
+        of notes playing to normalize the volume. Without normalizing the output
+        signal could spike in volume when notes are pressed or released.
+        Additionally the DAC expects a signal within a specific range, so
+        exceeding this range can lead to undesired behavior. This normalized
+        accumulated wave was used as the final output to the DAC.
+      </p>
+
+      <h2 class="w3-wide">MIDI File Processing</h2>
+      <p class="w3-justify">
+        A Musical Instrument Digital Interface (MIDI) file is a widely accepted
+        format to store music. Unlike an mp3 or wav file it does not contain
+        real audio data, but instead the notes played, their timing, duration,
+        and desired loudness, in sequence. Since it does not store audio data,
+        it is much smaller in size than eg. an alternative mp3 file, making it
+        ideal for our purpose with limited data storage.
+      </p>
+      <p class="w3-justify">
+        It is also easily compatible with different instruments, simply by
+        playing the frequency corresponding to the note on the particular
+        instrument. Further, this allows easy changes in temp based on the
+        user’s preference.
+      </p>
+      <p class="w3-justify">
+        Each MIDI note number is mapped to a particular frequency, corresponding
+        to a note. For example, MIDI note number 60 corresponds to middle C on
+        the piano (C4). We used the following formula to map MIDI note numbers
+        to a frequency used for FM synthesis: f = 440 * 2^((n - 69) / 12)
+      </p>
+
+      <h2 class="w3-wide">Capacative Touch Sensors</h2>
+      <p class="w3-justify">
+        We initially planned to use capacitive touch sensing so that simply
+        touching the keys would register as a key press. Capacitive touch
+        sensing utilizes an RC circuit to detect when a contact is touched. By
+        placing a resistor in line with a plate of metal that acts as a
+        capacitor an RC circuit is created. If it is connected to a GPIO pin it
+        can be powered to charge the circuit. The pin can then be set as an
+        input so that it can read the voltage as it decays. Since the rate of
+        decay is related to the value of the capacitor and the resistance is
+        known, the capacitance can be calculated. When the plate of metal is
+        touched the capacitance changes, which changes the decay rate, which can
+        be detected by the controller.
+      </p>
+
+      <h2 class="w3-wide">Human Conductance Sensing</h2>
+      <p class="w3-justify">
+        During implementation we encountered issues. The RP2040’s analog input
+        could not reliably register touch, and each reading required multiple
+        analog reads and precise time keeping. In response to this, we pivoted
+        our plan and used human conductance to allow a similar effect. We placed
+        a 1 mega ohm pullup resistor on the input. Then, when a human touches
+        the contact while grounding themselves they close the circuit with their
+        body pulling the sensor reading low.
+      </p>
+      <p class="w3-justify">
+        The low power involved insures safety in normal use cases. According to
+        <a
+          href="https://www.osha.gov/sites/default/files/2018-12/fy07_sh-16610-07_01_pg-module_1.pdf"
+          >OSHA</a
+        >
+        the resistance of a human body ranges in the magnitude of 100,000 ohms
+        while the skin is dry and unbroken. The RP2040 runs on 3.3 volt logic,
+        although the power source can be 5v if supplied through the micro usb
+        port. Even if there were a massive short and the 5v supply were routed
+        through the human conductor the current would remain significantly below
+        1 ma, which is the point at which humans start to notice the
+        electricity. Currents of up to 5 ma do not immediately cause injuries,
+        which gives us a large factor of safety. However, out of an abundance of
+        caution we recommend that individuals who may be at increased risk from
+        electrical sources refrain from using the RPiano.
+      </p>
+      <h2 class="w3-wide">Multiplexers</h2>
+      <p class="w3-justify">
+        Since the RP2040 only has 28 GPIO pins, we needed to multiplex the
+        inputs from the keyboard in order to have all of the functionality we
+        wanted. We chose to use two 16x1 analog multiplexers (cd74hc4067). The
+        multiplexers required 4 GPIO pins to select which of the 16 inputs
+        should be passed through to the common output. We were able to reuse the
+        same selector signal for both of the muxes. This meant that they always
+        selected the same chanel as each other, but since we read the input with
+        separate analog input pins this simply meant that we made two analog
+        reads at each selector signal configuration.
+      </p>
+      <p class="w3-justify">
+        This system enabled us to utilize 29 analog inputs while using only four
+        selector pins and two input pins, which freed up the other pins on the
+        RP2040 to handle the other button inputs, and the speaker output. With
+        additional multiplexers we could have expanded the sensing capabilities
+        to 64 keys with only 2 additional analog input pins.
+      </p>
+      <h2 class="w3-wide">DAC</h2>
+      <p class="w3-justify">
+        We used a MCP4802 digital to analog converter (DAC) to send our output
+        signal from the RP2040 to a set of speakers. The DAC uses the Serial
+        Peripheral Interface (SPI) to take digital input from the RP2040 and
+        convert it to analog signal. This allows us to control a speaker from
+        the RP2040.
+      </p>
+    </div>
+
+    <script>
+      // Automatic Slideshow - change image every 4 seconds
+      var myIndex = 0;
+      carousel();
+
+      function carousel() {
+        var i;
+        var x = document.getElementsByClassName("mySlides");
+        for (i = 0; i < x.length; i++) {
+          x[i].style.display = "none";
+        }
+        myIndex++;
+        if (myIndex > x.length) {
+          myIndex = 1;
+        }
+        x[myIndex - 1].style.display = "block";
+        setTimeout(carousel, 4000);
+      }
+
+      // Used to toggle the menu on small screens when clicking on the menu button
+      function myFunction() {
+        var x = document.getElementById("navDemo");
+        if (x.className.indexOf("w3-show") == -1) {
+          x.className += " w3-show";
+        } else {
+          x.className = x.className.replace(" w3-show", "");
+        }
+      }
+
+      // When the user clicks anywhere outside of the modal, close it
+      var modal = document.getElementById("ticketModal");
+      window.onclick = function (event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      };
+    </script>
+  </body>
+</html>
