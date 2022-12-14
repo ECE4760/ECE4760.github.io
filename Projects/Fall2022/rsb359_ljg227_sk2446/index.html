@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<title>A Whale of a Time</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="Rochelle Barsz, Lauren Greenhill, Sarika Kannan">
+<meta name="generator" content="Jekyll v3.9.2">
+
+<link rel="stylesheet" href="assets/css/frame.css">
+
+<link rel="alternate" type="application/atom+xml" title="A Whale of a Time">
+
+<header>
+  <aclass="title">A Whale of a Time</a>
+  <img src="https://thumbs.gfycat.com/ElderlyCoordinatedBarasingha-max-1mb.gif" alt="whale" width="93" height="283"/>
+</header>
+
+
+  
+<article>
+  <header>
+  <h1><a>Project Introduction</a></h1>
+</header>
+  <p><a href="https://www.youtube.com/watch?v=SYovWosy5Rc&amp;list=PLDqMkB5cbBA6AwYC_DElkDStUdOsTuIL7&amp;index=9"><img src="https://i.ibb.co/8DC7rRC/demo-vid.png" alt="Demo Video" /></a></p>
+
+<p>Our goal was to simulate whale echolocation. Select whale species send out a series of clicks and intepret their echoes after bouncing back from surrounding objects. Our project does just that!</p>
+
+<p>In our setup, there are two whales, one represented by a stationary Raspberry Pi Pico microcontroller and one mobile robot also programmed with a Raspberry Pi Pico. Both whales are equipped with a microphone and a speaker. When the moving whale emits clicks, the stationary whale detects the sounds and reponds with its own clicks of another frequency. The mobile whale can use the calculated time from when a click is sent to when a response  is received to determine the distance to the stationary whale and decides which direction to move in, based on our implementation of a state machine to navigate in a grid-like manner towards the stationary whale.</p>
+
+  
+</article>
+
+<article>
+  <header>
+  <h1><a>High Level Design</a></h1>
+</header>
+  <h2 id="background-math">Background Math</h2>
+
+<p>The Nyquist Critical Frequency determines the bandwidth of the FFT algorithm.</p>
+
+<p>It can be calculated using f<sub>c</sub> = 1/2Δt 
+where the bandwith ranges from f - f<sub>c</sub> to f + f<sub>c</sub>.</p>
+
+<p>These formulas and the full explanation can be found <a href="https://vanhunteradams.com/FFT/FFT.html">here</a>.</p>
+
+<p>Based on these equations, the fastest frequency that can be detected is half the sample rate.</p>
+
+<p>In our case, the robot emits a frequency of 2500 Hz and the stationary circuit emits a frequency of 5000 Hz. Therefore a sampling rate of 10kHz (a max bound of 5kHz) is accepable for the stationary circuit to detect the robot clicks while a sampling rate of 20kHz (a max bound of 10kHz) is more suitable for the robot to detect the stationary circuit clicks.</p>
+
+<h2 id="rationale-and-sources">Rationale and Sources</h2>
+<p>The goal of our project is to mimic whale echolocation. Our group was initially interested in music applications of ECE, but we’re also big animal lovers and were interested in a further overlap. Through research, we found that Toothed whales, one of 2 species that emits sounds, communicate through high-frequency clicks and perform echolocation to locate other whales but also understand warning sounds to avoid a certain area. Each whale typically has a different pitch and speed between clicks for others to identify each whale. Through further exploration, we found that prior experimentation has been done with detecting emitted whale clicks around cargo ships prior to movement.
+Cargo ship collisions are the top cause of <a href="https://www.washingtonpost.com/national/health-science/whales-are-facing-a-big-deadly-threat-along-west-coast-massive-container-ships/2019/03/15/cebee6e8-3eb0-11e9-a0d3-1210e58a94cf_story.html">whale death</a>, which are increasing as overseas shipping increases. We thought that instead of anticipating for whales to approach the area of concern, maybe we could synthesize warning sounds emitted by whales to warn species to keep their distance.</p>
+
+<p>This future application of our project would minimize whale casualties by simulating a whale sound onboard a cargo ship, repeatedly emitting ‘warning clicks’ for real whales to register the sound, calculate the location of the synthesized whale, and understand that the sound is a warning to avoid the location of the cargo ship.</p>
+
+<h2 id="logical-structure">Logical Structure</h2>
+
+<p>The code for both the stationary circuit and robot feature a interrupt service routine for creating clicks, and one main thread which samples audio using a DMA channel and computes the maximum frequency using a FFT algorithm.</p>
+
+<p>The sequence begins when the robot sends a click. The stationary circuit detects this click and will respond. 
+This exchange happens 3 times. The time between when the robot sent a click and received the stationary click is recorded as a time difference. If the robot does not receive a return click from the stationary circuit within 1 second, it sends another click. Once 3 time differences have been recorded, a median time difference is calculated. This median time difference is used to determine if the previous median time difference was smaller than the previous calculated median time difference (meaning the two circuits are closer).</p>
+
+<p>The robot will then move accordingly as described in the Program Details section of Program and Hardware Design.</p>
+
+<h2 id="hardwaresoftware-tradeoffs">Hardware/Software Tradeoffs</h2>
+
+<h3 id="detecting-distance">Detecting Distance</h3>
+
+<p>One of the major decisions we made in our design was deciding the mechanics of simulating a whale sending out a sound and then detecting a response in order to determine their relative location. In the first iteration of our hardware design, both the stationary circuit and the robot used a speaker powered by the Pico. However, we found that the microphone was unable to detect clicks made by the speaker as it was too quiet. We then decided to power the speaker for both circuits with a 9V battery. We also increased the audio sampling rate from 10kHz to 20kHz to account for detecting a 5000 Hz click (which according to the Nyquist Sampling Theorem, our sampling frequency should be greater than 2 * 5000 = 10,000 Hz). This increased the distance the two circuits could be from each other while detecting the others’ clicks. We found that the mobile robot still sometimes struggled to detect the clicks made by the stationary circuit. Since the stationary circuit did not have to move, we decided to use an audio socket with wall speakers to increase the output of the stationary ciruit.</p>
+
+<p>We also considered using ultrasonic sensors. However, we decided to use sound since we thought that would make it easier to debug (we can hear the interaction between the circuits and did not need to add an additional indicator like a LED) and our familiarity with detecting audible frequencies from Lab 1 with cricket chirp synchronization.</p>
+
+<h3 id="detecting-correct-time-differences">Detecting <em>Correct</em> Time Differences</h3>
+<p>Since our robots must be relatively close to each other due to constraints in speaker volume output, each movement by the robot will resemble a small difference in the time differences before and after the movement, on the scale of fractions of a second. Due to the uncertainty in the time differences and the large impact of such small differences on our software state machine (discussed later), we decided that in each position, the mobile robot waits for 3-back-and-forths, i.e. 3 time difference values, find the median within the three values, and then move according to the state machine. We were able to account for some uncertainty in our hardware with software additions.</p>
+
+  
+</article>
+
+<article>
+  <header>
+  <h1><a>Program and Hardware Design</a></h1>
+</header>
+  <h2 id="program-details">Program Details</h2>
+
+<h3 id="making-clicks">Making Clicks</h3>
+
+<p>Frequency of clicks is controlled by the rate at which the service routine is called. For the stationary circuit, the interrupt is called every 100μs. Since this is the amount of time the speaker will be on or off, 1 / 2 * 100μs is the frequency of the click (in this case, 5000 Hz). The interrupt is called every 200μs, or 2500 Hz.</p>
+
+<p>The main thread indicates that a click should be made by flipping a boolean value. Once this boolean value is true, the service routine uses the following logic:</p>
+
+<p><img src="https://i.ibb.co/WcW4b9T/final-state-machine-Page-2-drawio.png" alt="Click State Machine" /></p>
+
+<p>In the diagram, if the interrupt service routine is called every 100μs, time is increased every 100μs. Therefore CLICK_DURATION of 750 would result in the speaker being on for 75000μs, or 0.075s.</p>
+
+<h3 id="detecting-clicks">Detecting Clicks</h3>
+
+<p>The main loop is constantly sampling audio into a DMA channel. Once enough samples are acquired, the FFT algorithm is run on the samples to calculate max frequency. If the max frequency detected is ±100 Hz of the expected frequency, a click is acknowledged as received.</p>
+
+<h3 id="moving">Moving</h3>
+
+<p>The mobile robot uses two PWM channels (A and B) to signal to the H-Bridge with what direction and power each motor should be turning. The following table shows the settings we used for duty cycle:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Direction</th>
+      <th>Right Motor Channel A</th>
+      <th>Right Motor Channel B</th>
+      <th>Left Motor Channel A</th>
+      <th>Left Motor Channel B</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Forward</td>
+      <td>0</td>
+      <td>5000</td>
+      <td>0</td>
+      <td>5000</td>
+    </tr>
+    <tr>
+      <td>Backward</td>
+      <td>-5000</td>
+      <td>0</td>
+      <td>-5000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Left</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>5000</td>
+    </tr>
+    <tr>
+      <td>Right</td>
+      <td>0</td>
+      <td>5000</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The wrap value (maximum counter value) was set to 5000 and the clock division (value to divide the counter value by) was set to 25.</p>
+
+<p>In the following diagram, the blue dot is the starting location of the mobile robot, and the orange dot is the stationary Pico. Every time a new median time difference is calculated (three clicks have been sent and received) the thread running on core 0 evaluates if the state machine should switch cases.</p>
+
+<p><img src="https://i.ibb.co/pnMGG9B/final-state-machine-Page-1-drawio.png" alt="Moving State Machine" /></p>
+
+<h2 id="hardware-details">Hardware Details</h2>
+<p>In our system, we had two separate circuits: one for the mobile robot and one for the stationary Pico.</p>
+
+<p>The mobile robot has two H-bridge circuits, one to control each motor. One H-bridge circuit was driven by PWM outputs from pins 10 and 11, and the other was driven by PWM outputs from pin 14 and 15. Two 4N35 optoisolators were used in each H-bridge circuit—each one had its anode connected to a 300 Ω resistor and then to a GPIO pin on the RP2040. The anodes were connected to the ground rail. The 4N35’s collector pins were connected to the power rail. Their emitter pins were connected to 10 kΩ resistors and their bases were connected to 1 MΩ resistors, all of which were then connected to ground rail. The L9110 motor driver’s GND was connected to the ground rail. The 4N35’s emitters were connected to the L9110’s IA and IB pins. The L9110’S ground pins were connected to the ground rail, its VCC pins were connected to the power rail, and its OB and OA pins were connected to the positive and negative terminals of the motor, respectively. The capacitor and four 1.5V AA batteries in series (for a total of 6V) were connected in parallel with the motor, i.e. to the power and ground lines. The MCU’s GPIO 16 pin for the output audio was connected to a 330 Ω resistor, which was then connected to the 2N3904 NPN transistor’s base. The transistor’s collector was connected to MCU ground and its emitter was connected to the ground lead of the AST-1732MR-R speaker. The power pin of the speaker was connected to a 9V battery. The ground line was connected to the motor ground. The RP2040 was powered by two 1.5 AA batteries in series (for a total of 3V), connected to the VSYS pin. The mobile robot circuit rested on a robot car chassis.</p>
+
+<p>The stationary Pico was powered by a laptop. The audio socket for the speaker was connected to the Pico, with input connected to GPIO 16 and GND to MCU ground. In both circuits, the microphone was connected in the following manner: GND to MCU ground, VCC to 3V3, and OUT to GPIO 26.</p>
+
+<h4 id="mobile-robot-circuit-diagram">Mobile Robot Circuit Diagram</h4>
+
+<p><img src="https://i.imgur.com/ISyDn8F.png" alt="Mobile Pico Circuit Diagram" /></p>
+
+<h4 id="stationary-pico-circuit-diagram">Stationary Pico Circuit Diagram</h4>
+
+<p><img src="https://i.ibb.co/VNFDCFZ/stationary.png" alt="Stationary Pico Circuit Diagram" /></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RP2040</td>
+      <td>This was the microcontroller onto which our programs were loaded.</td>
+    </tr>
+    <tr>
+      <td>4N35 Optoisolators</td>
+      <td>The 4N35 isolates the RP2040 from the motor, helping protect the microcontroller from voltage spikes that can come off the motor.</td>
+    </tr>
+    <tr>
+      <td>Capacitors</td>
+      <td>The 0.1 μF capacitors provide a path to ground to drain any high-frequency noise generated.</td>
+    </tr>
+    <tr>
+      <td>L9110 H-Bridge Motor Driver</td>
+      <td>Used to convert a PWM signal to a motor angular velocity through controlling current delivered to the motor.</td>
+    </tr>
+    <tr>
+      <td>Hobby Gearmotor</td>
+      <td>Each of the two motors in the mobile robot is connected to a wheel, so the rotation of the motor rotates the wheel.</td>
+    </tr>
+    <tr>
+      <td>Microphone</td>
+      <td>The microphones connected to each Pico were used to detect clicks generated by the other Pico.</td>
+    </tr>
+    <tr>
+      <td>Batteries</td>
+      <td>Batteries were used to power the mobile robot’s motors, speaker, and RP2040.</td>
+    </tr>
+    <tr>
+      <td>Speakers</td>
+      <td>The speakers were used to emit the clicks generated by each Pico.</td>
+    </tr>
+    <tr>
+      <td>Audio Socket</td>
+      <td>The audio socket is used to connect to the output of the stationary Pico’s core in order to hear the audio produced.</td>
+    </tr>
+    <tr>
+      <td>Robot Car Chassis</td>
+      <td>The chassis for the mobile robot consisted of a base with wheels. The breadboard with the circuit and the batteries was taped on top of the base, and the two back wheels were controlled by the motors.</td>
+    </tr>
+    <tr>
+      <td>2N3904 NPN Transistor</td>
+      <td>A transistor was used in the mobile robot circuit to amplify the output audio signal before passing it to the speaker.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="code-sources">Code Sources</h2>
+<p>We used the FFT and DMA channel code from this <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/blob/master/Lab_1/Audio_FFT/fft.c">audio FFT example</a>.</p>
+
+<p>The motor PWM channel code was inspired by this <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/blob/master/Lab_3/PWM_Demo/pwm-demo.c">PWM demo</a>.</p>
+
+  
+</article>
+
+<article>
+  <header>
+  <h1><a>Results of the Design</a></h1>
+</header>
+  <p>A large aspect of our early testing was ensuring each element of our project worked independently, then integrating each aspect one at a time.</p>
+
+<p>We first ensured the mobile robot could move in all directions, writing simple movement functions to go forward, backwards, left and right when powered with the external power supply. We ran into some difficulty as we were using the <strong>PT_GETTIME_us()</strong> function in our movement functions to keep track of how much time was spent going forwards. However, our functions were not protothreads so this line halted our movement. We also found errors in declaring the PWM mask, where we must use a logical OR between the left and right motor slice numbers.</p>
+
+<p>As discussed earlier, we ran into an issue where one frequency was more detectable than another and found this was a problem with the frequency sampling rate when swapping the code on both Picos and seeing it was not a circuitry problem. Increasing the sample rate allowed the 5000Hz frequency to be detected. 
+Our debugging techniques was to analyze the sound emission and response without yet involving movement. We were finally able to get a suitable call-and-response for our needs.</p>
+
+<h3 id="call-and-response-demonstration-video">Call-and-Response Demonstration Video:</h3>
+
+<p><a href="https://youtu.be/Qb5uwBpkJ-c"><img src="https://i.ibb.co/P5x0z99/call-response.png" alt="Call-and-Response Demonstration Video" /></a></p>
+
+<p>Lastly after all code has been written and aspects worked independently, it was time to debug the state machine. Through lots of test runs and seeing the usual movement of the mobile robot, we made improvements to state machine as follows:</p>
+<ul>
+  <li>When first entering a new case, we must first take a time difference measurement, and then always move forwards (backwards if that is the default, seen later in the state machine) to take a new time difference measurement and compare to see if the robot is moving in the correct direction</li>
+  <li>The mobile robot moves after receiving a time difference, and then emits its response. Otherwise, we saw that the response sound was being calculated during the movement, which we only want to happen after movement when the mobile robot is at a new location.</li>
+  <li>When the state machine ends, i.e. the mobile robot believes it has found the stationary speakers, the microcontroller on the mobile robot will turn on the onboard LED - this helped with debugging to know when the state machine has complete</li>
+  <li>As shown in the image below, the time differences were on the order of 10^5, and approximately one-third of the time the recorded time differences were on the correct magnitude. Due to the vast impact an incorrect time difference calculation has on our state machine, we decided to take the median of 3 time difference values (following 3 call-and-responses between the mobile and stationary circuits). This vastly increased our state machine accuracy.</li>
+</ul>
+
+<p><img src="https://i.ibb.co/fMNQV05/rsz-putty.jpg" /></p>
+
+<ul>
+  <li>If the stationary robot did not send a response or the mobile robot did not detect a response, we have a timeout where the mobile robot will send its signal again and wait for a response. In the case that background noise was louder than the response, our execution time increased as many back-and-forth clicks would be sent before movement was observed</li>
+</ul>
+
+<p>To allow full mobility of our robot, we decided to battery power all elements of the circuit. We had a 9V battery for the speaker, 2x1.5V batteries for powering the microcontroller, and 4x1.5V batteries for supplying voltage to the motors. To avoid confusing each battery inputs/outputs, we recorded the location of each battery input and ground and checked our connections before connecting any power. This maximized our safety as well as prevented frying our circuit elements.</p>
+
+<p>To start and restart the mobile robot, the user must simply connect the microcontroller to the 3V power source. This makes it easy for others to begin the robot’s motion through the state machine.</p>
+
+  
+</article>
+
+<article>
+  <header>
+  <h1><a>Conclusions</a></h1>
+</header>
+  <p>Overall, our design allowed the mobile robot to move to the general location of the stationary Pico. Mostly due to variable turning and time difference calculated, the mobile robot state machine sometimes exited cases too early, causing the mobile robot to fail to find the stationary Pico. With additional time to work on the project, we would implement different moves for the stationary Pico that would allow it to indicate to the mobile robot to move in the opposite direction, seen in the wild when whale species emit warning clicks to avoid a certain area.</p>
+
+<h2 id="lessons-learned">Lessons Learned</h2>
+
+<p>One of the major flaws in our design was the ability for us to obtain accurate distance measurements from the time difference between the two clicks. We were able to improve the accuracy of this measurement by recording 3 time differences for each position, but the state machine still periodically failed due to an innacurate time difference measurement. This was most likely due to how we sample audio measurements with a DMA channel which we then ran the FFT algorithm on, introducing variable latency into the system.</p>
+
+<p>Additionally, the microphone and speakers we selected did not allow for long range tests. The stationary Pico often failed to detect clicks produced by the mobile robot. A future design could experiment with different speakers or microphones.</p>
+
+<p>Another issue was variance in the robot movements. We relied on turning each motor on for a set period of time to move in a certain direction for a certain approximate distance. To improve turning accuracy, we could have implemented motor encoders and PID  control for each turn and for moving straight.</p>
+
+<h2 id="intellectual-property-considerations">Intellectual Property Considerations</h2>
+
+<p>We reused code from previous ECE 4760 labs as mentioned in the Program and Hardware Design section.</p>
+
+  
+</article>
+
+<article>
+  <header>
+  <h1><a>Appendix A</a></h1>
+</header>
+  <p>The group approves this report for inclusion on the course website.</p>
+
+<p>The group approves the video for inclusion on the course youtube channel.</p>
+
+  
+</article>
+
+<article>
+  <header>
+  <h1><a>Additional Appendices</a></h1>
+</header>
+  <h2 id="tasking">Tasking</h2>
+
+<h3 id="rochelle">Rochelle</h3>
+<ul>
+  <li>Wired mobile robot car for two-motor movement, speakers and mics, connections to microcontroller</li>
+  <li>Arranged code for initial basic motor movement independent from sound detection and emission</li>
+  <li>Debugged motor code and combined with frequency detection code</li>
+  <li>Programmed and tested state machine with motor movement</li>
+</ul>
+
+<h3 id="lauren">Lauren</h3>
+<ul>
+  <li>Worked on initial state machine design and created diagram</li>
+  <li>Wrote code to generate and detect clicks</li>
+  <li>Debugged code and wiring to move motors backwards</li>
+  <li>Forked website template and structured pages</li>
+</ul>
+
+<h3 id="sarika">Sarika</h3>
+<ul>
+  <li>Wrote code for the mobile robot to allow the Pico to control two motors</li>
+  <li>Programmed movement functions for moving in different directions</li>
+  <li>Debugged motor code and tested with frequency detection code with Rochelle</li>
+  <li>Programmed and tested state machine code for motor movement with Rochelle</li>
+</ul>
+
+<h2 id="data-sheets">Data Sheets</h2>
+
+<p><a href="https://cdn-shop.adafruit.com/product-files/4489/4489_datasheet-l9110.pdf">L9110 H-Bridge Motor Driver</a></p>
+
+<p><a href="https://cdn.sparkfun.com/datasheets/Robotics/DG01D.jpg">Hobby Gearmotor</a></p>
+
+<p><a href="https://www.cuidevices.com/product/resource/sj1-352xng.pdf">Audio Socket</a></p>
+
+<p><a href="https://www.mouser.com/datasheet/2/256/MAX4465-MAX4469-934412.pdf">Microphone</a></p>
+
+<p><a href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf">RP2040</a></p>
+
+<p><a href="https://www.mouser.com/datasheet/2/334/AST-1732MR-R-72511.pdf">AST-1732MR-R Speaker</a></p>
+
+<h2 id="references">References</h2>
+
+<p><a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos">RP2040 Sample Code</a></p>
+
+<p><a href="https://vanhunteradams.com/FFT/FFT.html">FFT Algorithm</a></p>
+
+  
+</article>
+
+
+
+
+
+
+
+
+</html>
