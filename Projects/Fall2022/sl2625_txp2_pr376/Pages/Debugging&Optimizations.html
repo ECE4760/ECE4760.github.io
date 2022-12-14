@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<link rel="stylesheet" href="../app.css">
+</head>
+<!-- navbar -->
+<header>
+	<nav>
+		<div class="logo">
+			<h4>ECE 5730</h4>
+		</div>
+		<ul class="nav-links">
+			<li><a href="../index.html">Home</a></li>
+			<li><a href="Introduction.html">Introduction</a></li>
+			<li><a href="Design&TestingMethods.html">Design</a></li>
+			<li><a href="Hardware&Software.html">Hardware/Software</a></li>
+			<li><a href="Appendix.html">Appendix</a></li>
+		</ul>
+		<div class="burger">
+			<div class="line1"></div>
+			<div class="line2"></div>
+			<div class="line3"></div>
+		</div>
+	</nav>
+
+	<!-- scroll indicator -->
+	<div class="progress-bar"></div>
+</header>
+
+<!-- Body -->
+<br>
+<br>
+<br>
+<br>
+<div class="body-text"><h1><center>Debugging & Optimization</center></h1></div>
+<p>
+<div class="home-card-wrapper2">
+<br>Working with MicroPython had posed a slight limitation on the Pico’s performance level. To make up for the flickering to ensure a smooth gaming experience, we realized a FrameBuffer (provides a pixel buffer that can be drawn upon with pixels, lines, rectangles, ellipses, polygons, fill and text) was necessary to prevent the flickering from occuring, so the FrameBuffer was added in the existing ili9341 library in order to fix this issue and generate an improved output for the display. As a result, instead of using display.fill.rectangle() or oled.fill.rect(), game() was used instead. <br>
+<br>The FrameBuffer is a 2D array stored in the RAM of  the pico, therefore when we are sending SPI commands, it is directly being copied from the RAM to the LCD screen. This process of transitioning from the RAM to the screen is very fast, so we cannot see it visually when the game is being used. This caused us to send the command every time where we would update and erase the code the display to update the screen, which induced huge flickering. Furthermore, FrameBuffers are used for much smaller screens since the pico only has a limited amount of RAM. To get around this issue, the initial color scheme for the ili9341 display was 16-bit but this was changed to a 4-bit  color scheme to use the RAM. A 16-bit color scheme would require around 150 kbyte for this 320 by 240 screen. However, the pico has 250 kbyte of RAM, but a lot of it is taken up by the MicroPython software, so we don’t have 150 kbyte to allocate. Therefore, reducing to a 4-bit scheme for the pixels, that would only use 40 kbytes. This means there are 4-bits per pixel, which gives us enough colors to implement mini games like this. We’ve noticed, if the wires are loose, the ili9341 screen brightness would sometimes turn dark. To fix this, soldering the pico into a solder board so the wires are physically connected at all times prevented this from happening.<br>
+</p></div>
+<script src="../app.js"></script>

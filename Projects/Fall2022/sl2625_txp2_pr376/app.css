@@ -1,0 +1,352 @@
+@import url('https://fonts.googleapis.com/css?family=Poppins');
+
+:root {
+	--major-text-color: rgb(7, 6, 6);
+	--major-text-hover-color: rgb(175, 175, 175);
+	--major-bg-color: rgb(19, 19, 19);
+	--blend-mode-color: rgba(102,102,102, 0.2);
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+*, *::after, *::before {
+	margin: 0px;
+	padding: 0px;
+	box-sizing: border-box;
+	font-family: 'Poppins', sans-serif;
+}
+
+.progress-bar {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 1;
+	width: 0%;
+	height: 3px;
+	background-color: var(--major-text-color);
+}
+
+nav {
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	min-height: 12vh;
+	background-color: black;
+    position: fixed;
+    width: 100%;
+	z-index: 1;
+}
+
+.logo {
+	color: white;
+	text-transform: uppercase;
+	letter-spacing: 5px;
+	font-size: 20px;
+}
+
+.logo a {
+	text-decoration: none;
+	color: var(--major-text-color);
+	font-weight: bold;
+}
+
+.nav-links {
+	display: flex;
+	width: 45%;
+	justify-content: space-between;
+}
+
+.nav-links li {
+	list-style: none;
+}
+
+.nav-links a {
+	color: white;
+	text-decoration: none;
+	letter-spacing: 3px;
+	font-weight: bold;
+	font-size: 14px;
+	position: relative;
+	padding-bottom: 2px;
+}
+
+.nav-links a:hover, a:focus {
+	color: var(--major-text-hover-color);
+}
+
+.nav-links a::after {
+	content: '';
+	position: absolute;
+	height: 3px;
+	width: 100%;
+	left: 0;
+	bottom: 0;
+	background-color: var(--major-text-hover-color);
+	transform: scaleX(0);
+	transform-origin: right;
+	transition: transform 300ms ease-in-out;
+}
+
+.nav-links a:hover::after, a:focus::after {
+	transform: scaleX(1);
+	transform-origin: left;
+}
+
+.burger {
+	display: none;
+}
+
+.burger div {
+	width: 25px;
+	height: 3px;
+	background-color: var(--major-text-color);
+	margin: 5px;
+	transition: all 300ms ease-in-out;
+}
+
+.landing-page {
+	height: 100vh;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	background-image: url("https://hdwallpaperim.com/wp-content/uploads/2017/08/31/151036-GameBoy-green.jpg");
+	background-position: bottom;
+	background-color: var(--blend-mode-color);
+	background-size: cover;
+	background-blend-mode: multiply;
+	color: var(--major-text-color);
+
+}
+
+.landing-page a {
+	color: var(--major-text-color);
+	text-decoration: none;
+	position: absolute;
+	bottom: 5vh;
+}
+
+.landing-page a span {
+	position: absolute;
+	bottom: 12vh;
+	left: 50%;
+	margin-left: -8px;
+	width: 16px;
+	height: 16px;
+	border-left: 2px solid var(--major-text-color);
+	border-bottom: 2px solid var(--major-text-color);
+	transform: rotate(-45deg);
+	animation: homescroll 2s infinite;
+	opacity: 0;
+}
+
+.landing-page a span:nth-of-type(1) {
+	animation-delay: 0s;
+}
+
+.landing-page a span:nth-of-type(2) {
+	bottom: 9vh;
+	animation-delay: .15s;
+}
+
+.landing-page a span:nth-of-type(3) {
+	bottom: 6vh;
+	animation-delay: .3s;
+}
+
+@keyframes homescroll {
+	0% {
+		opacity: 0;
+	}
+
+	50% {
+		opacity: 1;
+	}
+
+	100% {
+		opacity: 0;
+	}
+}
+
+.typewriter-text-container {
+	margin-top: 12vh;
+}
+
+.landing-page-text {
+	font-family: monospace;
+	font-size: 3rem;
+	color: var(--major-text-color);
+}
+
+.blink {
+	color: var(--major-text-color);
+	animation: blink 0.5s infinite;
+}
+
+@keyframes blink {
+	to {
+		opacity: 0;
+	}
+}
+
+.toggle .line1 {
+	transform: rotate(-45deg) translate(-5px,6px);
+}
+
+.toggle .line2 {
+	opacity: 0;
+}
+
+.toggle .line3 {
+	transform: rotate(45deg) translate(-5px,-6px);
+}
+
+@media screen and (max-width: 960px) {
+	body {
+		overflow-x: hidden;
+	}
+
+	.nav-links {
+		position: absolute;
+		right: 0px;
+		height: 88vh;
+		top: 12vh;
+		background-color: var(--major-bg-color);
+		display: flex;
+		flex-direction: column;
+		justify-content: space-around;
+		align-items: center;
+		transform: translatex(100%);
+		transition: transform 500ms ease-in-out;
+		z-index: 999;
+		
+	}
+
+	.nav-links li {
+		opacity: 0;
+	}
+
+	.burger {
+		display: initial;
+		cursor: pointer;
+	}
+}
+
+.nav-active {
+	transform: translatex(0%);
+}
+
+@keyframes navlinkFade {
+	from {
+		opacity: 0;
+		transform: translatex(50px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translatex(0);
+	}
+}
+
+.home-card-wrapper {
+	width: 100%;
+	background-color: black;
+}
+
+.home-card-wrapper1 {
+	width: 100%;
+	background-color: white;
+}
+.home-card-wrapper2 {
+		border: 1px solid rgb(214, 249, 214);
+		margin-top: 10px;
+		margin-bottom: 30px;
+		margin-right: 150px;
+		margin-left: 150px;
+		background-color: rgb(214, 249, 214);
+}
+
+.home-card-container {
+	max-width: 75rem;
+	margin: auto;
+	padding: 32px;
+	display: flex;
+	gap: 60px;
+	justify-content: center;
+	align-items: center;
+	flex-flow: row wrap;
+}
+
+.home-card-container > * {
+	flex-grow: 1;
+	flex-basis: 0;
+}
+
+.home-card {
+	display: flex;
+	flex-direction: column;
+	min-width: 15rem;
+	max-width: calc(12.5rem + 13vw);
+	background-color: white;
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 0.25em 0.6em #0005, 0 0.65em 1em #0004;
+	transition: transform 300ms ease;
+}
+
+.home-card:hover, .home-card:focus-within {
+	transform: scale(1.05);
+}
+
+.home-card img {
+	display: block;
+	max-width: 100%;
+	aspect-ratio: 16/9;
+	object-fit: cover;
+	height: auto;
+}
+
+.home-card .home-card-body h3 {
+	padding-block: 16px;
+	text-align: center;
+	font-size: 1.5rem;
+}
+
+.home-card .home-card-body p {
+	padding-inline: 16px;
+	padding-block: 0 16px;
+	text-align: center;
+	line-height: 1.3;
+	font-style: italic;
+}
+
+.home-card .home-card-body a {
+	text-decoration: none;
+	color: white;
+	outline: none;
+	display: block;
+	margin: 0 auto 16px auto;
+	width: fit-content;
+	text-align: center;
+	padding: 0.5rem 1rem;
+	border-radius: 4px;
+	transition: background-color 300ms ease;
+	background-color: white;
+}
+
+.home-card .home-card-body a:hover, a:focus {
+	background-color: var(--major-bg-color);
+}
+
+.footer-container {
+	height: 8vh;
+	display: flex;
+	flex-flow: column wrap;
+	justify-content: center;
+	align-items: center;
+	background-color: var(--major-bg-color);
+	color: var(--major-text-color);
+}
