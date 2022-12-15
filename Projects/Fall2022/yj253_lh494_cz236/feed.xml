@@ -1,0 +1,700 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.2">Jekyll</generator><link href="https://404codercn.github.io//ece4760_final_project/feed.xml" rel="self" type="application/atom+xml" /><link href="https://404codercn.github.io//ece4760_final_project/" rel="alternate" type="text/html" /><updated>2022-12-14T05:16:45+00:00</updated><id>https://404codercn.github.io//ece4760_final_project/feed.xml</id><title type="html">ECE4760 final project</title><subtitle>An awesome robot hand project designed at Cornell</subtitle><author><name>Jerry Jin</name></author><entry><title type="html">Final project code</title><link href="https://404codercn.github.io//ece4760_final_project/jekyll/2022/12/12/project-code.html" rel="alternate" type="text/html" title="Final project code" /><published>2022-12-12T00:00:00+00:00</published><updated>2022-12-12T00:00:00+00:00</updated><id>https://404codercn.github.io//ece4760_final_project/jekyll/2022/12/12/project-code</id><content type="html" xml:base="https://404codercn.github.io//ece4760_final_project/jekyll/2022/12/12/project-code.html">&lt;h2 id=&quot;transmitter-code&quot;&gt;Transmitter code&lt;/h2&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;math.h&amp;gt;
+#include &quot;pico/stdlib.h&quot;
+&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &quot;hardware/sync.h&quot;
+#include &quot;hardware/spi.h&quot;
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Include standard libraries&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdlib.h&amp;gt;
+#include &amp;lt;string.h&amp;gt;
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Include PICO libraries&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &quot;pico/stdlib.h&quot;
+#include &quot;pico/multicore.h&quot;
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Include hardware libraries&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &quot;hardware/pio.h&quot;
+#include &quot;hardware/dma.h&quot;
+#include &quot;hardware/adc.h&quot;
+#include &quot;hardware/irq.h&quot;
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Include custom library&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &quot;pt_cornell_rp2040_v1.h&quot;
+#include &quot;nrf24_driver.h&quot;
+#include &quot;pico/stdlib.h&quot;
+&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;tusb.h&amp;gt; // TinyUSB tud_cdc_connected()
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Get data from flex sensor &lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#define FLEX_INDEX            26
+#define ADC_INDEX_CHAN        0
+#define FLEX_MIDDLE           27
+#define ADC_MIDDLE_CHAN       1
+&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#define FLEX_RING             28
+#define ADC_RING_CHAN         2
+&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flex_out_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;//flex sensor output&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flex_out_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;//flex sensor output&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flex_out_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;//flex sensor output&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;fn_status_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;checks&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;//////////////////////////////////Transmiter //////////////////////////////////&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// GPIO pin numbers&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pin_manager_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_pins&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sck&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;copi&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cipo&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;csn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ce&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;6&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+&lt;span class=&quot;cm&quot;&gt;/**
+* nrf_manager_t can be passed to the nrf_client_t
+* initialise function, to specify the NRF24L01 
+* configuration. If NULL is passed to the initialise 
+* function, then the default configuration will be used.
+*/&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;nrf_manager_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_config&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// RF Channel &lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;channel&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;120&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// AW_3_BYTES, AW_4_BYTES, AW_5_BYTES&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;address_width&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AW_5_BYTES&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// dynamic payloads: DYNPD_ENABLE, DYNPD_DISABLE&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dyn_payloads&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DYNPD_ENABLE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// data rate: RF_DR_250KBPS, RF_DR_1MBPS, RF_DR_2MBPS&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data_rate&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RF_DR_2MBPS&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// RF_PWR_NEG_18DBM, RF_PWR_NEG_12DBM, RF_PWR_NEG_6DBM, RF_PWR_0DBM&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;power&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RF_PWR_NEG_12DBM&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// retransmission count: ARC_NONE...ARC_15RT&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;retr_count&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ARC_10RT&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// retransmission delay: ARD_250US, ARD_500US, ARD_750US, ARD_1000US&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;retr_delay&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ARD_500US&lt;/span&gt; 
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// SPI baudrate&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_baudrate&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10000000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;nrf_client_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// result of packet transmission&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;fn_status_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;success&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;//////////////////////////////////Transmiter ////////////////////////////////// &lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// User input thread. User can change draw speed&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;PT_THREAD&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;protothread_transmitter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PT_BEGIN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;//////////////////////////////////Transmiter //////////////////////////////////&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tx_destination&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]){&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x37&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x37&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x37&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x37&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x37&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;          &lt;span class=&quot;c1&quot;&gt;//data pipe 0&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;success&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send_packet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;flex_out_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;flex_out_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;success&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;               
+            &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Packet sent: flex_out_index: %d&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flex_out_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tx_destination&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]){&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;           &lt;span class=&quot;c1&quot;&gt;//data pipe 1&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;success&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send_packet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;flex_out_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;flex_out_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;success&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;               
+            &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Packet sent: flex_out_middle: %d&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flex_out_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tx_destination&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]){&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xCA&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;           &lt;span class=&quot;c1&quot;&gt;//data pipe 2&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;success&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send_packet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;flex_out_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;flex_out_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;success&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;               
+            &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Packet sent: flex_out_ring: %d&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flex_out_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+        &lt;span class=&quot;c1&quot;&gt;//////////////////////////////////Transmiter //////////////////////////////////&lt;/span&gt;
+
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PT_END&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// User input thread. User can change draw speed&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;PT_THREAD&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;protothread_adcs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PT_BEGIN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;adc_select_input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ADC_INDEX_CHAN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;flex_out_index&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;adc_read&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// printf(&quot;Index Flex sensor data is %d \n: &quot;, flex_out_index); &lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;adc_select_input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ADC_MIDDLE_CHAN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;flex_out_middle&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;adc_read&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// printf(&quot;Middle Flex sensor data is %d \n: &quot;, flex_out_middle); &lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;adc_select_input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ADC_RING_CHAN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;flex_out_ring&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;adc_read&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Ring Flex sensor data is %d &lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;: &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flex_out_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PT_END&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// Entry point for core 1&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;core1_entry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pt_add_thread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;protothread_adcs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pt_schedule_start&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Initialize stdio/uart&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;stdio_init_all&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;        
+
+    &lt;span class=&quot;c1&quot;&gt;//wait until the CDC ACM (serial port emulation) is connected&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tud_cdc_connected&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;sleep_ms&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;//////////////////////////////////Transmiter //////////////////////////////////&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// initialise my_nrf&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;nrf_driver_create_client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// configure GPIO pins and SPI&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;configure&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;my_pins&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_baudrate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// not using default configuration (my_nrf.initialise(NULL)) &lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;initialise&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;my_config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dyn_payloads_enable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// set to Standby-I Mode&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;standby_mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;///////////////////////////////////////////////////////////////////////////////&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// ============================== ADC CONFIGURATION ==========================&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;//////////////////////////////////////////////////////////////////////////////&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;adc_gpio_init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FLEX_INDEX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;adc_gpio_init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FLEX_MIDDLE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;adc_gpio_init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FLEX_RING&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;adc_init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    
+    &lt;span class=&quot;c1&quot;&gt;////////////////////////////////////////////////////////////////////////&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;///////////////////////////// ROCK AND ROLL ////////////////////////////&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;////////////////////////////////////////////////////////////////////////&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// start core 1 &lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;multicore_reset_core1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;multicore_launch_core1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;core1_entry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// start core 0&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pt_add_thread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;protothread_transmitter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pt_schedule_start&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;receiver&quot;&gt;Receiver&lt;/h2&gt;
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;math.h&amp;gt;
+#include &quot;pico/stdlib.h&quot;
+&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &quot;hardware/sync.h&quot;
+#include &quot;hardware/spi.h&quot;
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Include standard libraries&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdlib.h&amp;gt;
+#include &amp;lt;string.h&amp;gt;
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Include PICO libraries&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &quot;pico/stdlib.h&quot;
+#include &quot;pico/multicore.h&quot;
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Include hardware libraries&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &quot;hardware/pio.h&quot;
+#include &quot;hardware/dma.h&quot;
+#include &quot;hardware/adc.h&quot;
+#include &quot;hardware/irq.h&quot;
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Include custom library&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &quot;pt_cornell_rp2040_v1.h&quot;
+#include &quot;nrf24_driver.h&quot;
+#include &quot;pico/stdlib.h&quot;
+&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;tusb.h&amp;gt; // TinyUSB tud_cdc_connected()
+&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &quot;hardware/pwm.h&quot;
+&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in_data_index&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in_data_middle&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in_data_ring&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;///////////////////////////////PWM Servo /////////////////////////////////////////&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// PWM wrap value and clock divide value&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// For a CPU rate of 125 MHz, this gives&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// a PWM frequency of 1 kHz.&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#define WRAPVAL  20000.0f
+#define CLKDIV   125.0f
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Variable to hold PWM slice number&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;slice_num_index&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;slice_num_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;slice_num_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;slice_num_little&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;slice_num_thumb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;///////////////////////////////PWM Servo /////////////////////////////////////////&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;//////////////////////////////////Receiver //////////////////////////////////&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pipe_number&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; 
+
+&lt;span class=&quot;c1&quot;&gt;// GPIO pin numbers&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pin_manager_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_pins&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sck&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;copi&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cipo&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;csn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ce&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;6&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+  &lt;span class=&quot;cm&quot;&gt;/**
+   * nrf_manager_t can be passed to the nrf_client_t
+   * initialise function, to specify the NRF24L01 
+   * configuration. If NULL is passed to the initialise 
+   * function, then the default configuration will be used.
+   */&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;nrf_manager_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_config&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// RF Channel &lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;channel&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;120&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// AW_3_BYTES, AW_4_BYTES, AW_5_BYTES&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;address_width&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AW_5_BYTES&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// dynamic payloads: DYNPD_ENABLE, DYNPD_DISABLE&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dyn_payloads&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DYNPD_ENABLE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// data rate: RF_DR_250KBPS, RF_DR_1MBPS, RF_DR_2MBPS&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data_rate&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RF_DR_2MBPS&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// RF_PWR_NEG_18DBM, RF_PWR_NEG_12DBM, RF_PWR_NEG_6DBM, RF_PWR_0DBM&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;power&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RF_PWR_NEG_12DBM&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// retransmission count: ARC_NONE...ARC_15RT&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;retr_count&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ARC_10RT&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// retransmission delay: ARD_250US, ARD_500US, ARD_750US, ARD_1000US&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;retr_delay&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ARD_500US&lt;/span&gt; 
+  &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// SPI baudrate&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_baudrate&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10000000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;nrf_client_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// result of packet transmission&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;fn_status_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;success&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;//////////////////////////////////Transmiter ////////////////////////////////// &lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// User input thread. User can change draw speed&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;PT_THREAD&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;protothread_serial&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PT_BEGIN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;//////////////////////////////////Transmiter //////////////////////////////////&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// read payload&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;  &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;is_packet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pipe_number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)){&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;switch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pipe_number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DATA_PIPE_0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;read_packet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;in_data_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;in_data_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+                    &lt;span class=&quot;c1&quot;&gt;// receiving a one byte uint8_t payload on DATA_PIPE_0&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Packet received:- Payload (%d) on data pipe (%d)&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in_data_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pipe_number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; 
+
+                &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DATA_PIPE_1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+                    &lt;span class=&quot;c1&quot;&gt;// read payload&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;read_packet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;in_data_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;in_data_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+                    &lt;span class=&quot;c1&quot;&gt;// receiving a five byte string payload on DATA_PIPE_1&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Packet received:- Payload (%d) on data pipe (%d)&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in_data_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pipe_number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+                &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DATA_PIPE_2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+                    &lt;span class=&quot;c1&quot;&gt;// read payload&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;read_packet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;in_data_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;in_data_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+                    &lt;span class=&quot;c1&quot;&gt;// receiving a five byte string payload on DATA_PIPE_1&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Packet received:- Payload (%d) on data pipe (%d)&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in_data_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pipe_number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+        &lt;span class=&quot;c1&quot;&gt;//////////////////////////////////Transmiter //////////////////////////////////&lt;/span&gt;
+        
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PT_END&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;PT_THREAD&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;protothread_pwm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PT_BEGIN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;///////////////////////////////PWM Servo /////////////////////////////////////////&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;in_data_index&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;150&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;in_data_middle&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;150&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_A&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_thumb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_A&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_thumb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;in_data_ring&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;150&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_A&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_little&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_A&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_little&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PT_END&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// Entry point for core 1&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;core1_entry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pt_add_thread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;protothread_pwm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pt_schedule_start&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Initialize stdio/uart&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;stdio_init_all&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;        
+
+    &lt;span class=&quot;c1&quot;&gt;// wait until the CDC ACM (serial port emulation) is connected&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tud_cdc_connected&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;sleep_ms&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;//////////////////////////////////Transmiter //////////////////////////////////&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// initialise my_nrf&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;nrf_driver_create_client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// configure GPIO pins and SPI&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;configure&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;my_pins&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_baudrate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// not using default configuration (my_nrf.initialise(NULL)) &lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;initialise&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;my_config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;cm&quot;&gt;/**
+    * set addresses for DATA_PIPE_0 - DATA_PIPE_3.
+    * These are addresses the transmitter will send its packets to.
+    */&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rx_destination&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;DATA_PIPE_0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]){&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x37&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x37&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x37&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x37&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x37&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rx_destination&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;DATA_PIPE_1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]){&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rx_destination&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;DATA_PIPE_2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]){&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xCA&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ALL_DATA_PIPES&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FIVE_BYTES&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  
+    &lt;span class=&quot;c1&quot;&gt;// set to RX Mode&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;my_nrf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;receiver_mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    
+    &lt;span class=&quot;c1&quot;&gt;///////////////////////////////PWM Servo /////////////////////////////////////////&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;gpio_set_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GPIO_FUNC_PWM&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;gpio_set_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GPIO_FUNC_PWM&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;gpio_set_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GPIO_FUNC_PWM&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;gpio_set_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GPIO_FUNC_PWM&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;gpio_set_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;11&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GPIO_FUNC_PWM&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+
+    &lt;span class=&quot;c1&quot;&gt;// Find out which PWM slice is connected to GPIO 5 (it's slice 2)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;slice_num_index&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pwm_gpio_to_slice_num&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;slice_num_middle&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pwm_gpio_to_slice_num&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;slice_num_ring&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pwm_gpio_to_slice_num&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;slice_num_little&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pwm_gpio_to_slice_num&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;slice_num_thumb&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pwm_gpio_to_slice_num&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;11&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+     &lt;span class=&quot;c1&quot;&gt;// This section configures the period of the PWM signals&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_clkdiv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CLKDIV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_wrap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WRAPVAL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;pwm_set_clkdiv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CLKDIV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_wrap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WRAPVAL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;pwm_set_clkdiv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CLKDIV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_wrap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WRAPVAL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;pwm_set_clkdiv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_little&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CLKDIV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_wrap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_little&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WRAPVAL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;pwm_set_clkdiv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_thumb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CLKDIV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_wrap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_thumb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WRAPVAL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// This sets duty cycle&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_A&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_A&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_little&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_chan_level&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_thumb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PWM_CHAN_B&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// Start the channel&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_enabled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_enabled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_middle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_enabled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_ring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_enabled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_little&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pwm_set_enabled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slice_num_thumb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;////////////////////////////////////////////////////////////////////////&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;///////////////////////////// ROCK AND ROLL ////////////////////////////&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;////////////////////////////////////////////////////////////////////////&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// start core 1 &lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;multicore_reset_core1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;multicore_launch_core1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;core1_entry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// start core 0&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pt_add_thread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;protothread_serial&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pt_schedule_start&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Jerry Jin</name></author><category term="jekyll" /><category term="C" /><category term="code" /><summary type="html">Transmitter code</summary></entry><entry><title type="html">Glove-controlled robot hand</title><link href="https://404codercn.github.io//ece4760_final_project/jekyll/2022/12/12/project-details.html" rel="alternate" type="text/html" title="Glove-controlled robot hand" /><published>2022-12-12T00:00:00+00:00</published><updated>2022-12-12T00:00:00+00:00</updated><id>https://404codercn.github.io//ece4760_final_project/jekyll/2022/12/12/project-details</id><content type="html" xml:base="https://404codercn.github.io//ece4760_final_project/jekyll/2022/12/12/project-details.html">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;Nowadays, robot hands are everywhere. They don’t just serve as a toy to be played with, but also exist in educational and industrial sectors. The best thing about robot hands is that they can never get tired or injured. They can help us with repetitive and mundane tasks and can operate in conditions that human cannot stand. These characteristics make them perfect for completing tasks in extreme conditions. But the challenge of using a robot hand is that it is very difficult to operate it exactly the way we want. More specifically, we cannot control its fingers like we control ours, which limits its ability to complete delicate tasks. This led us to think if we can build a robot hand that can precisely follow our movements.&lt;/p&gt;
+
+&lt;p&gt;Inspired by this idea, our final project is to build a robot hand that can mimic human fingers’ movements. To accomplish this goal, we designed a control glove that collects curvature data from a set of flex sensors and transmits this data via a transceiver to the robot hand. The microcontroller connected to the robot hand then maps this curvature data to the corresponding duty cycle and thus controls the servo movement using PWM. We will discuss the technical details in the following sections.&lt;/p&gt;
+
+&lt;h2 id=&quot;high-level-design&quot;&gt;High level design&lt;/h2&gt;
+&lt;p&gt;The purpose of the project is to build a robot hand whose actions could be controlled wirelessly by a sensor glove. The implementation consists of three major parts: assembling a 3D-printed robot arm whose gesture would be controlled by servos, soldering flex sensors to fingers of the sensor glove which would be connected to GPIO ports of a RP2040 microcontroller, and establishing wireless communication between the glove and the robot arm with nRF2401 transceivers. The required hardware components are listed as following and the 3D printing arm parts prototype could be referenced in the following website:&lt;/p&gt;
+
+&lt;table&gt;
+&lt;center&gt;
+  &lt;tr&gt;
+    &lt;th&gt;Components&lt;/th&gt;
+    &lt;th&gt;Quantity&lt;/th&gt;
+    &lt;th&gt;Shopping Website&lt;/th&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Raspberry Pi Pico&lt;/td&gt;
+    &lt;td&gt;2&lt;/td&gt;
+    &lt;td&gt;From lab&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;nRF24L01 + Transceiver&lt;/td&gt;
+    &lt;td&gt;2 &lt;/td&gt;
+    &lt;td&gt;&lt;a class=&quot;highlight-link&quot; href=&quot;https://www.amazon.com/HiLetgo-NRF24L01-Wireless-Transceiver-Module/dp/B00LX47OCY/ref=asc_df_B00LX47OCY/?tag=hyprod-20&amp;amp;linkCode=df0&amp;amp;hvadid=380013417597&amp;amp;hvpos=&amp;amp;hvnetw=g&amp;amp;hvrand=15043867926934858616&amp;amp;hvpone=&amp;amp;hvptwo=&amp;amp;hvqmt=&amp;amp;hvdev=c&amp;amp;hvdvcmdl=&amp;amp;hvlocint=&amp;amp;hvlocphy=9005779&amp;amp;hvtargid=pla-815756879405&amp;amp;psc=1&amp;amp;tag=&amp;amp;ref=&amp;amp;adgrpid=77922879259&amp;amp;hvpone=&amp;amp;hvptwo=&amp;amp;hvadid=380013417597&amp;amp;hvpos=&amp;amp;hvnetw=g&amp;amp;hvrand=15043867926934858616&amp;amp;hvqmt=&amp;amp;hvdev=c&amp;amp;hvdvcmdl=&amp;amp;hvlocint=&amp;amp;hvlocphy=9005779&amp;amp;hvtargid=pla-815756879405&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;Amazon&lt;/a&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Servo motor&lt;/td&gt;
+    &lt;td&gt;5&lt;/td&gt;
+    &lt;td&gt;&lt;a class=&quot;highlight-link&quot; href=&quot;https://www.amazon.com/ETMall-Digital-Helicopter-Compatible-Raspberry/dp/B08CH2SJLR/ref=asc_df_B08CH2SJLR/?tag=hyprod-20&amp;amp;linkCode=df0&amp;amp;hvadid=459643686207&amp;amp;hvpos=&amp;amp;hvnetw=g&amp;amp;hvrand=15996783978418188023&amp;amp;hvpone=&amp;amp;hvptwo=&amp;amp;hvqmt=&amp;amp;hvdev=c&amp;amp;hvdvcmdl=&amp;amp;hvlocint=&amp;amp;hvlocphy=9005779&amp;amp;hvtargid=pla-947377955673&amp;amp;psc=1&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;Amazon&lt;/a&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+    &lt;tr&gt;
+    &lt;td&gt;Flex sensor&lt;/td&gt;
+    &lt;td&gt;3&lt;/td&gt;
+    &lt;td&gt;&lt;a class=&quot;highlight-link&quot; href=&quot;https://www.adafruit.com/product/182?gclid=Cj0KCQjwqoibBhDUARIsAH2OpWhIXkzbfrneTXbraNZmYftoxgLD-aamazqFndEY7rLEM5Z75axPEasaAroxEALw_wcB&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;Adafruit&lt;/a&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Glove&lt;/td&gt;
+    &lt;td&gt;1&lt;/td&gt;
+    &lt;td&gt;&lt;a class=&quot;highlight-link&quot; href=&quot;https://www.amazon.com/-/es/DEX-FIT-resistentes-el%C3%A1stico-inteligente/dp/B07HHZ4PRZ/ref=sr_1_43_mod_primary_new?__mk_es_US=%C3%85M%C3%85%C5%BD%C3%95%C3%91&amp;amp;crid=1PFRXFN4KW460&amp;amp;keywords=electrical%2Bglove&amp;amp;qid=1667437203&amp;amp;qu=eyJxc2MiOiI0LjAxIiwicXNhIjoiMy43MyIsInFzcCI6IjIuODcifQ%3D%3D&amp;amp;sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&amp;amp;sprefix=electrical%2Bglove%2Caps%2C105&amp;amp;sr=8-43&amp;amp;th=1&amp;amp;language=en_US&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;Amazon&lt;/a&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/center&gt;
+&lt;/table&gt;
+
+&lt;p&gt;In particular, three flex sensors have been used to measure the amount of deflection of the sensor glove’s fingers. As flex sensors function as variable resistors, we created a voltage divider circuit with 10k resistors for each of the flex sensors. To be more specific, the GND end of the all flex sensors are connected to the GND port of the Raspberry Pi Pico, and the + 3.3 V from the Raspberry Pi are connected to the main positive voltage wire of the voltage divider circuits. The wire from the other end of each flex sensor is connected to separate Analog-to-Digital GPIO ports – 26, 27, and 28 – to reflect how much each flex sensor bends. The specific connection could be seen in Figure 1.&lt;/p&gt;
+
+&lt;div&gt;
+&lt;center&gt;
+&lt;img src=&quot;https://404codercn.github.io/ece4760_final_project//assets/images/banners/transmiter_setup.jpg&quot; width=&quot;550&quot; height=&quot;300&quot; /&gt;
+&lt;figcaption align=&quot;center&quot;&gt; Figure 1: Transmitter side setup &lt;/figcaption&gt;
+&lt;/center&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The digital signal of the flex sensors is then sent to the other Raspberry Pi Microcontroller utilizing the NRF24L01 transceivers. The transmitter and receiver logic was implemented referencing the following &lt;a class=&quot;highlight-link&quot; href=&quot;https://github.com/AndyRids/pico-nrf24&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;open-source library&lt;/a&gt;. This library provides the user with functions that associate the pins of the transceiver – CE, CSN, etc. – to the appropriate GPIO ports of the Raspberry Pi microcontroller. It also allows the users to configure and initialize NRF24L01 transceivers and transmit multiple signals using various data pipes with simple functions. In the project, we transmitted three data pipes – each associated with one finger – at an air data rate of 5Mbps and address width of 5 bytes.&lt;/p&gt;
+
+&lt;p&gt;As the digital signal of the flex sensor has been transmitted from one microcontroller to the other, it would be used to set the servos motor voltages of the robot hand at appropriate values so as the control the fingers’ movement. In setting the motor voltage, the scheme PWM – a process that turns a digital signal into a smoothly varying average voltage signal by altering the on and off periods – was utilized. The term, duty cycle, describes the fraction of time spent high and is connected to the receiver signals. The duty cycle was set with the function pwm_set_chan_level(). Noticeably, the RP2040 PWM block possesses 8 identical slices, while each slice possesses the ability to drive two PWM output signals. Slice 3, 4, and 5 were utilized in the project. 
+Noticeably, there is a balance of hardware and software design in the project, and all the open source libraries that we have used are listed in the appendix.&lt;/p&gt;
+
+&lt;div&gt;
+&lt;center&gt;
+&lt;img src=&quot;https://404codercn.github.io/ece4760_final_project//assets/images/banners/pwm_slices.jpg&quot; width=&quot;750&quot; height=&quot;250&quot; /&gt;
+&lt;figcaption align=&quot;center&quot;&gt; Figure 2: RP2040 PWM slice table &lt;/figcaption&gt;
+&lt;/center&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;software-design&quot;&gt;Software design&lt;/h2&gt;
+&lt;p&gt;We implemented two separate program logics in the project design, one for each of the Raspberry Pi Pico Microcontrollers. Both program logics set up two threads. In the transmitter logic, the protothread_adc thread consistently reads the digital signal of the flex sensors and stores the value in the global variables; the protothread_transmitter thread consistently sends such signals to the receiver on the other Raspberry Pi Pico Microcontrollers. In the receiver logic, the protothread_serial thread consistently receives the data sent by the transmitter and stores the value in global variables, while the protothread_pwm thread consistently checks the status of flex sensors with such global variables and sets the motor voltages accordingly.&lt;/p&gt;
+
+&lt;p&gt;The communication between the two microcontrollers was achieved through NRF24L01 transceivers. In implementation, we first set up the GPIO pins according to Table 2 and initialize the device with desired settings. Specifically, we set the air data rate to be 5Mbps and address width to be 5 bytes, which corresponds to a baud rate of 10000000. We used a RF channel of 110, as WiFi uses most of the lower channels. Then, we define three separate dynamic data pipes to store transmitting signals, set a unique address in buffer to the specified data pipes, and switch the NRF24L01 from the Standby-I mode to RX/TX Mode. Eventually, we call function – nrf_driver_send_packet(const void *tx_packet, size_t size); – to send the data packet on the TX side and call function – nrf_driver_read_packet(void *rx_packet, size_t size)– to receive the data packet on the RX side.&lt;/p&gt;
+
+&lt;p&gt;Through experimentation, it is determined that the flex sensor presents a digital value around 50 when held straight and a digital value around 150 when held bending over. As a result, we would set the duty cycle as 2000 – corresponding to robot arm finger bending down – when the signal of the flex sensor is detected to be lower than 100. On the other hand, we would set the duty cycle as 1000 – corresponding to the robot arm finger straight up – when the signal of the flex sensor is detected to be bigger than 100.&lt;/p&gt;
+
+&lt;video width=&quot;600&quot; height=&quot;400&quot; controls=&quot;&quot;&gt;
+  &lt;source src=&quot;https://404codercn.github.io/ece4760_final_project//assets/images/banners/receive_data.mp4&quot; type=&quot;video/mp4&quot; /&gt;
+  &lt;source src=&quot;https://404codercn.github.io/ece4760_final_project//assets/images/banners/receive_data.ogg&quot; type=&quot;video/ogg&quot; /&gt;
+Your browser does not support the video tag.
+&lt;/video&gt;
+
+&lt;h2 id=&quot;hardware-deisgn&quot;&gt;Hardware deisgn&lt;/h2&gt;
+&lt;p&gt;We will discuss the design of our hardware in two parts: the robot hand and the control glove.&lt;/p&gt;
+&lt;h3 id=&quot;robot-hand&quot;&gt;Robot hand&lt;/h3&gt;
+&lt;p&gt;Our entire robot hand is 3D printed using PLA material. PLA is known for its high strength, low thermal-expansion, and non-toxic nature and is easily accessible in labs. These properties make PLA ideal for 3D printing. For the individual components of the hand, we used models from an open-source website—InMoov—with slight adjustments in the wrist. Table 1 shows all the components and corresponding cost. When printing these components, we chose an infill of 20% to ensure the hand is robust enough to withstand external force. After printing was completed, we assembled them using epoxy glue. For each finger joint, we inserted short strips of filament and electrical wires to fill the holes.&lt;/p&gt;
+
+&lt;div&gt;
+&lt;img align=&quot;left&quot; src=&quot;https://404codercn.github.io/ece4760_final_project//assets/images/banners/hand1.jpg&quot; width=&quot;200&quot; height=&quot;300&quot; /&gt;&lt;img align=&quot;left&quot; src=&quot;https://404codercn.github.io/ece4760_final_project//assets/images/banners/hand2.jpg&quot; width=&quot;200&quot; height=&quot;300&quot; /&gt;&lt;img align=&quot;left&quot; src=&quot;https://404codercn.github.io/ece4760_final_project//assets/images/banners/hand3.jpg&quot; width=&quot;200&quot; height=&quot;300&quot; /&gt;
+&lt;/div&gt;
+
+&lt;p&gt;
+&lt;div&gt;
+&lt;table&gt;
+&lt;center&gt;
+&lt;caption&gt;Table 1: Cost of 3D printing&lt;/caption&gt;
+  &lt;tr&gt;
+    &lt;th&gt;Part&lt;/th&gt;
+    &lt;th&gt;Price($)&lt;/th&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Forearm 1&lt;/td&gt;
+    &lt;td&gt;1.84&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Forearm 2&lt;/td&gt;
+    &lt;td&gt;2.08&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Forearm 3&lt;/td&gt;
+    &lt;td&gt;2.38&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Forearm 4&lt;/td&gt;
+    &lt;td&gt;1.6&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Little finger&lt;/td&gt;
+    &lt;td&gt;0.21&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Thumb&lt;/td&gt;
+    &lt;td&gt;0.6&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Ring finger&lt;/td&gt;
+    &lt;td&gt;0.27&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Index finger&lt;/td&gt;
+    &lt;td&gt;0.3&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Middle finger&lt;/td&gt;
+    &lt;td&gt;0.35&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Bolts&lt;/td&gt;
+    &lt;td&gt;0.29&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Hand covers&lt;/td&gt;
+    &lt;td&gt;1.13&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Servo wheels&lt;/td&gt;
+    &lt;td&gt;0.26&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Servo stand&lt;/td&gt;
+    &lt;td&gt;1.33&lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/center&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+The movement of the fingers are achieved by pulling on the wire that goes through each joint. We used braided fishing wire to link the fingers together as it can withstand a relatively large amount of force, which is necessary considering that the MG996R servo motor can exert up to 11 kg/cm of stall torque. The wires are routed to the wrist of the robot hand and wraps around a servo wheel.
+
+
+After the mechanical side of the robot hand was complete, we started adding on servos. Each of the five servos is responsible for controlling one finger. These servos can rotate their shafts within a range of angles and by defining the duty cycle of the pulse-width modulation, we can explicitly turn them to a certain angle. Referencing the datasheet, we know that the MG996R servos take in a PWM signal of 50Hz and the on-time can vary from 1ms to 2ms, corresponding to 0 to 180 degrees. Given the raspberry pi pico’s default frequency of 125MHz, we calculated a new warp value of 20000 and a clock divide value of 125 to achieve a resultant frequency of 50Hz. These two values are carefully selected so that 0.001 and 0.002 are both integer multiples of the reciprocal of 125MHz/warp value. We allocate the selected GPIO explicitly for the PWM function using the gpio_set_function. Then, we set up PWM’s wrap value and divide value to the two numbers we found before. The last step is to select an initial duty cycle and enable the PWM channel. To test the actual behavior of the servos, we connected their signal pin to a GPIO on the raspberry pi pico and observed the reaction of the servos when PWM channel level is setted to 1000 and 2000 respectively. Using this method, we found that the fingers are straight when the duty cycle is set to 1ms and curls up when set to 2ms. The behavior of the thumb is reversed due to reversed wire connection. 
+
+When testing the entire robot hand circuit, we initially powered the servos by wiring its power pin to VBUS of the raspberry pi pico, and the pico itself is powered by connecting to a computer. The VBUS pin directly connects to the 5V input from the micro-USB port and should provide 5V power to the servo. However, our computer reboots every time the code runs. We suspect this happens because the servos are drawing too much current from the computer, which causes it to go to sleep. To address this problem, we used a battery case with 4 AA batteries to externally supply power to the servos.
+&lt;/p&gt;
+
+&lt;div&gt;
+&lt;center&gt;
+&lt;img src=&quot;https://404codercn.github.io/ece4760_final_project//assets/images/banners/receiver_setup.jpg&quot; width=&quot;500&quot; height=&quot;320&quot; /&gt;
+&lt;figcaption align=&quot;center&quot;&gt; Figure 2: Receiver side setup &lt;/figcaption&gt;
+&lt;/center&gt;
+&lt;/div&gt;
+
+&lt;h3 id=&quot;control-glove&quot;&gt;Control glove&lt;/h3&gt;
+&lt;p&gt;On the control glove side, the goal is to collect curvature data from the flex sensors and send them to the robot hand using a transceiver. Under the hood, the flex sensors work as variable resistors. By connecting them in series with 10K resistors and connecting wires in between to ADCs on the microcontroller, we can determine the change in voltage level which reflects the bending of flex sensors. When the flex sensors are bent, the materials inside get close together and the resistance increases.&lt;/p&gt;
+
+&lt;p&gt;However, during the actual implementation, we found that the flex sensor readings fluctuates a lot when applied a small force. The correlation between bending angle and flex sensor readings are not always the same, and after bending the sensor a few more times, the values take longer and longer to change when the flex sensor is straightened up. We also found that the flex sensor readings wrap around when the sensor is bent past a certain angle, which sometimes causes incorrect behavior. After setting up the flex sensor circuit on the glove, we found that the robot hand will consistently and randomly twitch, which makes the whole system very unstable. Some of the potential causes of this behavior include the inherent angle of the glove and the extreme sensitivity of the flex sensors. After a few more experiments, we unfortunately had to give up using the glove and instead control the fingers by manually bending the flex sensors.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Overall, our project successfully fulfilled the initial proposal. The core of our project, wireless control of the robot hand, functioned well in the sense that the robot fingers will move accordingly as the bend of flex sensors. Even when multiple flex sensors are bent simultaneously, the delay of robot fingers’ movement is negligible. In terms of safety relating to our system, we set the lower and the upper bound for the turning degree of servo motors to make sure the hardware will not break. Moreover, to ensure security of our mechanical hauling system, we choose to use the fishing thread that could sustain 30 lb to connect all joints of the robot finger with the servo motor.&lt;/p&gt;
+
+&lt;p&gt;According to users’ feedback, there are still some drawbacks of our system that need to be improved in the future. First and foremost is the hardware problem. After attaching the flex sensors onto the glove, the data collected will sometimes be inaccurate and fluctuate, causing the incorrect movement of robot fingers. This problem can be caused by either inappropriate attachment method of flex sensors to the glove, or by the possible damage of flex sensors.&lt;/p&gt;
+
+&lt;p&gt;Another improvement we can make is that we currently only enable three flex sensors to work simultaneously, because there are only three ADC channels on the Raspberry Pi Pico board. To control all five fingers together, the on-time of the PWM for the servo connected to the little finger is determined by the same ADC channel used for the ring finger, and the movement of thumb is set to be same as the index finger.&lt;/p&gt;
+
+&lt;p&gt;Lastly, the flex sensors are too sensitive that they sometimes send incorrect sensor data when bended slightly. When the sensors are bend over a certain angle, the value also wraps around. This could cause redundant back and forth movements of robot fingers. 
+The proposed solutions to the above drawbacks will be discussed in the next section.&lt;/p&gt;
+
+&lt;h3 id=&quot;solution-and-improvements&quot;&gt;Solution and improvements:&lt;/h3&gt;
+
+&lt;p&gt;To address the above three main drawbacks, here are what we could do in the future:&lt;/p&gt;
+
+&lt;p&gt;(1)	Modify the way we attach flex sensors to the glove. Instead of only fixing two ends of the flex sensor, we could design a cover for the flex sensor and fix the cover to the glove, enabling the sensor to fit tightly with the glove.&lt;/p&gt;
+
+&lt;p&gt;(2)	Use mux in our design. This way we can select multiple inputs to one ADC channel, and we could receive and convert data from five flex sensors and control the five fingers independently.&lt;/p&gt;
+
+&lt;p&gt;(3)	Adding an average function in our code. This function is responsible for taking average of received sensor data over a short period of time and determine the movement of robot fingers. In this way we could reduce much of the back and forth movement because of a few inaccurate data.&lt;/p&gt;
+
+&lt;h4 id=&quot;intellectual-property-consideration&quot;&gt;Intellectual Property Consideration:&lt;/h4&gt;
+&lt;p&gt;Our design of robot hand is based on the open-source project called &lt;a class=&quot;highlight-link&quot; href=&quot;https://inmoov.fr/hand-and-forarm/&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;inMoov&lt;/a&gt;, including most 3D-printing files and the instructions for assembling the robot hand. This platform is available to everyone and thus using their design does not violate any intellectual property rights. 
+We referred to the public Github repository of &lt;a class=&quot;highlight-link&quot; href=&quot;https://github.com/AndyRids/pico-nrf24&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;AndyRids&lt;/a&gt; for using the nRF24L01+ transceiver with raspberry pi pico.&lt;/p&gt;
+
+&lt;h2 id=&quot;final-demo-video&quot;&gt;Final demo video&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.youtube.com/watch?v=G2LN8rhvrco&amp;amp;list=PLDqMkB5cbBA6AwYC_DElkDStUdOsTuIL7&amp;amp;index=34&quot;&gt;&lt;img src=&quot;https://404codercn.github.io/ece4760_final_project//assets/images/banners/demo_vid.jpg&quot; alt=&quot;Final demo video&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;appendix&quot;&gt;Appendix&lt;/h2&gt;
+&lt;p&gt;
+The group approves this report for inclusion on the course website.
+&lt;/p&gt;
+&lt;p&gt;The group approves the video for inclusion on the course youtube channel.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;References:&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a class=&quot;highlight-link&quot; href=&quot;https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;RP2040 datasheet&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a class=&quot;highlight-link&quot; href=&quot;https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;Raspberry pi pico C/C++ SDK&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a class=&quot;highlight-link&quot; href=&quot;https://www.sparkfun.com/datasheets/Components/SMD/nRF24L01Pluss_Preliminary_Product_Specification_v1_0.pdf&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;nRF24L01+ datasheet&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a class=&quot;highlight-link&quot; href=&quot;https://github.com/AndyRids/pico-nrf24&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;nRF24L01+ driver&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a class=&quot;highlight-link&quot; href=&quot;https://components101.com/motors/mg996r-servo-motor-datasheet&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;MG996R datasheet&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a class=&quot;highlight-link&quot; href=&quot;https://www.instructables.com/Robotic-Hand-With-Wireless-Glove-Controlled-NRF24L/&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;Instructables project&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a class=&quot;highlight-link&quot; href=&quot;https://inmoov.fr/hand-and-forarm/&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;inMoov robot model&lt;/a&gt;&lt;/p&gt;</content><author><name>Jerry Jin</name></author><category term="jekyll" /><category term="microcontroller" /><category term="ECE4760" /><summary type="html">Introduction</summary></entry></feed>

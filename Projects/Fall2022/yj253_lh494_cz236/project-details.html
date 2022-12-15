@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Glove-controlled robot hand | ECE4760 final project</title>
+<meta name="generator" content="Jekyll v3.9.2" />
+<meta property="og:title" content="Glove-controlled robot hand" />
+<meta name="author" content="Jerry Jin" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Introduction" />
+<meta property="og:description" content="Introduction" />
+<link rel="canonical" href="./project-details.html" />
+<meta property="og:url" content="./project-details.html" />
+<meta property="og:site_name" content="ECE4760 final project" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-12-12T00:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Glove-controlled robot hand" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Jerry Jin"},"dateModified":"2022-12-12T00:00:00+00:00","datePublished":"2022-12-12T00:00:00+00:00","description":"Introduction","headline":"Glove-controlled robot hand","mainEntityOfPage":{"@type":"WebPage","@id":"./project-details.html"},"url":"./project-details.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="./assets/css/main.css">
+  <script src="./assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="./feed.xml" title="ECE4760 final project" /><link rel="stylesheet"
+      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8"
+        src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header site-header-transparent" role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner"><span class="site-brand"><a class="site-brand-inner" rel="author" href="./">
+  <img class="site-favicon" title="ECE4760 final project" src="" onerror="this.style.display='none'">
+  ECE4760 final project
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewBox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger"><a class="page-link" href="./index.html">HOME</a><a class="page-link" href="./about.html">ABOUT</a><a class="page-link" href="./gallery.html">GALLERY</a>
+
+
+
+
+
+
+
+
+
+<span class="page-link">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<span class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</span>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</span></div>
+        </nav></div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;documentElement.setAttribute("data-header-transparent", "");var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style>
+    html .page-banner {
+      background: #000;
+    }
+  </style><style>html .page-banner {
+      height:  36.8vh;
+      min-height: 38vh;
+    }
+    html[data-scroll-status="top"] .page-banner {
+      height: 100vh;
+    }
+  </style><style>
+    html .page-banner .page-banner-img > *:first-child {
+      opacity: 0.618;
+    }
+
+    html[data-theme="dark"] .page-banner .page-banner-img > *:first-child {
+      opacity: 0.443724;
+    }
+  </style><style>
+    html .page-banner .page-banner-inner > *:first-child > *:nth-child(1) {
+      font-size: 4.25em; font-weight: bold; text-decoration: underline
+    }
+  </style><style>
+    html .page-banner .page-banner-inner > *:first-child > *:nth-child(2) {
+      color: gold
+    }
+  </style><section class="page-banner">
+    <div class="page-banner-img"><video
+          autoplay=""
+          poster=""
+          playsinline
+        >
+          <source src="./assets/images/banners/project_banner.mp4">
+        </video>
+        <script>
+          (function() {
+            var video = document.querySelector('.page-banner .page-banner-img > video');
+            var videoPlay = function() {
+              video.play().catch (function() {
+                  video.muted = true;
+                  video.play();
+                });
+            }
+
+            video.onloadstart = function() {
+              video.currentTime = 0;
+              video.volume = 0.5;
+              video.muted = (video.volume == 0);
+              videoPlay();
+            }
+
+            video.onended = function() {
+              video.currentTime = 0;
+              video.volume = 0;video.play();}
+          })();
+        </script></div>
+    <div class="wrapper">
+      <div class="page-banner-inner"><header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">Glove-controlled robot hand</h1>
+  <h2 class="post-subtitle">an ECE4760 final project</h2>
+
+  <p class="post-meta">
+    <time class="dt-published" datetime="2022-12-12T00:00:00+00:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Dec 12, 2022
+    </time>
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 17 mins</span>
+  </p><div class="post-tags"><a class="post-tag" href="./tags.html#microcontroller">#microcontroller</a><a class="post-tag" href="./tags.html#ECE4760">#ECE4760</a></div></header>
+</div>
+    </div>
+  </section><script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('auto' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      <h2 id="introduction">Introduction</h2>
+
+<p>Nowadays, robot hands are everywhere. They don’t just serve as a toy to be played with, but also exist in educational and industrial sectors. The best thing about robot hands is that they can never get tired or injured. They can help us with repetitive and mundane tasks and can operate in conditions that human cannot stand. These characteristics make them perfect for completing tasks in extreme conditions. But the challenge of using a robot hand is that it is very difficult to operate it exactly the way we want. More specifically, we cannot control its fingers like we control ours, which limits its ability to complete delicate tasks. This led us to think if we can build a robot hand that can precisely follow our movements.</p>
+
+<p>Inspired by this idea, our final project is to build a robot hand that can mimic human fingers’ movements. To accomplish this goal, we designed a control glove that collects curvature data from a set of flex sensors and transmits this data via a transceiver to the robot hand. The microcontroller connected to the robot hand then maps this curvature data to the corresponding duty cycle and thus controls the servo movement using PWM. We will discuss the technical details in the following sections.</p>
+
+<h2 id="high-level-design">High level design</h2>
+<p>The purpose of the project is to build a robot hand whose actions could be controlled wirelessly by a sensor glove. The implementation consists of three major parts: assembling a 3D-printed robot arm whose gesture would be controlled by servos, soldering flex sensors to fingers of the sensor glove which would be connected to GPIO ports of a RP2040 microcontroller, and establishing wireless communication between the glove and the robot arm with nRF2401 transceivers. The required hardware components are listed as following and the 3D printing arm parts prototype could be referenced in the following website:</p>
+
+<table>
+<center>
+  <tr>
+    <th>Components</th>
+    <th>Quantity</th>
+    <th>Shopping Website</th>
+  </tr>
+  <tr>
+    <td>Raspberry Pi Pico</td>
+    <td>2</td>
+    <td>From lab</td>
+  </tr>
+  <tr>
+    <td>nRF24L01 + Transceiver</td>
+    <td>2 </td>
+    <td><a class="highlight-link" href="https://www.amazon.com/HiLetgo-NRF24L01-Wireless-Transceiver-Module/dp/B00LX47OCY/ref=asc_df_B00LX47OCY/?tag=hyprod-20&amp;linkCode=df0&amp;hvadid=380013417597&amp;hvpos=&amp;hvnetw=g&amp;hvrand=15043867926934858616&amp;hvpone=&amp;hvptwo=&amp;hvqmt=&amp;hvdev=c&amp;hvdvcmdl=&amp;hvlocint=&amp;hvlocphy=9005779&amp;hvtargid=pla-815756879405&amp;psc=1&amp;tag=&amp;ref=&amp;adgrpid=77922879259&amp;hvpone=&amp;hvptwo=&amp;hvadid=380013417597&amp;hvpos=&amp;hvnetw=g&amp;hvrand=15043867926934858616&amp;hvqmt=&amp;hvdev=c&amp;hvdvcmdl=&amp;hvlocint=&amp;hvlocphy=9005779&amp;hvtargid=pla-815756879405" target="_blank" rel="noreferrer">Amazon</a></td>
+  </tr>
+  <tr>
+    <td>Servo motor</td>
+    <td>5</td>
+    <td><a class="highlight-link" href="https://www.amazon.com/ETMall-Digital-Helicopter-Compatible-Raspberry/dp/B08CH2SJLR/ref=asc_df_B08CH2SJLR/?tag=hyprod-20&amp;linkCode=df0&amp;hvadid=459643686207&amp;hvpos=&amp;hvnetw=g&amp;hvrand=15996783978418188023&amp;hvpone=&amp;hvptwo=&amp;hvqmt=&amp;hvdev=c&amp;hvdvcmdl=&amp;hvlocint=&amp;hvlocphy=9005779&amp;hvtargid=pla-947377955673&amp;psc=1" target="_blank" rel="noreferrer">Amazon</a></td>
+  </tr>
+    <tr>
+    <td>Flex sensor</td>
+    <td>3</td>
+    <td><a class="highlight-link" href="https://www.adafruit.com/product/182?gclid=Cj0KCQjwqoibBhDUARIsAH2OpWhIXkzbfrneTXbraNZmYftoxgLD-aamazqFndEY7rLEM5Z75axPEasaAroxEALw_wcB" target="_blank" rel="noreferrer">Adafruit</a></td>
+  </tr>
+  <tr>
+    <td>Glove</td>
+    <td>1</td>
+    <td><a class="highlight-link" href="https://www.amazon.com/-/es/DEX-FIT-resistentes-el%C3%A1stico-inteligente/dp/B07HHZ4PRZ/ref=sr_1_43_mod_primary_new?__mk_es_US=%C3%85M%C3%85%C5%BD%C3%95%C3%91&amp;crid=1PFRXFN4KW460&amp;keywords=electrical%2Bglove&amp;qid=1667437203&amp;qu=eyJxc2MiOiI0LjAxIiwicXNhIjoiMy43MyIsInFzcCI6IjIuODcifQ%3D%3D&amp;sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&amp;sprefix=electrical%2Bglove%2Caps%2C105&amp;sr=8-43&amp;th=1&amp;language=en_US" target="_blank" rel="noreferrer">Amazon</a></td>
+  </tr>
+</center>
+</table>
+
+<p>In particular, three flex sensors have been used to measure the amount of deflection of the sensor glove’s fingers. As flex sensors function as variable resistors, we created a voltage divider circuit with 10k resistors for each of the flex sensors. To be more specific, the GND end of the all flex sensors are connected to the GND port of the Raspberry Pi Pico, and the + 3.3 V from the Raspberry Pi are connected to the main positive voltage wire of the voltage divider circuits. The wire from the other end of each flex sensor is connected to separate Analog-to-Digital GPIO ports – 26, 27, and 28 – to reflect how much each flex sensor bends. The specific connection could be seen in Figure 1.</p>
+
+<div>
+<center>
+<img src="./assets/images/banners/transmiter_setup.jpg" width="550" height="300" />
+<figcaption align="center"> Figure 1: Transmitter side setup </figcaption>
+</center>
+</div>
+
+<p>The digital signal of the flex sensors is then sent to the other Raspberry Pi Microcontroller utilizing the NRF24L01 transceivers. The transmitter and receiver logic was implemented referencing the following <a class="highlight-link" href="https://github.com/AndyRids/pico-nrf24" target="_blank" rel="noreferrer">open-source library</a>. This library provides the user with functions that associate the pins of the transceiver – CE, CSN, etc. – to the appropriate GPIO ports of the Raspberry Pi microcontroller. It also allows the users to configure and initialize NRF24L01 transceivers and transmit multiple signals using various data pipes with simple functions. In the project, we transmitted three data pipes – each associated with one finger – at an air data rate of 5Mbps and address width of 5 bytes.</p>
+
+<p>As the digital signal of the flex sensor has been transmitted from one microcontroller to the other, it would be used to set the servos motor voltages of the robot hand at appropriate values so as the control the fingers’ movement. In setting the motor voltage, the scheme PWM – a process that turns a digital signal into a smoothly varying average voltage signal by altering the on and off periods – was utilized. The term, duty cycle, describes the fraction of time spent high and is connected to the receiver signals. The duty cycle was set with the function pwm_set_chan_level(). Noticeably, the RP2040 PWM block possesses 8 identical slices, while each slice possesses the ability to drive two PWM output signals. Slice 3, 4, and 5 were utilized in the project. 
+Noticeably, there is a balance of hardware and software design in the project, and all the open source libraries that we have used are listed in the appendix.</p>
+
+<div>
+<center>
+<img src="./assets/images/banners/pwm_slices.jpg" width="750" height="250" />
+<figcaption align="center"> Figure 2: RP2040 PWM slice table </figcaption>
+</center>
+</div>
+
+<h2 id="software-design">Software design</h2>
+<p>We implemented two separate program logics in the project design, one for each of the Raspberry Pi Pico Microcontrollers. Both program logics set up two threads. In the transmitter logic, the protothread_adc thread consistently reads the digital signal of the flex sensors and stores the value in the global variables; the protothread_transmitter thread consistently sends such signals to the receiver on the other Raspberry Pi Pico Microcontrollers. In the receiver logic, the protothread_serial thread consistently receives the data sent by the transmitter and stores the value in global variables, while the protothread_pwm thread consistently checks the status of flex sensors with such global variables and sets the motor voltages accordingly.</p>
+
+<p>The communication between the two microcontrollers was achieved through NRF24L01 transceivers. In implementation, we first set up the GPIO pins according to Table 2 and initialize the device with desired settings. Specifically, we set the air data rate to be 5Mbps and address width to be 5 bytes, which corresponds to a baud rate of 10000000. We used a RF channel of 110, as WiFi uses most of the lower channels. Then, we define three separate dynamic data pipes to store transmitting signals, set a unique address in buffer to the specified data pipes, and switch the NRF24L01 from the Standby-I mode to RX/TX Mode. Eventually, we call function – nrf_driver_send_packet(const void *tx_packet, size_t size); – to send the data packet on the TX side and call function – nrf_driver_read_packet(void *rx_packet, size_t size)– to receive the data packet on the RX side.</p>
+
+<p>Through experimentation, it is determined that the flex sensor presents a digital value around 50 when held straight and a digital value around 150 when held bending over. As a result, we would set the duty cycle as 2000 – corresponding to robot arm finger bending down – when the signal of the flex sensor is detected to be lower than 100. On the other hand, we would set the duty cycle as 1000 – corresponding to the robot arm finger straight up – when the signal of the flex sensor is detected to be bigger than 100.</p>
+
+<video width="600" height="400" controls="">
+  <source src="./assets/images/banners/receive_data.mp4" type="video/mp4" />
+  <source src="./assets/images/banners/receive_data.ogg" type="video/ogg" />
+Your browser does not support the video tag.
+</video>
+
+<h2 id="hardware-deisgn">Hardware deisgn</h2>
+<p>We will discuss the design of our hardware in two parts: the robot hand and the control glove.</p>
+<h3 id="robot-hand">Robot hand</h3>
+<p>Our entire robot hand is 3D printed using PLA material. PLA is known for its high strength, low thermal-expansion, and non-toxic nature and is easily accessible in labs. These properties make PLA ideal for 3D printing. For the individual components of the hand, we used models from an open-source website—InMoov—with slight adjustments in the wrist. Table 1 shows all the components and corresponding cost. When printing these components, we chose an infill of 20% to ensure the hand is robust enough to withstand external force. After printing was completed, we assembled them using epoxy glue. For each finger joint, we inserted short strips of filament and electrical wires to fill the holes.</p>
+
+<div>
+<img align="left" src="./assets/images/banners/hand1.jpg" width="200" height="300" /><img align="left" src="./assets/images/banners/hand2.jpg" width="200" height="300" /><img align="left" src="./assets/images/banners/hand3.jpg" width="200" height="300" />
+</div>
+
+<p>
+<div>
+<table>
+<center>
+<caption>Table 1: Cost of 3D printing</caption>
+  <tr>
+    <th>Part</th>
+    <th>Price($)</th>
+  </tr>
+  <tr>
+    <td>Forearm 1</td>
+    <td>1.84</td>
+  </tr>
+  <tr>
+    <td>Forearm 2</td>
+    <td>2.08</td>
+  </tr>
+  <tr>
+    <td>Forearm 3</td>
+    <td>2.38</td>
+  </tr>
+  <tr>
+    <td>Forearm 4</td>
+    <td>1.6</td>
+  </tr>
+  <tr>
+    <td>Little finger</td>
+    <td>0.21</td>
+  </tr>
+  <tr>
+    <td>Thumb</td>
+    <td>0.6</td>
+  </tr>
+  <tr>
+    <td>Ring finger</td>
+    <td>0.27</td>
+  </tr>
+  <tr>
+    <td>Index finger</td>
+    <td>0.3</td>
+  </tr>
+  <tr>
+    <td>Middle finger</td>
+    <td>0.35</td>
+  </tr>
+  <tr>
+    <td>Bolts</td>
+    <td>0.29</td>
+  </tr>
+  <tr>
+    <td>Hand covers</td>
+    <td>1.13</td>
+  </tr>
+  <tr>
+    <td>Servo wheels</td>
+    <td>0.26</td>
+  </tr>
+  <tr>
+    <td>Servo stand</td>
+    <td>1.33</td>
+  </tr>
+</center>
+</table>
+</div>
+</p>
+
+<p>
+The movement of the fingers are achieved by pulling on the wire that goes through each joint. We used braided fishing wire to link the fingers together as it can withstand a relatively large amount of force, which is necessary considering that the MG996R servo motor can exert up to 11 kg/cm of stall torque. The wires are routed to the wrist of the robot hand and wraps around a servo wheel.
+
+
+After the mechanical side of the robot hand was complete, we started adding on servos. Each of the five servos is responsible for controlling one finger. These servos can rotate their shafts within a range of angles and by defining the duty cycle of the pulse-width modulation, we can explicitly turn them to a certain angle. Referencing the datasheet, we know that the MG996R servos take in a PWM signal of 50Hz and the on-time can vary from 1ms to 2ms, corresponding to 0 to 180 degrees. Given the raspberry pi pico’s default frequency of 125MHz, we calculated a new warp value of 20000 and a clock divide value of 125 to achieve a resultant frequency of 50Hz. These two values are carefully selected so that 0.001 and 0.002 are both integer multiples of the reciprocal of 125MHz/warp value. We allocate the selected GPIO explicitly for the PWM function using the gpio_set_function. Then, we set up PWM’s wrap value and divide value to the two numbers we found before. The last step is to select an initial duty cycle and enable the PWM channel. To test the actual behavior of the servos, we connected their signal pin to a GPIO on the raspberry pi pico and observed the reaction of the servos when PWM channel level is setted to 1000 and 2000 respectively. Using this method, we found that the fingers are straight when the duty cycle is set to 1ms and curls up when set to 2ms. The behavior of the thumb is reversed due to reversed wire connection. 
+
+When testing the entire robot hand circuit, we initially powered the servos by wiring its power pin to VBUS of the raspberry pi pico, and the pico itself is powered by connecting to a computer. The VBUS pin directly connects to the 5V input from the micro-USB port and should provide 5V power to the servo. However, our computer reboots every time the code runs. We suspect this happens because the servos are drawing too much current from the computer, which causes it to go to sleep. To address this problem, we used a battery case with 4 AA batteries to externally supply power to the servos.
+</p>
+
+<div>
+<center>
+<img src="./assets/images/banners/receiver_setup.jpg" width="500" height="320" />
+<figcaption align="center"> Figure 2: Receiver side setup </figcaption>
+</center>
+</div>
+
+<h3 id="control-glove">Control glove</h3>
+<p>On the control glove side, the goal is to collect curvature data from the flex sensors and send them to the robot hand using a transceiver. Under the hood, the flex sensors work as variable resistors. By connecting them in series with 10K resistors and connecting wires in between to ADCs on the microcontroller, we can determine the change in voltage level which reflects the bending of flex sensors. When the flex sensors are bent, the materials inside get close together and the resistance increases.</p>
+
+<p>However, during the actual implementation, we found that the flex sensor readings fluctuates a lot when applied a small force. The correlation between bending angle and flex sensor readings are not always the same, and after bending the sensor a few more times, the values take longer and longer to change when the flex sensor is straightened up. We also found that the flex sensor readings wrap around when the sensor is bent past a certain angle, which sometimes causes incorrect behavior. After setting up the flex sensor circuit on the glove, we found that the robot hand will consistently and randomly twitch, which makes the whole system very unstable. Some of the potential causes of this behavior include the inherent angle of the glove and the extreme sensitivity of the flex sensors. After a few more experiments, we unfortunately had to give up using the glove and instead control the fingers by manually bending the flex sensors.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>Overall, our project successfully fulfilled the initial proposal. The core of our project, wireless control of the robot hand, functioned well in the sense that the robot fingers will move accordingly as the bend of flex sensors. Even when multiple flex sensors are bent simultaneously, the delay of robot fingers’ movement is negligible. In terms of safety relating to our system, we set the lower and the upper bound for the turning degree of servo motors to make sure the hardware will not break. Moreover, to ensure security of our mechanical hauling system, we choose to use the fishing thread that could sustain 30 lb to connect all joints of the robot finger with the servo motor.</p>
+
+<p>According to users’ feedback, there are still some drawbacks of our system that need to be improved in the future. First and foremost is the hardware problem. After attaching the flex sensors onto the glove, the data collected will sometimes be inaccurate and fluctuate, causing the incorrect movement of robot fingers. This problem can be caused by either inappropriate attachment method of flex sensors to the glove, or by the possible damage of flex sensors.</p>
+
+<p>Another improvement we can make is that we currently only enable three flex sensors to work simultaneously, because there are only three ADC channels on the Raspberry Pi Pico board. To control all five fingers together, the on-time of the PWM for the servo connected to the little finger is determined by the same ADC channel used for the ring finger, and the movement of thumb is set to be same as the index finger.</p>
+
+<p>Lastly, the flex sensors are too sensitive that they sometimes send incorrect sensor data when bended slightly. When the sensors are bend over a certain angle, the value also wraps around. This could cause redundant back and forth movements of robot fingers. 
+The proposed solutions to the above drawbacks will be discussed in the next section.</p>
+
+<h3 id="solution-and-improvements">Solution and improvements:</h3>
+
+<p>To address the above three main drawbacks, here are what we could do in the future:</p>
+
+<p>(1)	Modify the way we attach flex sensors to the glove. Instead of only fixing two ends of the flex sensor, we could design a cover for the flex sensor and fix the cover to the glove, enabling the sensor to fit tightly with the glove.</p>
+
+<p>(2)	Use mux in our design. This way we can select multiple inputs to one ADC channel, and we could receive and convert data from five flex sensors and control the five fingers independently.</p>
+
+<p>(3)	Adding an average function in our code. This function is responsible for taking average of received sensor data over a short period of time and determine the movement of robot fingers. In this way we could reduce much of the back and forth movement because of a few inaccurate data.</p>
+
+<h4 id="intellectual-property-consideration">Intellectual Property Consideration:</h4>
+<p>Our design of robot hand is based on the open-source project called <a class="highlight-link" href="https://inmoov.fr/hand-and-forarm/" target="_blank" rel="noreferrer">inMoov</a>, including most 3D-printing files and the instructions for assembling the robot hand. This platform is available to everyone and thus using their design does not violate any intellectual property rights. 
+We referred to the public Github repository of <a class="highlight-link" href="https://github.com/AndyRids/pico-nrf24" target="_blank" rel="noreferrer">AndyRids</a> for using the nRF24L01+ transceiver with raspberry pi pico.</p>
+
+<h2 id="final-demo-video">Final demo video</h2>
+
+<p><a href="https://www.youtube.com/watch?v=G2LN8rhvrco&amp;list=PLDqMkB5cbBA6AwYC_DElkDStUdOsTuIL7&amp;index=34"><img src="./assets/images/banners/demo_vid.jpg" alt="Final demo video" /></a></p>
+
+<h2 id="appendix">Appendix</h2>
+<p>
+The group approves this report for inclusion on the course website.
+</p>
+<p>The group approves the video for inclusion on the course youtube channel.</p>
+
+<p><strong>References:</strong></p>
+
+<p><a class="highlight-link" href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf" target="_blank" rel="noreferrer">RP2040 datasheet</a></p>
+
+<p><a class="highlight-link" href="https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf" target="_blank" rel="noreferrer">Raspberry pi pico C/C++ SDK</a></p>
+
+<p><a class="highlight-link" href="https://www.sparkfun.com/datasheets/Components/SMD/nRF24L01Pluss_Preliminary_Product_Specification_v1_0.pdf" target="_blank" rel="noreferrer">nRF24L01+ datasheet</a></p>
+
+<p><a class="highlight-link" href="https://github.com/AndyRids/pico-nrf24" target="_blank" rel="noreferrer">nRF24L01+ driver</a></p>
+
+<p><a class="highlight-link" href="https://components101.com/motors/mg996r-servo-motor-datasheet" target="_blank" rel="noreferrer">MG996R datasheet</a></p>
+
+<p><a class="highlight-link" href="https://www.instructables.com/Robotic-Hand-With-Wireless-Glove-Controlled-NRF24L/" target="_blank" rel="noreferrer">Instructables project</a></p>
+
+<p><a class="highlight-link" href="https://inmoov.fr/hand-and-forarm/" target="_blank" rel="noreferrer">inMoov robot model</a></p>
+
+
+
+    </div>
+
+</article>
+<div class="post-nav"><a class="previous" href="./project-code.html" title="Final project code">Final project code</a><span></span></div><div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li><a class="post-link" href="./project-details.html" title="">Glove-controlled robot hand</a></li><li><a class="post-link" href="./project-code.html" title="">Final project code</a></li></ul>
+    </div><div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <!-- <section class="sidebar" style="margin-left: 15px;"> -->
+    <!-- Get sidebar items -->
+    <!---->
+  </section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="./"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner"><div>Copyright © 2019-2023 {Jerry Industries} </div>
+      <div>Powered by <a title="Jekyll is a simple, blog-aware, static site
+      generator." href="https://jekyllrb.com/">Jekyll</a> &amp; <a title="Yat, yet
+      another theme." href="https://github.com/jeffreytse/jekyll-theme-yat">Yat Theme</a>.</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="./feed.xml">via RSS</a></div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
