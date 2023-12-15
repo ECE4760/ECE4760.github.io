@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title> Kinetic Molecular Theory with Particles on a RP2040 
+      </title>
+      <style>
+        main{
+            padding-left:50px;
+            padding-right:50px;
+            padding-top:25px;
+            padding-bottom:25px;
+        }
+        h1 {text-align: center;}
+        p {text-align: left;
+        }
+        div {text-align: center;
+        }
+        .center {
+            margin-left: auto;
+            margin-right: auto;
+        }
+        ul {
+            text-align: left;
+        }
+        </style>
+   </head>
+   <body style="background:grey">
+        <header>
+            <!--text-align: center; 
+            padding: 20px;-->
+        </header>
+        <!--/*navigation bar style*/
+        nav {
+            text-align: center;
+            word-spacing: 30px;
+            padding: 10px;
+            background-color: #f5f5dc
+   
+        }-->
+
+        <main>
+            <div class = "Title" style="background:grey">
+                <h1>ECE 5730: Kinetic Molecular Theory with Particles on a RP2040</h1>
+            </div>
+            <div class = "names">
+                <h2>Chih-Yu Arthur Chang (cc2535) and Miriya Pinkerman (mp2235)</h2>
+            </div>
+            <div class = "Demonstration_Video" style="background:grey;">
+                <div class="Demonstration_Video">
+                    <h1>Demonstration Video</h1>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/LiEpu315REc"></iframe>
+                </div>
+            </div>
+            <hr>
+            <div class="Objective" style="background:grey;">
+                <h1>Objective</h1>
+                <section>
+                    <p>The purpose of this lab is to use the RP2040, DAC, and VGA to create a kinetic molecular theory physics simulation.</p>
+                </section>
+            </div>
+            <hr>
+            <div class="Introduction" style="background:grey;">
+                <h1>Introduction</h1>
+                <section>
+                    <p> The boids lab earlier this semester inspired us to understand other natural phenomena, so naturally we began to research different physics theorems. Due to the nature of the boids lab, we realized we could create an ideal gas law simulation that followed kinetic molecular theory. In order to verify the simulation was working as physics would expect, we implemented a representation of Boyle's law and displayed the kinetic energy average of the particles. 
+                        </p>
+                </section>
+            </div>
+            <hr>
+            <div class="High_Level_Design" style="background:grey;">
+                <h1>High Level Design</h1>
+                <img src="HigherLevelBlockDiagram.png" alt="Higher Level Design" style="width:824px;height:416px;">
+                <section>
+                    <caption>Figure 1: Higher Level Block Diagram</caption>
+                </section>
+                <p></p>
+                <section>
+                    <div class="Boids_Algorithm_Background">
+                        <h2>Boids Algorithm Background</h2>
+                        <section>
+                            <p>Using different portions of the boids pseudocode from the <a href="https://vanhunteradams.com/Pico/Animal_Movement/Boids-predator.html">4760/5730 Boids Algorithm page</a> we were able to  implement particle like behavior. Below are segments of the code that we found useful when simulating our particle movement.
+                            </p>
+                            <img src="Boidscodepart1.png" alt="Boids Code Part 1" style="width:804px;height:835px;">
+                            <img src="Boidscodepart2.png" alt="Boids Code Part 2" style="width:804px;height:378px;">
+                            <p>Within our code the main focus was on the boid algorithm's use of visual range, speed limit, and updating of position.
+                            </p>
+                        </section>
+                    </div>
+                    <div class="Ideal_Gas_Law_Background">
+                        <h2>Ideal Gas Law Background</h2>
+                        <section>
+                            <p>Our particle model is based on the five postulates of kinetic molecular theory: (1) Gas particles move linearly unless a the particle collides with another particle or a wall (2) volume between particles is negligible because the free space between them is large (3) the particles collisions are elastic, so no kinetic energy is lost during collisions (4) there is no forces of attraction and repulsion between particles (5)  the particles' average kinetic energy is proportional to temperature.  Thus, for a group of particles average kinetic energy should remain constant in the model which gives us that KEavg= 0.5*m*vrms^2, where vrms is the root mean square velocity and m is the mass of the particle. Furthermore, using KEavg based on temperature we could directly relate our temperature to the particles' velocities such that vrms = sqrt(3RT/m). These postulates provide us with the ideal gas law PV = nRT, where P is pressure, V is volume, n is number of moles of a particle, R is the universal gas constant, and T is the temperature.
+                            </p>
+                            <p>In relation to collision in our model, initially ran the program assuming the collisions would result in the particles just moving at the velocity of those reaching it, but the downfall of this method was not every collision was based on the particles' centers of mass. Based on this relationship a collision method had to be put in place. Using this new method and increasing visual range slightly we were able to create a more accurate collision model for the particles that kept our initial particle velocities consistent to what we expected.</p>
+                            <p>Another component of ideal gas law we implemented in our simulation was Boyle's law. According to Boyle's law pressure and volume are inversely related and thus P is proportional to 1/V. In order to make sure that our program was acting in this manner we assumed temperature would be a constant that the user could change from Putty. Through the implementation of calculating Boyle's law at different temperatures, we had a theoretical check for our simulation's pressure vs. volume relationship.</p>
+                            <p>An unexpected outcome of changing the temperature in this manner provided us with different isothermal graphs as derived in thermodynamics. Since the temperature was constant, change in temperature was zero and pressure vs. volume graph acted as one would expect isothermal graphs to act at different temperatures. In isothermal graphs as the temperature is increased energy within the system is increased, such a phenomenon was seen in our simulation as temperature was increased it had a direct impact on the kinetic energy average in our model.</p>
+                        </section>
+                        
+                        <h2>Collision</h2>
+                        <section>
+                            <p>In our collision simulation, we have the assumption that all particles have the same mass and the same velocity. Therefore, the collision model can be largely simplified. However, we cannot oversimplify the model. In our first model, we assumed that each particle has an infinite small volume and force field, so when two particles collide, we simply swap their moving direction. This made no difference between the non-colliding model.
+                                Therefore, we introduced the second model: We assumed each particle had a specific volume. To implement this concept, we can translate it to: we perform collision of these two particles if their distance is within twice their radius.
+                            </p>
+                            <img src="collision.png" alt="collision" style="width:800px;height:390px;">
+                            <section>
+                                <caption>Figure 10: collision illustration</caption>
+                            </section>
+                            <p>The left picture shows the collision of two particles with the conservation of momentum. We can convert it to the right one for better understanding. Because the particle mass  and the velocities are the same, we only need to consider the direction after the collision. Thus, the surface of the right picture circle serves as a mirror. Therefore, the collision can be modeled as follows:</p>
+                            <img src="collision_formula.png" alt="collision_formula" style="width:400px;height:80px;">
+                            <section>
+                                <caption>Figure 11: collision_formula</caption>
+                            </section>
+                            <p>Where vector u is the normalized vector that points from the center of the circle to reflecting point and 2(v  u) u  serves as the speed difference that v needs to change which is perpendicular to the surface of the circle. This equation can simulate the mirror reflection without too much computation cost and implementation complexity.</p>
+                            
+                        </section>
+                    </div>
+                    <div class="Hardware_Software_Tradeoffs">
+                        <h2>Hardware/Software Tradeoffs</h2>
+                        <section>
+                            <p>There is no trade-off between hardware and software. They provide different functionalities in this project. Hardware provides DAC, Putty connections, and VGA output while software provides the simulation algorithm, system control and hardware resource manipulations. They cannot replace each other in any manner.</p>
+                        </section>
+                    </div>
+            </div>
+            <hr>
+            <div class = "Program_hadrware_design" style="background:grey;">
+                <h1>Program/Hardware Design</h1>
+                    <section>
+                        <p>Our main objective was to adapt the boids code such that the particles collided like gas particles. From there we adapted the code so the user could input different amounts for the volume and see the different results of pressure (hitting rate per second) versus time. After getting a working model of the constant volume, we modified it by integrating a synthesized beep. When the beep was working correctly, we adjusted the code to beep every time a particle hit the wall of its volume. Once we had developed a constant volume, we made a simulation to develop pressure versus volume graphs at varying temperatures (chosen by the user).  To verify that our pressure versus volume graph was behaving as expected, we plotted Boyle's law. Finally, we added a constant pressure graph so the user could see how kinetic energy would need to decrease if volume decreased at a constant pressure for varying temperatures. To verify that this was working correctly we found what the pressure should be based on the chosen temperature and plotted the result.</p>
+                    </section>
+                <div class="RP2040_design">
+                    <h2>RP2040 Program Design</h2>
+                    
+                    <section>
+                        <p>
+                            Our software architecture and computational power distribution
+                        </p>
+                    </section>
+                    <section>
+                        <p>
+                            <ul>
+                                <li>Core1 (main computation)</li>
+                                    <ul>
+                                        <li>Particle simulation</li>
+                                    </ul>
+                                <li>Core2 (miscellaneous)</li>
+                                    <ul>
+                                        <li>Particle simulation</li>
+                                        <li>Pressure calculation</li>
+                                        <li>Graph plotting</li>
+                                        <li>Serial input output</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </p>
+                    </section>
+                    <p>
+                        Our design principle is an incremental design. We complete each functionality by gradually adding features on it and making sure it works within our expectation every time. This is one of the most efficient ways to build up a complex system and we can narrow down the place that is most likely to produce bugs. Every time a feature is created, we would set up several hand-crafted unit tests to ensure the basic functionality. The methodology helps a lot even when the project scale grows up. More specifically and practically, we made the program highly modularized, in which we separated each functionality into several functions and made sure each function will not be too long to read or debug. Moreover, we try to keep everything as function calls instead of macro because the function can make a good isolation for variable names and take the advantage of C's type checking. There should be little or no drawback with modern compiler architecture. Functions can be inlined and therefore can have the same performance with macro which puts the program at risk by modifying the program in compile time.
+                    </p>
+                    
+                    <h2>Main Functions Explanation</h2>
+                    <h3>Move_particles()</h3>
+                    <section>
+                        <img src="move_particles_code.png" alt="move_particles_code" style="width:800px;height:300px;">
+                        <section>
+                            <caption>Figure 9: Move_particles() pseudocode.</caption>
+                        </section>
+                    </section>
+                    <p>
+                        All particles are stored in global variables and therefore can be accessed by every function, but this slightly decreases the safety of the program.
+                    <!-- </p>
+                    <p> -->
+                        For each two particles, if they are both in each other's visual range, then a collision happens. The collision is explained in the physics section. The drawing part is relatively simple: for each frame, the previous positions will be erased, the position will be updated, and the new position will be printed (if the position is inside the bound).
+                    <!-- </p>
+                    <p> -->
+                        This is the core computation in our project. If we do not perform the collision the time complexity of this function will be O(N), while our version of collision algorithm complexity is O(N^2) which is much higher and became the bottleneck. of the whole simulation. However, collisions are essential because we need to increase the 'chaos' of our system. 
+                    </p>
+                    <p>
+                        When the volume was changed, the moving wall generated a wavefront which made the measurement fluctuate and gave an imprecise measurement of collisions especially when the kinetic energy was at a lower state. Therefore, we still need collisions to increase the entropy even though, logically, the pressure will be measured the same in a long-term experiment.
+                    <!-- </p>
+                    <p> -->
+                        According to the experimental result, the collision actually helps a lot. The wave-like moving particles will be eliminated in a short time (in 3-4 wave period) and quickly make the measured pressure converge to the ideal line. This is obvious when the volume is adjusted in a short period of time.                    
+                    </p>
+                    
+                    <h3>Beeping Sound Generator</h3>
+                    <p>The sound is generated by Direct Digital Synthesis Algorithm (DDS). The target sine wave will be incrementally generated with the timer interrupt callback. When a particle hits the wall, a swoop sound will be generated once. While the original sound is synthesized every 25 us, we change the frequency of it to 75 but change the increment of the sin phase three times larger. This can produce the sound with lower computation consumption. The reason we adjust it to three times lower is because if we keep the same as 25 us, the other functionality will become lagging which means it took too much CPU time to do the sound generation. The lowering seems to have no problem producing the same result. However, we cannot ignore the noise sound produced by the square wave coming from DDS.</p>
+                    <img src="square_wave.png" alt="square_wave" style="width:800px;height:250px;">
+                    <section>
+                        <caption>Figure 11: Fourier transform of a square wave</caption>
+                    </section>
+                    <p>For a perfect square wave, the first harmonic noise comes from 3f. We can treat the procedure of DDS as the perfect sine wave combining with a square wave with the frequency of timer callback. Theoretically, the absolute threshold of hearing of humans is from 20 to 20000 hz. The synthesis period should be higher than 50us. When we adjust it to 75, we can start to hear some unexpected noises, but we treated it as an acceptable trade-off.</p>
+                    
+                    <h3>Low Pass Filter for Graph Plotting</h3>
+                    <p>We output the current measured pressure every frame. However, if the volume change is too large, the measured pressure will be several unwanted high frequency peaks. Therefore, we implemented a software low pass filter that can average the most recent five plotting points. The data structure we use is a queue which is the most suitable one to use in this scenario. Every time we only need to insert and pop one value and calculate the average.
+                    </p>
+                    
+                    <h3>Synchronization Problems</h3>
+                    <p>In our program design, two cores mainly perform different functionalities, so we do not need the explicit synchronization between the two cores. However, there is one situation that we need to solve by waiting on one core. While core0 did the particle plotting, core1 will move the volume line and erase particles outside the bound. In the experiment, sometimes particles outside the bound will not be erased. We debugged for a long time and found that the erasing was slightly earlier than the particle drawing. Some particles will remain unerased permanently. Eventually, we solved this problem by adding PT_YIELD_usec(5000) before the erasing to make sure the erasing was an 'atomic-like' function that will not be interrupted or switched.</p>
+                    
+                    <h3>Trick Parts</h3>
+                    <p>One of the most difficult parts in this project is to deal with PT_thread library and timer interrupt. In most of the software designs, we did not need to tackle the low level or even the hardware in this way. The operating system took care of most of the hardware-related problems, and we only needed to focus on the algorithm itself. The bare metal design provided us more freedom with its aggressive development of software applications. We could control the timer ourselves and did not need to consider the performance consumed by other processes: we had full control of the hardware. The tradeoff is that we did not have services provided by modern operating systems such as memory protections and multitasking which made it much harder when memory leaking happened.</p>
+                    
+                    <!-- <section>
+                        <p></p>
+                    </section> -->
+                </div>
+                <div class="Hardware_design">
+                    <h2>Hardware Design</h2>
+                    <p>Our hardware was minimal as we wanted to mainly focus on giving the user multiple options when dealing with the simulation. Therefore, our main hardware components consisted of the RP2040, the DAC, and the VGA Plug (See the appendix c for a labeled circuit image.). Using what we had learned from Lab 1 on the Birdsong Synthesis we utilized the DAC to output signals through our audio socket and speaker. Initially we intended to use an HDMI port to display the simulation, but due to our focus on making our simulation as accurate as we could we decided to work significantly more on coding the simulation.
+                    </p>
+                    <img src="CircuitDiagramFinalProject.png" alt="Diagram of Circuit" style="width:800px;height:600px;">
+                    <section>
+                        <caption>Figure 2: Above is a circuit diagram for our RP2040, DAC, and VGA</caption>
+                        <p>A future change that could be made to this simulation is adjusting the way user input works. By including a keypad to enter in numerical values of temperature and volumes we could adjust the user interface.
+                        </p>
+                    </section>
+                </div>
+            </div>
+            <hr>
+            <div class = "Results" style="background:grey;">
+                <h1>Results</h1>
+                    <section>
+                        <p>Our particle's movement, generated digital direct synthesis beeping, and putty interface had to be split between two cores to ensure the simulated movement did not noticeably lag. Due to the amount of things working on the cores we were limited by the number of particles that we could utilize. This led to the early testing and accuracy checks we used in the simulation below.
+                        </p>
+                    </section>
+                <div class = "Early Tests">
+                    <h2>Early Tests</h2>
+                    <section>
+                        <p>One of our greatest challenges during this project was learning how collision worked for the particles and determining the best way to implement this collision. At the beginning of our test, when we created our simulation of constant volume, we had not set up our collision algorithm. This resulted in an interesting wave-like side effect when the volume was restored to the initial size; the waves would travel towards the wall at the same right from left to right and would not adjust to the increased volume (Fig. 3). The wavefront would collide with the wall and would continue this movement for every volume.
+                        </p>
+                    </section>
+                    <img src="wavefrontimage_results.png" alt="Wavefront Results Image" style="width:800px;height:603px;">
+                    <section>
+                        <caption>Figure 3: Presented is one of our initial trials without the collision protocol. Once this behavior was exhibited, it did not stop.</caption>
+                    </section>
+                    <section>
+                        <p>From here we tried different collision methods until we had developed a collision model that worked as expected. The first method we tried was a collision method based on bi-particle collisions. Before evaluating this new collision method, we increased the size of the particle. Unexpectedly a vibrating behavior began to occur. This behavior led to the particles clustering into the corners of the simulation's boundaries and leaving the boundary (Fig.4).
+                        </p>
+                    </section>
+                    <img src="biparticlecollision_result.png" alt="Wavefront Results Image" style="width:800px;height:603px;">
+                    <section>
+                        <caption>Figure 4: Simulation with bi-particle collision code where particles were leaving the boundary and increased in size.</caption>
+                    </section>
+                        <p>Due to the issues we were encountering with collisions, we moved to make our pressure vs. volume graph and after developing that graph moved back to the collision. By having the pressure vs. volume graph taking in data from our simulation we were able to see a data representation and we were able to see the wavefront issue graphically. This graphic allowed us to develop a different collision algorithm and then implemented a small visual range to ensure collisions (like in the boids lab) which allowed the simulation to return to the expected ideal gas behavior.</p>
+                </div>
+                <div class = "Accuracy">
+                    <h2>Accuracy</h2>
+                    <section>
+                        <p>In this lab one way to measure accuracy was on our pressure vs. volume simulation. For each temperature that pressure and volume were plotted we also had a line printed for Boyle's law. When the pressure was equivalent at a specific volume the simulation line would overlap with the line plotted for Boyle's law. It is important to note that because we scaled the y axis to fit most points, our y axis was scaled differently than our volume axis. In turn we determined the best coefficient n that would best fit the plot (Fig. 5). After making this change, we had to slightly shift the Boyle's law equation based on the temperature we had entered. Once this change was made the plots aligned more closely (Fig. 6).
+                        </p>
+                    </section>
+                    <img src="pressure_volume_unshifted.png" alt="Pressure v. Volume Unshifted" style="width:800px;height:603px;">
+                    <section>
+                        <caption>Figure 5: Simulation of Pressure vs. Volume Graph with the unshifted Boyle's law line (purple) at the pre-set temperature.</caption>
+                    </section>
+                    <img src="pressure_volume_shifted.png" alt="Pressure v. Volume shifted" style="width:800px;height:603px;">
+                    <section>
+                        <caption>Figure 6: Simulation of Pressure vs. Volume Graph with shifted Boyle's law line (purple) at temperatures of 3, 10, 20, and 30.</caption>
+                    </section>
+                    <section>
+                        <p>We also measured the simulation's accuracy while we maintained a constant pressure. Unlike our pressure vs. volume graph, the energy of the particles decreased in speed such that pressure was constant. Using this method, we plotted our simulation on a pressure vs. volume graph while simultaneously plotting the expected pressure. When graphing this we initially encountered a similar scaling concern (Fig. 7), but after working with coefficients we were able to find a more accurate linear pressure for our baseline.</p>
+                    </section>
+                    <img src="scaling_temperature_constant_pressure.png" alt="Constant Pressure Simulation" style="width:800px;height:603px;">
+                    <section>
+                        <caption>Figure 7: Simulation of the constant pressure at different temperatures.</caption>
+                    </section>
+                </div>
+            </div>
+            <hr>
+            <div class = "Conclusion" style="background:grey;">
+                <h1>Conclusion</h1>
+                    <section>
+                        <p>Overall, we accomplished most things we wanted to in our model. We wanted to create a physics simulation that allowed for user input and utilized a display. In our original design we had intended to add an HDMI component, but as we began to work more in depth with the different graphs and user inputs, we ultimately used VGA as it allowed us to focus more on relationships like constant pressure and constant volume.</p>
+                        <p>In the future it would be helpful to improve the number of particles that could be present in the simulation. Earlier in this project we attempted to implement the Alpha Max Beta Minimum Algorithm, but this resulted in an inaccurate Boyle's law curve. By utilizing things like a spinlock on certain commands, we could avoid using Protothread yield, potentially impacting the frame rate per second of the system. From here we could use the frame rate per second like we did in the boids lab to ensure that the particles were being animated during the proper time.
+                        </p>   
+                        <p>Another improvement that could be made is changing the y axis scaling to a log scale, from here we could compare linear plots of pressure vs. volume with a slope of -1. In this case it may be easier to determine the accuracy of the pressure vs. volume graph.
+                        </p>
+                    </section>
+                <div class="Results_Expectations_Future_Changes">
+                    <h2>RP2040 Program Design</h2>
+                    <p>In terms of program design, we could possibly increase the performance through further optimization. Some places use floating point computation. If the value range is carefully managed, all calculations can be safely converted to fix15 point numbers and therefore increases the performance. With longer spare time, it is possible to either increase the frames per second (FPS) or more particles in simulation. Increasing FPS is more important in this project. With higher FPS, the particle movement can be more fine-grained and thus can eliminate the unideal situation when the volume becomes lower. The collision algorithm can be optimized to O(N) instead of O(N^2). The implementation could be much more complex, such that some data structure like binary tree would be needed to describe the 2-D plane. With higher computational efficiency, we can add more particles to simulate the situation with higher pressure.</p>
+                    <p>Moreover, our particle model can be used for computational fluid dynamics. For example, we can put a wing inside our model and calculate the sum of hitting force to determine the lifting force. In this case, viscosity between particles and the wing can also be implemented.</p>
+                    
+                </div>
+                <div class="Intellectual_Property_Considerations">
+                    <h2>Intellectual Property Considerations</h2>
+                    <section>
+                        <p>The RP2040 code for this project was based in the protothreads library. 
+                            By splitting the synthesis of the beeping sound, tracking of our particles, and the putty user interface into two cores, we were able to implement our code in a "round robin" setup. 
+                            As a basis for our particle algorithm, we used the 5730 lab two animation.c and adapted it such that we could utilize methods and integrate the ideas from beep.c into our main code. 
+                            Using these example codes, and the addition of our own methods and calculations, we were able to create our physics simulation.</p>
+                    </section>
+                </div>
+                <div class="Ethical_considerations">
+                    <h2>Ethical Considerations</h2>
+                    <section>
+                        <p>We created this simulation as a learning tool for students to gain greater understanding of ideal gas law and kinetic molecular theory. 
+                            Due to this interest in aiding student conceptual understanding we wanted to make our simulation accessible to a wider range of people. 
+                            The first adjustment we made was based on red-green colorblindness. 
+                            In order for the simulation to be more easily viewed, we avoided using red and green outside of a small number of particles within the simulation and plotted our graphs utilizing blue, yellow, and magenta. Another component added to our simulation was a beeping sound that occurred when particles hit the boundary of the simulation volume. 
+                            The ability to hear the changes in pressure based on volume makes the simulation more accessible to those with visual impairments. </p>
+                    </section>
+                </div>
+                <div class="Safety_considerations">
+                    <h2>Safety Considerations</h2>
+                    <section>
+                        <p>There were no major safety concerns in this lab, as the user was interacting only with the computer and the monitor.
+                            Although if a younger child, ages 6 to 10, is running the simulation, they should not use the simulation for more than 1.5 hours as recommended by the American Academy of Pediatrics and World Health Organization.
+
+                        </p>
+                    </section>
+                </div>
+                <div class="Legal_considerations">
+                    <h2>Legal Considerations</h2>
+                    <section>
+                        <p>No major legal considerations needed to be made in this lab. </p>
+                    </section>
+                </div>
+            </div>
+            <hr>
+            <div class="Work_Distribution" style="background:grey;">
+                <h1>Work Distribution</h1>
+                <section>
+                    <p>We collaborated on the c code of this project. When beginning the project Arthur set up the initial file changes, while Miriya worked on the DDS circuit hardware components. Upon testing that beep.c worked as it had in lab 1, we began to integrate components of the beep code with portions of the boids algorithm. 
+                    </p>
+                    <p>Later while working on this collision model both conducted separate research and ultimately Arthur's model for the collision calculations was chosen and Arthur coded this model. Miriya began to develop an incremental volume method that was later edited by both Arthur and Miriya to serve as the basis for our pressure vs. volume graph. 
+                    </p>
+                    <p>Furthermore, to assess our model both Arthur and Miriya made changes to finalize and test the program at different stages. When plotting Boyle's law and different user inputs images and values were recorded to determine constants as well as track our changes made. During these recordings we were able to distinguish whether our optimizations had any visual effects as was mentioned when using the Alpha Max Beta Minimum Algorithm.                        
+                    </p>
+                </section>
+            </div>
+            <hr>
+            <div class="Appendix" style="background:grey">
+                <h1>Appendix</h1>
+                <div class = "Appendix_a">
+                    <h2>Appendix A: Permissions</h2>
+                    <section>
+                        <p>The group approves this report for inclusion on the course website.</p>
+                    </section>
+                    <section>
+                        <p>The group approves the video for inclusion on the course YouTube channel.</p></p>
+                    </section>
+                </div>
+                <div class = "Appendix_b">
+                    <h2>Appendix B: Commented Code</h2>
+                    <section>
+                        <!-- <p></p> -->
+                        <a href="https://drive.google.com/drive/u/1/folders/1DhF3gPnAu7L_WfxDLWLMJXvCW3s5oXEf">Source Code</a>
+                    </section>
+                </div>
+                <div class = "Appendix_c">
+                    <h2>Appendix C: Hardware Schematic</h2>
+                    <img src="CircuitFinalProject.png" alt="Circuit Final Project" style="width:450px;height:600px;">
+                    <section>
+                        <caption>Figure 8: Above is a labeled circuit for our simulation</caption>
+                    </section>
+                    <p>In the figure above, VGA PLUG wires correspond to the RGB colors. The red wire goes to the red port, the blue wire goes to the blue port, and the green wire goes to the green port. Furthermore, the HSYNC is connected to the RP2040 by an orange wire, and the yellow wire connects the RP2040 to the VSYNC. 
+                    </p>
+                </div>
+                <div class = "Bill"></div>
+                    <h2>Bill of Materials</h2>
+                    <section>
+                        <p><table class = "center">
+                            <tr>
+                                <th>Component</th>
+                                <th>Source</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                            </tr>
+                            <tr>
+                                <td>RP2040</td>
+                                <td>Lab</td>
+                                <td>1</td>
+                                <td>$7.50</td>
+                            </tr>
+                            <tr>
+                                <td>DAC</td>
+                                <td>Lab</td>
+                                <td>1</td>
+                                <td>$2.11</td>
+                            </tr>
+                            <tr>
+                                <td>VGA Driver Cable</td>
+                                <td>Lab</td>
+                                <td>1</td>
+                                <td>$5.49</td>
+                            </tr>
+                            <tr>
+                                <td>3.55 mm Audio Socket</td>
+                                <td>Lab</td>
+                                <td>1</td>
+                                <td>$1.07</td>
+                            </tr>
+                            <tr>
+                                <td>Total Cost</td>
+                                <td></td>
+                                <td></td>
+                                <td>$0</td>
+                            </tr>
+                        </table>
+                        </p>
+                    </section>
+                </div>
+            </div>
+            <hr>
+            <div class = "References" style="background:grey;">
+                <h1>References</h1>
+                    <section>
+                        <p>1. An educational consulting network. Kecia Ray&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Kecia Ray is a globally recognized leader in education and a transformation coach. She leads K20Connect, "Here's what the research says about screen time and school-aged kids," Technology Solutions That Drive Education, https://edtechmagazine.com/k12/article/2023/01/heres-what-research-says-about-screen-time-and-school-aged-kids#:~:text=The%20organizations%20also%20note%20that,and%20learning%20beyond%20our%20screens (accessed Dec. 0, 2023). </p>
+                        <p>2. Libretexts, "10.5: Kinetic molecular theory of gases," Chemistry LibreTexts, https://chem.libretexts.org/Courses/University_of_Arkansas_Little_Rock/Chem_1402%3A_General_Chemistry_1_(Belford)/Text/10%3A_Gases/10.5%3A__Kinetic_Molecular_Theory_of_Gases (accessed Oct. 22, 2023).</p>
+                        <p>3. S. Kahn, "PV diagrams - part 2: Isothermal, isometric, adiabatic processes (video)," Khan Academy, https://www.khanacademy.org/science/ap-physics-2/ap-thermodynamics/ap-laws-of-thermodynamics/v/pv-diagrams-part-2-isothermal-isometric-adiabatic-processes (accessed Dec. 9, 2023). </p>
+                        <p>4. “What is the slope of logp vs logv graph at constant temperature?,” byju, https://byjus.com/question-answer/what-is-the-slope-of-logp-vs-logv-graph-at-constant-temperature/ (accessed Dec. 14, 2023). </p>
+                    </section>
+            </div>
+        </main>
+   </body>
+</html>
