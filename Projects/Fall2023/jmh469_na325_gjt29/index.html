@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ECE 4760 Final Project: RP2040 Camera</title>
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/2/23/Aperture_Science_logo_%28light_grey_background%29.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="stylesheets/normalize.css"
+      media="screen"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:400,700"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="stylesheets/stylesheet.css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="stylesheets/github-light.css"
+      media="screen"
+    />
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">ECE 4760 Final Project: RP2040 Camera</h1>
+      <h2 class="project-tagline">
+        Jason Heller (jmh469), Noah Abramson (na325), Grace Tang (gjt29)
+      </h2>
+      <a
+        href="https://github.coecis.cornell.edu/gjt29/ECE4760-ArduCAM-OV5642-Public"
+        class="btn"
+        >View on GitHub</a
+      >
+    </section>
+
+    <section class="main-content">
+      <!-- <h3>ECE3140 / CS 3420: pH Sensor</h3>
+      <p>Michelle Li (myl39), Noah Abramson (na325), Nathan Raklin (npr29)</p>
+      <hr /> -->
+      <ol>
+        <video width="640" height="480" controls>
+          <source src="images/movie.mp4" type="video/mp4"
+            style="vertical-align:middle;margin:0px 175px"
+          >
+          
+        Your browser does not support the video tag.
+        </video>
+      </ol>
+      <ol>
+        <h4>Project Introduction</h4>
+        <hr />
+        <!-- <li>
+          Motivation of your project. If appropriate, consider the impact of
+          your system public health, safety, and welfare as well as relevant
+          global, cultural, social, environmental, and economic factors.
+        </li>
+        <li>Describes briefly what their system does.</li>
+        <li>Include any necessary background information.</li>
+        <li>
+          Summary of what you have accomplished and what you have learned.
+        </li> -->
+
+          The goal of our project was to implement an interface for the Arducam OV5642 
+        with the Raspberry Pi Pico. We want it to be able to store image pixel information 
+        and to be able to display images taken with the camera on a VGA. Our intent for 
+        this project is to get it working and well documented so that it can be used for 
+        future RP2040 projects that may want to integrate a camera. We also wanted to develop 
+        a way to take information from the camera, identify useful information, and save it 
+        on the RP2040's limited memory.
+        
+      </ol>
+
+      <ol>
+        <h4>High Level Design</h4>
+        <hr />
+
+        Our initial idea for our project was to implement eye tracking using the 
+        Raspberry Pi Pico. However, as we researched this option further, we realized 
+        that just getting the camera to work would be a massive endeavor on its own. 
+        So, we adjusted our goal to be to implement an interface for a camera for the 
+        RP2040, specifically the ArduCam OV5642. This program must read an image from 
+        the camera, draw its result on a VGA screen, and be able to store some image data, 
+        which could then be hypothetically used for some rudimentary object detection or 
+        similar applications.
+
+        <figure>
+          <img src="images/High_level_diagram.png" 
+          width = "500"
+          height = "125"
+          style="vertical-align:middle;margin:0px 175px"
+          alt = "early tuning of camera"/>
+          <figcaption>High Level Diagram</figcaption>
+        </figure>
+
+        The OV5642 camera communicates with the RP2040 using 2 different methods: an I2C 
+        interface is used to configure the camera (eg. writing to registers that control 
+        image format, camera settings, number of frames to capture, etc.), and an SPI 
+        interface is used to transfer image data from the camera to the RP2040. For each 
+        capture, the RP2040 then reads the data for each pixel from the SPI FIFO, which 
+        is then compressed to be stored and drawn on the VGA (depending on the mode). If 
+        the program is configured to just draw the image capture on the VGA, the RAW8 8 
+        bit color format must be compressed down to 3 bits, and the image is not stored. 
+        Otherwise, if the image is stored, the image must be compressed to a black and 
+        white image with a minimal number of pixels. The camera settings are also 
+        adjustable via serial terminal.
+        <br />
+        <br />
+        A major hardware/software tradeoff we had to work around was the RP2040's 
+        extremely limited memory. The microcontroller has only 264 kB of SRAM memory to 
+        work with, which wasn't even enough to store a single black and white image of 
+        640x480 resolution (the resolution of our VGA). Because of this, we had to find 
+        a way to significantly compress image data from the camera. Rather than reduce 
+        the resolution of the image, we opted to capture only the notable features of 
+        the image, such as lines and edges. This way, the image is still decently clear 
+        and recognizable, while also taking up significantly less space in memory. 
+        Additionally, this has the added benefit of capturing the notable features 
+        that may be needed for object detection. Another possible workaround for this 
+        memory issue could be to use some form of external memory such as an SD card or 
+        external SRAM, but we did not have time or resources to implement this.
+        <br />
+        <br />
+        ArduCAM has some demo code for the camera for the RP2040, which we used as a 
+        starting point [1]. However, there were some major changes we had to make to 
+        this code to make it usable for our purposes. The demo merely takes a capture 
+        with the camera and sends it to a program on an external computer (via USB) to be 
+        displayed. We had to change this so that instead, the image is stored and 
+        processed locally on the RP2040 so that it can then be directly drawn on the VGA. 
+        This entailed not only getting rid of the USB protocols that were implemented, 
+        but also replacing the JPEG format that the demo uses with RAW8. Since JPEG is 
+        already compressed, it will be very hard to parse into pixel data, hence why we 
+        use RAW8 instead. Additionally, we referenced some code written by an MEng 
+        student, Yibo Yang, which implemented a PIO driver for the OV5642 camera to be 
+        used with the RP2040 [2]. While this code was not complete, it was a valuable 
+        resource to us for understanding how the camera interface works.
+      </ol>
+
+      <ol>
+        <h4>Program/Hardware Design</h4>
+        <hr />
+        We only had 3 main hardware components that were used in our final project: the 
+        Pico, the ArduCAM, and the VGA monitor. We connected the VGA monitor to the Pico 
+        the same way we did in Labs 2 and 3, as is shown in the schematic below. The 
+        ArduCAM has both SPI and I2C connections to the Pico which is also shown below.
+
+        <figure>
+          <img src="images/Schematic.png" 
+          width = "500"
+          height = "400"
+          style="vertical-align:middle;margin:0px 175px"
+          alt = "Schematic"/>
+          <figcaption>Schematic</figcaption>
+        </figure>
+        
+        To get started with communicating with the ArduCAM, we referenced the ArduCAM 
+        example code available on their Git (<a href="url">github.com/ArduCAM/PICO_SPI_CAM</a>). This code 
+        is set up for an RP2040 to communicate with the camera, and then forward the 
+        picture information to a computer over UART for the computer to process the image. 
+        The main part that we used this code for was the initialization of the camera, 
+        as we wanted to either send the pixel information to the VGA driver, or find a way 
+        to save important information onto the RP2040 and the rest of this code immediately 
+        forwarded compressed JPEG information to the computer to be uncompressed.
+        <br />
+        <br />
+        The other code that we used was Professor Adams' VGA graphics driver for the RP2040 
+        and the associated PIO programs. This was used as it was the quickest way for us to 
+        get set up with getting visual feedback from the ArduCAM. We also used Bruce Land's 
+        protothreads implementation to allow us to have one thread for serial communication 
+        to change camera parameters and program functionality and another thread for processing 
+        camera information. Other than those programs, we used the Pico C SDK for other 
+        functionality like SPI and I2C.
+        <br />
+        <br />
+        From examining the example code, we decided to write our main project code in C++, as 
+        the ArduCAM example code uses a camera object for its functions to control the camera, 
+        and we wanted to keep the camera controls to be similar to the examples for the highest 
+        chance of working. This decision was tricky at first, as we were attempting to add VGA 
+        functionality to the provided C++ code from ArduCAM, but we eventually found out it was 
+        easier to start with a VGA demo and changing the file type to C++ (this didn't break the 
+        functionality) and then adding the Arducam code to it. We did learn that you have to add 
+        an ' extern “C” ' to the includes when the included files are written in C and you are 
+        including it in a C++ file.
+        <br />
+        <br />
+        As for the code's structure itself, we had one thread that was for serial communication 
+        over PuTTY and another for the actual camera setup and image capturing. As we did not 
+        want our communication over serial to affect the speed of the camera transferring data 
+        to the RP2040, we only had the camera's thread yield for 5000usec, as we were willing to 
+        have the tradeoff of slow printing and user input so we could have optimal camera performance.
+        <h5>CAMERA THREAD:</h5>
+        The bulk of our coding went into the camera thread, where we handle the setup and communication 
+        with the camera, and the processing of data from the camera. This entire part of code took the 
+        most work, as the ArduCAM documentation is not very in depth, or completely missing. It took a 
+        lot of trial and error, digging through forum posts, and reading the sdk's implementation of 
+        functions to get it working.
+        <br />
+        <br />
+        At the start of this function, we reset the Complex Programmable Logic Device (CPLD) of the 
+        camera, which is done in the example code, presumably to get the camera into a known state on a 
+        new session. Then, we begin to verify the functionality of SPI and I2C. For this camera, I2C is 
+        used for changing camera parameters like brightness and contrast, while SPI is the protocol used 
+        for the data transfer of the photo information from the camera's buffer where it loads the pixel 
+        information. For checking that SPI is functional, we write a number (0x55) to the ArduCAM's test 
+        register (ARDUCHIP_TEST1 or 0x00). We then read this value and make sure that it has been changed 
+        by this writing, meaning that we have successfully completed a SPI transaction. Then, for 
+        checking the I2C communication we read the camera's model number, which is stored in two 
+        registers on the camera module over I2C. Once these two steps are finished, we know that the 
+        camera is communicating correctly.
+        <br />
+        <br />
+        The next step of startup is one that took us some time to figure out also, the format of the image. 
+        The ArduCAM documentation says that the camera can capture in RGB, RAW, and JPEG. Unfortunately, 
+        it does not seem like RGB is fully implemented in the ArduCAM sdk for the OV5640. Because of this, 
+        we decided to set the camera's format to RAW, which is the RAW8 image format. This image format 
+        has 2 bitx for red, 2 bits for blue, and 4 bits for green. We tried for a while to get RGB working, 
+        but it probably would have needed a significant amount of changing the sdk to get working.
+        <br />
+        <br />
+        We then enter the capture loop, which continuously happens for the rest of the program. At the start 
+        of each capture, we flush the fifo, meaning the camera clears out the buffer that the previous image 
+        (if there is one) is stored in. We then clear the fifo flag which appears when a capture is complete, 
+        and then command the camera to start taking an image. Next, we wait until the camera's bit that 
+        corresponds to a completed capture is nonzero. Then, for image processing, we can read the length 
+        of the buffer to memory, which corresponds to a 640x480 image.
+        <br />
+        <br />
+        Then, reading the data from the ArduCAM's buffer was probably the most challenging step of this 
+        process. We want to read from the fifo where the image data is stored, so we decided to do that with 
+        the ArduCAM's sdk function read_fifo. This initially didn't work, so looking into the function, we 
+        saw that it calls buss_read with the single fifo read address as the target register. Then, looking 
+        at bus_read's implementation, we were able to see that the code was there for an SPI transaction 
+        to take place, but was commented out. Once we added a SPI read to take place there, we were able 
+        to get the data for pixels out of the camera's buffer one at a time. From this point on per capture, 
+        we are able to read in data from the camera about the image, and do different actions with that data. 
+        The following are what we implemented, in the order that we implemented them and in increasing complexity:
+        <h5>Relay directly to VGA:</h5>
+        The simplest action that we took as soon as we were able to get pixel information was to send these 
+        individual pixels to the VGA screen directly through the RP2040, only processing the colors. We would 
+        loop through the length of the buffer on the camera, and for each pixel, we would do a SPI transaction 
+        to get the RAW8 information for that pixel. With this, we would have to manipulate the RAW8 data to get 
+        one bit per color, as our VGA driver only has support for 3-bit color. We did this by shifting the pixel 
+        information until we only had that color's information, and then picked the most significant bit of each 
+        of those 2-bit values. Then, we would draw that individual pixel to the screen, and move on to the next. 
+        From this, we were able to get images that had color information, and looks like as follows:
+        
+        <figure>
+          <img src="images/First_Image_Taken.png" 
+          width = "400"
+          height = "300"
+          style="vertical-align:middle;margin:0px 175px"
+          alt = "Schematic"/>
+          <figcaption>Our first image taken with the camera. Camera was facing towards the ceiling and you can 
+            make out the light and the ceiling tiles.
+          </figcaption>
+        </figure>
+
+        <h5>Black and white:</h5>
+        Being able to take images, we wanted to start to work towards being able to store information onto the 
+        RP2040, as just forwarding the pixel information to the VGA screen doesn't allow for any real use cases 
+        of the camera. Starting off, we needed a way to identify where edges in an image are. To do this, we 
+        began by noticing that around edges of objects in our color images, that there were areas of black pixels:
+        
+        <figure>
+          <img src="images/Edges_with_Arrows.jpg" 
+          width = "400"
+          height = "350"
+          style="vertical-align:middle;margin:0px 175px"
+          alt = "Schematic"/>
+        </figure>
+
+        Then, instead of calculating the colors of individual pixels, we checked if all of the red, 
+        green, and blue values were zeroed out, and then we drew that as a white pixel. All other pixels 
+        were drawn as black. This ended up giving us a good characterization of edges (images available in results 
+        section). We used this information as the starting point for both of our implementations of edge detection.
+        <h5>Simple edge detection:</h5>
+        With the knowledge of where these “edges” were in an image, we wanted to be able to save their 
+        locations onto the RP2040, as this would make the camera's information useful and could be used for 
+        computer vision applications. The hard part of this was being able to fit the image into memory on the 
+        processor. The RP2040 has 264KB of internal RAM, so when we save the pixel locations of an edge as a 
+        2D array of shorts representing the x and y coordinates of a pixel, we can only have ~22,000 locations, 
+        or ~7% of the screen. This is why we cannot save every pixel that was set as white in the previous section, 
+        it wouldn't fit. Because of this, we had to create an algorithm to determine if a pixel is worth saving 
+        into memory.
+        <br />
+        <br />
+        Our simple implementation of this was to check the previous pixels in a row, and count how many pixels 
+        in a row were detected as an edge using the black and white technique. We were able to adjust this number 
+        using our consecutive_threshold variable, that set how many pixels in a row were needed for a pixel's 
+        position to be saved:
+
+        <figure>
+          <img src="images/simpleedge.png" 
+          width = "400"
+          height = "400"
+          style="vertical-align:middle;margin:0px 175px"
+          alt = "Schematic"/>
+          <figcaption>Simple edge detection with consecutive_threshold = 3</figcaption>
+        </figure>
+
+        With this algorithm, we were able to put the information into a form that was able to fit onto the 
+        microcontroller. The images that this algorithm created are in the results section. Unfortunately, this 
+        fairly basic approach doesn't work in all cases. When there was an edge that was vertical, this algorithm 
+        doesn't have a way of checking consecutive pixels upwards or diagonally. Also, it would often not get a 
+        very detailed image, meaning that we weren't using as much memory in the RP2040 as we possibly could. 
+        This is why we set out to make an algorithm that was able to capture more detail in our black and white 
+        images than this one.
+
+        <h5>Detailed edge detection:</h5>
+
+        For our final algorithm, we decided to give it more information to work with when determining if a pixel 
+        should be saved. To do this, we had to allocate some space so that we could save previous rows, and then 
+        look back at them when we determined if we should save a pixel. We decided to save the previous 3 rows of 
+        black and white pixels, and then when we finished reading in 3 rows worth of information from the camera, 
+        we would go back through the middle row and check for if an edge was present at each pixel. To check, we 
+        would look at the other 8 pixels around this pixel, and if consecutive_threshold (we reused this variable 
+        from the simple algorithm) of those pixels were white, we would save that pixel location as an 
+        edge location:
+
+        <figure>
+          <img src="images/detailededge.png" 
+          width = "400"
+          height = "400"
+          style="vertical-align:middle;margin:0px 175px"
+          alt = "Schematic"/>
+          <figcaption>Complex edge detection with consecutive_threshold = 8</figcaption>
+        </figure>
+
+        We found that this algorithm was able to pick up on much more detail on an image, but had to set the 
+        consecutive threshold to check if every pixel surrounding a given pixel was white to save a location, 
+        as if it was less, we would run out of memory. One other way we tried to save on memory was to implement
+        a sort of dithering to the image when doing this type of edge detection. This was done by only allowing 
+        for a pixel to be saved if it has been a certain number of pixels from the last saved pixel. With this 
+        algorithm implemented with the dithering, we were able to save a good amount of detail in an image, which 
+        in the future could be processed for many different uses. Images are in the results section.
+        
+        <h5>SERIAL THREAD:</h5>
+        Inside of the serial thread, we allowed for a user to change the camera's settings through the provided commands 
+        in the ArduCAM sdk. We decided to allow for the user to change contrast, brightness, mirroring, light settings, 
+        and toggle test patterns. There were a few other settings that the sdk allows the user to change about the 
+        camera (special effects, hue, exposure, sharpness) but we decided that the ones that we allowed to be changed 
+        were the best ones for our use case. The rest of the commands in the serial thread are for changing the way 
+        that we handle the data coming in from the camera on the RP2040. The commands are as follows:
+        <br />
+        <br />
+        'r': Show the raw image coming in from the ArduCAM directly to the VGA, either in black and white or color 
+        (determined by 'm' command). Only processing is color to be showed on screen
+        <br />
+        <br />
+        'm': Toggle color mode on VGA, between black & white and color
+        <br />
+        <br />
+        's': Enable simple edge detection
+        <br />
+        <br />
+        'e': Enable detailed edge detection
+        <br />
+        <br />
+        'd': Adjust amount of dithering for edge detection. This will set a number of the minimum number of pixels 
+        between pixels saved in memory when saving edges to save on memory
+        <br />
+        <br />
+        'n': Adjust the threshold for edge detection, meaning that it changes the number of pixels each check for 
+        if we should save a pixel (edge) in memory. This changes the threshold for both simple and detailed edge detection.
+      </ol>
+
+      <ol>
+        <h4>Results</h4>
+        <hr />
+        Our end result was both baseline code for connecting the Raspberry Pi Pico to a camera and a working edge detection 
+        algorithm. Given the nature of the project the results are very visually-based, so we'll walk through some of the images we have.
+        <br />
+        <br />
+        Pictured below is one of the first images we generated with the camera with recognizable details. Although the colors aren't 
+        correct, which we'll remark on later, the shapes can be made out.
+        
+        <figure>
+          <img src="images/Back_of_phone.png" 
+          width = "400"
+          height = "400"
+          style="vertical-align:middle;margin:0px 175px"
+          alt = "Schematic"/>
+          <figcaption>Back of phone shown</figcaption>
+        </figure>
+
+        The next image shown is a “negative” image and is the result of converting all of the black pixels to white and all of the 
+        non-black pixels to black. This, by itself, actually creates a decent representation of the details in the image. Text can 
+        definitely be made out from these images, so it gave us a good indicator that this camera could be used for things like machine 
+        learning applications.
+
+        <figure>
+          <img src="images/Make_Hack_Code_BW.jpg" 
+          width = "400"
+          height = "400"
+          style="vertical-align:middle;margin:0px 175px"
+          alt = "Schematic"/>
+          <figcaption>ECE Sticker Shown in “negative” mode</figcaption>
+        </figure>
+
+        The images from the first implementation of edge detection got the information from the camera into a form that was able to fit on 
+        the RP2040, but there was definitely room for improvement. It didn't capture many details other than the largest details in an 
+        image, meaning that it didn't utilize all of the space that we had available to us on the RP2040. Also, it was much more likely 
+        to save edges that were horizontal or thicker vertical lines. It was a great starting point in creating an edge detection algorithm 
+        for identifying what features we wanted to save, but once we had that working, we moved on to making a better version using the 
+        more advanced implementation.
+
+        <figure>
+          <img src="images/Simple_edge_detection_results.png" 
+          width = "400"
+          height = "400"
+          style="vertical-align:middle;margin:0px 175px"
+          alt = "Schematic"/>
+          <figcaption>Jason's face using simple edge detection</figcaption>
+        </figure>
+
+        Finally, with the more advanced form of edge detection, we can see much more detail in the image being stored into the RP2040's memory. 
+        Compared to the simple edge detection, there is a lot more information that one could work with and could be used for something like 
+        text detection for computer vision.
+
+        <figure>
+          <img src="images/Detailed_edge_detection_results.jpg" 
+          width = "400"
+          height = "475"
+          style="vertical-align:middle;margin:0px 175px"
+          alt = "Schematic"/>
+          <figcaption>Jason in detailed edge detection mode</figcaption>
+        </figure>
+
+        The frame rate of the system was about 1 frame for every 2 seconds. Although this isn't particularly fast, given the limitations this isn't 
+        bad. It could also provide usable data with slow moving objects. The camera was actually surprisingly accurate in what it displayed. 
+        With more time we felt we could have debugged color to get it working correctly, but as that was not our main objective we focused our 
+        efforts on other areas. That being said the current color representation does have some amount of meaning, with most lighter colors 
+        showing up as blue, and darker colors showing up as red. There were no real safety issues to consider in our design, as direct human 
+        interaction is quite limited and voltages being worked at were quite low. We focused efforts towards the protection of our equipment from 
+        FOD and ESD by using good breadboarding techniques and keeping our space clear. Finally, the usability is pretty simple. Besides knowing a 
+        few commands to change parameters in the terminal, all that's needed is to point the camera and wait.
+      </ol>
+
+      <ol>
+        <h4>Conclusions</h4>
+        <hr />
+        In the end, we're very happy with the results from our project. One thing that we didn't expect was how long it would take to actually 
+        get the camera working with basic functionality. Our original goal for the project was eye tracking, but we quickly adjusted after 
+        seeing the difficulty. That being said, future groups can use our code as a starting point and build some sort of eye tracking algorithm 
+        from there.
+        <br />
+        <br />
+        If we were to do this project again there are a few things we would change. The first of these is to try to further integrate the
+         VGA driver into the camera program. This would allow the VGA array to be written directly from the camera to save pixel data 
+         that is to be processed. Additionally, a 4-bit color VGA driver would allow for color accuracy, as the RAW8 file format we 
+         currently use has proved difficult. Another change we could make would be implementing external memory, which could allow 
+         us to do more in depth image processing as we could save more data per frame. Finally, if we had more time we would have 
+         spent more time focusing on how to correctly represent colors. This would involve focusing more on the data we are receiving 
+         and implementing a correct conversion for our VGA driver.
+        <br />
+        <br />
+        As for intellectual property considerations, we did use code in the public domain, which was provided by ArduCAM. 
+        This is mostly example code that we had to make changes to so that it would run properly for our implementation. 
+        Overall, our group was able to get a working edge detection program interfaced with the Raspberry Pi Pico.
+      </ol>
+
+      <h3>Appendices</h3>
+      <br />
+      <ol>
+        <h4>Appendix A (permissions)</h4>
+        <hr />
+        "The group approves this report for inclusion on the course website."
+        <br />
+        <br />
+        "The group approves the video for inclusion on the course youtube channel."
+      </ol>
+
+      <ol>
+        <h4>Appendix B (code)</h4>
+        <hr />
+        Github Link: <a href="url"> https://github.coecis.cornell.edu/gjt29/ECE4760-ArduCAM-OV5642-Public</a>
+        <br />
+        Most of the code we worked on is in cam_vga/2040camera.cpp
+      </ol>
+
+      <ol>
+        <h4>Appendix C (Work Division)</h4>
+        <hr />
+        Hardware/Code/Testing: Noah, Jason, Grace
+        <br />
+        <br />
+        Report:
+        <br />
+        Intro and high level design: Grace
+        <br />
+        Program/hardware design: Jason
+        <br />
+        Results/conclusion: Noah
+      </ol>
+
+      <ol>
+        <h4>Appendix D (references)</h4>
+        <hr />
+        [1] Arducam 5MP Plus OV5642 Mini Module Camera Shield SPI camera module for Arduino Uno MEGA2560 
+        Board & Raspberry Pi Pico. Arducam. (2023, May 7).
+        <a href="url"> https://www.arducam.com/product/arducam-5mp-plus-spi-cam-arduino-ov5642/</a>
+        <br />
+        Software Documentation: <a href="url"> https://www.arducam.com/downloads/shields/ArduCAM_Camera_Shield_Software_Application_Note.pdf</a>
+        <br />
+        Code: <a href="url"> https://github.com/ArduCAM/PICO_SPI_CAM/tree/master</a>
+        <br />
+        Tutorial: <a href="url"> https://docs.arducam.com/Arduino-SPI-camera/Legacy-SPI-camera/Pico/Camera-Module/SPI-Camera/</a>
+        <br />
+        <br />
+        [2] Yang, Y. (n.d.). DESIGNING A CAMERA MODULE DRIVER USING PROGRAMMABLE I/O ON PI PICO RP2040. School of Electrical and 
+        Computer Engineering of Cornell University. (2022, Dec.) <a href="url"> https://vanhunteradams.com/6930/Yibo_Yang.pdf</a>
+        <br />
+        Code: <a href="url"> https://github.com/thomasyyb/PiPico/tree/master</a>
+      </ol>
+
+      <style>
+        img {
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        figcaption {
+          background-color: white;
+          color: black;
+          font-style: italic;
+          padding: 2px;
+          text-align: center;
+        }
+      </style>
+    </section>
+  </body>
+</html>
