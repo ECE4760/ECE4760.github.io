@@ -1,0 +1,480 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Starter Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <!-- <link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet"> -->
+
+    <!-- Custom styles for this template -->
+    <link href="starter-template.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <!-- <script src="../../assets/js/ie-emulation-modes-warning.js"></script> -->
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Etch-A-Sketch</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#intro">Introduction</a></li>
+            <li><a href="#obj">Project Objective</a></li>
+            <li><a href="#design">High-level design</a></li>
+            <li><a href="#programdesign">Program/Hardware design</a></li>
+            <li><a href="#result">Results</a></li>
+            <li><a href="#conclusion & future work">Conclusions & Future Work</a></li>
+            <li><a href="#appendix">Appendix</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+
+      <div class="starter-template">
+        <h1>Etch-A-Sketch</h1>
+        <p class="lead">ECE5730 Final Project<br>A Project By Spencer Davis (sd954), Ming He (hh759), Joash Shankar (jcs556)</p>
+      </div>
+
+      <hr>
+      <div class="center-block">
+          <iframe width="640" height="360" src="https://www.youtube.com/embed/LVCq2VqcC4U" frameborder="0" allowfullscreen></iframe>
+          <h4 style="text-align:center;">Demonstration Video</h4>
+      </div>
+
+      <hr id="intro">
+      <div>
+            <h2 style="text-align:left; padding: 0px 26px;">Introduction</h2>
+            <p style="text-align: left;padding: 0px 30px;">We have created an experience similar to the Etch-A-Sketch toy using the Raspberry Pi Pico as the host. This final project uses various aspects and peripherals introduced in all three laboratory assignments. From the first lab, we used our knowledge of <a href="https://vanhunteradams.com/DDS/DDS.html" target="_blank">(direct digital synthesis)</a> for sound generation, <a href="https://vanhunteradams.com/Pico/Keypad/Keypad.html" target="_blank">(button debouncing)</a> for user input on a keypad, and <a href="https://vanhunteradams.com/FixedPoint/FixedPoint.html" target="_blank">(fixed point arithmetic)</a> for fast computation of floating point numbers. From the second lab, we have pulled knowledge of the <a href="https://vanhunteradams.com/Pico/VGA/VGA.html" target="_blank">(VGA driver)</a> to allow the user to see what they are drawing on a screen. We have integrated the <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master/Sensors/MPU6050_IMU_Demo" target="_blank">(IMU)</a>  into our design from the final lab to allow for the shake-and-erase feature of a typical Etch-A-Sketch.
+                <br><br>Our Etch-A-Sketch “game” offers the user an extended suite of tools previously unavailable to someone using an Etch-A-Sketch toy. We have added the ability to place filled or outlined pre-drawn shapes to aid artistic ingenuity. The user can also change the cursor's color, allowing up to 10 different hues.
+                <br><br>This project utilizes a few peripherals offered by the RP2040, such as the PIO state machines and DMA, to name a few. These Co-processors free up the main processor’s time, allowing it to compute more difficult tasks in parallel.
+                <br><br>The user has four means of interacting with the Etch-A-Sketch. The first two potentiometers control the cursor's x and y positions. As the user turns the potentiometers, the cursor will move accordingly, with the left potentiometer controlling the x coordinate and the right controlling the y. The third is a keypad where the user can navigate a menu and select the various options, such as cursor color, pre-drawn shapes, and shape fill. Lastly, the user can shake the device to erase the contents of the drawing space.                
+            </p>
+      </div>
+    <hr id='obj'>  
+          <h2 style="text-align:left; padding: 0px 26px;">Project Objective:</h2>
+          <p style="text-align: left;padding: 0px 30px;">    
+            This project aimed to design and implement the Etch-A-Sketch on a Raspberry Pi Pico. This version would offer extended capabilities offering the user the ability to place pre-drawn shapes to aid in the ease of drawing. 
+        </p>
+    <div class="row" style="text-align:center;">
+        <div class="col-md-6" style="font-size:16px">
+          <img src="pics/play-station.jpg" alt="play handle diagram picture" >
+          <h4 style="margin-top: 25px">Project Model</h4>  
+        </div>
+
+        <div class="col-md-6" style="font-size:16px">
+            <img src="pics/VGA-screen.jpg" alt="VGA screen picture">
+            <h4>VGA Screen</h4>  
+        </div>
+    </div>
+
+
+    <hr id='design'>
+
+        <div>
+            <h2 style="text-align:left; padding: 0px 26px;">High-level Design</h2>
+            <h4 style="text-align: left;padding: 0px 30px;">Rationale and sources of project idea</h4>
+            <p style="text-align: left;padding: 0px 30px;">
+                We decided to create this well-known toy at a digital level, particularly intrigued by thinking how we can use potentiometers as cursors and the IMU to clear the screen, while also providing the nostalgia this kid’s toy invokes.
+            </p>
+
+            <h4 style="text-align: left;padding: 0px 30px;">Background math</h4>
+                <ul style="text-align: left;padding: 0px 50px;">
+                    <li> Drawing menus</li>
+                    <ul style="text-align: left;padding: 0px 60px;">
+                            <li>
+                                Grid calculation: We divide the drawing menu into a 3x4 grid, as part of organizing and displaying our main menu, color menu, and shapes menu. To achieve this, we calculate the width, rectWidth, and height, rectHeight, of each grid cell by dividing the overall dimensions of the rectangle area reserved for the menu by 3 and 4, respectively. 
+                            </li>
+                            <br>
+                            <li>
+                                Positioning squares: For positioning squares within each cell of the grid, the program calculates the top-left coordinates (squareX, squareY) for each cell. It does this by adding the product of the column or row number with the width or height of a cell to the rectangle's starting position (rectX, rectY). This ultimately helps us place each menu item (text or shapes) within its designated cell.
+                            </li>
+                            <br>
+                            <li>
+                                Displaying text and colors: The display of text and colors within these grid cells is managed through arrays that store the text labels and corresponding color values (colors and colorValue, respectively). Each piece of text is then displayed in the center of its respective grid cell. The positioning is calculated to be vertically central within the cell. This involved determining the vertical midpoint of each cell and then positioning the text accordingly. To do this, we first calculated the height of each cell in the grid by dividing the total height of the rectangle area (rectHeight) by the number of rows in the grid; so in our case, we divide rectHeight by 4. Then for each cell, to find the vertical midpoint, we take the top Y-coordinate of the cell (squareY) and add half of the cell’s height to it. Then, when displaying text in a cell, we use this calculated vertical midpoint as the Y-coordinate for the text. In terms of horizontal alignment, since each text is of a different length, we simply eyeball the text being centered by adding spaces in front of the text string. Additionally, the text in each cell is rendered in a color that corresponds to its value in the color array, essentially providing a visual to the user about the color they select. To do this, we take the colorValue array that stores the actual color values, where each element in this array represents a color code. Then we take the colors array that stores the text labels corresponding to the colors. It’s important to note that we align these two arrays in terms of indexing and use the same index to access both arrays i.e. if colors[0] is “Red”, then colorValue[0] would be the color code for red. We finally draw text in the square corresponding to its color by use of our custom drawText function, which call as: drawText(colors[row*3 + col], squareX, textY, colorValue[row*3 + col]). colors[row*3 + col] and colorValue[row*3 + col] are how the text is drawn and color is rendered, respectively. The row*3 + col calculation selects the correct text and appropriate color based on the current grid position, respectively, to ensure the color of the text matches the intended color for that grid cell. squareX is the x-coordinate where the text will start to be drawn i.e. horizontal position of text on the screen. textY is the y-coordinate for the text i.e. the calculated vertical center of the cell. 
+                            </li>
+                            <br>
+                            <li>
+                                Adding shapes: Based on shape drawing, we use the center point of each grid cell as a reference to draw the 9 different shapes.
+                            </li>
+                            <br>
+                    </ul>
+                    <li> Adding shapes</li>
+                    <ul style="text-align: left;padding: 0px 60px;">
+                            <li>In terms of adding shapes to the drawing area, we first define the maximum size for each shape which is important to ensure that the shapes fit within the designated drawing boundaries. The position where the shape will be drawn is adjusted based on the current coordinates (x_coord, y_coord), read in from the potentiometer. This adjustment is important to keep the shapes within the confines of the drawing area (leftWall, rightWall, topWall, bottomWall). 
+                            </li>
+                    </ul>
+                    <br>
+                    <li> Shape drawing</li>
+                    <ul style="text-align: left;padding: 0px 60px;">
+                            <li>Users can place nine pre-defined shapes. Four shapes were able to be drawn using predefined functions (drawRect for two of our rectangles and one square, drawCircle for one circle). The other more complex five shapes (equilateral triangle, right triangle, pentagon, diamond, and star) were created using custom functions where we make use of the drawLine() to draw the shapes. Each complex shape function takes specific coordinates and a color as parameters. The specific coordinates represent a reference point of a vertex of a shape, which is the reference point with which to draw the rest of the shape. To fine-tune the exact coordinates and dimensions of these shapes, we mainly used a trial-and-error approach while using mental math for where to draw lines for creating the shape. We began by defining an approximate center (x,y) for each shape, which are the specific coordinates passed into each call of drawTriangle(), drawPentagon(), etc. The process of drawing each shape involved conceptualizing how each shape should look and then approximating the coordinates for where each line should begin and end, starting with the reference point vertex. These mental calculations of where to draw the lines to and from entailed estimating where the lines should start and end (and keeping the lengths of these lines proportional but for the most part these were the same length) and then tweaking the line coordinates and adjusting them until the shapes looked correct.
+                            </li>
+                    </ul>
+                    <br>
+                    <li> Filled shapes</li>
+                    <ul style="text-align: left;padding: 0px 60px;">
+                            <li>We have a boolean variable, fillShapes, which determines whether shapes should be filled or not. This variable is toggled by user input on the main menu, triggered when clicking the “2” on the keypad. This is visually seen as text underneath the menu “Filled In” or “Not Filled In” based on whether fillShapes is true or false. Within our drawShapesMenu(), we add conditional logic based on the status of the fillShapes, and the same logic applies when adding a shape onto the drawing area in addShape(). The conditional logic simply states that for each shape if fillShapes is true, call the function to fill in the shape as opposed to outlining the shape. It’s important to note that we only filled in the four shapes that had predefined functions (fillRect() for the two rectangles and one square; fillCircle() for the one circle). While it is certainly possible to develop algorithms to fill the other shapes, we encountered significant mathematical complexity in these tasks. Creating fill algorithms for shapes beyond basic rectangles and circles requires more complex calculations. For instance, filling a pentagon or a star involves determining the internal area boundaries and efficiently coloring these without overlapping or leaving gaps. Such calculations go beyond standard line-drawing algorithms and venture into more advanced geometry. Given these complexities, we decided to prioritize other features and functionalities for the scope of this project.
+                            </li>
+                    </ul>
+<br>
+                    <li> Dragging and Dropping Shapes</li>
+                    <ul style="text-align: left;padding: 0px 60px;">
+                            <li>The process of reading the potentiometer values and displaying them on the VGA screen is the same, where we first read values from the potentiometers connected to the ADC channels (via read_pots()) and then map these values to screen coordinates on the VGA screen (via map_value()). When the user wants to select a shape, they click on the shapes menu and the current shape selected will be tracked based on what button the user pressed (currShape variable that tracks which shape is selected which maps to the keypad button pressed within processButtonPressed()). So when a shape is selected (currShape is not “NoShape”), we used the potentiometer-based coordinates, x_coord and y_coord, to determine where on the screen the shape should be placed. In terms of drawing and redrawing shapes as the user is selecting them, the protothread_vga thread continuously checks if a shape is selected and, if so, calls addShape() to draw the shape at the current coordinates. Regarding the dragging effect, where once a user selects a shape they can drag it around using the potentiometers, we moreso create an illusion of this occurring as we redraw the shape at new coordinates every time the potentiometer values change. This is implemented by continuously updating x_coord and y_coord in read_pots() and redrawing the shape in addShape(). Before any shape is moved, the current state of the screen where the shape is currently is stored in vga_data_array_old. This array stores the previous state of the screen, which is what allows the program to restore it before redrawing a shape at a new position. This also ensures we are only dragging and dropping one shape, as opposed to leaving a trail of shapes across the screen. Additionally, pasteRect() is called after moving the shape to essentially erase any old pixel data on the screen (such as a shape being moved) and restore the background of that screen area.
+                            </li>
+                    </ul>
+                    <br>
+                    <li> Sound Dirac Delta discovery </li>
+                    <ul style="text-align: left;padding: 0px 60px;">
+                            <li>While tearing a piece of a paper towel to dry my hands, I found that the sound of that rip was fairly similar to the sound we desired to generate when the user shook the device to clear the screen (like the sand rattling around an etch-a-sketch). I opened a spectrogram app to capture the sound and dissect the frequencies present and was surprised to find all frequencies were present. We used direct digital synthesis to generate this sound, but for the frequency generation, we generated noise using the rand function. We chose to generate frequencies between 1000 Hz and 8000 Hz. This range was chosen based on trial and error, originally picking between 1000 and 20000 Hz and narrowing down until we liked the sound generated.
+                            </li>
+                    </ul>
+                    <br>
+                    <style>
+                        .image-container {
+                            width: 50vw; /* Adjust the width as needed */
+                            height: 25vw; /* Adjust the height as needed */
+                            overflow: hidden; /* Hide parts of the image outside the container */
+                            margin: auto; /* Center the container */
+                            display: block; /* Ensure the container is a block-level element */
+                        }
+
+                        .image-container img {
+                            width: 100%;
+                            height: 90%;
+                            object-fit: cover; /* Resize the image to cover the container */
+                            object-position: 40% 35%; /* Center the image within the container */
+                        }
+                    </style>
+                    <li> Debouncing buttons 
+                        <div class="image-container" style="text-align:center;">
+                                <img src="pics/debouncing.svg" alt="Debouncing State Machine">
+                            <h4 style="margin-top: 0; margin-bottom: 10px;">Debouncing State Machine</h4>
+                        </div>
+                    </li>
+                </ul>
+
+            <h4 style="text-align: left;padding: 0px 30px;">Logical Structure</h4>
+            <p style="text-align: left;padding: 0px 30px;">
+                The program starts by initializing the various communication protocols, drivers and (non-preemptive round-robin scheduler) we use for threads. Our Raspberry Pi communicates with the DAC via SPI, and with the IMU via I2C. The program has 3 threads. The first thread is responsible for getting IMU accelerometer values and ADC values. It does this every 20000 micro seconds. The second thread is responsible for debouncing keypad presses. The last thread is responsible for drawing at the cursor and is signaled by the thread that gets ADC values. 
+                <br><br>Below is a list of all functions present in our program as well as important variables that govern our code behavior.
+            </p>
+
+            <style>
+                table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  table-layout: fixed; /* This can help prevent overly wide tables */
+                }
+              
+                th, td {
+                  border: 1px solid #ddd;
+                  padding: 10px; /* Add more padding for a better look */
+                  text-align: left;
+                  word-wrap: break-word; /* Ensures text wraps to avoid stretching the cell too wide */
+                }
+              
+                th {
+                  background-color: #f4f4f4;
+                  font-weight: bold;
+                }
+              
+                tr:nth-child(even) {
+                  background-color: #f9f9f9; /* Zebra striping for rows */
+                }
+            </style>
+
+            <table border="1" style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                    <td>main()</td>
+                    <td>This function is responsible for initializing on-board peripherals as well as the second core and non-preemptive round-robin scheduler. This also sets up the repeating timer for sound generation.</td>
+                    </tr>
+    
+                    <tr>
+                    <td>core1_entry()</td>
+                    <td>This is responsible for setting up the scheduler on the second core.</td>
+                    </tr>
+    
+                    <tr>
+                    <td>accelAndADCThread()</td>
+                    <td>This thread is responsible for getting a new accelerometer magnitude from the IMU, and new x/y coordinates from the potentiometers. This thread runs every 20,000 microseconds.</td>
+                    </tr>
+    
+                    <tr>
+                    <td>repeating_sound_timer_callback()</td>
+                    <td>This 40 kHz  repeating timer is responsible for generating sound when the user shakes the board, erasing the screen.</td>
+                    </tr>
+
+                    <tr>
+                    <td>protothread_vga()</td>
+                    <td>This thread is responsible for drawing the cursor at the location indicated by the potentiometers. This thread is signaled by accelAndADCThread() through a semaphore called vga_semaphore. </td>
+                    </tr>
+
+                    <tr>
+                    <td>protothread_debounce()</td>
+                    <td>This thread is responsible for debouncing the
+                        button. If the thread determines that the
+                        button has been pressed, it will verify by
+                        iterating through the debouncing state
+                        machine. Once it is confirmed the button has
+                        been pressed and is stable, the current button that is pressed is passed to processButtonPress. </td>
+                    </tr>
+
+                    <tr>
+                    <td>processButtonPress()</td>
+                    <td>This function takes the button that was pressed on the keypad as an input and determines based on a case structure what action should be taken. Depending on the menu the user is in, various keys can have multiple meanings. For example, in FIGURE XXX, if the user is on the color screen, button 1 would mean they would like to select the color Red, but on the shapes screen, it would mean they would like to select the wide rectangle. This main menu they are on is monitored using the variable currentMenueState and depending on that, the appropriate action is taken. </td>
+                    </tr>
+
+                    <tr>
+                    <td>keypadConfig()</td>
+                    <td>This function initializes the various GPIO pins responsible for the keypad’s functionality.</td>
+                    </tr>
+
+                    <tr>
+                    <td>spiConfig()</td>
+                    <td>This function is responsible for setting up the SPI channel for communication with the DAC.</td>
+                    </tr>
+
+                    <tr>
+                    <td>init_adc()</td>
+                    <td>This sets up the two adc channels that control the x and y position of the cursor.</td>
+                    </tr>
+
+                    <tr>
+                    <td>read_adc()</td>
+                    <td>This function reads a specific ADC channel and returns the value read by the processor.</td>
+                    </tr>
+
+                    <tr>
+                    <td>map_value()</td>
+                    <td>This function converts ADC readings to x and y coordinates.</td>
+                    </tr>
+
+                    <tr>
+                    <td>read_pots()</td>
+                    <td>This function reads the value of both potentiometers by calling read_adc and map_value.</td>
+                    </tr>
+
+                    <tr>
+                    <td>drawBounds()</td>
+                    <td>This draws the white box around where the user draws.</td>
+                    </tr>
+                    
+                    <tr>
+                    <td>drawSideMenu / drawColorMenu / drawShapesMenu()</td>
+                    <td>These functions draw the menu on the right half of the screen.</td>
+                    </tr>
+                                        
+                    <tr>
+                    <td>soundConfig()</td>
+                    <td>This function generates the sin table and amplitude modulation variables use for sound generation.</td>
+                    </tr>
+
+                    <tr>
+                    <td>drawTriangle / drawPentagon / drawDiamond / drawStar / drawRightTriangle()</td>
+                    <td>These helper functions draw their respective shapes at the cursor’s position.</td>
+                    </tr>
+
+                    <tr>
+                    <td>clearMenu()</td>
+                    <td>This function erases the current menu in preparation for a new one.</td>
+                    </tr>
+
+                    <tr>
+                    <td>changeColor()</td>
+                    <td>This function maps keypad presses to specific colors.</td>
+                    </tr>
+
+
+                    <tr>
+                    <td>addShape()</td>
+                    <td>This function processes keypad entry and converts it to a shape. It also handles out-of bounds placing to prevent any part of the shape from moving outside of the drawing screen.</td>
+                    </tr>
+
+
+                    <tr>
+                    <td>getRandomInteger()</td>
+                    <td>This function gets a random integer.</td>
+                    </tr>
+
+                    <tr>
+                    <td>copyRect / pasteRect()</td>
+                    <td>These functions are responsible for copying a section of the screen and pasting it back from vga_data_array_old.</td>
+                    </tr>
+
+
+                    <tr>
+                    <td>copyPixel / pastePixel()</td>
+                    <td>These functions copy and paste specific pixels to and from vga_data_array_old.</td>
+                    </tr>
+
+                    <tr>
+                    <td>x_coord / y_coord</td>
+                    <td>These are the x and y coordinates of the cursor. </td>
+                    </tr>
+
+                    <tr>
+                    <td>currShape</td>
+                    <td>This is the current shape the user has selected.</td>
+                    </tr>
+
+                    <tr>
+                    <td>currColor</td>
+                    <td>This is the current color the user has selected.</td>
+                    </tr>
+
+                    <tr>
+                    <td>currentMenuState</td>
+                    <td>This is the current menu shown on the right half of the screen.</td>
+                    </tr>
+
+                    <tr>
+                    <td>vga_data_array_old</td>
+                    <td>This is the double buffer of the section of the screen the user is drawing. This allows the user the ability to move a shape around the screen without destroying the contents of the screen.</td>
+                    </tr>
+
+                    <tr>
+                    <td>isShaken</td>
+                    <td>This indicates that the user has shaken the board.</td>
+                    </tr>
+
+                    <tr>
+                    <td>fillShapes</td>
+                    <td>This indicates the user has selected the option to draw filled shapes.</td>
+                    </tr>
+
+                </tbody>
+                </table>
+        </div>
+        <hr id='programdesign'>
+        <div>
+            <h2 style="text-align:left; padding: 0px 26px;">Program/Hardware Design</h2>
+            <h3 style="text-align:left; padding: 0px 30px;">Program Details</h3>
+
+            <h4 style="text-align: left;padding: 0px 30px;">VGA data array</h4>
+            <ul style="text-align: left;padding: 0px 50px;">
+                <li>To allow the user to select a pre-drawn shape and move it around the screen without affecting the contents of the screen, we needed to double-buffer the VGA data array. The VGA data array is an array of chars containing the pixel data for what is displayed on the screen. Each char contains the data for two pixels. The flow for adding this functionality is as follows. When the user selects a pre-drawn shape, copy the VGA data array into a secondary array (VGA_data_old) and draw the shape. As the user moves the pre-drawn shape around the screen, update the VGA data array with the contents of the VGA_data_old and redraw the shape. The easiest way to allow the user to move a shape around the screen would be to copy the entire VGA data array into VGA_data_old, however, the RPI Pico does not have enough memory to do so. Instead, what needed to be done was copy the section of the screen that the user would be drawing in. This is a better solution, as we would only be copying the contents of the screen that needed to be copied, and we significantly reduced the overall memory usage.</li> 
+            </ul>
+            <h4 style="text-align: left;padding: 0px 30px;">Translating the analog input from potentiometers to precise screen coordinates for smooth cursor movement</h4>
+            <ul style="text-align: left;padding: 0px 50px;">
+                <li>This entails first reading the pot values, where the x-axis and y-axis control are connected to the ADC channels of the Pico. When the potentiometer dials are turned, the resistance is varied, changing the voltage at the output, which the ADC reads. The ADC converts this to digital values. The Pico’s ADC resolution of 12 bits, 8.7 of which are non-noise. Once the ADC values are obtained, we map this to the VGA screen. This is done in map_value(), which takes the ADC value and maps it to a coordinate on the screen. To scale the value in map_value(), we scale the input value from its original range (0 to adcMax) to the target range (min_out to max_out). The equation we used is:  <i>value * max_out - min_out / adcMax</i>
+                </li> 
+            </ul>
+    
+            <h4 style="text-align: left;padding: 0px 30px;">Hardware details</h4>
+            <ul style="text-align: left;padding: 0px 50px;">
+                <li>Our hardware circuitry is designed for easy replication, as detailed in our schematic diagram. The design includes a Raspberry Pi Pico microcontroller board, which interfaces with a DAC to display audio using the SPI protocol. It also incorporates an IMU MPU 6050 for detecting shakes to clear the screen, utilizing the I2C protocol. A keypad is integrated for navigating menus and selecting options, functioning through monitoring inputs on GPIO pins. Additionally, two potentiometers are employed to control the direction of movement and adjust the x and y positions by reading ADC channel values. Finally, the setup includes a VGA screen connector, which is essential for displaying the game on a monitor.
+                </li> 
+            </ul>
+
+            <div style="text-align:center;">
+                <img src="pics/schematic.png" alt="hardware schematic">
+                <h4 style="margin-top: 25px">Hardware Schematic</h4>
+            </div>
+        </div>
+
+    <hr id='result'>
+
+      <div>
+            <h2 style="text-align:left; padding: 0px 26px;">Results</h2>
+            
+            <h4 style="text-align: left;padding: 0px 30px;">Speed of execution</h4>
+            <ul style="text-align: left;padding: 0px 50px;">
+                <li>Two issues arise regarding flicker and jitter. One is when dragging filled-in shapes, the shape constantly flickers, which most likely arises because the program must erase the old shape and redraw it at a new location. The other issue arises in drawing lines when controlling the potentiometers. If the readings are stationary or not, there is a jitter to draw random pixels about the actual location of the potentiometer reading. This is due to noise caused by the potentiometers and could be removed by purchasing better quality components.</li> 
+                <li>We also use multicore processing (multicore_launch_core1()), which allows for different tasks to be executed simultaneously on different cores of the RP2040 utilizing a semaphore (vga_semaphore) and protothreads to handle multiple tasks concurrently (such as reading sensor data and updating the display).</li>
+                <li>Our primary “physical” user interactiveness comes when the user navigates through the different menus using the keypad. The debouncing logic ensures button presses are accurately registered without false triggers and without adding any noticeable delay.                 </li>
+            </ul>
+            
+            <h4 style="text-align: left;padding: 0px 30px;">Accuracy</h4>
+            <ul style="text-align: left;padding: 0px 50px;">
+                <li>We make use of fixed-point arithmetic, specifically for handling calculations with acceleration data and in the sound synthesis process, to offer more precision in our calculations. </li> 
+                <li>We also use DDS for sound generation (of clearing the screen) with a phase accumulator and sine table lookup. The frequency accuracy here depends on the size of the sine table (256) and the sampling rate (40000 Hz). This results an accumulator accracy of 9.31 uHz.                </li>  
+                <li>We control the VGA display using GPIO pins on the RP2040, where the timing accuracy is largely dependent on the RP2040’s clock speed and how well the VGA driving code is optimized.                 </li>
+                <li>We properly map the ADC values to screen coordinates in map_value(), which accurately reflect the range and sensitivity of the potentiometers. If we misalign this mapping, there could be imprecise cursor movement or inaccurate readings being displayed (for example, turning the knob and the readings jump inconsistently instead of giving a relatively smooth line)                </li>
+            </ul>
+
+            <h4 style="text-align: left;padding: 0px 30px;">Safety in the design</h4>
+            <ul style="text-align: left;padding: 0px 50px;">
+                <li>Our debouncing logic ensures safety regarding reliable input from the keypad, as it filters out noise that could occur when a button is pressed or released. Using a time delay in the debouncing thread (PT_YIELD_usec(30000)) provides enough time for the button to stabilize.</li> 
+                <li>In drawing functions and ADC-to-screen mapping, we check to ensure that drawing operations and shape placements stay within the defined screen boundaries. This would prevent errors like buffer overflows, which could lead to some possible unpredictable behavior or program crashes.</li>  
+                <li>To prevent the user from prodding, pricking, or shocking themselves, the device is placed inside a box and the user only has access to parts that should be interacted with.</li>
+            </ul>
+
+            <h4 style="text-align: left;padding: 0px 30px;">Inclusivity</h4>
+            <ul style="text-align: left;padding: 0px 50px;">
+                <li>To extend usability to those with color vision deficiency, printing out the color selected by the user mitigates the issues that could be encountered.</li> 
+            </ul>
+
+
+      </div>
+
+    <hr id='conclusion & future work'>
+
+    <div>
+        <h2 style="text-align:left; padding: 0px 26px;">Conclusions & Future Work</h2>
+        
+        
+        <p style="text-align: left;padding: 0px 30px;">Our design meets the expectations set in the proposal. A future improvement our group would like to include is additional filled-in shapes. The few shapes that were filled in were able to be generated quite easily, but due to time constraints, shapes like the star or the triangle were not given this feature. Second, our group would like to use the DMA channels to move data from the ADC’s to the program without CPU cycles. There isn’t an inherent reason to do so as the program runs into no timing issues, it would just be interesting to do.</p>
+
+        <h4 style="text-align: left; padding: 0px 30px;">Intellectual property considerations</h4>
+        <ul style="text-align: left; padding: 0px 50px;">
+            <li>Did you reuse code or someone else's design?</li>   
+            <p style="text-align: left; margin-left: 10px;">The code for this lab was either developed using previous laboratory assignments written by Professor Land and Professor Adamns as a starting point or was entirely developed for this assignment.</p>
+            <p style="text-align: left; margin-left: 10px;">Professor Land: <a href="https://people.ece.cornell.edu/land/courses/ece4760/RP2040/C_SDK_vga16_protothreads/index_vga_Protothreads.html" target="_blank"> 4 - Bit Color </a>  </p>
+            <p style="text-align: left; margin-left: 10px;">Course Code: <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master/Sensors/MPU6050_IMU_Demo" target="_blank"> IMU Interface, </a> <a href="https://vanhunteradams.com/Pico/Keypad/Keypad.html" target="_blank"> Debouncing, <a href="https://vanhunteradams.com/FixedPoint/FixedPoint.html" target="_blank"> Fixed Point Arithmetic, </a> <a href="https://people.ece.cornell.edu/land/courses/ece4760/RP2040/C_SDK_protothreads/index_Protothreads.html" target="_blank"> Protothreads, </a> <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master/Audio/d_Audio_Beep_Synthesis_Single_Core" target="_blank"> Direct Digital Synthesis </a></a> </p>
+
+            <li>Are you reverse-engineering a design? How did you deal with patent/trademark issues?</li>
+            <p style="text-align: left; margin-left: 10px;">We have made a device similar to the Etch-A-Sketch, but since we have included several different features and made a completely different interface, we are not infringing upon trademark rights. However, because of this, this project is neither patentable nor sellable.</p>
+        </ul>
+    </div>
+
+    <hr id ='appendix'>
+
+        <div>
+            <h2 style="text-align:left; padding: 0px 26px;">Appendix A</h2>
+            <p style="text-align: left;padding: 0px 30px;">
+                The group approves this report for inclusion on the course website.
+                The group approves the video for inclusion on the course youtube channel.
+            </p>
+        </div>
+
+        <div>
+            <h2 style="text-align:left; padding: 0px 26px;">Additional Appendices</h2>
+            <a href="../jcs556_sd954_hh759/etchASketch.zip" download="file.zip" style="text-align:left; padding: 0px 30px;">Download etchASketch code ZIP File</a>
+        </div>
+        
