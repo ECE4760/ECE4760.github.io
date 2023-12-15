@@ -1,0 +1,50 @@
+;Parth Sarthi Sharma (pss242@cornell.edu)
+;SPI driver for TFT
+
+.program spi_cpha0_cs ;Program name
+.side_set 1 ;Set 1 pin for sideset
+
+; Drive SPI
+; Pin assignments:
+; - SCK is side-set bit 0
+; - MOSI is OUT bit 0 (host-to-device)
+
+.wrap_target ;Free 0 cycle unconditional jump
+bitloop: ;Bitloop label
+public entry_point: ;The entry point for the program
+    out pins, 1        side 0x0 [1] ;Output the bit on pin, sideset the clock
+    jmp x-- bitloop    side 0x1 [1] ;Jump to bitloop if bit counter still available
+
+    out pins, 1        side 0x0 ;Output the bit on pin, sideset the clock
+    mov x, y           side 0x0     ;Reload bit counter from Y
+    jmp !osre bitloop  side 0x1 [1] ;Fall-through if TXF empties
+
+    irq 0              side 0x0 [1] ;Set IRQ 0 flag
+.wrap
+
+;Helper function
+
+% c-sdk {
+#include "hardware/gpio.h" //The hardware GPIO library
+static inline void pio_spi_cs_init(PIO pio, uint sm, uint prog_offs, uint n_bits, int clkdiv, bool cpha, bool cpol, uint pin_sck, uint pin_mosi){ //The PIO SPI initialize functions
+    pio_sm_config c = spi_cpha0_cs_program_get_default_config(prog_offs); //Get default configurations for the PIO state machine
+    sm_config_set_out_pins(&c, pin_mosi, 1); //Set the 'out' pins in a state machine configuration
+    sm_config_set_sideset_pins(&c, pin_sck); //Set the 'sideset' pins in a state machine configuration
+    sm_config_set_out_shift(&c, false, true, n_bits); //Setup 'out' shifting parameters in a state machine configuration
+    sm_config_set_clkdiv(&c, clkdiv); //Set the state machine clock divider
+
+    pio_sm_set_pins_with_mask(pio, sm, 0, (1u << pin_sck) | (1u << pin_mosi)); //Use a state machine to set a value on multiple pins for the PIO instance
+    pio_sm_set_pindirs_with_mask(pio, sm, (1u << pin_sck) | (1u << pin_mosi), (1u << pin_sck) | (1u << pin_mosi)); //Use a state machine to set the pin directions for multiple pins for the PIO instance
+    pio_gpio_init(pio, pin_mosi); //Setup the function select for a GPIO to use output from the given PIO instance
+    pio_gpio_init(pio, pin_sck); //Setup the function select for a GPIO to use output from the given PIO instance
+    //pio_gpio_init(pio, pin_sck + 1); //Setup the function select for a GPIO to use output from the given PIO instance
+    gpio_set_outover(pin_sck, cpol ? GPIO_OVERRIDE_INVERT : GPIO_OVERRIDE_NORMAL); //Set GPIO output override
+	
+
+    uint entry_point = prog_offs + spi_cpha0_cs_offset_entry_point; //The offset entry point
+    pio_sm_init(pio, sm, entry_point, &c); //Resets the state machine to a consistent state, and configures it
+    pio_sm_exec(pio, sm, pio_encode_set(pio_x, n_bits - 2)); //Put n_bits - 2 in pio_x
+    pio_sm_exec(pio, sm, pio_encode_set(pio_y, n_bits - 2)); //Put n_bits - 2 in pio_y
+    pio_sm_set_enabled(pio, sm, true); //Enable or disable a PIO state machine
+}
+%}
