@@ -1,0 +1,100 @@
+<!DOCTYPE HTML>
+<!--
+	Editorial by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>ECE4760 Final Project</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<div id="main">
+						<div class="inner">
+
+							<!-- Header -->
+								<header id="header">
+									<a href="index.html" class="logo"><strong>Stickman Ninja</strong> </a>ECE4760 Final Project
+								</header>
+
+							<!-- Content -->
+								<section>
+									<header class="main">
+										<h1>Program Design</h1>
+									</header>
+									<p> Our code is available on <a href="https://github.com/avaishnav1/stickman-ninja">Github</a>!</p>
+									<hr class="major" />
+
+									<h2>Software Overview</h2>
+									<p>The main file that we coded was our stickman_main.c file. Our code is split into two cores: core 0 for collecting sensor/button data and core 1 to animate player movements. </p>
+									<p>Core 0 is largely meant for collecting data from the IMU and the buttons. We used an interrupt service routine in order to ensure that data from the buttons and IMU was collected every millisecond. The ISR also performed calculations on the data collected from the IMU to determine its acceleration (which was used to establish when a movement corresponds to a stab) and its angle (which was used to determine block movement). Furthermore, the ISR records whether the players press buttons to move left or right and stores that into variables. We had to make sure that we were using two I2C channels for each IMU so that each player’s actions were separated from each other. In doing so, we had to make edits to mpu6050.c/mpu6050.h files in which we added functions that read data from both channels.</p>
+									<p>Core 1 involves using the sensor data from core 0 to perform animations for each player. For each player, we declared a struct, player_struct, which contains all variables that are used to describe the player; this includes the player ID, the x and y coordinates for a player, state variables for stabbing and blocking, and the health of the player. The protothread_anim1 thread in core 1 is the only thread in the core. The thread begins with initializing the variables in two instantiations of the player struct, player0 and player1. Specifically, we set player0 is on the left of the VGA screen and player1 is on the right. Player0 is yellow in color and player1 is cyan in color. Both players start with a health of 100 and are in the wait position– neither stabbing nor blocking. After setting these and other variables, we start the while loop. In order to control the game screens, we use the game_state variable, which is 0 if player0 wins, 1 if player1 wins, 2 if the game is running, 3 if the players want to restart the game, 4 if the game starts for the first time, and 5 for the instruction screen. The value of the game_state variable is checked every time the while loop executes, and, in most of these game states, the VGA screen is cleared and new text is added to indicate game flow. </p>
+									<p>The most logic goes into a game_state value of 2, which is when the game is running. In this case, the first thing that happens is the health bars for each player are printed to the VGA display based on the health of the players. Next, we move onto player0 animations. First, we check if player0 is stabbing or blocking by shaking the IMU horizontally or holding the IMU vertically, and update player0’s struct variables for blocking/stabbing accordingly. We decided the angles and acceleration values that determine when the IMU is blocking/stabbing by testing different angles and stabs and establishing thresholds. After this, we determined which direction player0 was facing and how the on-screen character should move if the player pressed the left/right button. After updating the necessary variables, we used the vga_graphics.h custom library to draw the player0 stickman. Similarly, we checked whether player1 was stabbing or blocking and whether player1 was trying to move left or right. After updating the necessary struct members for player1, we used this information to animate the player. </p>
+									<p>The next major part was to determine and code sword-to-sword interactions. In order to do so, we had to map out the pixels in the VGA display and figure out which pixel crossings would result in collisions. We also had to determine the various cases that both players could be found in. If there was a change in the stance of either player, the following logic is executed. First, the relative position of the two players is checked; if player0 is to the left of player1, there are four cases to consider: both players face each other, player1 faces away from player0, player0 faces away from player1, and both players face away from each other; if player0 is to the right of player1, there are also four cases to consider: both players face each other, player1 faces away from player0, player0 faces away from player1, and both players face away from each other. If both players faced each other and were close enough to each other (such that the sword would hit the other player), then it would be possible for a player to get damage from stabs; since each player has the ability to block, if a player tries to stab a player who is in the blocking stance, the stabbing player cannot hurt the blocked player. If one player faces away from another player and both players are close enough to each other (such that the sword would hit the other player), only the player looking at the other player can inflict damage; furthermore, since the other player (who is facing the wall) is not facing the other player, its blocks have no purpose, since the player is blocking in the wrong direction. Lastly, if both players are facing away from each other, neither player can cause damage to the other player, so nothing happens. In all cases, a stab results in a health decrease of one. The last part of this game logic is to check if the health of any player is 0, in which case the other player (who has positive health) wins. </p>
+
+									<hr class="major" />
+
+									<h2>Our Thoughts on the Software</h2>
+									<p>We had initially thought of splitting the code organization such that we could have multiple threads on both cores such that each player would have its own thread. However, we realized that collisions between players was the main source of logic for gameplay and this logic had to be together on one thread. So, we decided to combine the animation logic into one thread on core 1. A functionality that we wanted to add but couldn’t due to time constraints was to add music to our game. In the initial iterations of our hardware, we had added a DAC and an audio socket so that we could play music in the background. We had also created an array of frequencies and an associated C array, which we wanted to use. However, we also wanted to enhance the user interface of our game along with its functionality, so we were unable to implement music.</p>
+
+								</section>
+
+						</div>
+					</div>
+
+				<!-- Sidebar -->
+					<div id="sidebar">
+						<div class="inner">
+
+							<!-- Menu -->
+								<nav id="menu">
+									<header class="major">
+										<h2>Menu</h2>
+									</header>
+									<ul>
+										<li><a href="index.html">Homepage</a></li>
+										<li><a href="hardware_design.html">Hardware Design</a></li>
+										<li><a href="program_design.html">Program Design</a></li>
+										<li><a href="visual_design.html">Visual Design</a></li>
+										<li><a href="results_conclusion.html">Results and Conclusions</a></li>
+									</ul>
+								</nav>
+
+							<!-- Section -->
+								<section>
+									<header class="major">
+										<h2>Gameplay!</h2>
+									</header>
+									<div class="mini-posts">
+										<article>
+											<iframe width="260" height="200" src="https://www.youtube.com/embed/Lt3ESErPqRE?si=6zhzjWlNtAEWVdR9" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+										</article>
+									</div>
+								</section>
+
+							<!-- Footer -->
+								<footer id="footer">
+									<p class="copyright">&copy; Stickman Ninja. All rights reserved. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+								</footer>
+						</div>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
