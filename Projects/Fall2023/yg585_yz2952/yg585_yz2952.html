@@ -1,0 +1,641 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autonomous Luggage Following System</title>
+<link href="Assets/styles/Style.css" rel="stylesheet" type="text/css">
+<!--The following script tag downloads a font from the Adobe Edge Web Fonts server for use within the web page. We recommend that you do not modify it.--><script>var __adobewebfontsappname__="dreamweaver"</script><script src="http://use.edgefonts.net/montserrat:n4:default;source-sans-pro:n2:default.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+<div id="mainwrapper">
+  <header> 
+    <!--**************************************************************************
+    Header starts here. It contains Logo and 3 navigation links. 
+    ****************************************************************************-->
+    <div id="logo"><!-- <img src="logoImage.png" alt="sample logo"> --><!-- Company Logo text -->2023 Fall ECE5730 Final Project</div>
+    <nav> <a href="#YG" title="Link1">Yuqiang Ge</a> <a href="#YZ" title="Link2">Yiyang Zhao</a> </nav>
+  </header>
+  <div id="content">
+    <div class="notOnDesktop"> 
+      <!-- This search box is displayed only in mobile and tablet laouts and not in desktop layouts -->
+      <input type="text" placeholder="Search">
+    </div>
+    <section id="mainContent"> 
+      <!--************************************************************************
+    Main Blog content starts here
+    ****************************************************************************-->
+      <h1 id="title">
+        <!-- Blog title -->
+      Autonomous Luggage Following System</h1>
+      <h3>2023 Fall ECE5730 Final Project by Yuqiang Ge (yg585) and Yiyang Zhao (yz2952)</h3>
+      <div id="bannerImage">
+      <img src="Assets/images/robot.jpg" alt="">
+      </div>
+	  <div class="video-container">
+	  <h5>Project Video</h5>
+      <iframe width="80%" height="500" src="https://www.youtube.com/embed/UMxiqASDjy0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+
+	  <h4 id="Introduction">Project Introduction</h4>
+	<h5>Description</h5>
+      <p>The system is aimed at creating a smart and autonomous luggage that can effortlessly track and follow its user, providing convenience in airports, train stations, or any travel environment, easing the burden of carrying heavy luggage. This system can track the user’s direction and the distance between the user and the luggage. </p>
+		<h5>Overview</h5>
+      <p>In this project, we employ a robot car to simulate luggage movement, thereby facilitating our development process. When transitioning the system to the actual luggage, a simple motor replacement with increased power is all that is required for enhancement. </p>
+      <p>Directional determination is achieved through the use of a pair of infrared receivers. In instances where the robot car loses its direction or is powered on, it autonomously rotates while actively scanning for infrared signals. A centrally positioned paperboard separates the two infrared receivers, enabling them to discern direction based on signal intensity. Additionally, an infrared LED is integrated into the user's equipment, emitting infrared light detectable by the robot's infrared receivers. </p>
+      <p>The system is further equipped with a pair of ultrasonic sensors, functioning similarly to the infrared sensors. One sensor transmits signals, while the other receives, enabling the calculation of distance between the sensor and objects in front based on signal emission and reception times. </p>
+        <p>The robot car's motion system comprises two DC motors and a motor controller. As DC motors cannot directly interpret PWM signals, the utilization of a motor controller is logical for modulating motor power. This modulation allows for precise control of the motors' speed, enhancing the overall functionality of the system.</p>
+<h4 id="High level design">High Level Design</h4>
+	 <h5>Rationale and Sources of Project Idea</h5>	
+	 <p>As people travel more and more these days, there's a growing need for a new kind of luggage system that can automatically follow travelers. This kind of system would be incredibly useful, especially in crowded places like train stations and airports. </p>
+	 <p>Imagine if your suitcase could follow you on its own. You wouldn't have to worry about dragging heavy bags anymore. You could freely make phone calls, check information boards, or take care of your children without being distracted by your luggage. Such a suitcase would make traveling much easier. </p>
+	 <p>For people with limited mobility, an automatically following suitcase would be a huge help. Some people might find it difficult to carry luggage by themselves and relying on others can make them feel uncomfortable. But with a suitcase that can autonomously follow them, they can travel more freely and experience greater independence and autonomy. This technology also lessens the burden for caregivers, making travel easier and more enjoyable for everyone. </p>
+<h5>Background Knowledge</h5>	
+      <p><strong>1. Ultrasonic Ranging</strong></p>
+      <p>Ultrasonic ranging is a technique that uses ultrasonic waves, which are sound waves with frequencies higher than the human audible range, typically above 20 kilohertz, to measure distances.&nbsp;</p>
+      <p>The process starts with an ultrasonic transmitter emitting high-frequency sound waves. These waves travel through the air and, upon encountering an object, are reflected back towards the source. This reflection creates echoes that are captured by an ultrasonic receiver, often the same device as the transmitter.&nbsp;</p>
+      <p>The key to measuring distance lies in the time difference between when the ultrasonic waves are emitted and when the echoes are received. This time lapse is crucial as it represents the total time taken for the waves to travel to the object and back. Since the speed of sound in air is known, approximately 343 meters per second, this time difference can be used to calculate the distance to the object. The distance is computed using the formula: Distance = (Speed of Sound × Time) / 2. </p>
+      <p><strong>2. Infrared Phototransistor</strong></p>
+      <p>An infrared phototransistor is  a semiconductor device designed to respond specifically to infrared light (IR). At its core, it functions similarly to a standard transistor but with a significant sensitivity to infrared light. </p>
+      <p>The operation of an infrared phototransistor begins when it is exposed to infrared light. Infrared light interacts with the semiconductor material of the phototransistor. When IR photons strike the material, they impart energy to the electrons, elevating them to a higher energy state and thereby creating charge carriers. </p>
+      <p>These charge carriers increase the conductivity of the semiconductor material. In practical terms, this translates to a change in the current flowing through the transistor. The amount of current generated is directly proportional to the intensity of the incident IR light. Thus, the phototransistor effectively converts varying IR light intensities into corresponding electrical signals.</p>
+<h5>logical Structure</h5>	
+      <p>Our devised system exhibits three different operational states: </p>
+      <p><strong>Target Loss Mode:</strong> If the target is lost, the system stops moving briefly and then rotates. During this time, the system consistently tries to find the target again. Once the target reappears, indicated by the detection of the infrared signal, the robotic car continues its tracking. </p>
+      <p><strong>Following Mode:</strong> Our design focuses on tracking a specific target by detecting an infrared signal, analyzing signal strength differences to determine the target's lateral position, and then dynamically adjusting the duty cycle of the PWM for the two motors to enable precise turns and straight-line movement.&nbsp;</p>
+      <p><strong>Obstacle Avoidance:</strong> The system incorporates an obstacle avoidance function for autonomous luggage tracking in complex environments. When it detects an obstacle in front of itself, the car quickly stops moving. After a brief pause, it rotates, trying to assess potential targets from the left, right, or rear perspectives.&nbsp;</p>
+<h5>Tradeoffs</h5>	
+      <p>Tradeoffs were a critical aspect of our project, especially with a focus on cost-effectiveness. Ranging is relatively simple, we could have used ultrasonic ranging, but how to get the direction is more complicated. Ultimately, after considering several alternatives, we finally decided on a solution with two infrared receivers. </p>
+      <p>Initially, we contemplated using Ultra-Wideband (UWB) chips. UWB is good for indoor localization, it can be used to get the direction and distance to the target. However, their cost was a significant deterrent; each chip costs around twenty dollars, requiring a total of forty dollars for two. Additionally, the lack of support for the Raspberry Pi Pico presented a major challenge, as there were no readily available libraries for using UWB chips with the Pico. </p>
+      <p>Our second option involved the use of a servo mechanism. The idea was to mount a directional infrared receiver on a servo, using its rotational movement to determine the direction of a person, akin to a radar system. Upon experimentation, we found that this approach had limitations. The servo's rotation speed and the system's responsiveness were not adequate for effective person-following, resulting in sluggish reactions and imprecise positioning. Furthermore, as a moving mechanical part, the servo lacked the stability and durability. This option was also more expensive compared to our final choice. </p>
+      <p>We also explored the possibility of sound localization using microphones. This method would have required three microphones, each costing seven dollars, elevating the overall cost. Additionally, the complexity of the algorithm needed for sound localization and its usability posed significant challenges. The necessity for a person to carry a sound source and the susceptibility to noise interference further detracted from the viability of this approach. </p>
+      <p>In contrast, the dual infrared receiver setup offered a more cost-effective and technically feasible solution. It provided a balance of performance, stability, and affordability, addressing our project requirements more effectively than the alternatives we considered.</p>
+<h4 id="Program and hardware design">Program and Hardware Design</h4>
+	  <h5>Program Details</h5>	
+      <p>Our system has three primary functions: motion control, infrared positioning, and ultrasonic ranging. These tasks are encapsulated within the proto thread, arranged and synchronized via semaphores to maintain a coherent order. The sequential execution of the three threads follows the prescribed sequence: ultrasonic ranging -> infrared positioning -> motion control. This structured sequence guarantees the seamless operation of system functionalities. In the main program, what we mainly do is some initialization work. The intricate details of each thread are expounded below: </p>
+      <p><strong>1. distance_measure</strong></p>
+	  <p>Objective: This thread is dedicated to the precise measurement of distances using ultrasonic sensors. </p>
+		<p>Execution: In this process, the <i>measure</i> function determines the distance between the robot car and the object in front of it. Following this, a condition is checked: if the measured distance is less than a specified threshold (in this instance, 25cm), the <i>'stop'</i> variable is set to 1; otherwise, it is set to 0, as illustrated below. This result is then sent to the post for further handling. The thread subsequently activates the infrared detection thread using the <i>PT_SEM_SIGNAL</i> function.</p>
+		<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">measure();
+<span style="color: #008800; font-weight: bold">if</span> ( distance <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">25</span>){
+    stop <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>;
+}
+<span style="color: #008800; font-weight: bold">else</span>{
+    stop <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+}
+</pre></div>
+
+    <p><strong>2. infrared_detection</strong></p>
+	  <p>Objective: Focused on the accurate determination of the target's position through infrared signal detection. </p>
+	  <p>Execution: The voltage across infrared receivers reflects the intensity of infrared signals. To measure this intensity, we employ the analog-to-digital converter (ADC) in the Raspberry Pi Pico. The first step is to read ADC values, followed by a comparative analysis to determine the target's position—whether it is in the front left or right:</p>
+		<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">direction_differece <span style="color: #333333">=</span> adc_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">-</span> adc_values[<span style="color: #0000DD; font-weight: bold">1</span>];
+<span style="color: #008800; font-weight: bold">if</span> (direction_differece <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">0</span> ){
+	is_left <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>;
+}
+<span style="color: #008800; font-weight: bold">else</span> {
+	is_left <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+}
+</pre></div>
+		<p>Following this determination, we calculate the absolute value of direction_difference, and the motor control thread is activated for further processing.</p>
+		<p><strong>3. motor_control</strong></p>
+	  <p>Objective: Responsible for performing the movement of the system based on the data from <i>distance_measure</i> and <i>infrared_detection</i> threads. </p>
+	  <p>Execution: In this process, we start by using <i>direction_difference</i> as feedback input for the Proportional-Integral-Derivative (PID) controller in this thread. The <i>pid_iterate</i> function is then run once to control the motor response. Afterward, a conditional check verifies whether <i>is_left</i> is equal to 1. If this condition is met, the left motor is adjusted to generate a lower PWM duty cycle compared to the right one, and conversely for the right motor.</p>
+	  <div class="centered-content">
+	   <img class="img-rounded" src="Assets/images/structure.png" alt="">
+     <p style="text-align: center;">Code Structure</p>
+	  </div>
+	  <p>The diagram explains how the code's organizational structure works. After the other two tasks finish their calculations, motor control incorporates the data. Infrared detection establishes the values for '<i>is_left</i>' and '<i>direction_difference</i>,' while distance measurement sets the stop flag. Using these assigned values, motor control then manages the motion of the robot car.&nbsp;</p>
+	  <p><strong>4. State Machine</strong></p>
+	  <p>Furthermore, within the <i>motor_control</i> and <i>distance_measure</i> threads, there are two distinct state machines. The former performs the rotation of the robot car in cases such as target loss or obstacle avoidance, while the latter serves the purpose of filtering ultrasonic ranging data.&nbsp;</p>
+	  <div class="centered-content">
+	   <img class="img-rounded" src="Assets/images/sm1.png" alt="">
+     <p style="text-align: center;">State Transition of Motion for Robot car</p>
+	  </div>
+    <p>The finite state machine illustrates the three motion states of the robotic car and their transition conditions. In normal situations, the system smoothly tracks the specified target. However, if the target is lost or an obstacle is encountered, the car transits to a stationary state, waiting for a predefined duration. After this stationary period, the car resumes rotation to try to regain the target. Once the target is successfully detected, the car returns to its usual tracking behavior.&nbsp;</p>
+    <p>Below is the implementation of this state machine based on the figure shown above.&nbsp;</p>
+    <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008800; font-weight: bold">while</span>(<span style="color: #0000DD; font-weight: bold">1</span>) {
+        PT_SEM_WAIT(pt, <span style="color: #333333">&amp;</span>motor_semaphore);
+        pid_iterate();
+        <span style="color: #008800; font-weight: bold">if</span> (<span style="color: #333333">!</span>rotate) {
+            <span style="color: #008800; font-weight: bold">if</span> (stop <span style="color: #333333">==</span> <span style="color: #0000DD; font-weight: bold">0</span>){
+                counter_stop <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+                <span style="color: #008800; font-weight: bold">if</span> ((adc_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">3000</span>) <span style="color: #333333">&amp;&amp;</span> (adc_values[<span style="color: #0000DD; font-weight: bold">1</span>] <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">3000</span>)){
+                    counter_stop2<span style="color: #333333">++</span>;
+                    <span style="color: #008800; font-weight: bold">if</span>(counter_stop2 <span style="color: #333333">&gt;=</span><span style="color: #0000DD; font-weight: bold">100</span>) {
+                        rotate <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>;
+                    }
+                }
+                <span style="color: #008800; font-weight: bold">else</span> <span style="color: #008800; font-weight: bold">if</span> (is_left <span style="color: #333333">==</span> <span style="color: #0000DD; font-weight: bold">1</span>){
+                    counter_stop2 <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+                    pwm_set_chan_level(slice_num_1, PWM_CHAN_B, control);
+                    pwm_set_chan_level(slice_num_1, PWM_CHAN_A, control<span style="color: #333333">-</span>pid.output);
+                }
+                <span style="color: #008800; font-weight: bold">else</span>{
+                    counter_stop2 <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+                    pwm_set_chan_level(slice_num_1, PWM_CHAN_B, control<span style="color: #333333">-</span>pid.output);
+                    pwm_set_chan_level(slice_num_1, PWM_CHAN_A, control);
+                }
+            }
+            <span style="color: #008800; font-weight: bold">else</span>{
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_B, <span style="color: #0000DD; font-weight: bold">0</span>);
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_A, <span style="color: #0000DD; font-weight: bold">0</span>);
+                counter_stop<span style="color: #333333">++</span>;
+                <span style="color: #008800; font-weight: bold">if</span>(counter_stop <span style="color: #333333">&gt;=</span><span style="color: #0000DD; font-weight: bold">500</span>) {
+                    rotate <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>;
+                }
+            }
+        }
+        <span style="color: #008800; font-weight: bold">else</span> {
+            <span style="color: #008800; font-weight: bold">if</span>((adc_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">3000</span>) <span style="color: #333333">&amp;&amp;</span> (adc_values[<span style="color: #0000DD; font-weight: bold">1</span>] <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">3000</span>)){
+                gpio_put(<span style="color: #0000DD; font-weight: bold">14</span>, <span style="color: #0000DD; font-weight: bold">1</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">15</span>, <span style="color: #0000DD; font-weight: bold">0</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">16</span>, <span style="color: #0000DD; font-weight: bold">0</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">17</span>, <span style="color: #0000DD; font-weight: bold">1</span>);
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_B, <span style="color: #0000DD; font-weight: bold">4000</span>);
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_A, <span style="color: #0000DD; font-weight: bold">4000</span>);
+            }
+            <span style="color: #008800; font-weight: bold">else</span> {
+                rotate <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+                counter_stop2 <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+                gpio_put(<span style="color: #0000DD; font-weight: bold">14</span>, <span style="color: #0000DD; font-weight: bold">1</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">15</span>, <span style="color: #0000DD; font-weight: bold">0</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">16</span>, <span style="color: #0000DD; font-weight: bold">1</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">17</span>, <span style="color: #0000DD; font-weight: bold">0</span>);
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_B, <span style="color: #0000DD; font-weight: bold">0</span>);
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_A, <span style="color: #0000DD; font-weight: bold">0</span>);
+            } 
+        }
+
+        PT_SEM_SIGNAL(pt, <span style="color: #333333">&amp;</span>distance_semaphore);
+
+        <span style="color: #888888">// Yield for 5 ms</span>
+        PT_YIELD_usec(<span style="color: #0000DD; font-weight: bold">5000</span>) ;
+    }
+</pre></div>
+    <div class="centered-content">
+	   <img src="Assets/images/sm2.png" alt="">
+       <p style="text-align: center;">State Transition of Filter for the Data from Ultrasonic Sensor</p>
+	  </div>
+    <p>This illustration demonstrates the use of finite state machines for filtering data from the ultrasonic sensor on a robot car. To address occasional noise detection that could cause abrupt pauses, we apply a filtering mechanism, similar to the button filtering used in lab 1. The stop flag is set only after two consecutive detections; otherwise, the system returns to the motion state. Likewise, if no obstacles are detected in two successive instances, the robot car continues moving forward; otherwise, it goes back to the stationary state.</p>
+    <p><strong>5. PID Controller</strong></p>
+    <p>We incorporated PID controller into our system, obtaining insights from lab 3. The PID controller uses the difference in infrared signals detected by two infrared receivers as feedback input, regulating the power output of the two motors differentially. This control mechanism enables precise control over the robotic car, allowing it to closely follow the target and execute smooth movements.</p>
+
+    <h5>Hardware Details</h5>
+	  <div class="centered-content">
+	   <img src="Assets/images/circuit.png" alt="">
+       <p style="text-align: center;">Circuit Diagram</p>
+	  </div>
+      <p>In this project, the Raspberry Pi Pico serves as the main controller controlling three peripheral sub-circuits: the infrared phototransistor circuit, the ultrasonic ranging circuit, and the motor control circuit. Each of these sub-circuits plays a pivotal role in the operation of the system, and they are analyzed in detail below. </p>
+	  <p><strong>1. Ultrasonic Ranging Circuit:</strong></p>
+	  <p>The ultrasonic ranging circuit incorporates an HC-SR04 Ultrasonic Sensor, which features four pins. The Trig pin is connected to GPIO 21 pin on the Pico and is used to send out a pulse. The Echo pin, connected to GPIO 20 pin on the Pico, is responsible for receiving the echo of the pulse after it bounces off an object. The duration between the Trig pulse and the Echo reception allows Pico to calculate the distance to the object by using the speed of sound.</p>
+	  <p><strong>2. Infrared Phototransistor Circuit</strong></p>
+      <p>The infrared phototransistor circuit is constructed by serially connecting a 1 MΩ resistor with an infrared phototransistor. The purpose of this circuit is to detect the presence and intensity  of infrared light. When infrared light shines upon the phototransistor, it causes the device to conduct, resulting in a drop in voltage across the phototransistor. The Raspberry Pi Pico is configured to measure this voltage drop using ADC (GPIO 26 and GPIO 27). As the phototransistor conducts in the presence of infrared light, the ADC reading decreases, providing a digital signal indicative of the light intensity.</p>
+	  <p><strong>3. Motor Control Circuit</strong></p>
+      <p>The motor control circuit is centered around the TB6612FNG motor driver. The VM pin of this driver is connected to a 6V power supply, which powers the motors. The AIN1, AIN2, BIN1, and BIN2 pins are interfaced with GPIO pins on the Pico, determining the direction of the motors' rotation. The PWMA and PWMB pins receive PWM signals from the Pico, which regulate the speed of the motors by adjusting the duty cycle of the PWM signal. The motor outputs, A01, A02, B01, and B02, are connected to the terminals of two motors, which are driven by the motor driver based on the control signals provided by the Pico. The control function of TB6612FNG is shown in the table below</p>
+	 <div class="centered-content">
+	   <img src="Assets/images/ControlFunction.png" alt="">
+       <p style="text-align: center;">Control Function</p>
+	  </div>
+      <h5>Things We Tried</h5>	
+      <p>After deciding to use infrared receivers for our project, our initial approach involved using a directional infrared receiver mounted on a rotating servo. We started with a VS1838B infrared receiver that could decode signals emitted by a standard remote control. This allowed us to use any remote as an emitter. Although this method was effective in eliminating interference from other infrared noise, it didn't provide us with the infrared intensit , which resulted in suboptimal tracking performance. We realized that obtaining the intensity of the infrared signal was crucial, so we switched to an infrared phototransistor. However, our experiments showed that the servo-based solution was inadequate. The direction determined was not accurate enough, and the speed of updating the direction was too slow.</p>
+		<p>We then moved to a new plan that involved using two infrared receivers with a partition between them. We implemented a PID control algorithm to track the target by using the difference in infrared intensity between the two receivers. To enhance the reception of the infrared intensity and make the difference between the two sides more obvious, we did some experiments.</p>
+		<div class="centered-content">
+	   <img src="Assets/images/twofront.png" alt="" style="width:30%;">
+       <p style="text-align: center;">Two Receivers</p>
+	  </div>
+		<p>One of the challenges was determining the optimal resistance for the series circuit with the phototransistor. Due to the small current flowing through the phototransistor, we tested many different resistor values. Eventually, we found that 1 MΩ provided a noticeable difference in the ADC readings, even when the infrared source was at a distance.</p>
+	  <p>We also encountered a limitation due to the narrow receiving angle of the infrared phototransistors, which was approximately 45 degrees. To address this, we attempted a setup with four infrared receivers, with two parallel receivers on each side facing slightly different angles. This configuration expanded the effective angle of reception.
+		  <div class="centered-content">
+	   <img src="Assets/images/four.png" alt="" style="width:30%;">
+       <p style="text-align: center;">Four Receivers</p>
+	  </div>
+		  <p>Despite this adjustment, we faced another issue. The intensity of the infrared was strongest when the emitter was directly in front of the receivers and weakest when it was in between them, leading to poor PID control.&nbsp;</p>
+		<p>Our final solution was to modify the phototransistors to widen their reception angle. By sanding down the lens-like tip of the phototransistor, we effectively increased the angle of reception. After several tests, we found that the modified phototransistors could still receive signals at angles greater than 70 degrees, significantly improving our tracking system's performance.</p>
+	  <div class="centered-content">
+	   <img src="Assets/images/twoflat.png" alt="" style="width:30%;">
+       <p style="text-align: center;">Two flattened receivers</p>
+	  </div>
+<h4 id="Results">Results</h4>
+	  <h5>Testing Results</h5>	
+      <p>We conducted thorough testing on all the hardware components utilized in our project. Initially, we wrote simple program to test the motor driver, examining its rotational directions and the ability to adjust speed through pulse-width modulation (PWM). We observed that our two motors did not have identical speeds at the same PWM duty cycle, which could be attributed to slight variations in hardware parameters during manufacturing. Therefore, we calibrated the motors to synchronize their speed.</p>
+      <p>Additionally, we created&nbsp; program to test the ultrasonic ranging module. The procedure involved sending a 10-microsecond pulse to the Trig pin and waiting to receive the echo to calculate the distance. This module proved to be relatively straightforward and functioned properly without issues.&nbsp;</p>
+      <p>The most crucial aspect of our hardware testing was to analyze the waveforms from the infrared receivers. Assessing the waveform is essential to determine if the infrared receivers are functioning correctly. </p>
+<p>The following figure shows the waveform of the signal received by the decoder receiver on an oscilloscope. Since we could not get the infrared intensity, we discarded this solution.</p>
+<div class="centered-content">
+  <img src="Assets/images/decode.jpg" alt="" style="width:60%;">
+  <p style="text-align: center;">Decoder Receiver Waveform</p>
+</div>
+	  <p>The following figure shows the waveform of the voltage across the infrared phototransistor on an oscilloscope after receiving an strong infrared signal.</p>
+	   <div class="centered-content">
+	   <img src="Assets/images/nearone.jpg" alt="" style="width:60%;">
+       <p style="text-align: center;">Infrared Phototransistor Voltage (Close to the Infrared Emitter)</p>
+	  </div>
+		<p>The following figure shows the waveform of the voltage across the infrared phototransistor on an oscilloscope after receiving a signal from a long-distance infrared emitter(about 5 meters).</p>
+	   <div class="centered-content">
+	   <img src="Assets/images/farone.jpg" alt="" style="width:60%;">
+       <p style="text-align: center;">Infrared Phototransistor Voltage (About 5 Meters from the Infrared Emitter)</p>
+	  </div>
+      <p>The following figure shows the waveform of the signal received by the infrared phototransistor when the infrared emitter is directly in front of the two infrared phototransistor receivers.</p>
+	   <div class="centered-content">
+	   <img src="Assets/images/fronttwo.jpg" alt="" style="width:60%;">
+       <p style="text-align: center;">Waveforms of two Phototransistors (Front Emitter)</p>
+	  </div>
+	  <p>The following figure shows the waveform of the signal received by the infrared phototransistor when the infrared emitter is on one side of the two infrared phototransistor receivers.</p>
+	   <div class="centered-content">
+	   <img src="Assets/images/sidetwo.jpg" alt="" style="width:60%;">
+       <p style="text-align: center;">Waveforms of two Phototransistors (Side Emitter)</p>
+	  </div>
+	  <p>The following figure shows the ADC's readings for two phototransistor voltages when the emitter is directly in front of them.</p>
+	   <div class="centered-content">
+	   <img src="Assets/images/adcfront.jpg" alt="" style="width:40%;">
+       <p style="text-align: center;">Waveforms of two Phototransistors (Front Emitter)</p>
+	  </div>
+	  <p>The following figure shows the ADC's readings for two phototransistor voltages when the emitter is on one side.</p>
+	   <div class="centered-content">
+	   <img src="Assets/images/adcside.jpg" alt="" style="width:40%;">
+       <p style="text-align: center;">Waveforms of two Phototransistors (Side Emitter)</p>
+	  </div>
+	  <p>The above tests prove that our design works. We can perform PID control using the difference of two ADC readings.</p>
+	  <h5>Speed of Execution</h5>	
+      <p>In examining execution speed, it's important to highlight that our design is not significantly affected by calculation speed. Thus, during development, we did not pay much attention to the speed of execution and did not heavily prioritize optimizing the code from the perspective of execution speed. </p>
+	  <h5>Accuracy</h5>	
+      <p>During our experimentation, we faced a notable challenge: a part of our robot car sustained damage, causing an uneven speed between the two wheels. Although we provide the same power to the motors, the car cannot move straightly. Despite this mechanical issue, the robot car demonstrates impressive accuracy in the demonstration by effectively tracking the target and staying on a straight trajectory. </p>
+      <p>The system's resilience and precision come from its robust design, enabling it to compensate for mechanical imperfections and navigate accurately along the intended path despite physical flaws. This underscores the system's capability to perform precisely even in less-than-ideal conditions. </p>
+	  <h5>Usability</h5>	
+      <p>Our design is highly user-friendly and easily accessible. Replicating it for real-world luggage applications is straightforward. In order to do that, people only need to make a few modifications:  replacing the motors with more powerful alternatives and substituting a high-powered infrared emitter. These adjustments improve the overall performance and suitability of the system for various luggage configurations. </p>
+      <p>Furthermore, the documentation is crafted to be user-friendly, allowing even those with limited familiarity with the system to easily replicate it by following the detailed instructions and guidelines. </p>
+
+		<h4 id="Conclusions">Conclusions</h4>
+      <p>In evaluating our design, it is worth noting that our system has successfully met the expected outcomes, as its seamless tracking, precise navigation, and resilience to specific mechanical challenges, affirming the success of our design in terms of meeting the established goal.</p>
+      <p>When it comes to the next generation of development, we are excited to explore how adding more receivers to the system might improve its overall performance. Since each infrared receiver has a limited measured angle, it is intuitive to add extra receivers to expand its detected range and enhance its capability.</p>
+      <p>In our future plans, we aim to shift our system from a controlled laboratory setting to the real-world context of luggage tracking. This move to practical application will offer valuable insights into how well the system adapts and performs in dynamic, uncontrolled environments.</p>
+		<h4 id="Appendix A">Appendix A: Permissions</h4>
+      <p>The group approves this report for inclusion on the course website.</p>
+		 <p>The group approves the video for inclusion on the course youtube channel.</p>
+		<h4 id="Appendix B">Appendix B: Code</h4>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">// Include standard libraries</span>
+<span style="color: #557799">#include &lt;stdio.h&gt;</span>
+<span style="color: #557799">#include &lt;stdlib.h&gt;</span>
+<span style="color: #557799">#include &lt;math.h&gt;</span>
+<span style="color: #557799">#include &lt;string.h&gt;</span>
+<span style="color: #888888">// Include PICO libraries</span>
+<span style="color: #557799">#include &quot;pico/stdlib.h&quot;</span>
+<span style="color: #557799">#include &quot;pico/multicore.h&quot;</span>
+<span style="color: #888888">// Include hardware libraries</span>
+<span style="color: #557799">#include &quot;hardware/pwm.h&quot;</span>
+<span style="color: #557799">#include &quot;hardware/irq.h&quot;</span>
+<span style="color: #888888">// Include custom libraries</span>
+<span style="color: #557799">#include &quot;pt_cornell_rp2040_v1.h&quot;</span>
+<span style="color: #557799">#include &quot;motor_control.h&quot;</span>
+<span style="color: #557799">#include &quot;hardware/adc.h&quot;</span>
+
+<span style="color: #557799">#include &quot;hardware/gpio.h&quot;</span>
+<span style="color: #557799">#include &quot;hardware/timer.h&quot;</span>
+
+<span style="color: #557799">#define TRIG_PIN 21 </span>
+<span style="color: #557799">#define ECHO_PIN 20 </span>
+
+<span style="color: #888888">// Some paramters for PWM</span>
+<span style="color: #557799">#define WRAPVAL 5000</span>
+<span style="color: #557799">#define CLKDIV  255.0 </span><span style="color: #888888">//</span>
+<span style="color: #557799">#define NUM_CHANNELS 2</span>
+<span style="color: #557799">#define difference_threshold 500</span>
+uint slice_num_1 ;
+uint slice_num_2 ;
+uint slice_num ;
+<span style="color: #333399; font-weight: bold">uint16_t</span> adc_values[NUM_CHANNELS];
+<span style="color: #333399; font-weight: bold">int</span> direction_differece;
+<span style="color: #333399; font-weight: bold">int</span> is_left;
+<span style="color: #333399; font-weight: bold">int</span> enter_here;
+<span style="color: #333399; font-weight: bold">float</span> distance;
+<span style="color: #333399; font-weight: bold">int</span> stop;
+<span style="color: #333399; font-weight: bold">int</span> counter_stop<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">0</span>;
+<span style="color: #333399; font-weight: bold">int</span> counter_stop2<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">0</span>;
+
+<span style="color: #008800; font-weight: bold">static</span> <span style="color: #008800; font-weight: bold">struct</span> pt_sem distance_semaphore ;
+<span style="color: #008800; font-weight: bold">static</span> <span style="color: #008800; font-weight: bold">struct</span> pt_sem infrared_semaphore ;
+<span style="color: #008800; font-weight: bold">static</span> <span style="color: #008800; font-weight: bold">struct</span> pt_sem motor_semaphore ;
+
+<span style="color: #008800; font-weight: bold">struct</span> PID{
+    <span style="color: #333399; font-weight: bold">float</span> kp,ki,kd;
+    <span style="color: #333399; font-weight: bold">int</span> desired_difference; 
+    <span style="color: #333399; font-weight: bold">int</span> current_difference;
+    <span style="color: #333399; font-weight: bold">int</span> output;
+    <span style="color: #333399; font-weight: bold">float</span> tmp_output;
+    <span style="color: #333399; font-weight: bold">int</span> integral;
+    <span style="color: #333399; font-weight: bold">int</span> err, pre_err;
+};
+
+<span style="color: #008800; font-weight: bold">struct</span> PID pid;
+
+<span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">pid_init</span>(){
+    pid.kp <span style="color: #333333">=</span> <span style="color: #6600EE; font-weight: bold">1.5</span>;
+    pid.ki <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+    pid.kd <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">8</span>;
+    pid.output <span style="color: #333333">=</span> pid.current_difference <span style="color: #333333">=</span> pid.integral <span style="color: #333333">=</span> pid.err <span style="color: #333333">=</span> pid.pre_err <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+    pid.desired_difference <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+}
+
+<span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">pid_iterate</span>(){
+    pid.current_difference <span style="color: #333333">=</span> direction_differece;
+    pid.pre_err <span style="color: #333333">=</span> pid.err;
+    pid.err <span style="color: #333333">=</span> pid.current_difference <span style="color: #333333">-</span> pid.desired_difference;
+    <span style="color: #008800; font-weight: bold">if</span> ( pid.err <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">0</span> ){
+        pid.err <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+    }
+    pid.integral <span style="color: #333333">+=</span> pid.err;
+    pid.tmp_output <span style="color: #333333">=</span> pid.kp <span style="color: #333333">*</span> pid.err <span style="color: #333333">+</span> \
+                pid.ki <span style="color: #333333">*</span> pid.integral <span style="color: #333333">+</span> \
+                pid.kd <span style="color: #333333">*</span> (pid.err <span style="color: #333333">-</span> pid.pre_err);
+    <span style="color: #008800; font-weight: bold">if</span>(pid.tmp_output <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">0</span>){
+        pid.output <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+    }
+    <span style="color: #008800; font-weight: bold">else</span> <span style="color: #008800; font-weight: bold">if</span> (pid.tmp_output <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">4000</span>){
+        pid.output <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">4000</span>;
+    }
+    <span style="color: #008800; font-weight: bold">else</span>{
+        pid.output <span style="color: #333333">=</span> pid.tmp_output;
+    }
+}
+
+
+<span style="color: #888888">// PWM duty cycle</span>
+<span style="color: #008800; font-weight: bold">volatile</span> <span style="color: #333399; font-weight: bold">int</span> control ;
+<span style="color: #333399; font-weight: bold">int</span> pin_value;
+
+<span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">on_pwm_wrap</span>() {
+    <span style="color: #888888">// Clear the interrupt flag that brought us here</span>
+    pwm_clear_irq(pwm_gpio_to_slice_num(<span style="color: #0000DD; font-weight: bold">5</span>));
+    pwm_clear_irq(pwm_gpio_to_slice_num(<span style="color: #0000DD; font-weight: bold">4</span>));
+}
+
+<span style="color: #008800; font-weight: bold">static</span> <span style="color: #0066BB; font-weight: bold">PT_THREAD</span> (distance_measure(<span style="color: #008800; font-weight: bold">struct</span> pt <span style="color: #333333">*</span>pt))
+{
+    <span style="color: #888888">// Indicate thread beginning</span>
+    PT_BEGIN(pt) ;
+    <span style="color: #008800; font-weight: bold">while</span>(<span style="color: #0000DD; font-weight: bold">1</span>) {
+        PT_SEM_WAIT(pt, <span style="color: #333333">&amp;</span>distance_semaphore);
+
+        measure();
+        <span style="color: #008800; font-weight: bold">if</span> ( distance <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">25</span>){
+            stop <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>;
+        }
+        <span style="color: #008800; font-weight: bold">else</span>{
+            stop <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+        }
+        PT_SEM_SIGNAL(pt, <span style="color: #333333">&amp;</span>infrared_semaphore);
+    }
+    <span style="color: #888888">// Indicate thread end</span>
+    PT_END(pt) ;
+}
+
+<span style="color: #008800; font-weight: bold">static</span> <span style="color: #0066BB; font-weight: bold">PT_THREAD</span> (infrared_detection(<span style="color: #008800; font-weight: bold">struct</span> pt <span style="color: #333333">*</span>pt))
+{
+    <span style="color: #008800; font-weight: bold">static</span> <span style="color: #333399; font-weight: bold">int</span> left_min;
+    <span style="color: #008800; font-weight: bold">static</span> <span style="color: #333399; font-weight: bold">int</span> right_min;
+    <span style="color: #888888">// Indicate thread beginning</span>
+    PT_BEGIN(pt) ;
+    <span style="color: #008800; font-weight: bold">while</span>(<span style="color: #0000DD; font-weight: bold">1</span>) {
+        PT_SEM_WAIT(pt, <span style="color: #333333">&amp;</span>infrared_semaphore);
+        <span style="color: #008800; font-weight: bold">for</span> (<span style="color: #333399; font-weight: bold">int</span> i <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>; i <span style="color: #333333">&lt;</span> NUM_CHANNELS; i<span style="color: #333333">++</span>) {
+            adc_select_input(i);
+            adc_values[i] <span style="color: #333333">=</span> adc_read();
+        }
+        direction_differece <span style="color: #333333">=</span> adc_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">-</span> adc_values[<span style="color: #0000DD; font-weight: bold">1</span>];
+        <span style="color: #008800; font-weight: bold">if</span> (direction_differece <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">0</span> ){
+            is_left <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>;
+        }
+        <span style="color: #008800; font-weight: bold">else</span> {
+            is_left <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+        }
+        direction_differece <span style="color: #333333">=</span> abs(direction_differece);
+
+        PT_SEM_SIGNAL(pt, <span style="color: #333333">&amp;</span>motor_semaphore);
+    }
+    <span style="color: #888888">// Indicate thread end</span>
+    PT_END(pt) ;
+}
+
+<span style="color: #008800; font-weight: bold">static</span> <span style="color: #0066BB; font-weight: bold">PT_THREAD</span> (motor_control(<span style="color: #008800; font-weight: bold">struct</span> pt <span style="color: #333333">*</span>pt))
+{   
+    <span style="color: #008800; font-weight: bold">static</span> <span style="color: #333399; font-weight: bold">int</span> rotate <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+    <span style="color: #888888">// Indicate thread beginning</span>
+    PT_BEGIN(pt) ;
+    <span style="color: #008800; font-weight: bold">while</span>(<span style="color: #0000DD; font-weight: bold">1</span>) {
+        PT_SEM_WAIT(pt, <span style="color: #333333">&amp;</span>motor_semaphore);
+        pid_iterate();
+        <span style="color: #008800; font-weight: bold">if</span> (<span style="color: #333333">!</span>rotate) {
+            <span style="color: #008800; font-weight: bold">if</span> (stop <span style="color: #333333">==</span> <span style="color: #0000DD; font-weight: bold">0</span>){
+                counter_stop <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+                <span style="color: #008800; font-weight: bold">if</span> ((adc_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">3000</span>) <span style="color: #333333">&amp;&amp;</span> (adc_values[<span style="color: #0000DD; font-weight: bold">1</span>] <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">3000</span>)){
+                    counter_stop2<span style="color: #333333">++</span>;
+                    <span style="color: #008800; font-weight: bold">if</span>(counter_stop2 <span style="color: #333333">&gt;=</span><span style="color: #0000DD; font-weight: bold">100</span>) {
+                        rotate <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>;
+                    }
+                }
+                <span style="color: #008800; font-weight: bold">else</span> <span style="color: #008800; font-weight: bold">if</span> (is_left <span style="color: #333333">==</span> <span style="color: #0000DD; font-weight: bold">1</span>){
+                    counter_stop2 <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+                    pwm_set_chan_level(slice_num_1, PWM_CHAN_B, control<span style="color: #333333">+</span><span style="color: #0000DD; font-weight: bold">350</span>);
+                    pwm_set_chan_level(slice_num_1, PWM_CHAN_A, control<span style="color: #333333">-</span>pid.output);
+                }
+                <span style="color: #008800; font-weight: bold">else</span>{
+                    counter_stop2 <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+                    pwm_set_chan_level(slice_num_1, PWM_CHAN_B, control<span style="color: #333333">-</span>pid.output<span style="color: #333333">+</span><span style="color: #0000DD; font-weight: bold">350</span>);
+                    pwm_set_chan_level(slice_num_1, PWM_CHAN_A, control);
+                }
+            }
+            <span style="color: #008800; font-weight: bold">else</span>{
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_B, <span style="color: #0000DD; font-weight: bold">0</span>);
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_A, <span style="color: #0000DD; font-weight: bold">0</span>);
+                counter_stop<span style="color: #333333">++</span>;
+                <span style="color: #008800; font-weight: bold">if</span>(counter_stop <span style="color: #333333">&gt;=</span><span style="color: #0000DD; font-weight: bold">500</span>) {
+                    rotate <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span>;
+                }
+            }
+        }
+        <span style="color: #008800; font-weight: bold">else</span> {
+            <span style="color: #008800; font-weight: bold">if</span>((adc_values[<span style="color: #0000DD; font-weight: bold">0</span>] <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">3000</span>) <span style="color: #333333">&amp;&amp;</span> (adc_values[<span style="color: #0000DD; font-weight: bold">1</span>] <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">3000</span>)){
+                gpio_put(<span style="color: #0000DD; font-weight: bold">14</span>, <span style="color: #0000DD; font-weight: bold">1</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">15</span>, <span style="color: #0000DD; font-weight: bold">0</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">16</span>, <span style="color: #0000DD; font-weight: bold">0</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">17</span>, <span style="color: #0000DD; font-weight: bold">1</span>);
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_B, <span style="color: #0000DD; font-weight: bold">4350</span>);
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_A, <span style="color: #0000DD; font-weight: bold">4000</span>);
+            }
+            <span style="color: #008800; font-weight: bold">else</span> {
+                rotate <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+                counter_stop2 <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+                gpio_put(<span style="color: #0000DD; font-weight: bold">14</span>, <span style="color: #0000DD; font-weight: bold">1</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">15</span>, <span style="color: #0000DD; font-weight: bold">0</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">16</span>, <span style="color: #0000DD; font-weight: bold">1</span>);
+                gpio_put(<span style="color: #0000DD; font-weight: bold">17</span>, <span style="color: #0000DD; font-weight: bold">0</span>);
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_B, <span style="color: #0000DD; font-weight: bold">0</span>);
+                pwm_set_chan_level(slice_num_1, PWM_CHAN_A, <span style="color: #0000DD; font-weight: bold">0</span>);
+            } 
+        }
+
+        PT_SEM_SIGNAL(pt, <span style="color: #333333">&amp;</span>distance_semaphore);
+
+        <span style="color: #888888">// Yield for 5 ms</span>
+        PT_YIELD_usec(<span style="color: #0000DD; font-weight: bold">5000</span>) ;
+    }
+    <span style="color: #888888">// Indicate thread end</span>
+    PT_END(pt) ;
+}
+
+<span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">send_pulse</span>() {
+    gpio_put(TRIG_PIN, <span style="color: #0000DD; font-weight: bold">1</span>);
+    sleep_us(<span style="color: #0000DD; font-weight: bold">10</span>);
+    gpio_put(TRIG_PIN, <span style="color: #0000DD; font-weight: bold">0</span>);
+}
+
+<span style="color: #333399; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">measure</span>() {
+    send_pulse();
+    <span style="color: #333399; font-weight: bold">uint32_t</span> init_time <span style="color: #333333">=</span> time_us_32();
+    <span style="color: #333399; font-weight: bold">uint32_t</span> detect_time <span style="color: #333333">=</span> time_us_32();
+    <span style="color: #008800; font-weight: bold">while</span> (<span style="color: #333333">!</span>gpio_get(ECHO_PIN) <span style="color: #333333">&amp;&amp;</span> detect_time <span style="color: #333333">&lt;</span> init_time<span style="color: #333333">+</span><span style="color: #0000DD; font-weight: bold">1000000</span>) {
+        detect_time <span style="color: #333333">=</span> time_us_32();
+    }
+
+    <span style="color: #333399; font-weight: bold">uint32_t</span> start_time <span style="color: #333333">=</span> time_us_32();
+    <span style="color: #008800; font-weight: bold">while</span> (gpio_get(ECHO_PIN)) {
+    }
+
+    <span style="color: #333399; font-weight: bold">uint32_t</span> end_time <span style="color: #333333">=</span> time_us_32();
+    distance <span style="color: #333333">=</span> (<span style="color: #333399; font-weight: bold">float</span>)(end_time <span style="color: #333333">-</span> start_time) <span style="color: #333333">*</span> <span style="color: #6600EE; font-weight: bold">0.01715</span>;
+}
+
+<span style="color: #333399; font-weight: bold">int</span> <span style="color: #0066BB; font-weight: bold">main</span>(){ 
+    control <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">4000</span>;
+    <span style="color: #888888">////////////////////////////////////////////////////////////////////////</span>
+    <span style="color: #888888">///////////////////////// PWM CONFIGURATION ////////////////////////////</span>
+    <span style="color: #888888">////////////////////////////////////////////////////////////////////////</span>
+    <span style="color: #888888">// Tell GPIO&#39;s 5 that they allocated to the PWM</span>
+    gpio_set_function(<span style="color: #0000DD; font-weight: bold">5</span>, GPIO_FUNC_PWM);
+    gpio_set_function(<span style="color: #0000DD; font-weight: bold">4</span>, GPIO_FUNC_PWM);
+
+    <span style="color: #888888">// Find out which PWM slice is connected to GPIO 5 (it&#39;s slice 2, same for 4)</span>
+    slice_num_1 <span style="color: #333333">=</span> pwm_gpio_to_slice_num(<span style="color: #0000DD; font-weight: bold">4</span>);
+
+    <span style="color: #888888">// Mask our slice&#39;s IRQ output into the PWM block&#39;s single interrupt line,</span>
+    <span style="color: #888888">// and register our interrupt handler</span>
+    pwm_clear_irq(slice_num_1);
+    pwm_set_irq_enabled(slice_num_1, <span style="color: #007020">true</span>);
+
+    irq_set_exclusive_handler(PWM_IRQ_WRAP, on_pwm_wrap);
+    irq_set_enabled(PWM_IRQ_WRAP, <span style="color: #007020">true</span>);
+
+    <span style="color: #888888">// This section configures the period of the PWM signals</span>
+    pwm_set_wrap(slice_num_1, WRAPVAL) ;
+    pwm_set_clkdiv(slice_num_1, CLKDIV) ;
+
+    <span style="color: #888888">// This sets duty cycle</span>
+    pwm_set_chan_level(slice_num_1, PWM_CHAN_B, control);
+    pwm_set_chan_level(slice_num_1, PWM_CHAN_A, control);
+
+    <span style="color: #888888">// Start the channel</span>
+    pwm_set_mask_enabled((<span style="color: #0000DD; font-weight: bold">1u</span> <span style="color: #333333">&lt;&lt;</span> slice_num_1));
+
+    <span style="color: #888888">// adc initialization</span>
+    adc_init();
+    adc_gpio_init(<span style="color: #0000DD; font-weight: bold">26</span>); <span style="color: #888888">// GPIO 26 for ADC channel 0</span>
+    adc_gpio_init(<span style="color: #0000DD; font-weight: bold">27</span>); <span style="color: #888888">// GPIO 27 for ADC channel 1</span>
+
+    <span style="color: #888888">// infrared initialization</span>
+    stdio_init_all();
+
+    gpio_init(<span style="color: #0000DD; font-weight: bold">18</span>); 
+    gpio_set_dir(<span style="color: #0000DD; font-weight: bold">18</span>, GPIO_IN);
+
+    <span style="color: #888888">// pid initialization</span>
+    pid_init();
+    
+    <span style="color: #888888">// motor initialization</span>
+    gpio_init(<span style="color: #0000DD; font-weight: bold">14</span>);
+    gpio_init(<span style="color: #0000DD; font-weight: bold">15</span>);
+    gpio_init(<span style="color: #0000DD; font-weight: bold">16</span>);
+    gpio_init(<span style="color: #0000DD; font-weight: bold">17</span>);
+    gpio_set_dir(<span style="color: #0000DD; font-weight: bold">14</span>, GPIO_OUT);
+    gpio_set_dir(<span style="color: #0000DD; font-weight: bold">15</span>, GPIO_OUT);
+    gpio_set_dir(<span style="color: #0000DD; font-weight: bold">16</span>, GPIO_OUT);
+    gpio_set_dir(<span style="color: #0000DD; font-weight: bold">17</span>, GPIO_OUT);
+
+    gpio_put(<span style="color: #0000DD; font-weight: bold">14</span>, <span style="color: #0000DD; font-weight: bold">1</span>);
+    gpio_put(<span style="color: #0000DD; font-weight: bold">15</span>, <span style="color: #0000DD; font-weight: bold">0</span>);
+    gpio_put(<span style="color: #0000DD; font-weight: bold">16</span>, <span style="color: #0000DD; font-weight: bold">1</span>);
+    gpio_put(<span style="color: #0000DD; font-weight: bold">17</span>, <span style="color: #0000DD; font-weight: bold">0</span>);
+
+    gpio_init(TRIG_PIN);
+    gpio_init(ECHO_PIN);
+    gpio_set_dir(TRIG_PIN, GPIO_OUT);
+    gpio_set_dir(ECHO_PIN, GPIO_IN);
+
+    <span style="color: #888888">// while(1){</span>
+
+    <span style="color: #888888">// }</span>
+    PT_SEM_INIT(<span style="color: #333333">&amp;</span>distance_semaphore, <span style="color: #0000DD; font-weight: bold">1</span>); <span style="color: #888888">// start unblocked</span>
+    PT_SEM_INIT(<span style="color: #333333">&amp;</span>infrared_semaphore, <span style="color: #0000DD; font-weight: bold">0</span>); <span style="color: #888888">// start blocked</span>
+    PT_SEM_INIT(<span style="color: #333333">&amp;</span>motor_semaphore, <span style="color: #0000DD; font-weight: bold">0</span>); <span style="color: #888888">// start blocked</span>
+    pt_add_thread(distance_measure) ;
+    pt_add_thread(infrared_detection) ;
+    pt_add_thread(motor_control) ;
+    pt_schedule_start ;
+	
+}
+</pre></div>
+		<h4 id="Appendix C">Appendix C: Contribution</h4>
+      <div class="authors-container">
+    <div id="YG" class="author">
+		<img src="Assets/images/Yuqiang.jpg" alt="Yuqiang Ge" style="width:50%;">
+        <h5>Yuqiang Ge</h5>
+        <p>Netid: yg585</p>
+		<p>Focused on high level design and hardware design </p>
+    </div>
+    <div id="YZ" class="author">
+		<img src="Assets/images/Yiyang.jpg" alt="Yiyang Zhao" style="width:40%;">
+        <h5>Yiyang Zhao</h5>
+        <p>Netid: yz2952</p>
+		<p>Focused on software design</p>
+    </div>
+</div>
+		<h4 id="Appendix D">Appendix D: Reference</h4>
+        <p><a href="https://www.sparkfun.com/datasheets/Robotics/TB6612FNG.pdf">[1]Motor Driver TB6612FNG Datasheet</a></p>
+		<p><a href="https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf">[2]Ultrasonic Ranging Module HC-SR04 Datasheet</a></p>
+		<p><a href="https://cdn.evilmadscientist.com/catalog/components/semi/opto/phototrans/LTR-3208E.pdf">[3]Infrared Phototransistor Datasheet</a></p>
+		<p><a href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf">[4]RP2040 Datasheet</a></p>
+		<p><a href="https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf">[5]Raspberry Pi Pico Datasheet</a></p>
+		<p><a href="https://github.com/raspberrypi/pico-examples">[6]Raspberry Pi Pico Examples</a></p>
+    </section>
+    <section id="sidebar"> 
+      <!--************************************************************************
+    Sidebar starts here. It contains a searchbox, sample ad image and 6 links
+    ****************************************************************************-->
+<!--      <input type="text" placeholder="Search">-->
+<!--      <div id="adimage"><img src="Assets/images/300x250.gif" alt=""/></div>-->
+      <nav>
+        <ul>
+          <li><a href="#title" title="Link">Title</a></li>
+          <li><a href="#Introduction" title="Link">Project Introduction</a></li>
+          <li><a href="#High level design" title="Link">High Level Design</a></li>
+          <li><a href="#Program and hardware design" title="Link">Program and Hardware Design</a></li>
+          <li><a href="#Results" title="Link">Results</a></li>
+          <li><a href="#Conclusions" title="Link">Conclusions</a></li>
+			<li><a href="#Appendix A" title="Link">Appendix A</a></li>
+			<li><a href="#Appendix B" title="Link">Appendix B</a></li>
+			<li><a href="#Appendix C" title="Link">Appendix C</a></li>
+			<li><a href="#Appendix D" title="Link">Appendix D</a></li>
+        </ul>
+      </nav>
+    </section>
+    <footer> 
+      <!--************************************************************************
+    Footer starts here
+    ****************************************************************************-->
+    </footer>
+  </div>
+  <div id="footerbar"><!-- Small footerbar at the bottom --></div>
+</div>
+</body>
+</html>
