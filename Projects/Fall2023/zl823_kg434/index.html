@@ -1,0 +1,427 @@
+<!DOCTYPE HTML>
+<!--
+	Final Project Report for ECE5730
+-->
+<html lang="en">
+	<head>
+		<title> Microwave Imaging system </title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+		<meta name="description" content="" >
+		<meta name="keywords" content="" >
+		<!--[if lte IE 8]><script src="js/html5shiv.js"></script><![endif]-->
+		<script src="js/jquery.min.js"></script>
+		<script src="js/skel.min.js"></script>
+		<script src="js/skel-layers.min.js"></script>
+		<script src="js/init.js"></script>
+		<noscript>
+			<link rel="stylesheet" href="css/skel.css" >
+			<link rel="stylesheet" href="css/style.css" >
+			<link rel="stylesheet" href="css/style-xlarge.css" >
+		</noscript>
+		<style>
+			html {
+				scroll-behavior: smooth;
+			}
+			.center-block1 {  
+			  width:640px;
+			  display: block;  
+			  margin-right: auto;  
+			  margin-left: auto;  
+			}  
+			.center-block2 {  
+			  width:400px;
+			  display: block;  
+			  margin-right: auto;  
+			  margin-left: auto;  
+			}  
+			.center-block3 {  
+			  width:200px;
+			  display: block;  
+			  margin-right: auto;  
+			  margin-left: auto;  
+			}
+			.center-block4 {  
+			  width: 100%;
+			  display: block;  
+			  margin-right: auto;  
+			  margin-left: auto;  
+			}  
+			.imgContainer {
+				position: fixed;
+				top: 10%;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				display: none;
+				align-items: center;
+				justify-content: center;
+			}
+			.inner {
+				margin-right: 10%;  
+				margin-left: 10%;  
+			}
+			.caption {
+				text-align: center;
+				margin-top: 0;
+			}
+			.gif-container {
+				display: flex;
+				justify-content: space-between;
+			}
+
+			.gif-container figure {
+				flex: 1;
+				text-align: center;
+				margin: 0 5%;
+			}
+
+			.gif-container img {
+				max-width: 100%;
+				height: auto;
+			}
+			#nav ul {
+				display: flex;
+				justify-content: center;
+				flex-wrap: wrap;
+				list-style-type: none;
+			}
+			@media screen and (max-width: 600px) {
+				#nav ul li {
+					display: block;
+					width: 100%;
+					text-align: center;
+				}
+			}
+		</style>
+	</head>
+	<body id="main">
+
+		<!-- Header -->
+		<header id="header" class="skel-layers-fixed">
+			<nav id="nav">
+				<ul>
+					<li><a href="#top">Home</a></li>
+					<li><a href="#Introduction">Introduction</a></li>
+					<li><a href="#HLD">High Level Design</a></li>
+					<li><a href="#Program_Hardware">Program&amp;Hardware Co-Design</a></li>
+					<li><a href="#Results">Results</a></li>
+					<li><a href="#Conclusion">Conclusion</a></li>
+					<li><a href="#Team">Team</a></li>
+					<li><a href="#Appendix_A">Appendix A</a></li>
+					<li><a href="#Appendix_B">Appendix B</a></li>
+				</ul>
+			</nav>
+		</header>
+
+		<!-- Banner -->
+		<section id="banner">
+			<div class="inner">
+				<h2><strong style="color: red;">Microwave System for 2D and 3D imaging using RP2040 microcontroller</strong></h2>
+				<p><strong style="color: white;">A Project By Zehao Li and Kapil Gangwar</strong></p>
+			</div>
+		</section>
+
+		<!-- video -->
+		<section id="video">
+			<hr>
+			<div class="center-block1">
+			   <iframe width="640" height="360" src="https://www.youtube.com/embed/5o7RWTJmXuE" allowfullscreen></iframe>
+			   <h4 style="text-align:center;">Demonstration Video</h4>
+			</div>
+		</section>
+			
+		<!-- Introduction -->
+		<section id="Introduction" class="wrapper style2"> 
+			<header class="major">
+				<h2><strong style="color: white;">Introduction</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<p>The Microwave Imaging System with two Vivaldi antennas is designed to achieve high-resolution 2D imaging through circular motion and 3D image reconstruction with vertical subject movement, utilizing scattering parameter measurements. The antenna design involves fabricating two Vivaldi antennas, one acting as a transmitter (Tx) and the other as a receiver (Rx), optimized for wideband characteristics suitable for microwave imaging applications. To ensure accurate imaging and reconstruction, precise measurements of scattering parameters are conducted using a vector network analyzer (VNA). Circular motion is implemented using a stepper motor controlled by an RP2040 microcontroller, allowing the system to complete a 360-degree rotation in steps desired degrees such as 9, 18, or 27 degrees, etc. Control algorithms are implemented to ensure smooth and precise circular motion, and the functionality is tested by capturing 2D images at various angles. For vertical movement of the subject, an additional motor system is integrated, controlled by the same RP2040 microcontroller. The control logic is implemented to accurately adjust the vertical position, enabling the system to capture data from different heights for 3D image reconstruction. To enhance user interaction, a user-friendly interface is developed, providing users with control over the system, and options to adjust angle and height according to the object to be imaged. Matlab code for 2D imaging is implemented to generate the image. The reconstructed 2D images are validated against known objects and shapes to assess accuracy, ensuring the reliability and efficacy of the Microwave Imaging System. Overall, this system integrates technologies to achieve decent and accurate microwave imaging capabilities.</p>
+			</div>
+		</section>
+		
+		<!-- >High Level Design -->
+		<section id="HLD" class="wrapper style1"> 
+			<header class="major">
+				<h2><strong style="color: black;">High Level Design</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<p>Microwave Imaging, an emerging modality, holds the potential to complement established methods like Magnetic Resonance Imaging (MRI) and Computed Tomography (CT). Its affordability, non-invasiveness, and portability make Microwave Imaging well-suited for early tumor detection. In this study, we used a microwave imaging system using a prototype scanner with two Vivaldi antennas transmitting and receiving signals from 2.5 GHz- 8 GHz. A pyramidal shaped homogeneous wood phantom served as the scanned object. The acquired data from the Vector Network Analyzer (VNA), represented by the S21 parameter on the receiving antenna, was collected for input into the reconstruction algorithm. Filtered Back Projection (FBP) is used as the reconstruction algorithm having a Hann window as the filter for optimal results. Qualitatively, the FBP reconstructed image exhibited smoother quality with clearer edges with decent processing time. In the future, multiple 2D scans at different heights of the object can generate the 3D cross-sectional image by implementing the MATLAB code.  
+				<br><br>
+				Microwave Imaging detects tumors by discerning variations in permittivity profiles or distributions between normal and abnormal cells. Two prevalent methods for reconstructing images in microwave imaging are the reflection method and transmission method [1]. The reflection method involves utilizing scattered fields captured by multiple receiver antennas. In this approach, the reconstructed image is derived by solving the electromagnetic inverse scattering problem, specifically the object's permittivity profile [2]. Drawbacks include the need for numerous receiver antennas and the computational complexity coming from the non-linear nature of the inverse scattering problem. On the other hand, the transmission method relies on the attenuation profile of electromagnetic waves penetrating the object [1]. This method assumes straight-line or ray-based electromagnetic propagation, resulting in simpler mathematics and a reduced need for receiver antennas compared to the reflection method.
+				<br><br>
+				In prior research, a microwave imaging system was simulated in Computer Simulation Technology (CST) software using a straightforward cylindrical phantom as the scanned object [3, 4, 5]. The phantom's image was successfully reconstructed using the transmission method. The formation of a reconstructed image through the transmission method involves employing an algorithm alike to that used in CT scans, focusing on generating the material permittivity distribution of the object. The analytic approach relies on mathematical formulations, offering speed and elegance but lacking the capability to address complex issues such as scattering phenomena. The simplest algorithm within the analytic method is Filtered Back Projection (FBP), where the Fourier Slice Theorem is applied for image formation [6]. The acquired measurement data can be modeled using the Forward Problem, expressed by Eq. (1), commonly known as the Radon Transform. Here, P<sub>&Theta;</sub>(t) represents the attenuation profile (assumed to be the S21 parameter in microwave imaging), known as the sinogram, and fx,y represents the 2D image to be reconstructed. The image can be reconstructed from the acquired measurement data by applying the Inverse Problem, as formulated in Eq. (2).</p>
+				<figure>
+					<img src="images/equation.jpg" alt="equation" style="width:50%; height:auto; display: block; margin-left: auto; margin-right: auto;">
+				</figure>
+				<br><br>
+				To generate an accurate representation of scatterers within a specific imaging area, the intensity distribution of scattered waves in that area is determined by analyzing the fields received at various antenna locations surrounding the area. A Vivaldi antenna at one end emits electromagnetic waves and another collects the waves that are scattered from the object and this process is continuous for N<sub>p</sub> antenna positions encircling the imaging area. For each frequency increment (m = 1 to N<sub>f</sub>) and from every point (x, y) within the imaging zone, the scattered electromagnetic field (Escat) is calculated. This calculation is based on the S-parameters (Smeas), which are signals measured at each antenna position (n = 1 to N<sub>p</sub>) around the imaging area. The process of measuring across all antenna locations and frequency increments yields a total of N<sub>f</sub> x N<sub>p</sub> values representing the estimated scattered field at every point within the imaged area used for image reconstruction.
+				<br><br>
+				<strong>hardware/software tradeoffs:</strong> This imaging method and MATLAB code cannot disguise the edges of the object perfectly. Currently, 3D image reconstruction is also not possible as it needs a decent amount of time to write the MATLAB code, but it can be done in future.
+				<br><br>
+			</div>
+			<div style="padding: 0% 5% 0% 5%;">
+				<h3>Experimental setup:</h3>
+				The proposed microwave imaging system comprises two primary components: measurement-oriented hardware and reconstruction-focused software in MATLAB to generate images of scanned objects from acquired measurement data. The hardware component includes two Vivaldi antennas for transmitting (T<sub>x</sub>) and receiving (R<sub>x</sub>) microwave signals from 2.5 GHz-8 GHz; a Vector Network Analyzer for signal generation and S21 parameter measurement; and a proposed scanner system having various hardware components. The scanner is equipped with step motors and microcontrollers for data acquisition as shown in Fig.1.
+				<br><br>
+				To assess the performance of the Filtered Back Projection (FBP) algorithms, a pyramidal shaped wood phantom with a relative permittivity &Epsilon;<sub>r</sub> of 2-3 is employed as the material under test (MUT). During measurement, both Vivaldi antennas (T<sub>x</sub>-R<sub>x</sub>) are positioned 23 cm apart, translating together along the object. The S21 parameter is then acquired from the Vector Network Analyzer at each position. Following the translation process, the antennas are rotated at specific degrees (such as 9 or 18 degrees), and the translation process is repeated until the end of the rotation degree (complete 360-degree scan). 
+				<div style="display: flex; justify-content: center; gap: 0%;">
+					<div style="font-size:16px; width: 240px; text-align: center;">
+						<img class="img-rounded" src="images/setup1.jpg" alt="Generic placeholder image" width="240" height="240">
+					</div>
+					<div style="font-size:16px; width: 240px; text-align: center;">
+						<img class="img-rounded" src="images/setup2.jpg" alt="Generic placeholder image" width="220" height="240">
+					</div>
+				</div>
+				<figcaption style="text-align: center;">Fig.1. Experimental setup of microwave imaging system with two Vivaldi antennas</figcaption>		
+			</div>
+		</section>
+		
+		<!-- Program & Hardware Co-Design -->
+		<section id="Program_Hardware" class="wrapper style2"> 
+			<header class="major">
+				<h2><strong style="color: white;">Program &amp; Hardware Co-Design</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<h3>1. Hardware Implementation</h3>
+				<p>
+					<h4>a) System Overview</h4>
+					The Microwave Imaging System is engineered with a blend of electronic and mechanical components, each chosen for its role in achieving imaging. The system employs precise control mechanisms, leveraging the capabilities of a powerful microcontroller and dedicated motor drivers to manipulate stepper motors. These motors are responsible for the dual-axis movement required for multidimensional scanning. A user interface, consisting of a keypad and a VGA connector, allows for real-time user interaction and system monitoring. Safety and stability are ensured through the inclusion of capacitors and resistors, which protect against voltage spikes and regulate current. The run switch provides a simple interface for system control, allowing for quick resets or activation of the imaging process.<br><br>
+					<figure>
+						<img src="images/Sketch.jpg" alt="System Sketch" style="width:70%; height:auto; display: block; margin-left: auto; margin-right: auto;">
+						<figcaption style="text-align: center;">Fig.2. - Sketch of the Microwave Imaging Hardware System</figcaption>
+					</figure>
+					<h4>b) Component Functions</h4>
+					<ul>
+						<li><strong>RP2040 Microcontroller Board:</strong> This is the command center of the imaging system. It interprets user inputs from the keypad, processes them according to the programmed imaging algorithms, and sends precise movement commands to the stepper motors via the motor drivers. It also handles the processing of image data for display through the VGA output.</li>
+						<li><strong>A4988 Stepper Motor Drivers:</strong> These devices act as intermediaries between the microcontroller and the stepper motors. They receive low-power control signals from the microcontroller and amplify these signals to drive the motors with sufficient current. They also provide protection features such as overcurrent and thermal shutdown to prevent damage to the motors and themselves.</li>
+						<li><strong>Stepper Motors:</strong> The two Nema 17 Stepper Motors are instrumental in the positioning system. One motor controls the circular motion, enabling the antennas to rotate around the object being imaged, while the other controls the vertical movement, allowing for elevation adjustments to capture data from different angles for 3D reconstruction.</li>
+						<li><strong>Capacitors:</strong> These are placed across the power supply lines of the motor drivers to filter out electrical noise and smooth out the power supply voltage. They absorb and release energy quickly, thus protecting the circuit from voltage spikes and ensuring a stable operation of the motors.</li>
+						<li><strong>12V Power Supplies:</strong> These provide the energy required for the stepper motors to operate. They are chosen for their high current capability, which ensures that the motors can produce the required torque without voltage drops that could lead to loss of step precision.</li>
+						<li><strong>Keypad:</strong> The keypad is the primary input device for the user. It allows for the entry of commands to control the imaging process, such as starting and stopping scans, adjusting the step resolution, or changing the scanning pattern.</li>
+						<li><strong>VGA Connector:</strong> This is intended for connection to a display device. It outputs the visual interface of the system, which can include the imaging progress, real-time parameter adjustments, and potentially, preliminary imaging results.</li>
+						<li><strong>Run Switch:</strong> This manual switch is directly wired to the microcontroller. It is used to start the imaging process or reset the system to a known state. This provides a fail-safe in case of software malfunction and allows for quick re-initiation of the system.</li>
+						<li><strong>Resistors:</strong> These serve multiple purposes in the circuit, including current limiting to prevent damage to LEDs or other sensitive components, and setting logic levels to ensure clear high and low states for digital signals. They also help in the pull-up/pull-down configurations to keep the inputs to the microcontroller at a known voltage when no other input is present.</li>
+					</ul>
+				</p>
+				<h3>2. Software Implementation</h3>
+				<p>
+					<h4>a) Program Overview</h4>
+					The Microwave Imaging System's software is crafted to seamlessly bridge the gap between the intricate hardware controls and the user's operational commands. Developed for the RP2040 microcontroller, the software is responsible for executing precision motor movements, processing user interface interactions, and rendering visual feedback through a VGA output. The multi-threaded application is architected to balance computational demands across the microcontroller's dual cores, ensuring fluid system performance.
+					<br><br>
+					<h4>b) Program Functionalities</h4>
+				</p>
+			</div>
+			<div style="padding: 0% 10% 0% 10%;">
+				<h4>i. User Interface</h4>
+				The user interface of the microwave imaging system is designed to provide a direct and intuitive experience for the user. The UI operates on the principle of conditional rendering, where visual elements on the VGA monitor are updated only when the system state or user input changes. Considering that VGA monitors have a refresh rate of 60 Hz, this approach is crucial to save resources on the microcontroller and maintain a clear and stable image on the VGA monitor.
+				<br><br>
+				When the system boots, initialization is performed, which configures the GPIO pins for the keyboard interface. An internal pull-down resistor is activated to ensure that keyboard input remains in a defined low state until a key is pressed. This setting prevents spurious signals that could cause false input detections. The detector_keypad() function is essential for scanning the keyboard. It uses an efficient matrix scanning algorithm to minimize scanning time by quickly identifying active keys. The software then interprets the corresponding keycode, which indicates subsequent UI updates or control commands.
+				<br><br>
+				Rendering the UI is handled by the draw_UI() function, which intelligently redraws only the necessary parts of the screen. For example, it avoids redrawing the entire screen for each frame and instead updates only the areas that have changed, such as menu transitions or parameter adjustments. This selective update is essential to reduce visual flicker and ensure users always see the display clearly.
+				<br><br>
+				<figure>
+					<img src="images/ui.jpg" alt="ui" style="width:70%; height:auto; display: block; margin-left: auto; margin-right: auto;">
+					<figcaption style="text-align: center;">Fig.3. - User Interface when Running</figcaption>
+				</figure>
+				<h4>ii. Motor Control</h4>
+				The software's motor control subsystem is engineered to translate user inputs into precise mechanical movements. The RP2040 microcontroller directs the stepper motors through the A4988 drivers, taking care to produce the exact number of steps required for the desired rotation angle or vertical movement.
+				<br><br>
+				In manual control mode, the operator can input specific values for the desired movement. The software computes the necessary steps and executes the motion by toggling the STEP and DIR pins of the motor drivers accordingly. The rotation is managed by the protothread_serial() function, which also monitors for a stop condition, ensuring that the system halts the rotation at the correct time. For automated scanning, the software follows predefined sequences that are orchestrated through a series of steps and intervals. These sequences are designed to cover the entire scanning area systematically. The software takes into account the steps per revolution and the interval timing to create a consistent and repeatable scanning pattern. This automation is critical for achieving uniform data collection across different scanning sessions.
+				<br><br>
+				The challenge in motor control was not only to achieve this precision but also to integrate it smoothly with the UI updates. The software ensures that motor operations do not interfere with the user's ability to interact with the system or the visual feedback provided by the UI. This is managed by careful thread scheduling and prioritization, where UI responsiveness is maintained alongside ongoing motor operations.
+				<br><br>
+				<div class="gif-container">
+					<figure>
+						<img src="images/rotate.gif" alt="First GIF">
+						<figcaption>Rotation</figcaption>
+					</figure>
+
+					<figure>
+						<img src="images/lift.gif" alt="Second GIF">
+						<figcaption>Lift</figcaption>
+					</figure>
+				</div>
+			</div>
+			<div style="padding: 0% 5% 0% 5%;">
+				<h4>c) Challenges</h4>
+				In developing the software for the Microwave Imaging System, several aspects presented notable challenges, requiring careful planning, precise coding, and extensive testing to ensure both functionality and reliability.
+				<br><br>
+				<ul>
+					<li><strong>Complex User Interface Logic:</strong> The implementation of the UI logic was intricate, especially in managing the navigation between different menus and sub-menus. To achieve a seamless and error-free transition, we employed a combination of case statements and flags. This approach allowed for the tracking of the user's current position within the menu hierarchy and enabled the system to respond correctly to input, whether it was advancing into a submenu, modifying a parameter, or returning to a previous menu. The complexity was compounded by the need to maintain UI responsiveness and visual clarity, ensuring that each interaction led to an intuitive and immediate update on the VGA display.</li>
+					<li><strong>Precision in Motor Control:</strong> Achieving precision in motor control, particularly for the function that manages 1 cm lifts, was a critical aspect of the project. The stepper motors needed to translate electrical signals into precise mechanical movements. This required exact calculations to determine the number of steps the motor should take to move the system exactly 1 cm. Any error in these calculations could significantly impact the accuracy of the imaging system. Therefore, considerable effort was put into fine-tuning these parameters, along with implementing control algorithms that could accurately execute these movements while maintaining system stability.</li>
+					<li><strong>Synchronization Between Threads:</strong> Managing the multi-threaded environment posed its own set of challenges. The system had to ensure that the UI updates and motor controls were effectively synchronized. This meant that UI updates, motor movements, and system monitoring had to occur concurrently without causing delays or conflicts. Implementing efficient thread scheduling and prioritization was crucial to maintain a balance where the UI remained responsive and informative while motor operations proceeded without interruption.</li>
+				</ul>
+				<h3>3. Replicability of the Project</h3>
+				In its current form, the documentation and code provided for the Microwave Imaging System offer a solid foundation for another individual or team to recreate or build upon this project. The software implementation, especially, is detailed with clear explanations of both the user interface and motor control logic. However, the replicability of the project also depends on a few factors:
+				<br><br>
+				<ul>
+					<li>The specific hardware components used, such as the RP2040 microcontroller, the A4988 stepper motor drivers, and the mechanical components for the lift platform, need to be readily available. Any deviation in hardware might require adjustments in the software.</li>
+					<li>The provided code requires a degree of familiarity with RP2040 programming. Understanding the multi-threaded structure and the specific libraries used is crucial. Ideally, the program should run without showing errors. But when there is an issue like the motor not running, use a voltmeter to test each circuit and make sure the hardware working properly. And divide the code into several sections to debug.</li>
+					<li>The documentation on the code heading and this report should be clear enough to guide the replication process. This includes wiring diagrams, setup instructions, and explanations of how the software interacts with the hardware.</li>
+				</ul>
+				<h3>4. References</h3>
+				The development of the software for the Microwave Imaging System was influenced by external resources and previous work.
+				<br><br>
+				<ul>
+					<li><strong>Lab Demo Code by Professor Hunter:</strong> The PWM control segment of the code is built upon the demo code from Lab 3, provided by Professor Hunter. This can be found at Hunter-Adams RP2040 Demos - PWM Demo. Modifications were made to adapt <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master/PWM/PWM_Demo" target="_blank">this code</a> to the specific requirements of controlling the stepper motors and the VGA display in our system.</li>
+					<li><strong>Previous Semester's Lift Platform:</strong> The mechanical design for the lift platform was reused from a team in the previous semester. This influenced certain aspects of the motor control software, particularly the calculations for vertical movements.</li>
+				</ul>
+				<h3>5. Unsuccessful Attempts</h3>
+				During the development phase, some ideas and implementations were explored but ultimately not incorporated into the final design:
+				<br><br>
+				<ul>
+					<li><strong>Use of 360-Degree Potentiometers for Closed-Loop Control:</strong> An initial attempt was made to use two 360-degree potentiometers to obtain accurate rotational degrees for the motor. The goal was to establish a closed-loop system for more precise control. However, this approach faced practical issues. The potentiometers' physical dimensions were incompatible with the motor setup, and there was a noticeable 'click' during rotation, which could adversely affect motor performance. These limitations led to the decision to opt for an open-loop control system.</li>
+				</ul>
+				<h3>6. Summary</h3>
+				The software of the Microwave Imaging System deftly combines detailed control logic with a responsive UI, all while managing the computational constraints of the RP2040 microcontroller. By updating the UI only when changes occur and by synchronizing motor movements with user commands, the system achieves a balance between operational efficiency and user engagement. The software's design ensures that the system is robust when running, user-friendly for operation, and ready for future enhancements.
+			</div>
+		</section>
+		
+		<!-- Results -->
+		<section id="Results" class="wrapper style1"> 
+			<header class="major">
+				<h2><strong style="color: black;">Results</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<p>The rotational process was adjusted to a 9-degree rotation, yielding 40 sets of rotational data at 26 frequencies between 2.5 GHz-8 GHz. These data were transformed into a 26x40 matrix which served as the input for the image reconstruction algorithm. The 2D image obtained from a center cross section of a pyramid solid wood phantom is depicted in Fig. 3. This image was reconstructed using FBP which uses a Hann window filter. The resulting image was both qualitatively and quantitatively analyzed and is displayed in black and white color format in Fig.4. The FBP created an image around 500x500 pixels in spatial resolution. Areas outside the square in the FBP image likely represent air distribution, making the FBP image qualitatively clearer. FBP also boasts a faster processing time due to its simpler algorithm and available MATLAB code. The images were reconstructed in approximately 5 seconds with decent accuracy when compared with the dimension of the original object.</p>
+				<figure>
+					<img src="images/result_c.jpg" alt="ui" style="width:50%; height:auto; display: block; margin-left: auto; margin-right: auto;">
+					<figcaption style="text-align: center;">Fig.4. 2D- Reconstructed image of pyramid wood phantom (color) </figcaption>
+				</figure>
+				<figure>
+					<img src="images/result_b.jpg" alt="ui" style="width:50%; height:auto; display: block; margin-left: auto; margin-right: auto;">
+					<figcaption style="text-align: center;">Fig.5. 2D-Reconstructed image of pyramid wood phantom (black and white) </figcaption>
+				</figure>
+			</div>
+		</section>
+		
+		<!-- Conclusion -->
+		<section id="Conclusion" class="wrapper style2"> 
+			<header class="major">
+				<h2><strong style="color: white;">Conclusion</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<p>In our study, we deployed a microwave imaging system featuring a prototype scanner with two Vivaldi antennas operating between 2.5 GHz and 8 GHz frequencies. We scanned a pyramidal shaped, homogeneous wood phantom, acquiring data through the S21 parameter from a Vector Network Analyzer (VNA) for image reconstruction using Filtered Back Projection (FBP) with a Hann window filter. Our system's experimental setup involved a comprehensive hardware and software design. The hardware included two Vivaldi antennas, a Vector Network Analyzer, and a scanner system with step motors and microcontrollers for precise data acquisition. The system's software, developed for the RP2040 microcontroller, managed motor movements and processed user interface interactions. Challenges encountered during development included complex UI logic, precision in motor control, and synchronization between threads. Despite these challenges, the project is replicable with detailed documentation and a clear guide on the software-hardware interaction.
+				<br><br>
+				The results of our study are promising. The system's rotation was adjusted to a 9-degree increment, providing a comprehensive data set that was processed into a 26x40 matrix. This matrix served as the input for the FBP algorithm, resulting in a detailed 2D image of the phantom's cross-section. The FBP algorithm, with its simple design and rapid processing capability, generated images within approximately 5 seconds, demonstrating decent accuracy compared to the original object's dimensions.
+				<br><br>
+				The study underscores the potential of Microwave Imaging in medical diagnostics. Its ability to produce clear images of objects, coupled with the system's design and efficient processing algorithms, highlights its applicability in early tumor detection and other medical imaging needs. The success of this prototype scanner and its algorithms, particularly FBP, opens doors for further research and development in this field. Future work could focus on enhancing image resolution, expanding to 3D image reconstruction, and refining the system's hardware and software components for more complex applications. This study serves as a significant step towards establishing Microwave Imaging as a viable, cost-effective alternative in medical imaging technology.
+				<br><br>
+				The MATLAB coding for image reconstruction is developed by us and not someone else code. The project work is publishable in some of the microwave conferences such as IEEE APS– URSI symposium and IEEE Radio and Wireless Week. 
+				</p>
+			</div>
+		</section>
+		
+		<!-- Team -->
+		<section id="Team" class="wrapper style1"> 
+			<header class="major">
+				<h2><strong style="color: black;">Team</strong></h2>
+			</header>
+			<div style="display: flex; justify-content: center; gap: 10%;">
+				<div style="font-size:16px; width: 240px; text-align: center;">
+					<img class="img-rounded" src="images/zehao.png" alt="Generic placeholder image" width="240" height="240">
+					<h3>Zehao Li</h3>
+					<p class="lead">zl823@cornell.edu</p>
+				</div>
+				<div style="font-size:16px; width: 240px; text-align: center;">
+					<img class="img-rounded" src="images/kg_PIC.jpg" alt="Generic placeholder image" width="210" height="240">
+					<h3>Kapil Gangwar</h3>
+					<p class="lead">kg434@cornell.edu</p>
+				</div>
+			</div>
+		</section>
+		
+		<!-- Appendix A -->
+		<section id="Appendix_A" class="wrapper style2"> 
+			<header class="major">
+				<h2><strong style="color: white;">Appendix A</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<p>
+					The group approves this report for inclusion on the course website.
+					<br><br>
+					The group approves the video for inclusion on the course youtube channel.
+				</p>
+			</div>
+		</section>
+		
+		<!-- Appendix B -->
+		<section id="Appendix_B" class="wrapper style1"> 
+			<header class="major">
+				<h2><strong style="color: black;">Appendix B</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<h3>Reference</h3>
+				<ol>
+					<li>Larsen, L. E. and J. H. Jacobi, “Medical applications of microwave imaging,” IEEE Microwave Theory and Techniques Society, New York, 1995.</li>
+					<li>Chew, W. C. and Y. M. Wang, “Reconstruction of two-dimensional permittivity distribution using the distorted born iterative method,” IEEE Transactions on Medical Imaging, Vol. 9, No. 2, June 1990.</li>
+					<li>M. N. Akinci et al., “Qualitative Microwave Imaging With Scattering Parameters Measurements,” in IEEE Transactions on Microwave Theory and Techniques, vol. 63, no. 9, pp. 2730-2740, Sept. 2015.</li>
+					<li>Elevani, D., R. Ramadhan, D. T. Parastika, and Basari, “Evaluation of Algebraic Reconstruction Technique algorithm for microwave imaging,” 2016 Progress In Electromagnetic Research Symposium (PIERS), 587–591, Shanghai, China, Aug. 8–11, 2016.</li>
+					<li>Aprilliyani, R., R. G. Prabowo, and Basari, “Comparison analysis between SART and ART algorithm for microwave imaging,” 2017 Progress In Electromagnetics Research Symposium — Fall (PIERS — FALL), 1674–1678, Singapore, Nov. 19–22, 2017.</li>
+					<li>Kak, C. and M. Slaney, Principles of computerized Tomographic Imaging, IEEE Press, New York, 1988.</li>
+				</ol>
+			</div>
+			<br><br>
+			<div style="padding: 0% 5% 0% 5%;">
+				<h3>Project Code</h3>
+				<a href="https://github.com/xalzh/ECE5730-Final-Project">Project Repository on GitHub</a>
+				<ul>
+					<li><a href="c_html/main.c.html">main.c</a></li>
+				</ul>
+			</div>
+			<br><br>
+		</section>
+		
+	
+		
+		
+		<script>
+			$(document).ready(function(){
+				$(window).scroll(function() {
+					var sectionTop = $("#image_seq").offset().top;
+					var sectionHeight = $("#image_seq").height();
+					var scrollPosition = $(window).scrollTop();
+
+					if(scrollPosition >= sectionTop && scrollPosition < (sectionTop + sectionHeight)) {
+						var numImages = 4;
+						var imageHeight = sectionHeight / numImages * 0.4;
+						var imageIndex = Math.floor((scrollPosition - sectionTop) / imageHeight) + 1;
+
+						$('.imgContainer').hide();
+						$('#imgContainer' + imageIndex).show();
+					} else {
+						$('.imgContainer').hide();
+					}
+				});
+			});
+			document.addEventListener("DOMContentLoaded", function() {
+			var imgContainers = document.querySelectorAll(".imgContainer");
+
+			var options = {
+			  rootMargin: "0px",
+			  threshold: 0.5
+			};
+
+			var observer = new IntersectionObserver(function(entries, observer) {
+			  entries.forEach(function(entry) {
+				if (entry.isIntersecting) {
+				  var imgContainer = entry.target;
+				  imgContainer.style.display = "block";
+				  observer.unobserve(imgContainer);
+				}
+			  });
+			}, options);
+
+			imgContainers.forEach(function(imgContainer) {
+			  observer.observe(imgContainer);
+			});
+		  });
+		
+		document.getElementById('myLink').addEventListener('click', function(event) {
+		  event.preventDefault();
+		});
+		</script>
+	</body>
+
+</html>

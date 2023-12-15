@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<!-- saved from url=(0059)http://localhost:2199/4fdfcc29-69e9-40f5-baef-a4f7d5072a7a/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<!--<base href="http://localhost:2199/4fdfcc29-69e9-40f5-baef-a4f7d5072a7a/">--><base href=".">
+	<title>main.c</title>
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link href="./main.c_files/default.css" rel="stylesheet">
+	<link href="./main.c_files/line-numbers.css" rel="stylesheet">
+	<link href="./main.c_files/colour-scheme.css" rel="stylesheet">
+	<link href="./main.c_files/settings.css" rel="stylesheet">
+	
+
+</head>
+
+<body onload="printAndClose(true)" data-new-gr-c-s-check-loaded="14.1146.0" data-gr-ext-installed="">
+	<h3>~\Desktop\github\ECE5730-Final-Project\final\main.c</h3>
+	<div>
+		<table class="hljs">
+<tbody><tr><td class="line-number">1</td><td class="line-text"><span class="hljs-comment">/**
+</span></td></tr>
+<tr><td class="line-number">2</td><td class="line-text"><span class="hljs-comment"> * This is the code for the final project of ECE 5730
+</span></td></tr>
+<tr><td class="line-number">3</td><td class="line-text"><span class="hljs-comment"> * Project Name: Microwave Imaging System
+</span></td></tr>
+<tr><td class="line-number">4</td><td class="line-text"><span class="hljs-comment"> * Author: Zehao Li(zl823)<wbr> and Kapil Gangwar(kg434)<wbr>
+</span></td></tr>
+<tr><td class="line-number">5</td><td class="line-text"><span class="hljs-comment"> * Date: 12/11/2023 
+</span></td></tr>
+<tr><td class="line-number">6</td><td class="line-text"><span class="hljs-comment"> * Description: This project is to build the Microwave Imaging System with two Vivaldi antennas 
+</span></td></tr>
+<tr><td class="line-number">7</td><td class="line-text"><span class="hljs-comment">   aims to achieve good-resolution 2D imaging through circular motion and 3D image reconstruction 
+</span></td></tr>
+<tr><td class="line-number">8</td><td class="line-text"><span class="hljs-comment">   by vertical movement of the subject using scattering parameter messurements.
+</span></td></tr>
+<tr><td class="line-number">9</td><td class="line-text"><span class="hljs-comment">
+</span></td></tr>
+<tr><td class="line-number">10</td><td class="line-text"><span class="hljs-comment"> * HARDWARE CONNECTIONS
+</span></td></tr>
+<tr><td class="line-number">11</td><td class="line-text"><span class="hljs-comment">    - GPIO 2  ---&gt;<wbr> STEP on the A4988 Stepper Motor Driver 1
+</span></td></tr>
+<tr><td class="line-number">12</td><td class="line-text"><span class="hljs-comment">    - GPIO 3  ---&gt;<wbr> DIR on the A4988 Stepper Motor Driver 1
+</span></td></tr>
+<tr><td class="line-number">13</td><td class="line-text"><span class="hljs-comment">    - GPIO 7  ---&gt;<wbr> Pin1 on the Keyboard
+</span></td></tr>
+<tr><td class="line-number">14</td><td class="line-text"><span class="hljs-comment">    - GPIO 8  ---&gt;<wbr> Pin2 on the Keyboard
+</span></td></tr>
+<tr><td class="line-number">15</td><td class="line-text"><span class="hljs-comment">    - GPIO 9  ---&gt;<wbr> Pin3 on the Keyboard
+</span></td></tr>
+<tr><td class="line-number">16</td><td class="line-text"><span class="hljs-comment">    - GPIO 10 ---&gt;<wbr> Pin4 on the Keyboard
+</span></td></tr>
+<tr><td class="line-number">17</td><td class="line-text"><span class="hljs-comment">    - GPIO 11 ---&gt;<wbr> Pin5 on the Keyboard
+</span></td></tr>
+<tr><td class="line-number">18</td><td class="line-text"><span class="hljs-comment">    - GPIO 12 ---&gt;<wbr> Pin6 on the Keyboard
+</span></td></tr>
+<tr><td class="line-number">19</td><td class="line-text"><span class="hljs-comment">    - GPIO 13 ---&gt;<wbr> Pin7 on the Keyboard
+</span></td></tr>
+<tr><td class="line-number">20</td><td class="line-text"><span class="hljs-comment">    - GPIO 14 ---&gt;<wbr> STEP on the A4988 Stepper Motor Driver 2
+</span></td></tr>
+<tr><td class="line-number">21</td><td class="line-text"><span class="hljs-comment">    - GPIO 15 ---&gt;<wbr> DIR on the A4988 Stepper Motor Driver 2
+</span></td></tr>
+<tr><td class="line-number">22</td><td class="line-text"><span class="hljs-comment">    - GPIO 16 ---&gt;<wbr> VGA Hsync
+</span></td></tr>
+<tr><td class="line-number">23</td><td class="line-text"><span class="hljs-comment">    - GPIO 17 ---&gt;<wbr> VGA Vsync
+</span></td></tr>
+<tr><td class="line-number">24</td><td class="line-text"><span class="hljs-comment">    - GPIO 18 ---&gt;<wbr> 330 ohm resistor ---&gt;<wbr> VGA Red
+</span></td></tr>
+<tr><td class="line-number">25</td><td class="line-text"><span class="hljs-comment">    - GPIO 19 ---&gt;<wbr> 330 ohm resistor ---&gt;<wbr> VGA Green
+</span></td></tr>
+<tr><td class="line-number">26</td><td class="line-text"><span class="hljs-comment">    - GPIO 20 ---&gt;<wbr> 330 ohm resistor ---&gt;<wbr> VGA Blue
+</span></td></tr>
+<tr><td class="line-number">27</td><td class="line-text"><span class="hljs-comment">    - RP2040 GND ---&gt;<wbr> VGA GND
+</span></td></tr>
+<tr><td class="line-number">28</td><td class="line-text"><span class="hljs-comment">    - RP2040 GND ---&gt;<wbr> Switch ---&gt;<wbr> RP2040 RUN
+</span></td></tr>
+<tr><td class="line-number">29</td><td class="line-text"><span class="hljs-comment">    - RP2040 GND ---&gt;<wbr> GND on the A4988 Stepper Motor Driver 1 and 2
+</span></td></tr>
+<tr><td class="line-number">30</td><td class="line-text"><span class="hljs-comment">    - RP2040 3V3 ---&gt;<wbr> VDD on the A4988 Stepper Motor Driver 1 and 2
+</span></td></tr>
+<tr><td class="line-number">31</td><td class="line-text"><span class="hljs-comment">
+</span></td></tr>
+<tr><td class="line-number">32</td><td class="line-text"><span class="hljs-comment">    - External 12V power supply ---&gt;<wbr> VMOT on the A4988 Stepper Motor Driver 1 and 2
+</span></td></tr>
+<tr><td class="line-number">33</td><td class="line-text"><span class="hljs-comment">    - External 12V ground ---&gt;<wbr> GND on the A4988 Stepper Motor Driver 1 and 2
+</span></td></tr>
+<tr><td class="line-number">34</td><td class="line-text"><span class="hljs-comment"> */</span>
+</td></tr>
+<tr><td class="line-number">35</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">36</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">37</td><td class="line-text"><span class="hljs-comment">// Include standard libraries</span>
+</td></tr>
+<tr><td class="line-number">38</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;<wbr>stdio.h&gt;<wbr></span></span>
+</td></tr>
+<tr><td class="line-number">39</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;<wbr>stdlib.h&gt;<wbr></span></span>
+</td></tr>
+<tr><td class="line-number">40</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;<wbr>math.h&gt;<wbr></span></span>
+</td></tr>
+<tr><td class="line-number">41</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;<wbr>string.h&gt;<wbr></span></span>
+</td></tr>
+<tr><td class="line-number">42</td><td class="line-text"><span class="hljs-comment">// Include PICO libraries</span>
+</td></tr>
+<tr><td class="line-number">43</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">"<wbr>pico/stdlib.h"<wbr></span></span>
+</td></tr>
+<tr><td class="line-number">44</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">"<wbr>pico/multicore.h"<wbr></span></span>
+</td></tr>
+<tr><td class="line-number">45</td><td class="line-text"><span class="hljs-comment">// Include hardware libraries</span>
+</td></tr>
+<tr><td class="line-number">46</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">"<wbr>hardware/pwm.h"<wbr></span></span>
+</td></tr>
+<tr><td class="line-number">47</td><td class="line-text"><span class="hljs-comment">// Include custom libraries</span>
+</td></tr>
+<tr><td class="line-number">48</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">"<wbr>vga_graphics.h"<wbr></span></span>
+</td></tr>
+<tr><td class="line-number">49</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">"<wbr>pt_cornell_rp2040_v1.h"<wbr></span></span>
+</td></tr>
+<tr><td class="line-number">50</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">51</td><td class="line-text"><span class="hljs-comment">// Macros for fixed-point arithmetic (faster than floating point)<wbr></span>
+</td></tr>
+<tr><td class="line-number">52</td><td class="line-text"><span class="hljs-keyword">typedef</span> <span class="hljs-keyword">signed</span> <span class="hljs-keyword">int</span> fix15 ;<wbr>
+</td></tr>
+<tr><td class="line-number">53</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> multfix15(a,<wbr>b)<wbr> ((fix15)<wbr>((((signed long long)<wbr>(a)<wbr>)<wbr>*((signed long long)<wbr>(b)<wbr>)<wbr>)<wbr>&gt;<wbr>&gt;<wbr>15)<wbr>)<wbr></span>
+</td></tr>
+<tr><td class="line-number">54</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> float2fix15(a)<wbr> ((fix15)<wbr>((a)<wbr>*32768.0)<wbr>)<wbr> </span>
+</td></tr>
+<tr><td class="line-number">55</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> fix2float15(a)<wbr> ((float)<wbr>(a)<wbr>/32768.0)<wbr></span>
+</td></tr>
+<tr><td class="line-number">56</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> absfix15(a)<wbr> abs(a)<wbr> </span>
+</td></tr>
+<tr><td class="line-number">57</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> int2fix15(a)<wbr> ((fix15)<wbr>(a &lt;<wbr>&lt;<wbr> 15)<wbr>)<wbr></span>
+</td></tr>
+<tr><td class="line-number">58</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> fix2int15(a)<wbr> ((int)<wbr>(a &gt;<wbr>&gt;<wbr> 15)<wbr>)<wbr></span>
+</td></tr>
+<tr><td class="line-number">59</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> char2fix15(a)<wbr> (fix15)<wbr>(((fix15)<wbr>(a)<wbr>)<wbr> &lt;<wbr>&lt;<wbr> 15)<wbr></span>
+</td></tr>
+<tr><td class="line-number">60</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> divfix(a,<wbr>b)<wbr> (fix15)<wbr>( (((signed long long)<wbr>(a)<wbr>)<wbr> &lt;<wbr>&lt;<wbr> 15)<wbr> / (b)<wbr>)<wbr></span>
+</td></tr>
+<tr><td class="line-number">61</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> min(a,<wbr>b)<wbr> ((a&lt;<wbr>b)<wbr> ? a:b)<wbr></span>
+</td></tr>
+<tr><td class="line-number">62</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> max(a,<wbr>b)<wbr> ((a&lt;<wbr>b)<wbr> ? b:a)<wbr></span>
+</td></tr>
+<tr><td class="line-number">63</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> abs(a)<wbr> ((a&gt;<wbr>0)<wbr> ? a:-a)<wbr></span>
+</td></tr>
+<tr><td class="line-number">64</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> SIGN(x)<wbr> ((x &gt;<wbr> 0)<wbr> - (x &lt;<wbr> 0)<wbr>)<wbr></span>
+</td></tr>
+<tr><td class="line-number">65</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> PI 3.14159</span>
+</td></tr>
+<tr><td class="line-number">66</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">67</td><td class="line-text"><span class="hljs-comment">// semaphore</span>
+</td></tr>
+<tr><td class="line-number">68</td><td class="line-text"><span class="hljs-keyword">static</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">pt_sem</span> <span class="hljs-title">vga_semaphore</span>;<wbr></span> <span class="hljs-comment">// VGA drawing semaphore</span>
+</td></tr>
+<tr><td class="line-number">69</td><td class="line-text"><span class="hljs-keyword">const</span> <span class="hljs-keyword">int</span> dirPin_rotation =<wbr> <span class="hljs-number">3</span>;<wbr> <span class="hljs-comment">// rotation direction pin</span>
+</td></tr>
+<tr><td class="line-number">70</td><td class="line-text"><span class="hljs-keyword">const</span> <span class="hljs-keyword">int</span> stepPin_rotation =<wbr> <span class="hljs-number">2</span>;<wbr> <span class="hljs-comment">// rotation step pin</span>
+</td></tr>
+<tr><td class="line-number">71</td><td class="line-text"><span class="hljs-keyword">const</span> <span class="hljs-keyword">int</span> dirPin_lift =<wbr> <span class="hljs-number">15</span>;<wbr> <span class="hljs-comment">// lift direction pin</span>
+</td></tr>
+<tr><td class="line-number">72</td><td class="line-text"><span class="hljs-keyword">const</span> <span class="hljs-keyword">int</span> stepPin_lift =<wbr> <span class="hljs-number">14</span>;<wbr> <span class="hljs-comment">// lift step pin</span>
+</td></tr>
+<tr><td class="line-number">73</td><td class="line-text"><span class="hljs-keyword">int</span> stepsPerRevolution;<wbr> <span class="hljs-comment">// Steps per revolution</span>
+</td></tr>
+<tr><td class="line-number">74</td><td class="line-text"><span class="hljs-keyword">float</span> degree =<wbr> <span class="hljs-number">0.0</span>;<wbr> <span class="hljs-comment">// degree of the rotation</span>
+</td></tr>
+<tr><td class="line-number">75</td><td class="line-text"><span class="hljs-keyword">int</span> redius =<wbr> <span class="hljs-number">100</span>;<wbr> <span class="hljs-comment">// redius of the circle</span>
+</td></tr>
+<tr><td class="line-number">76</td><td class="line-text"><span class="hljs-keyword">int</span> rotate_flag =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// flag to rotate the plate</span>
+</td></tr>
+<tr><td class="line-number">77</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> FRAME_RATE 16667 <span class="hljs-comment">// 60 Hz frame rate</span></span>
+</td></tr>
+<tr><td class="line-number">78</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> BASE_KEYPAD_PIN 7</span>
+</td></tr>
+<tr><td class="line-number">79</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> KEYROWS         4</span>
+</td></tr>
+<tr><td class="line-number">80</td><td class="line-text"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> NUMKEYS         12</span>
+</td></tr>
+<tr><td class="line-number">81</td><td class="line-text"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> idx;<wbr>
+</td></tr>
+<tr><td class="line-number">82</td><td class="line-text"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> old_idx;<wbr>
+</td></tr>
+<tr><td class="line-number">83</td><td class="line-text"><span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> keycodes[<span class="hljs-number">12</span>]<wbr> =<wbr> {   <span class="hljs-number">0x28</span>,<wbr> <span class="hljs-number">0x11</span>,<wbr> <span class="hljs-number">0x21</span>,<wbr> <span class="hljs-number">0x41</span>,<wbr> <span class="hljs-number">0x12</span>,<wbr>
+</td></tr>
+<tr><td class="line-number">84</td><td class="line-text">                                <span class="hljs-number">0x22</span>,<wbr> <span class="hljs-number">0x42</span>,<wbr> <span class="hljs-number">0x14</span>,<wbr> <span class="hljs-number">0x24</span>,<wbr> <span class="hljs-number">0x44</span>,<wbr>
+</td></tr>
+<tr><td class="line-number">85</td><td class="line-text">                                <span class="hljs-number">0x18</span>,<wbr> <span class="hljs-number">0x48</span>}<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">86</td><td class="line-text"><span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> scancodes[<span class="hljs-number">4</span>]<wbr> =<wbr> {   <span class="hljs-number">0x01</span>,<wbr> <span class="hljs-number">0x02</span>,<wbr> <span class="hljs-number">0x04</span>,<wbr> <span class="hljs-number">0x08</span>}<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">87</td><td class="line-text"><span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> button =<wbr> <span class="hljs-number">0x70</span> ;<wbr>
+</td></tr>
+<tr><td class="line-number">88</td><td class="line-text"><span class="hljs-keyword">int</span> lift =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// stop the lift</span>
+</td></tr>
+<tr><td class="line-number">89</td><td class="line-text"><span class="hljs-keyword">int</span> page =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// Main Page</span>
+</td></tr>
+<tr><td class="line-number">90</td><td class="line-text"><span class="hljs-keyword">int</span> stop =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// stop flag for the rotation</span>
+</td></tr>
+<tr><td class="line-number">91</td><td class="line-text"><span class="hljs-keyword">int</span> manual_auto =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// Initial Stop Flag</span>
+</td></tr>
+<tr><td class="line-number">92</td><td class="line-text"><span class="hljs-keyword">int</span> auto_index =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// indicator of the auto initial configuration step</span>
+</td></tr>
+<tr><td class="line-number">93</td><td class="line-text"><span class="hljs-keyword">int</span> temp_step =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">//temp hold for rotation degree</span>
+</td></tr>
+<tr><td class="line-number">94</td><td class="line-text"><span class="hljs-keyword">int</span> temp_step2 =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// temp hold for rotation interval</span>
+</td></tr>
+<tr><td class="line-number">95</td><td class="line-text"><span class="hljs-keyword">int</span> temp_step3 =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// temp hold for lift interval</span>
+</td></tr>
+<tr><td class="line-number">96</td><td class="line-text"><span class="hljs-keyword">int</span> interval =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// set auto rotation interval</span>
+</td></tr>
+<tr><td class="line-number">97</td><td class="line-text"><span class="hljs-keyword">int</span> interval2 =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// set auto lift interval</span>
+</td></tr>
+<tr><td class="line-number">98</td><td class="line-text"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> new_x ;<wbr> <span class="hljs-comment">// new end x pos of the pointer on the circle</span>
+</td></tr>
+<tr><td class="line-number">99</td><td class="line-text"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> new_y ;<wbr>  <span class="hljs-comment">// new end y pos of the pointer on the circle</span>
+</td></tr>
+<tr><td class="line-number">100</td><td class="line-text"><span class="hljs-keyword">char</span> deg[<span class="hljs-number">50</span>]<wbr>;<wbr> <span class="hljs-comment">// degree in string</span>
+</td></tr>
+<tr><td class="line-number">101</td><td class="line-text"><span class="hljs-keyword">char</span> temp[<span class="hljs-number">50</span>]<wbr>;<wbr> <span class="hljs-comment">// temp string for rotation degree</span>
+</td></tr>
+<tr><td class="line-number">102</td><td class="line-text"><span class="hljs-keyword">char</span> temp1[<span class="hljs-number">50</span>]<wbr>;<wbr> <span class="hljs-comment">// temp string for auto rotation interval</span>
+</td></tr>
+<tr><td class="line-number">103</td><td class="line-text"><span class="hljs-keyword">char</span> temp2[<span class="hljs-number">50</span>]<wbr>;<wbr> <span class="hljs-comment">// temp string for auto lift interval</span>
+</td></tr>
+<tr><td class="line-number">104</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">105</td><td class="line-text"><span class="hljs-comment">// Interrupt service routine</span>
+</td></tr>
+<tr><td class="line-number">106</td><td class="line-text"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">on_pwm_wrap</span><span class="hljs-params">()<wbr></span> </span>{
+</td></tr>
+<tr><td class="line-number">107</td><td class="line-text">    <span class="hljs-comment">// Clear the interrupt flag that brought us here</span>
+</td></tr>
+<tr><td class="line-number">108</td><td class="line-text">    pwm_clear_irq(pwm_gpio_to_slice_num(<span class="hljs-number">5</span>)<wbr>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">109</td><td class="line-text">    <span class="hljs-comment">// Signal VGA to draw</span>
+</td></tr>
+<tr><td class="line-number">110</td><td class="line-text">    PT_SEM_SIGNAL(pt,<wbr> &amp;<wbr>vga_semaphore)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">111</td><td class="line-text">}<wbr>
+</td></tr>
+<tr><td class="line-number">112</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">113</td><td class="line-text"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">draw_UI</span><span class="hljs-params">()<wbr></span></span>{ <span class="hljs-comment">// Only call Draw UI when the page is changed</span>
+</td></tr>
+<tr><td class="line-number">114</td><td class="line-text">    fillRect(<span class="hljs-number">440</span>,<wbr> <span class="hljs-number">200</span>,<wbr> <span class="hljs-number">200</span>,<wbr> <span class="hljs-number">280</span>,<wbr> BLACK)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">115</td><td class="line-text">    drawRect(<span class="hljs-number">440</span>,<wbr> <span class="hljs-number">200</span>,<wbr> <span class="hljs-number">200</span>,<wbr> <span class="hljs-number">280</span>,<wbr> WHITE)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">116</td><td class="line-text">    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">210</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">117</td><td class="line-text">    setTextColor2(WHITE,<wbr> BLACK)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">118</td><td class="line-text">    <span class="hljs-keyword">switch</span> (page)<wbr>{
+</td></tr>
+<tr><td class="line-number">119</td><td class="line-text">        <span class="hljs-keyword">case</span> <span class="hljs-number">0</span>: <span class="hljs-comment">// at Main Page</span>
+</td></tr>
+<tr><td class="line-number">120</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>Main Page"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">121</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">230</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">122</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>1. Manual"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">123</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">250</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">124</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>2. Auto"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">125</td><td class="line-text">            <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">126</td><td class="line-text">        <span class="hljs-keyword">case</span> <span class="hljs-number">1</span>: <span class="hljs-comment">// at Manual Page</span>
+</td></tr>
+<tr><td class="line-number">127</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>Manual Page"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">128</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">230</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">129</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>1. Rotation"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">130</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">250</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">131</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>2. Lift"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">132</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">270</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">133</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>#. Back"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">134</td><td class="line-text">            <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">135</td><td class="line-text">        <span class="hljs-keyword">case</span> <span class="hljs-number">11</span>: <span class="hljs-comment">// at Manual Rotation Page</span>
+</td></tr>
+<tr><td class="line-number">136</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>Manual Rotation Page"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">137</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">230</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">138</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>0-9. Input"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">139</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">250</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">140</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>*. Confirm"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">141</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">270</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">142</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>#. Back"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">143</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">290</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">144</td><td class="line-text">            writeString(temp)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">145</td><td class="line-text">            <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">146</td><td class="line-text">        <span class="hljs-keyword">case</span> <span class="hljs-number">12</span>: <span class="hljs-comment">// at Manual Lift Page</span>
+</td></tr>
+<tr><td class="line-number">147</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>Manual Lift Page"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">148</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">230</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">149</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>2. Up"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">150</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">250</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">151</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>5. Down"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">152</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">270</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">153</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>3. Up 1cm"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">154</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">290</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">155</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>6. Down 1cm"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">156</td><td class="line-text">            setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">310</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">157</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>#. Back"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">158</td><td class="line-text">            <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">159</td><td class="line-text">        <span class="hljs-keyword">case</span> <span class="hljs-number">2</span>: <span class="hljs-comment">// at Auto Page</span>
+</td></tr>
+<tr><td class="line-number">160</td><td class="line-text">            writeString(<span class="hljs-string">"<wbr>Auto Page"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">161</td><td class="line-text">            <span class="hljs-keyword">switch</span> (auto_index)<wbr>{
+</td></tr>
+<tr><td class="line-number">162</td><td class="line-text">                <span class="hljs-keyword">case</span> <span class="hljs-number">0</span>:
+</td></tr>
+<tr><td class="line-number">163</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">230</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">164</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>Rotation degree:"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">165</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">250</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">166</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>0-9. Input"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">167</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">270</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">168</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>*. Confirm"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">169</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">290</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">170</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>#. Back to main"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">171</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">310</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">172</td><td class="line-text">                    writeString(temp)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">173</td><td class="line-text">                    <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">174</td><td class="line-text">                <span class="hljs-keyword">case</span> <span class="hljs-number">1</span>:
+</td></tr>
+<tr><td class="line-number">175</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">230</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">176</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>Rotation interval in seconds:"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">177</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">250</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">178</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>0-9. Input"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">179</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">270</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">180</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>*. Confirm"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">181</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">290</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">182</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>#. Back to main"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">183</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">310</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">184</td><td class="line-text">                    writeString(temp)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">185</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">330</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">186</td><td class="line-text">                    writeString(temp1)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">187</td><td class="line-text">                    <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">188</td><td class="line-text">                <span class="hljs-keyword">case</span> <span class="hljs-number">2</span>:
+</td></tr>
+<tr><td class="line-number">189</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">230</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">190</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>Manual Lift Control"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">191</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">250</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">192</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>2. Up"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">193</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">270</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">194</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>5. Down"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">195</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">290</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">196</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>*. Confirm"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">197</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">310</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">198</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>#. Back to main"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">199</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">330</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">200</td><td class="line-text">                    writeString(temp)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">201</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">350</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">202</td><td class="line-text">                    writeString(temp1)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">203</td><td class="line-text">                    <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">204</td><td class="line-text">                <span class="hljs-keyword">case</span> <span class="hljs-number">3</span>:
+</td></tr>
+<tr><td class="line-number">205</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">230</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">206</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>Lift interval in cm:"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">207</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">250</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">208</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>0-9. Input"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">209</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">270</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">210</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>*. Confirm"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">211</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">290</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">212</td><td class="line-text">                    writeString(<span class="hljs-string">"<wbr>#. Back to main"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">213</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">310</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">214</td><td class="line-text">                    writeString(temp)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">215</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">330</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">216</td><td class="line-text">                    writeString(temp1)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">217</td><td class="line-text">                    setCursor(<span class="hljs-number">450</span>,<wbr> <span class="hljs-number">350</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">218</td><td class="line-text">                    writeString(temp2)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">219</td><td class="line-text">                    <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">220</td><td class="line-text">            }<wbr>
+</td></tr>
+<tr><td class="line-number">221</td><td class="line-text">            <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">222</td><td class="line-text">    }<wbr>
+</td></tr>
+<tr><td class="line-number">223</td><td class="line-text">}<wbr>
+</td></tr>
+<tr><td class="line-number">224</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">225</td><td class="line-text"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">detect_keypad</span><span class="hljs-params">()<wbr></span></span>{
+</td></tr>
+<tr><td class="line-number">226</td><td class="line-text">    <span class="hljs-comment">//Scan the keypad!</span>
+</td></tr>
+<tr><td class="line-number">227</td><td class="line-text">    <span class="hljs-keyword">static</span> <span class="hljs-keyword">uint32_t</span> keypad ;<wbr>
+</td></tr>
+<tr><td class="line-number">228</td><td class="line-text">    <span class="hljs-keyword">for</span> (idx=<wbr><span class="hljs-number">0</span>;<wbr> idx&lt;<wbr>KEYROWS;<wbr> idx++)<wbr> {
+</td></tr>
+<tr><td class="line-number">229</td><td class="line-text">        <span class="hljs-comment">// Set a row high</span>
+</td></tr>
+<tr><td class="line-number">230</td><td class="line-text">        gpio_put_masked((<span class="hljs-number">0xF</span> &lt;<wbr>&lt;<wbr> BASE_KEYPAD_PIN)<wbr>,<wbr>
+</td></tr>
+<tr><td class="line-number">231</td><td class="line-text">                        (scancodes[idx]<wbr> &lt;<wbr>&lt;<wbr> BASE_KEYPAD_PIN)<wbr>)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">232</td><td class="line-text">        <span class="hljs-comment">// Small delay required</span>
+</td></tr>
+<tr><td class="line-number">233</td><td class="line-text">        sleep_us(<span class="hljs-number">1</span>)<wbr> ;<wbr> 
+</td></tr>
+<tr><td class="line-number">234</td><td class="line-text">        <span class="hljs-comment">// Read the keycode</span>
+</td></tr>
+<tr><td class="line-number">235</td><td class="line-text">        keypad =<wbr> ((gpio_get_all()<wbr> &gt;<wbr>&gt;<wbr> BASE_KEYPAD_PIN)<wbr> &amp;<wbr> <span class="hljs-number">0x7F</span>)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">236</td><td class="line-text">        <span class="hljs-comment">// Break if button(s)<wbr> are pressed</span>
+</td></tr>
+<tr><td class="line-number">237</td><td class="line-text">        <span class="hljs-keyword">if</span> (keypad &amp;<wbr> button)<wbr> <span class="hljs-keyword">break</span> ;<wbr>
+</td></tr>
+<tr><td class="line-number">238</td><td class="line-text">    }<wbr>
+</td></tr>
+<tr><td class="line-number">239</td><td class="line-text">    <span class="hljs-comment">// If we found a button . . .</span>
+</td></tr>
+<tr><td class="line-number">240</td><td class="line-text">    <span class="hljs-keyword">if</span> (keypad &amp;<wbr> button)<wbr> {
+</td></tr>
+<tr><td class="line-number">241</td><td class="line-text">        <span class="hljs-comment">// Look for a valid keycode.</span>
+</td></tr>
+<tr><td class="line-number">242</td><td class="line-text">        <span class="hljs-keyword">for</span> (idx=<wbr><span class="hljs-number">0</span>;<wbr> idx&lt;<wbr>NUMKEYS;<wbr> idx++)<wbr> {
+</td></tr>
+<tr><td class="line-number">243</td><td class="line-text">            <span class="hljs-keyword">if</span> (keypad =<wbr>=<wbr> keycodes[idx]<wbr>)<wbr> <span class="hljs-keyword">break</span> ;<wbr>
+</td></tr>
+<tr><td class="line-number">244</td><td class="line-text">        }<wbr>
+</td></tr>
+<tr><td class="line-number">245</td><td class="line-text">        <span class="hljs-comment">// If we don'<wbr>t find one,<wbr> report invalid keycode</span>
+</td></tr>
+<tr><td class="line-number">246</td><td class="line-text">        <span class="hljs-keyword">if</span> (idx=<wbr>=<wbr>NUMKEYS)<wbr> (idx =<wbr> <span class="hljs-number">-1</span>)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">247</td><td class="line-text">    }<wbr>
+</td></tr>
+<tr><td class="line-number">248</td><td class="line-text">    <span class="hljs-comment">// Otherwise,<wbr> indicate invalid/non-pressed buttons</span>
+</td></tr>
+<tr><td class="line-number">249</td><td class="line-text">    <span class="hljs-keyword">else</span> (idx=<wbr><span class="hljs-number">-1</span>)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">250</td><td class="line-text">}<wbr>
+</td></tr>
+<tr><td class="line-number">251</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">252</td><td class="line-text"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">draw_rotation_platform</span><span class="hljs-params">()<wbr></span></span>{
+</td></tr>
+<tr><td class="line-number">253</td><td class="line-text">    <span class="hljs-comment">// draw circle</span>
+</td></tr>
+<tr><td class="line-number">254</td><td class="line-text">    drawCircle(<span class="hljs-number">320</span>,<wbr> <span class="hljs-number">240</span>,<wbr> redius,<wbr> WHITE)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">255</td><td class="line-text">    drawLine(<span class="hljs-number">320</span>,<wbr> <span class="hljs-number">240</span>,<wbr> new_x,<wbr> new_y,<wbr> BLACK)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">256</td><td class="line-text">    new_x =<wbr> <span class="hljs-number">320</span> + redius * <span class="hljs-built_in">sin</span>(-degree*PI/<span class="hljs-number">180</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">257</td><td class="line-text">    new_y =<wbr> <span class="hljs-number">240</span> + redius * <span class="hljs-built_in">cos</span>(-degree*PI/<span class="hljs-number">180</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">258</td><td class="line-text">    drawLine(<span class="hljs-number">320</span>,<wbr> <span class="hljs-number">240</span>,<wbr> new_x,<wbr> new_y,<wbr> WHITE)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">259</td><td class="line-text">}<wbr>
+</td></tr>
+<tr><td class="line-number">260</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">261</td><td class="line-text"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">draw_rotation_text</span><span class="hljs-params">()<wbr></span></span>{
+</td></tr>
+<tr><td class="line-number">262</td><td class="line-text">    setCursor(<span class="hljs-number">250</span>,<wbr> <span class="hljs-number">400</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">263</td><td class="line-text">    setTextColor2(BLACK,<wbr> BLACK)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">264</td><td class="line-text">    writeString(deg)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">265</td><td class="line-text">    setCursor(<span class="hljs-number">250</span>,<wbr> <span class="hljs-number">400</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">266</td><td class="line-text">    setTextColor2(WHITE,<wbr> BLACK)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">267</td><td class="line-text">    <span class="hljs-built_in">sprintf</span>(deg,<wbr> <span class="hljs-string">"<wbr>%s%.2f"<wbr></span>,<wbr> <span class="hljs-string">"<wbr>Current Degree is "<wbr></span>,<wbr> degree)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">268</td><td class="line-text">    writeString(deg)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">269</td><td class="line-text">}<wbr>
+</td></tr>
+<tr><td class="line-number">270</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">271</td><td class="line-text"><span class="hljs-comment">// Thread that draws to VGA display</span>
+</td></tr>
+<tr><td class="line-number">272</td><td class="line-text"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-title">PT_THREAD</span> <span class="hljs-params">(protothread_vga(struct pt *pt)<wbr>)<wbr></span>
+</span></td></tr>
+<tr><td class="line-number">273</td><td class="line-text"><span class="hljs-function"></span>{
+</td></tr>
+<tr><td class="line-number">274</td><td class="line-text">    <span class="hljs-comment">// Indicate start of thread</span>
+</td></tr>
+<tr><td class="line-number">275</td><td class="line-text">    PT_BEGIN(pt)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">276</td><td class="line-text">    <span class="hljs-comment">// Variables for maintaining frame rate</span>
+</td></tr>
+<tr><td class="line-number">277</td><td class="line-text">    <span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> begin_time ;<wbr>
+</td></tr>
+<tr><td class="line-number">278</td><td class="line-text">    <span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> spare_time ;<wbr>
+</td></tr>
+<tr><td class="line-number">279</td><td class="line-text">    setTextSize(<span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">280</td><td class="line-text">    
+</td></tr>
+<tr><td class="line-number">281</td><td class="line-text">    <span class="hljs-built_in">sprintf</span>(temp,<wbr> <span class="hljs-string">"<wbr>%s%.2f"<wbr></span>,<wbr> <span class="hljs-string">"<wbr>Current Degree is "<wbr></span>,<wbr> temp_step*<span class="hljs-number">1.8</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">282</td><td class="line-text">    draw_rotation_platform()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">283</td><td class="line-text">    draw_rotation_text()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">284</td><td class="line-text">    draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">285</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">286</td><td class="line-text">    <span class="hljs-keyword">while</span>(<span class="hljs-number">1</span>)<wbr> {
+</td></tr>
+<tr><td class="line-number">287</td><td class="line-text">        <span class="hljs-comment">// Measure time at start of thread</span>
+</td></tr>
+<tr><td class="line-number">288</td><td class="line-text">        begin_time =<wbr> time_us_32()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">289</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">290</td><td class="line-text">        detect_keypad()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">291</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">292</td><td class="line-text">        <span class="hljs-keyword">switch</span>(page)<wbr>{
+</td></tr>
+<tr><td class="line-number">293</td><td class="line-text">            <span class="hljs-keyword">case</span> <span class="hljs-number">0</span>: <span class="hljs-comment">// at Main Page</span>
+</td></tr>
+<tr><td class="line-number">294</td><td class="line-text">                <span class="hljs-keyword">if</span> (old_idx !=<wbr> idx)<wbr>{
+</td></tr>
+<tr><td class="line-number">295</td><td class="line-text">                    <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">1</span>)<wbr>{
+</td></tr>
+<tr><td class="line-number">296</td><td class="line-text">                        page =<wbr> <span class="hljs-number">1</span>;<wbr> <span class="hljs-comment">// go to the manual page</span>
+</td></tr>
+<tr><td class="line-number">297</td><td class="line-text">                        draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">298</td><td class="line-text">                    }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">2</span>)<wbr>{
+</td></tr>
+<tr><td class="line-number">299</td><td class="line-text">                        page =<wbr> <span class="hljs-number">2</span>;<wbr> <span class="hljs-comment">// go to the auto page</span>
+</td></tr>
+<tr><td class="line-number">300</td><td class="line-text">                        draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">301</td><td class="line-text">                    }<wbr>
+</td></tr>
+<tr><td class="line-number">302</td><td class="line-text">                }<wbr>
+</td></tr>
+<tr><td class="line-number">303</td><td class="line-text">                <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">304</td><td class="line-text">            <span class="hljs-keyword">case</span> <span class="hljs-number">1</span>: <span class="hljs-comment">// at Manual Page</span>
+</td></tr>
+<tr><td class="line-number">305</td><td class="line-text">                manual_auto =<wbr> <span class="hljs-number">1</span>;<wbr> <span class="hljs-comment">// at Manual Mode</span>
+</td></tr>
+<tr><td class="line-number">306</td><td class="line-text">                <span class="hljs-keyword">if</span> (old_idx !=<wbr> idx)<wbr>{
+</td></tr>
+<tr><td class="line-number">307</td><td class="line-text">                    <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">1</span>)<wbr>{
+</td></tr>
+<tr><td class="line-number">308</td><td class="line-text">                        page =<wbr> <span class="hljs-number">11</span>;<wbr> <span class="hljs-comment">// go to the rotation page</span>
+</td></tr>
+<tr><td class="line-number">309</td><td class="line-text">                        draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">310</td><td class="line-text">                    }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">2</span>)<wbr>{
+</td></tr>
+<tr><td class="line-number">311</td><td class="line-text">                        page =<wbr> <span class="hljs-number">12</span>;<wbr> <span class="hljs-comment">// go to the lift page</span>
+</td></tr>
+<tr><td class="line-number">312</td><td class="line-text">                        draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">313</td><td class="line-text">                    }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">11</span>)<wbr>{
+</td></tr>
+<tr><td class="line-number">314</td><td class="line-text">                        page =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// go back to the main page</span>
+</td></tr>
+<tr><td class="line-number">315</td><td class="line-text">                        draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">316</td><td class="line-text">                        manual_auto =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// change to stop</span>
+</td></tr>
+<tr><td class="line-number">317</td><td class="line-text">                    }<wbr>
+</td></tr>
+<tr><td class="line-number">318</td><td class="line-text">                }<wbr>
+</td></tr>
+<tr><td class="line-number">319</td><td class="line-text">                <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">320</td><td class="line-text">            <span class="hljs-keyword">case</span> <span class="hljs-number">11</span>: <span class="hljs-comment">// at Manual Rotation Page</span>
+</td></tr>
+<tr><td class="line-number">321</td><td class="line-text">                <span class="hljs-keyword">if</span> (old_idx !=<wbr> idx)<wbr>{
+</td></tr>
+<tr><td class="line-number">322</td><td class="line-text">                    <span class="hljs-keyword">if</span> (stop =<wbr>=<wbr> <span class="hljs-number">1</span> &amp;<wbr>&amp;<wbr> idx =<wbr>=<wbr> <span class="hljs-number">0</span>)<wbr>{ <span class="hljs-comment">// continue to rotate by one step</span>
+</td></tr>
+<tr><td class="line-number">323</td><td class="line-text">                        stop =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">324</td><td class="line-text">                    }<wbr>
+</td></tr>
+<tr><td class="line-number">325</td><td class="line-text">                    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx &lt;<wbr>=<wbr> <span class="hljs-number">9</span> &amp;<wbr>&amp;<wbr> <span class="hljs-number">0</span> &lt;<wbr>=<wbr> idx)<wbr>{ <span class="hljs-comment">// integer</span>
+</td></tr>
+<tr><td class="line-number">326</td><td class="line-text">                        temp_step =<wbr> temp_step * <span class="hljs-number">10</span> + idx;<wbr>
+</td></tr>
+<tr><td class="line-number">327</td><td class="line-text">                        <span class="hljs-keyword">if</span> (temp_step &gt;<wbr> <span class="hljs-number">200</span>)<wbr>{
+</td></tr>
+<tr><td class="line-number">328</td><td class="line-text">                            temp_step =<wbr> <span class="hljs-number">200</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">329</td><td class="line-text">                        }<wbr>
+</td></tr>
+<tr><td class="line-number">330</td><td class="line-text">                        <span class="hljs-built_in">sprintf</span>(temp,<wbr> <span class="hljs-string">"<wbr>%s%.2f"<wbr></span>,<wbr> <span class="hljs-string">"<wbr>Degree Selection:  "<wbr></span>,<wbr> temp_step*<span class="hljs-number">1.8</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">331</td><td class="line-text">                        draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">332</td><td class="line-text">                    }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">10</span>)<wbr>{ <span class="hljs-comment">// confirm</span>
+</td></tr>
+<tr><td class="line-number">333</td><td class="line-text">                        stepsPerRevolution =<wbr> temp_step;<wbr>
+</td></tr>
+<tr><td class="line-number">334</td><td class="line-text">                        rotate_flag =<wbr> <span class="hljs-number">1</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">335</td><td class="line-text">                        temp_step =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">336</td><td class="line-text">                        stop =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">337</td><td class="line-text">                    }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">11</span>)<wbr>{ <span class="hljs-comment">// go back to the manual page</span>
+</td></tr>
+<tr><td class="line-number">338</td><td class="line-text">                        page =<wbr> <span class="hljs-number">1</span>;<wbr> <span class="hljs-comment">// go to manual page</span>
+</td></tr>
+<tr><td class="line-number">339</td><td class="line-text">                        temp_step =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">340</td><td class="line-text">                        rotate_flag =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">341</td><td class="line-text">                        stop =<wbr> <span class="hljs-number">1</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">342</td><td class="line-text">                        <span class="hljs-built_in">sprintf</span>(temp,<wbr> <span class="hljs-string">"<wbr>%s%.2f"<wbr></span>,<wbr> <span class="hljs-string">"<wbr>Degree Selection:  "<wbr></span>,<wbr> temp_step*<span class="hljs-number">1.8</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">343</td><td class="line-text">                        draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">344</td><td class="line-text">                    }<wbr>
+</td></tr>
+<tr><td class="line-number">345</td><td class="line-text">                }<wbr>
+</td></tr>
+<tr><td class="line-number">346</td><td class="line-text">                <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">347</td><td class="line-text">            <span class="hljs-keyword">case</span> <span class="hljs-number">12</span>: <span class="hljs-comment">// at Manual Lift Page</span>
+</td></tr>
+<tr><td class="line-number">348</td><td class="line-text">                <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">2</span>)<wbr>{ <span class="hljs-comment">// go up manually</span>
+</td></tr>
+<tr><td class="line-number">349</td><td class="line-text">                    lift =<wbr> <span class="hljs-number">1</span>;<wbr> <span class="hljs-comment">// up manual</span>
+</td></tr>
+<tr><td class="line-number">350</td><td class="line-text">                }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">5</span>)<wbr>{ <span class="hljs-comment">// go down manually</span>
+</td></tr>
+<tr><td class="line-number">351</td><td class="line-text">                    lift =<wbr> <span class="hljs-number">2</span>;<wbr> <span class="hljs-comment">// down manual</span>
+</td></tr>
+<tr><td class="line-number">352</td><td class="line-text">                }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">3</span> &amp;<wbr>&amp;<wbr> old_idx !=<wbr> idx)<wbr>{ <span class="hljs-comment">// go up by 1cm</span>
+</td></tr>
+<tr><td class="line-number">353</td><td class="line-text">                    lift =<wbr> <span class="hljs-number">3</span>;<wbr> <span class="hljs-comment">// up by 1cm</span>
+</td></tr>
+<tr><td class="line-number">354</td><td class="line-text">                }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">6</span> &amp;<wbr>&amp;<wbr> old_idx !=<wbr> idx)<wbr>{ <span class="hljs-comment">// go down by 1cm</span>
+</td></tr>
+<tr><td class="line-number">355</td><td class="line-text">                    lift =<wbr> <span class="hljs-number">4</span>;<wbr> <span class="hljs-comment">// down by 1cm</span>
+</td></tr>
+<tr><td class="line-number">356</td><td class="line-text">                }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">11</span> &amp;<wbr>&amp;<wbr> old_idx !=<wbr> idx)<wbr>{ <span class="hljs-comment">// go back to the manual page</span>
+</td></tr>
+<tr><td class="line-number">357</td><td class="line-text">                    page =<wbr> <span class="hljs-number">1</span>;<wbr> <span class="hljs-comment">// go to the manual page</span>
+</td></tr>
+<tr><td class="line-number">358</td><td class="line-text">                    lift =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// stop the lift</span>
+</td></tr>
+<tr><td class="line-number">359</td><td class="line-text">                    draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">360</td><td class="line-text">                }<wbr>
+</td></tr>
+<tr><td class="line-number">361</td><td class="line-text">                <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">362</td><td class="line-text">            <span class="hljs-keyword">case</span> <span class="hljs-number">2</span>: <span class="hljs-comment">// at Auto Page</span>
+</td></tr>
+<tr><td class="line-number">363</td><td class="line-text">                <span class="hljs-keyword">switch</span> (auto_index)<wbr>{
+</td></tr>
+<tr><td class="line-number">364</td><td class="line-text">                    <span class="hljs-keyword">case</span> <span class="hljs-number">0</span>: <span class="hljs-comment">// at auto rotation degree selection page</span>
+</td></tr>
+<tr><td class="line-number">365</td><td class="line-text">                        <span class="hljs-keyword">if</span> (old_idx !=<wbr> idx)<wbr>{
+</td></tr>
+<tr><td class="line-number">366</td><td class="line-text">                            <span class="hljs-keyword">if</span> (idx &lt;<wbr>=<wbr> <span class="hljs-number">9</span> &amp;<wbr>&amp;<wbr> <span class="hljs-number">0</span> &lt;<wbr>=<wbr> idx)<wbr>{ <span class="hljs-comment">// integer</span>
+</td></tr>
+<tr><td class="line-number">367</td><td class="line-text">                                temp_step =<wbr> temp_step * <span class="hljs-number">10</span> + idx;<wbr>
+</td></tr>
+<tr><td class="line-number">368</td><td class="line-text">                                <span class="hljs-keyword">if</span> (temp_step &gt;<wbr> <span class="hljs-number">200</span>)<wbr>{
+</td></tr>
+<tr><td class="line-number">369</td><td class="line-text">                                    temp_step =<wbr> <span class="hljs-number">200</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">370</td><td class="line-text">                                }<wbr>
+</td></tr>
+<tr><td class="line-number">371</td><td class="line-text">                                <span class="hljs-built_in">sprintf</span>(temp,<wbr> <span class="hljs-string">"<wbr>%s%.2f"<wbr></span>,<wbr> <span class="hljs-string">"<wbr>Degree Selection:  "<wbr></span>,<wbr> temp_step*<span class="hljs-number">1.8</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">372</td><td class="line-text">                                draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">373</td><td class="line-text">                            }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">10</span>)<wbr>{ <span class="hljs-comment">// confirm</span>
+</td></tr>
+<tr><td class="line-number">374</td><td class="line-text">                                stepsPerRevolution =<wbr> temp_step;<wbr>
+</td></tr>
+<tr><td class="line-number">375</td><td class="line-text">                                temp_step =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">376</td><td class="line-text">                                temp_step2 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">377</td><td class="line-text">                                temp_step3 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">378</td><td class="line-text">                                auto_index =<wbr> <span class="hljs-number">1</span>;<wbr> <span class="hljs-comment">// go to the lift page</span>
+</td></tr>
+<tr><td class="line-number">379</td><td class="line-text">                                draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">380</td><td class="line-text">                            }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">11</span>)<wbr>{ <span class="hljs-comment">// go back to the manual page</span>
+</td></tr>
+<tr><td class="line-number">381</td><td class="line-text">                                page =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// go to main page</span>
+</td></tr>
+<tr><td class="line-number">382</td><td class="line-text">                                temp_step =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">383</td><td class="line-text">                                temp_step2 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">384</td><td class="line-text">                                temp_step3 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">385</td><td class="line-text">                                draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">386</td><td class="line-text">                            }<wbr>
+</td></tr>
+<tr><td class="line-number">387</td><td class="line-text">                        }<wbr>
+</td></tr>
+<tr><td class="line-number">388</td><td class="line-text">                        <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">389</td><td class="line-text">                    <span class="hljs-keyword">case</span> <span class="hljs-number">1</span>: <span class="hljs-comment">// at auto interval time selection page</span>
+</td></tr>
+<tr><td class="line-number">390</td><td class="line-text">                        <span class="hljs-keyword">if</span> (old_idx !=<wbr> idx)<wbr>{
+</td></tr>
+<tr><td class="line-number">391</td><td class="line-text">                            <span class="hljs-keyword">if</span> (idx &lt;<wbr>=<wbr> <span class="hljs-number">9</span> &amp;<wbr>&amp;<wbr> <span class="hljs-number">0</span> &lt;<wbr>=<wbr> idx)<wbr>{ <span class="hljs-comment">// integer</span>
+</td></tr>
+<tr><td class="line-number">392</td><td class="line-text">                                temp_step2 =<wbr> temp_step2 * <span class="hljs-number">10</span> + idx;<wbr>
+</td></tr>
+<tr><td class="line-number">393</td><td class="line-text">                                <span class="hljs-built_in">sprintf</span>(temp1,<wbr> <span class="hljs-string">"<wbr>%s%d%s"<wbr></span>,<wbr> <span class="hljs-string">"<wbr>Degree Interval:  "<wbr></span>,<wbr> temp_step2,<wbr> <span class="hljs-string">"<wbr>(s)<wbr>"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">394</td><td class="line-text">                                draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">395</td><td class="line-text">                            }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">10</span>)<wbr>{ <span class="hljs-comment">// confirm</span>
+</td></tr>
+<tr><td class="line-number">396</td><td class="line-text">                                interval =<wbr> temp_step2;<wbr>
+</td></tr>
+<tr><td class="line-number">397</td><td class="line-text">                                auto_index =<wbr> <span class="hljs-number">2</span>;<wbr> <span class="hljs-comment">// go to height adjust page </span>
+</td></tr>
+<tr><td class="line-number">398</td><td class="line-text">                                temp_step =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">399</td><td class="line-text">                                temp_step2 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">400</td><td class="line-text">                                temp_step3 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">401</td><td class="line-text">                                draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">402</td><td class="line-text">                            }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">11</span>)<wbr>{ <span class="hljs-comment">// go back to the rotation degree selection page</span>
+</td></tr>
+<tr><td class="line-number">403</td><td class="line-text">                                page =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// go to main page</span>
+</td></tr>
+<tr><td class="line-number">404</td><td class="line-text">                                temp_step =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">405</td><td class="line-text">                                temp_step2 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">406</td><td class="line-text">                                temp_step3 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">407</td><td class="line-text">                                draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">408</td><td class="line-text">                            }<wbr>
+</td></tr>
+<tr><td class="line-number">409</td><td class="line-text">                        }<wbr>
+</td></tr>
+<tr><td class="line-number">410</td><td class="line-text">                        <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">411</td><td class="line-text">                    <span class="hljs-keyword">case</span> <span class="hljs-number">2</span>: <span class="hljs-comment">// at auto lift page</span>
+</td></tr>
+<tr><td class="line-number">412</td><td class="line-text">                        <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">2</span>)<wbr>{ <span class="hljs-comment">// go up</span>
+</td></tr>
+<tr><td class="line-number">413</td><td class="line-text">                            gpio_put(dirPin_lift,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">414</td><td class="line-text">                            sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">415</td><td class="line-text">                            gpio_put(stepPin_lift,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">416</td><td class="line-text">                            sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">417</td><td class="line-text">                            gpio_put(stepPin_lift,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">418</td><td class="line-text">                            sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">419</td><td class="line-text">                        }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">5</span>)<wbr>{ <span class="hljs-comment">// go down</span>
+</td></tr>
+<tr><td class="line-number">420</td><td class="line-text">                            gpio_put(dirPin_lift,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">421</td><td class="line-text">                            sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">422</td><td class="line-text">                            gpio_put(stepPin_lift,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">423</td><td class="line-text">                            sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">424</td><td class="line-text">                            gpio_put(stepPin_lift,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">425</td><td class="line-text">                            sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">426</td><td class="line-text">                        }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">10</span> &amp;<wbr>&amp;<wbr> old_idx !=<wbr> idx)<wbr>{ <span class="hljs-comment">// confirm</span>
+</td></tr>
+<tr><td class="line-number">427</td><td class="line-text">                            auto_index =<wbr> <span class="hljs-number">3</span>;<wbr> <span class="hljs-comment">// go to lift selection page</span>
+</td></tr>
+<tr><td class="line-number">428</td><td class="line-text">                            temp_step =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">429</td><td class="line-text">                            temp_step2 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">430</td><td class="line-text">                            temp_step3 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">431</td><td class="line-text">                            draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">432</td><td class="line-text">                        }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">11</span> &amp;<wbr>&amp;<wbr> old_idx !=<wbr> idx)<wbr>{ <span class="hljs-comment">// go back to the interval time selection page</span>
+</td></tr>
+<tr><td class="line-number">433</td><td class="line-text">                            page =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// go to main page</span>
+</td></tr>
+<tr><td class="line-number">434</td><td class="line-text">                            temp_step =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">435</td><td class="line-text">                            temp_step2 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">436</td><td class="line-text">                            temp_step3 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">437</td><td class="line-text">                            draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">438</td><td class="line-text">                        }<wbr>
+</td></tr>
+<tr><td class="line-number">439</td><td class="line-text">                        <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">440</td><td class="line-text">                    <span class="hljs-keyword">case</span> <span class="hljs-number">3</span>: <span class="hljs-comment">// at auto lift selection page</span>
+</td></tr>
+<tr><td class="line-number">441</td><td class="line-text">                        <span class="hljs-keyword">if</span> (old_idx !=<wbr> idx)<wbr>{
+</td></tr>
+<tr><td class="line-number">442</td><td class="line-text">                            <span class="hljs-keyword">if</span> (idx &lt;<wbr>=<wbr> <span class="hljs-number">9</span> &amp;<wbr>&amp;<wbr> <span class="hljs-number">0</span> &lt;<wbr>=<wbr> idx)<wbr>{ <span class="hljs-comment">// integer</span>
+</td></tr>
+<tr><td class="line-number">443</td><td class="line-text">                                temp_step3 =<wbr> temp_step3 * <span class="hljs-number">10</span> + idx;<wbr>
+</td></tr>
+<tr><td class="line-number">444</td><td class="line-text">                                <span class="hljs-built_in">sprintf</span>(temp2,<wbr> <span class="hljs-string">"<wbr>%s%d%s"<wbr></span>,<wbr> <span class="hljs-string">"<wbr>Lift Interval:  "<wbr></span>,<wbr> temp_step3,<wbr> <span class="hljs-string">"<wbr>(cm)<wbr>"<wbr></span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">445</td><td class="line-text">                                draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">446</td><td class="line-text">                            }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">10</span>)<wbr>{ <span class="hljs-comment">// confirm</span>
+</td></tr>
+<tr><td class="line-number">447</td><td class="line-text">                                interval2 =<wbr> temp_step3;<wbr>
+</td></tr>
+<tr><td class="line-number">448</td><td class="line-text">                                temp_step =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">449</td><td class="line-text">                                temp_step2 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">450</td><td class="line-text">                                temp_step3 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">451</td><td class="line-text">                                manual_auto =<wbr> <span class="hljs-number">2</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">452</td><td class="line-text">                                draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">453</td><td class="line-text">                            }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">11</span>)<wbr>{ <span class="hljs-comment">// go back to the rotation degree selection page</span>
+</td></tr>
+<tr><td class="line-number">454</td><td class="line-text">                                page =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// go to main page</span>
+</td></tr>
+<tr><td class="line-number">455</td><td class="line-text">                                temp_step =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">456</td><td class="line-text">                                temp_step2 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">457</td><td class="line-text">                                temp_step3 =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">458</td><td class="line-text">                                draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">459</td><td class="line-text">                            }<wbr>
+</td></tr>
+<tr><td class="line-number">460</td><td class="line-text">                        }<wbr>
+</td></tr>
+<tr><td class="line-number">461</td><td class="line-text">                        <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">462</td><td class="line-text">                }<wbr>
+</td></tr>
+<tr><td class="line-number">463</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">464</td><td class="line-text">                <span class="hljs-keyword">if</span> (idx =<wbr>=<wbr> <span class="hljs-number">11</span> &amp;<wbr>&amp;<wbr> old_idx !=<wbr> idx)<wbr>{ <span class="hljs-comment">// go back to the Main Page</span>
+</td></tr>
+<tr><td class="line-number">465</td><td class="line-text">                    page =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// go to the main page</span>
+</td></tr>
+<tr><td class="line-number">466</td><td class="line-text">                    manual_auto =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// change to stop</span>
+</td></tr>
+<tr><td class="line-number">467</td><td class="line-text">                }<wbr>
+</td></tr>
+<tr><td class="line-number">468</td><td class="line-text">                <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">469</td><td class="line-text">            <span class="hljs-keyword">default</span>:
+</td></tr>
+<tr><td class="line-number">470</td><td class="line-text">                <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">471</td><td class="line-text">        }<wbr>
+</td></tr>
+<tr><td class="line-number">472</td><td class="line-text">        
+</td></tr>
+<tr><td class="line-number">473</td><td class="line-text">        <span class="hljs-comment">//printf("<wbr>%d %d %f\n"<wbr>,<wbr>page,<wbr> temp_step,<wbr> degree)<wbr>;<wbr></span>
+</td></tr>
+<tr><td class="line-number">474</td><td class="line-text">        <span class="hljs-comment">//printf("<wbr>idx: %d\n"<wbr>,<wbr>idx)<wbr>;<wbr></span>
+</td></tr>
+<tr><td class="line-number">475</td><td class="line-text">        old_idx =<wbr> idx;<wbr>
+</td></tr>
+<tr><td class="line-number">476</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">477</td><td class="line-text">        spare_time =<wbr> FRAME_RATE - (time_us_32()<wbr> - begin_time)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">478</td><td class="line-text">        <span class="hljs-comment">// yield for necessary amount of time</span>
+</td></tr>
+<tr><td class="line-number">479</td><td class="line-text">        PT_YIELD_usec(spare_time)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">480</td><td class="line-text">    }<wbr> <span class="hljs-comment">// END WHILE(1)<wbr></span>
+</td></tr>
+<tr><td class="line-number">481</td><td class="line-text">    
+</td></tr>
+<tr><td class="line-number">482</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">483</td><td class="line-text">    <span class="hljs-comment">// Indicate end of thread</span>
+</td></tr>
+<tr><td class="line-number">484</td><td class="line-text">    PT_END(pt)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">485</td><td class="line-text">}<wbr>
+</td></tr>
+<tr><td class="line-number">486</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">487</td><td class="line-text"><span class="hljs-keyword">int</span> count =<wbr> <span class="hljs-number">0</span>;<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">488</td><td class="line-text"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-title">PT_THREAD</span> <span class="hljs-params">(protothread_serial(struct pt *pt)<wbr>)<wbr></span>
+</span></td></tr>
+<tr><td class="line-number">489</td><td class="line-text"><span class="hljs-function"></span>{
+</td></tr>
+<tr><td class="line-number">490</td><td class="line-text">    <span class="hljs-comment">// Indicate start of thread</span>
+</td></tr>
+<tr><td class="line-number">491</td><td class="line-text">    PT_BEGIN(pt)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">492</td><td class="line-text">    <span class="hljs-keyword">int</span> s;<wbr> <span class="hljs-comment">// step</span>
+</td></tr>
+<tr><td class="line-number">493</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">494</td><td class="line-text">    <span class="hljs-keyword">if</span> (manual_auto=<wbr>=<wbr><span class="hljs-number">1</span>)<wbr>{ <span class="hljs-comment">// at manual mode</span>
+</td></tr>
+<tr><td class="line-number">495</td><td class="line-text">        <span class="hljs-comment">// motor rotation</span>
+</td></tr>
+<tr><td class="line-number">496</td><td class="line-text">        <span class="hljs-keyword">if</span> (rotate_flag =<wbr>=<wbr> <span class="hljs-number">1</span> &amp;<wbr>&amp;<wbr> stop =<wbr>=<wbr> <span class="hljs-number">0</span>)<wbr>{
+</td></tr>
+<tr><td class="line-number">497</td><td class="line-text">            <span class="hljs-comment">//Set motor direction clockwise</span>
+</td></tr>
+<tr><td class="line-number">498</td><td class="line-text">            gpio_put(dirPin_rotation,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">499</td><td class="line-text">            <span class="hljs-comment">// Spin motor</span>
+</td></tr>
+<tr><td class="line-number">500</td><td class="line-text">            degree +=<wbr> stepsPerRevolution * <span class="hljs-number">1.8</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">501</td><td class="line-text">            draw_rotation_platform()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">502</td><td class="line-text">            draw_rotation_text()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">503</td><td class="line-text">            <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> x =<wbr> <span class="hljs-number">0</span>;<wbr> x &lt;<wbr> stepsPerRevolution;<wbr> x++)<wbr>{
+</td></tr>
+<tr><td class="line-number">504</td><td class="line-text">                gpio_put(stepPin_rotation,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">505</td><td class="line-text">                sleep_ms(<span class="hljs-number">10</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">506</td><td class="line-text">                gpio_put(stepPin_rotation,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">507</td><td class="line-text">                sleep_ms(<span class="hljs-number">10</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">508</td><td class="line-text">            }<wbr>
+</td></tr>
+<tr><td class="line-number">509</td><td class="line-text">            <span class="hljs-keyword">if</span> (degree &gt;<wbr>=<wbr> <span class="hljs-number">360.0</span>)<wbr>{
+</td></tr>
+<tr><td class="line-number">510</td><td class="line-text">                rotate_flag =<wbr> <span class="hljs-number">0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">511</td><td class="line-text">                degree =<wbr> <span class="hljs-number">0.0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">512</td><td class="line-text">                <span class="hljs-built_in">sprintf</span>(temp,<wbr> <span class="hljs-string">"<wbr>%s%.2f"<wbr></span>,<wbr> <span class="hljs-string">"<wbr>Current Degree is "<wbr></span>,<wbr> temp_step*<span class="hljs-number">1.8</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">513</td><td class="line-text">                draw_UI()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">514</td><td class="line-text">                draw_rotation_platform()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">515</td><td class="line-text">                draw_rotation_text()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">516</td><td class="line-text">            }<wbr>
+</td></tr>
+<tr><td class="line-number">517</td><td class="line-text">            stop =<wbr> <span class="hljs-number">1</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">518</td><td class="line-text">        }<wbr>
+</td></tr>
+<tr><td class="line-number">519</td><td class="line-text">        <span class="hljs-comment">// Motor Lift</span>
+</td></tr>
+<tr><td class="line-number">520</td><td class="line-text">        <span class="hljs-keyword">switch</span> (lift)<wbr>{
+</td></tr>
+<tr><td class="line-number">521</td><td class="line-text">            <span class="hljs-keyword">case</span> <span class="hljs-number">1</span>: <span class="hljs-comment">// if up manual</span>
+</td></tr>
+<tr><td class="line-number">522</td><td class="line-text">                gpio_put(dirPin_lift,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">523</td><td class="line-text">                sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">524</td><td class="line-text">                gpio_put(stepPin_lift,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">525</td><td class="line-text">                sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">526</td><td class="line-text">                gpio_put(stepPin_lift,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">527</td><td class="line-text">                sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">528</td><td class="line-text">                lift =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// stop the lift</span>
+</td></tr>
+<tr><td class="line-number">529</td><td class="line-text">                <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">530</td><td class="line-text">            <span class="hljs-keyword">case</span> <span class="hljs-number">2</span>: <span class="hljs-comment">// if down manual</span>
+</td></tr>
+<tr><td class="line-number">531</td><td class="line-text">                gpio_put(dirPin_lift,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">532</td><td class="line-text">                sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">533</td><td class="line-text">                gpio_put(stepPin_lift,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">534</td><td class="line-text">                sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">535</td><td class="line-text">                gpio_put(stepPin_lift,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">536</td><td class="line-text">                sleep_ms(<span class="hljs-number">2</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">537</td><td class="line-text">                lift =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// stop the lift</span>
+</td></tr>
+<tr><td class="line-number">538</td><td class="line-text">                <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">539</td><td class="line-text">            <span class="hljs-keyword">case</span> <span class="hljs-number">3</span>: <span class="hljs-comment">// if up by 1cm</span>
+</td></tr>
+<tr><td class="line-number">540</td><td class="line-text">                gpio_put(dirPin_lift,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">541</td><td class="line-text">                <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> x =<wbr> <span class="hljs-number">0</span>;<wbr> x &lt;<wbr> <span class="hljs-number">545</span>;<wbr> x++)<wbr>{
+</td></tr>
+<tr><td class="line-number">542</td><td class="line-text">                    gpio_put(stepPin_lift,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">543</td><td class="line-text">                    sleep_ms(<span class="hljs-number">6</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">544</td><td class="line-text">                    gpio_put(stepPin_lift,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">545</td><td class="line-text">                    sleep_ms(<span class="hljs-number">6</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">546</td><td class="line-text">                }<wbr>
+</td></tr>
+<tr><td class="line-number">547</td><td class="line-text">                lift =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// stop the lift</span>
+</td></tr>
+<tr><td class="line-number">548</td><td class="line-text">                <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">549</td><td class="line-text">            <span class="hljs-keyword">case</span> <span class="hljs-number">4</span>: <span class="hljs-comment">// if down by 1cm</span>
+</td></tr>
+<tr><td class="line-number">550</td><td class="line-text">                gpio_put(dirPin_lift,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">551</td><td class="line-text">                <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> x =<wbr> <span class="hljs-number">0</span>;<wbr> x &lt;<wbr> <span class="hljs-number">545</span>;<wbr> x++)<wbr>{
+</td></tr>
+<tr><td class="line-number">552</td><td class="line-text">                    gpio_put(stepPin_lift,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">553</td><td class="line-text">                    sleep_ms(<span class="hljs-number">6</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">554</td><td class="line-text">                    gpio_put(stepPin_lift,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">555</td><td class="line-text">                    sleep_ms(<span class="hljs-number">6</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">556</td><td class="line-text">                }<wbr>
+</td></tr>
+<tr><td class="line-number">557</td><td class="line-text">                lift =<wbr> <span class="hljs-number">0</span>;<wbr> <span class="hljs-comment">// stop the lift</span>
+</td></tr>
+<tr><td class="line-number">558</td><td class="line-text">                <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">559</td><td class="line-text">            <span class="hljs-keyword">default</span>:
+</td></tr>
+<tr><td class="line-number">560</td><td class="line-text">                <span class="hljs-keyword">break</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">561</td><td class="line-text">        }<wbr>
+</td></tr>
+<tr><td class="line-number">562</td><td class="line-text">    }<wbr><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (manual_auto =<wbr>=<wbr> <span class="hljs-number">2</span>)<wbr>{ <span class="hljs-comment">// at auto mode</span>
+</td></tr>
+<tr><td class="line-number">563</td><td class="line-text">        <span class="hljs-comment">//Motor Rotation auto run</span>
+</td></tr>
+<tr><td class="line-number">564</td><td class="line-text">        <span class="hljs-keyword">int</span> step =<wbr> <span class="hljs-number">200</span> / stepsPerRevolution;<wbr>
+</td></tr>
+<tr><td class="line-number">565</td><td class="line-text">        <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> i =<wbr> <span class="hljs-number">0</span>;<wbr> i &lt;<wbr> step;<wbr> i++)<wbr>{
+</td></tr>
+<tr><td class="line-number">566</td><td class="line-text">            <span class="hljs-comment">// Set motor direction clockwise</span>
+</td></tr>
+<tr><td class="line-number">567</td><td class="line-text">            gpio_put(dirPin_rotation,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">568</td><td class="line-text">            <span class="hljs-comment">// Spin motor</span>
+</td></tr>
+<tr><td class="line-number">569</td><td class="line-text">            <span class="hljs-built_in">printf</span>(<span class="hljs-string">"<wbr>%f"<wbr></span>,<wbr>degree)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">570</td><td class="line-text">            degree +=<wbr> stepsPerRevolution * <span class="hljs-number">1.8</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">571</td><td class="line-text">            draw_rotation_platform()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">572</td><td class="line-text">            draw_rotation_text()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">573</td><td class="line-text">            <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> x =<wbr> <span class="hljs-number">0</span>;<wbr> x &lt;<wbr> stepsPerRevolution;<wbr> x++)<wbr>{
+</td></tr>
+<tr><td class="line-number">574</td><td class="line-text">                gpio_put(stepPin_rotation,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">575</td><td class="line-text">                sleep_ms(<span class="hljs-number">10</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">576</td><td class="line-text">                gpio_put(stepPin_rotation,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">577</td><td class="line-text">                sleep_ms(<span class="hljs-number">10</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">578</td><td class="line-text">            }<wbr>
+</td></tr>
+<tr><td class="line-number">579</td><td class="line-text">            sleep_ms(interval*<span class="hljs-number">1000</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">580</td><td class="line-text">        }<wbr>
+</td></tr>
+<tr><td class="line-number">581</td><td class="line-text">        degree =<wbr> <span class="hljs-number">0.0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">582</td><td class="line-text">        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i=<wbr><span class="hljs-number">0</span>;<wbr> i&lt;<wbr>interval2;<wbr>i++)<wbr>{
+</td></tr>
+<tr><td class="line-number">583</td><td class="line-text">            gpio_put(dirPin_lift,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">584</td><td class="line-text">            <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> x =<wbr> <span class="hljs-number">0</span>;<wbr> x &lt;<wbr> <span class="hljs-number">545</span>;<wbr> x++)<wbr>{
+</td></tr>
+<tr><td class="line-number">585</td><td class="line-text">                gpio_put(stepPin_lift,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">586</td><td class="line-text">                sleep_ms(<span class="hljs-number">6</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">587</td><td class="line-text">                gpio_put(stepPin_lift,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">588</td><td class="line-text">                sleep_ms(<span class="hljs-number">6</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">589</td><td class="line-text">            }<wbr>
+</td></tr>
+<tr><td class="line-number">590</td><td class="line-text">            sleep_ms(interval*<span class="hljs-number">1000</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">591</td><td class="line-text">            <span class="hljs-comment">//Motor Rotation auto run</span>
+</td></tr>
+<tr><td class="line-number">592</td><td class="line-text">            <span class="hljs-keyword">int</span> step =<wbr> <span class="hljs-number">200</span> / stepsPerRevolution;<wbr>
+</td></tr>
+<tr><td class="line-number">593</td><td class="line-text">            <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> i =<wbr> <span class="hljs-number">0</span>;<wbr> i &lt;<wbr> step;<wbr> i++)<wbr>{
+</td></tr>
+<tr><td class="line-number">594</td><td class="line-text">                <span class="hljs-comment">// Set motor direction clockwise</span>
+</td></tr>
+<tr><td class="line-number">595</td><td class="line-text">                gpio_put(dirPin_rotation,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">596</td><td class="line-text">                <span class="hljs-comment">// Spin motor</span>
+</td></tr>
+<tr><td class="line-number">597</td><td class="line-text">                degree +=<wbr> stepsPerRevolution * <span class="hljs-number">1.8</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">598</td><td class="line-text">                draw_rotation_platform()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">599</td><td class="line-text">                draw_rotation_text()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">600</td><td class="line-text">                <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> x =<wbr> <span class="hljs-number">0</span>;<wbr> x &lt;<wbr> stepsPerRevolution;<wbr> x++)<wbr>{
+</td></tr>
+<tr><td class="line-number">601</td><td class="line-text">                    gpio_put(stepPin_rotation,<wbr> <span class="hljs-number">1</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">602</td><td class="line-text">                    sleep_ms(<span class="hljs-number">10</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">603</td><td class="line-text">                    gpio_put(stepPin_rotation,<wbr> <span class="hljs-number">0</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">604</td><td class="line-text">                    sleep_ms(<span class="hljs-number">10</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">605</td><td class="line-text">                }<wbr>
+</td></tr>
+<tr><td class="line-number">606</td><td class="line-text">                sleep_ms(interval*<span class="hljs-number">1000</span>)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">607</td><td class="line-text">            }<wbr>
+</td></tr>
+<tr><td class="line-number">608</td><td class="line-text">            degree =<wbr> <span class="hljs-number">0.0</span>;<wbr>
+</td></tr>
+<tr><td class="line-number">609</td><td class="line-text">        }<wbr>
+</td></tr>
+<tr><td class="line-number">610</td><td class="line-text">    }<wbr>
+</td></tr>
+<tr><td class="line-number">611</td><td class="line-text">    
+</td></tr>
+<tr><td class="line-number">612</td><td class="line-text">    <span class="hljs-comment">// Indicate end of thread</span>
+</td></tr>
+<tr><td class="line-number">613</td><td class="line-text">    PT_END(pt)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">614</td><td class="line-text">}<wbr>
+</td></tr>
+<tr><td class="line-number">615</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">616</td><td class="line-text"><span class="hljs-comment">// Entry point for core 1</span>
+</td></tr>
+<tr><td class="line-number">617</td><td class="line-text"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">core1_entry</span><span class="hljs-params">()<wbr></span> </span>{
+</td></tr>
+<tr><td class="line-number">618</td><td class="line-text">    pt_add_thread(protothread_vga)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">619</td><td class="line-text">    pt_schedule_start ;<wbr>
+</td></tr>
+<tr><td class="line-number">620</td><td class="line-text">}<wbr>
+</td></tr>
+<tr><td class="line-number">621</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">622</td><td class="line-text"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">()<wbr></span> </span>{
+</td></tr>
+<tr><td class="line-number">623</td><td class="line-text">    <span class="hljs-comment">// Initialize stdio</span>
+</td></tr>
+<tr><td class="line-number">624</td><td class="line-text">    stdio_init_all()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">625</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">626</td><td class="line-text">    gpio_init(stepPin_rotation)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">627</td><td class="line-text">    gpio_init(dirPin_rotation)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">628</td><td class="line-text">    gpio_init(stepPin_lift)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">629</td><td class="line-text">    gpio_init(dirPin_lift)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">630</td><td class="line-text">    gpio_set_dir(stepPin_lift,<wbr> GPIO_OUT)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">631</td><td class="line-text">    gpio_set_dir(dirPin_lift,<wbr> GPIO_OUT)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">632</td><td class="line-text">    gpio_set_dir(stepPin_rotation,<wbr> GPIO_OUT)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">633</td><td class="line-text">    gpio_set_dir(dirPin_rotation,<wbr> GPIO_OUT)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">634</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">635</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">636</td><td class="line-text">    <span class="hljs-comment">// Initialize the keypad GPIO'<wbr>s</span>
+</td></tr>
+<tr><td class="line-number">637</td><td class="line-text">    gpio_init_mask((<span class="hljs-number">0x7F</span> &lt;<wbr>&lt;<wbr> BASE_KEYPAD_PIN)<wbr>)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">638</td><td class="line-text">    <span class="hljs-comment">// Set row-pins to output</span>
+</td></tr>
+<tr><td class="line-number">639</td><td class="line-text">    gpio_set_dir_out_masked((<span class="hljs-number">0xF</span> &lt;<wbr>&lt;<wbr> BASE_KEYPAD_PIN)<wbr>)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">640</td><td class="line-text">    <span class="hljs-comment">// Set all output pins to low</span>
+</td></tr>
+<tr><td class="line-number">641</td><td class="line-text">    gpio_put_masked((<span class="hljs-number">0xF</span> &lt;<wbr>&lt;<wbr> BASE_KEYPAD_PIN)<wbr>,<wbr> (<span class="hljs-number">0x0</span> &lt;<wbr>&lt;<wbr> BASE_KEYPAD_PIN)<wbr>)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">642</td><td class="line-text">    <span class="hljs-comment">// Turn on pulldown resistors for column pins (on by default)<wbr></span>
+</td></tr>
+<tr><td class="line-number">643</td><td class="line-text">    gpio_pull_down((BASE_KEYPAD_PIN + <span class="hljs-number">4</span>)<wbr>)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">644</td><td class="line-text">    gpio_pull_down((BASE_KEYPAD_PIN + <span class="hljs-number">5</span>)<wbr>)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">645</td><td class="line-text">    gpio_pull_down((BASE_KEYPAD_PIN + <span class="hljs-number">6</span>)<wbr>)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">646</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">647</td><td class="line-text">    <span class="hljs-comment">// Initialize VGA</span>
+</td></tr>
+<tr><td class="line-number">648</td><td class="line-text">    initVGA()<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">649</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">650</td><td class="line-text">    <span class="hljs-comment">// start core 1 </span>
+</td></tr>
+<tr><td class="line-number">651</td><td class="line-text">    multicore_reset_core1()<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">652</td><td class="line-text">    multicore_launch_core1(core1_entry)<wbr>;<wbr>
+</td></tr>
+<tr><td class="line-number">653</td><td class="line-text">
+</td></tr>
+<tr><td class="line-number">654</td><td class="line-text">    <span class="hljs-comment">// start core 0</span>
+</td></tr>
+<tr><td class="line-number">655</td><td class="line-text">    pt_add_thread(protothread_serial)<wbr> ;<wbr>
+</td></tr>
+<tr><td class="line-number">656</td><td class="line-text">    pt_schedule_start ;<wbr>
+</td></tr>
+<tr><td class="line-number">657</td><td class="line-text">}<wbr>
+</td></tr>
+<tr><td class="line-number">658</td><td class="line-text">&nbsp;<wbr></td></tr>
+</tbody></table>
+	</div>
+
+
+</body><grammarly-desktop-integration data-grammarly-shadow-root="true"><template shadowrootmode="open"><style>
+      div.grammarly-desktop-integration {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select:none;
+        user-select:none;
+      }
+
+      div.grammarly-desktop-integration:before {
+        content: attr(data-content);
+      }
+    </style><div aria-label="grammarly-integration" role="group" tabindex="-1" class="grammarly-desktop-integration" data-content="{&quot;mode&quot;:&quot;limited&quot;,&quot;isActive&quot;:false,&quot;isUserDisabled&quot;:false}"></div></template></grammarly-desktop-integration></html>
