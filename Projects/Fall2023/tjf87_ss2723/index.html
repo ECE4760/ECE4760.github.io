@@ -1,0 +1,524 @@
+<html>
+    <head>
+        <title>
+            ECE 4760 Final Project
+        </title>
+        <meta name ="viewport" content ="width=device-width, initial-scale =1">
+        <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+        <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+        <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+        <!-- Style Section taken from https://www.w3schools.com/howto/howto_js_collapsible.asp -->
+        <style>
+            /* Style the button that is used to open and close the collapsible content */
+            .collapsible {
+            background-color: #eee;
+            color: #444;
+            cursor: pointer;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 15px;
+            }
+
+            /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+            .active, .collapsible:hover {
+            background-color: #ccc;
+            }
+
+            /* Style the collapsible content. Note: hidden by default */
+            .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: #f1f1f1;
+            }
+        </style>
+    </head>
+    <body> 
+        <section class = "main-content">
+            <h1>
+                ECE 4760 Final Project: Space Invaders Using Proximity Sensor on an RP2040
+            </h1> 
+            <h2>
+                Thomas Figura tjf87 & Steven Sun ss2723
+            </h2>
+            <h2>
+                Introduction
+            </h2>
+            <p>
+                We created an adaptation of Galaga on the RP2040, where the player controls the ship using a proximity sensor and several buttons. The proximity sensor is responsible for the x-position of Gyaraga (the protagonist ship).  The user can use a button to shoot an arsenal of bullets to defeat two waves of enemies. We used direct digital synthesis to create a variety of sounds corresponding to events in the game.
+
+            </p>
+        </section>
+        <section class ="main-content">
+            <h2>
+                High Level Design
+            </h2>
+            <button type="button" class ="collapsible"> Open High Level Design </button>
+            <div class = "content">
+                <h3>
+                    Rationale
+                </h3>
+                <p>
+                    This project was inspired by science fiction movies where characters control spaceships without touching a physical interface. Our goal is to create a similar experience by creating a space-themed game with “touchless” control. I put touchless in quotation marks because the button has to be pushed to function. The point is to create an illusion of touchless control.
+
+                </p>
+                <h3>
+                    Block Diagram
+                </h3>
+                <img src = "blockdiagram.png"></img>
+
+                <h3>
+                    Code Layout
+                </h3>
+                <p>
+                    Our code layout follows the standard set by previous labs. The top of the file includes all the necessary libraries needed for our project. Then, we define fixed point macros and game variables. Below that, we defined our game objects using structs. We also created structs to hold arrays of our game objects Then, we implemented game mechanics (such as sprite display, collision detection, sound effects) as functions that take the game objects as parameters. Next, we created three protothreads, each responsible for different parts of the game. The serial protothread was mostly used for debugging purposes. To check the value of a variable in our game loop, we would print the variable to the serial terminal. The animation protothread controlled what was being displayed on the VGA display depending on the game variables. The buttons protothread updated game variables depending on user input. The main function at the bottom of the code initializes direct digital synthesis, spawns the game objects, and initializes the protothreads.
+
+                </p>
+                <h3>
+                    Hardware / Software Trade-Offs
+ 
+                </h3>
+                <p>
+                    The APDS-9960 is a proximity sensor that outputs a number from 0 to 255 depending on how close or far an object is to it. However, the detection range of the APDS-9960 is limited to 5 inches away from it. This means that the proximity sensor is extremely sensitive to small hand movements and natural handshaking. In early versions of the game, the user ship would move erratically. To make controlling the ship feel better for the player, we lowpassed the proximity sensor output. The position of the ship no longer accurately represented the input of the user, but it made controlling the ship a more enjoyable experience.
+                </p>
+                <h3>
+                    Copyright
+                </h3>
+                <p>
+                    This game is inspired by the original Galaga game made in 1981. This game is an adaption of the original, offering a unique way to control the user ship.
+
+                </p>
+            </div>
+        </section>
+        <section class = "main-content">
+            <h2>
+                Program / Hardware Design
+            </h2>
+            <button type="button" class ="collapsible"> Open Program / Hardware Design </button>
+            <div class = "content">
+                <!--Program Design-->
+                <div>
+                <h3>
+                    Program Design
+                </h3>
+                <p>
+                    To design this program we first determined how we were going to organize our code. 
+                    To this end we organized our code as such, both cores of the RP2040 were used, 
+                    and three separate threads were used to further demarcate code purposes. 
+                    For file organization any code that was proposed only for the RP-2040 (including the DAC) was written in a single C file. 
+                    The code that interfaced with the APDS-9960 was written in a separate C file and was included in the main file. 
+                    This separation of files was done so that if the APDS was going to be used in separate scenarios
+                    then the code to access at least the proximity sensor can be easily included.
+                </p>
+                <p>
+                    The structure of the code organization on the RP-2040, multi-core / threading, was done so for this reason.
+                    Since we were using Direct Digital Synthesis (DDS) to generate game sounds we needed realtime control on the interrupt so that the generated sound sounded good. 
+                    Since the pico has two cores and only one was being used, to fully achieve this real-time constraint the second core was used. 
+                </p>
+                <p>
+                    The rest of the code was organized on the first core of the pico. This code was organized into three threads. 
+                    A thread for the buttons, to allow user control, a thread for serial inputs to allow easier debugging and if the buttons fail to allow the user to still play the game, and the last thread, the game loop. 
+                    This last thread is where the majority of the code implementation happened. Lastly, all of the functions that were defined and used throughout the game loop were defined above the game loop thread, and any other functions were defined below this loop.
+                </p>
+                <p>
+                    The loop was then further organized so that proper behavior was seen while playing the game. 
+                    The game checks if paused, if paused then the body of the game loop does not execute, instead it goes to the pause (or death) screen. 
+                    Next from top down the thread checks if a user bullet has been fired, then it does enemy movement, then the firing of the enemies’ bullets. 
+                    The thread then moves all of the bullets that are on the screen, then after all the bullets have moved it checks a bullet hit on either the user or the enemies, 
+                    then the game moves the user according to the proximity sensor. After all of this does the game then check if the user has won. The loop then restarts from the top.  
+                </p>
+                <p>
+                    One more code organization that we implemented was to create another set of structs, one for big and one for small, so that we could store in a struct array all of our enemy objects and bullet objects. 
+                    Thus we had two structs to hold both big and small enemy objects and another 3 arrays to hold big and small bullet objects, 2 for the enemy bullets and 1 for the user’s bullets
+                </p>
+                </div>
+                <!--Sprite Implementation-->
+                <div>
+                  <h3>
+                    Sprite implementation
+                </h3>
+                <p>
+                    In this version of Space Invaders, we created sprites for big enemies, big enemy bullets, small enemies, small enemy bullets, a user ship, and user ship bullets.
+                </p>
+                <p>
+                    Each sprite object was created by a struct which contained the information as to whether the sprite should be drawn, if it had been shot (in the case of bullet sprites), the x,y positions of all four corners and the bitmap array that contained all the pixel information. So the variables in the sprite object are:
+                </p>
+                <table>
+                    <tr> <td> object_array </td> <td> Holds the Pixel Map. </td> </tr>
+                    <tr> <td> top_left </td> <td> Holds the top left coordinate of the Sprite. </td> </tr>
+                    <tr> <td> top_right </td> <td> Holds the top right coordinate of the Sprite. </td> </tr>
+                    <tr> <td> bot_left </td> <td> Holds the bottom left coordinate of the Sprite. </td> </tr>
+                    <tr> <td> bot_right </td> <td> Holds the bottom right coordinate of the Sprite. </td> </tr>
+                    <tr> <td> draw </td> <td> Says whether the sprite is drawn. </td> </tr>
+                    <tr> <td> x </td> <td> Length of the Sprite's x dimension. </td> </tr>
+                    <tr> <td> y </td> <td> Length of the Sprite's y dimension.</td> </tr>
+                    <tr> <td> shot </td> <td> Says whether the sprite is shot (if a bullet). </td> </tr>
+                </table>
+                <p>
+                    Since no dynamic memory allocation occurs in this program, two versions of this struct were created, one struct for the “small” sprites, in which their bitmap was an 11x11 array, and another “big” struct for objects whose sprite was 18x18 pixels. Because of these two separate structs, every function that can possibly take in both big and small has two versions, one for the small version and one for the large version.
+
+                </p>
+                <p>
+                    Each sprite visualization is represented by a bitmap. A bitmap is a 2D-array of numbers that specify the color of each pixel in the sprite. For example, the bitmap shown below would correspond to  a 3 by 3 square with a white center.
+                </p>
+                <pre> <code> 
+                    int bitmap[3][3] = {
+                        {1, 1, 1},
+                        {1, 0, 1},
+                        {1, 1, 1}
+                        };
+                    
+                </code> </pre>
+                <p>
+                    Our game has two types of sprites, small sprites and large sprites.<br> 
+                    The colors corresponding to each number in our game are shown below:
+  
+                </p>
+                <table>
+                    <tr> <td> Number </td> <td> Color </td> <td> Number </td> <td> Color </td> </tr>
+                    <tr> <td> 0 </td> <td> Black </td> <td> 1 </td> <td> White </td> </tr>
+                    <tr> <td> 2 </td> <td> Blue </td> <td> 3 </td> <td> Red </td> </tr>
+                    <tr> <td> 4 </td> <td> Magenta </td> <td> 5 </td> <td> Green </td> </tr>
+                    <tr> <td> 6 </td> <td> Cyan </td> <td> 7 </td> <td> Yellow </td> </tr>   
+                </table>
+                <p>
+                    To display each sprite onto the VGA display, we use a function that loops through each element in the sprite's bitmap which then draws the specific pixel to the screen.
+                </p>  
+                <pre> <code> 
+void drawObject(object_reg * t){
+    char color;
+    for(int i = 0; i<t->x; i++ ){
+        for(int k = 0; k<t->y; k++){
+            if(t->draw==1){
+                switch(t->object_array[i][k]){
+                    case 1: color = WHITE; break;
+                    case 2: color = BLUE; break;
+                    case 3: color = RED; break;
+                    case 4: color = MAGENTA; break;
+                    case 5: color = GREEN; break;
+                    case 6: color = CYAN; break;
+                    case 7: color = YELLOW; break;
+                    default: color = BLACK; break;
+                }
+                drawPixel(k+ t->bot_left[0],i+ t->bot_left[1],color);
+            }
+        }
+    }
+}
+                </code> </pre> 
+                <p>
+                    To then clear in object from the screen we would call a similar function, but
+                    instead of setting to a specific color, all pixels would be set to black.
+                </p>
+                </div> 
+                <!--Bullet Movement and Shooting-->
+                <div>   
+                <h3>
+                    Bullet Movement & Shooting
+                </h3>
+                <p>
+                    Shooting the bullet, like moving the ship, is one of the main key gameplay features that we have implemented in this game. To shoot the bullet all one has to do is push the associated button on the breadboard and the user ship will shoot a bullet. 
+                </p>
+                <p>
+                    To actually implement this shooting, we first limited how many bullets can be shot at a singular time, this ensures that the player has a chance to not get hit and the player can not fill the entire screen with user bullets. In this case we decided on five bullets total for all objects. This means that the user cannot have more than five bullets on the screen at once and there cannot be more than five big or small bullets on the screen at once as well. To keep track of this number we created ammo counters.
+
+                </p>
+                <p>
+                    With these ammo counters the shoot functions are only allowed to execute when the respective ammo count is less than 5. Thus when a bullet is shot, the shoot function takes in the sprite that is doing the shooting and the array that holds the bullets. The function then loops through the array until it finds a bullet which has draw == 0 and shot == 0. At this point the function spawns the bullet at the object which shot it and the draw and shot flags are set to 1. At this point the ammo count is incremented as well. Thus when 5 bullets have been shot the ammo count == 5 and the shot function can no longer be accessed.
+
+                </p>
+                <p>
+                    Then when a bullet is cleared, either by hitting an enemy or by going out of bounds the ammo count is decremented and this allows for another bullet to be fired.
+                </p>
+                <p>
+                    To implement bullet movement. We made a function that takes in the bullet arrays and a direction. The function then loops through until it finds a bullet that has been shot, i.e. shot and draw == 1. When this happens, depending on the inputted direction. The corner coordinates are either added to or subtracted from. This then moves the bullet up or down the screen.
+
+                </p>
+                </div>
+                <!--Player Control-->
+                <div>
+                    <h3>
+                        Player Control
+                    </h3>
+                    <p>
+                        To implement player control we decided that it would be interesting and fun to control the player ship through a motion sensor. To this end we used the ADPS-9960 and its IR proximity sensor to provide this functionality. To access the ADPS-9960 we attached it to the second I2C channel on the raspberry pi and set the required register bits according to the ADPS-9960 datasheet. We then read the proximity register from the sensor into a single unsigned byte data array as the size of the output register is only 8 bits.
+
+                    </p>
+                    <p>
+                        The example code below is how we were able to read from the ADPS-9960:
+
+                    </p>
+                    <pre>
+                    <code>
+int adaFruitRead_pos(){
+    uint8_t buffer[1];
+    uint8_t position_val = 0x9C;
+    i2c_write_blocking(I2C_CHAN, ADDRESS, &position_val, 1, true);
+    i2c_read_blocking(I2C_CHAN, ADDRESS, buffer, 1, false);
+
+    return buffer[0];
+}                        
+                    </code>
+                    </pre>
+                    <p>
+                        Now that we are able to read from the proximity sensor we are able to properly tell how the player can move. When the proximity value is larger that means the player’s finger is closer to the sensor and thus the user ship should be further right on the screen with the max value of 255 corresponding to the rightmost boundary. In the inverse a sensor value closer to 0 means that the player’s finger is further from the sensor and thus the player’s ship should be more to the left. With the minimum sensor value being the leftmost boundary of the playing area. 
+                    </p>
+                    <p>
+                        The playable area however, is not 255 pixels wide, so to overcome this issue so that the player is able to seemingly reach every pixel in the arena, this 8 bit pixel value was scaled by 2.2 so that it could traverse the entire area. Then to finally move the ship we modified the x coordinate values of the user’s ship to these new scaled numbers.
+                    </p>
+                    <p>
+                        While this implementation works in moving the user ship, it has the downsides of being very jittery with any variation in the input teleporting the ship around the screen. Thus to allow more stable movement and to allow the user to keep the ship from moving when their finger is otherwise still, we low passed the proximity data so that any noise being added to the movement would be filtered out. We accomplished this by doing adding a new lowpass variable and doing this:
+                    </p>
+                    <pre>
+                        <code>
+lowPassPosistion = 0.9*lowPassPosistion + 0.1*position
+                        </code>
+                    </pre>
+                    <p>
+                        This has the effect of allowing big movements to pass through, such as moving from side to side, but preventing high fluctuations, such as fingers trying to be held still. An interesting side effect from this implementation is that it seemed to give a little bit of “momentum” to the ship as the variable would wind up and wind down. So it would appear to move faster to some final rate and then would appear to slow down to some final position.
+
+                    </p>
+                </div>
+                <!--Enemy Behavior-->
+                <div>
+                    <h3>
+                        Enemy Behavior
+                    </h3>
+                    <p>
+                        Enemy movement is simple. Every couple of cycles, all enemies will move either left or right. After moving left or right for a predetermined amount of cycles, the enemies will stop and begin moving in the other direction. The enemy movement does not depend on how many enemies are still alive. 
+                    </p>
+                    <p>
+                        Enemy shooting happens at random intervals. If a randomly generated variable is within a certain range, then the program will choose a random surviving enemy to shoot a bullet at the user. This means that if there are few enemies remaining, each individual enemy's rate of fire increases. The final enemy can be considered a final boss because it will have an extremely fast rate of fire, making it difficult for the user to align themselves with the enemy to destroy it.
+
+                    </p>
+                </div>
+                <!--Collision Detection-->
+                <div>
+                    <h3>
+                        Collision Detection
+                    </h3>
+                    <p>
+                        Collision detection was one of the trickiest features to implement. Our original implementation involved checking every pixel of every object for collisions. This version of collision detection was extremely slow and caused enormous lag. Our second version of collision detection would check if the corners of our models were inside other models, which achieved the same result as the first version, but was faster and more efficient. Shown below is the collision detection between a user bullet and a small enemy.
+
+                    </p>
+                    <pre>
+                        <code>
+if(bullets->objects[i].shot == 1 && bullets->objects[i].draw == 1){
+    for(int k = 0; k<NUM_ENEMIES; k++){
+    if(
+    (bullets->objects[i].bot_left[1] <= small_enemy->objects[k].top_left[1] && bullets->objects[i].top_left[1] <= small_enemy->objects[k].bot_left[1])
+                    && ((bullets->objects[i].bot_left[0] >= small_enemy->objects[k].bot_left[0] && 
+                        bullets->objects[i].bot_left[0] <= small_enemy->objects[k].bot_right[0]) || ( 
+                        bullets->objects[i].bot_right[0] >= small_enemy->objects[k].bot_left[0] && 
+                        bullets->objects[i].bot_right[0] <= small_enemy->objects[k].bot_right[0]))
+                        && small_enemy->objects[k].draw == 1
+                    ){
+                // Recognize that a collision has occurred
+                    }                                
+                        </code>
+                    </pre>
+                    <p>
+                        When a user bullet collides with an enemy, the program stops the user bullet and the enemy is cleared, the user gains a bullet, and a hit sound plays. If a user bullet collides with the top of the screen or an enemy bullet collides with the bottom of the screen, the bullet is cleared.
+                    </p>
+                </div>
+                <!--Sound Effect-->
+                <div>
+                    <h3>
+                        Sound Effects
+                    </h3>
+                    <p>
+                        To create sound effects, we reused some code from Lab 1: DDS. We made the sounds unique by changing the sound functions in the accumulator. We matched the sound with the event by setting the sound effect variable to either True or False. If true, the sound would play and then set the variable to false in the next cycle.
+ 
+                    </p>
+                </div>
+                <!--Changing Game State-->
+                <div>
+                <h3>
+                    Changing Game State
+                </h3>
+                <p>
+                    Another key feature of this game is the ability to change game state. In this game four different game states were implemented. The normal play state, the paused state, and the dead state and the game end state.
+
+                </p>
+                <p>
+                    The main state is the play, the game plays as normal. The enemies and player can move and shoot and potentially get hit by bullets causing either the enemy to die and the player’s score to increase or for the player to get hit and lose a life. This state persists until either the player pauses the game, wins the game, loses a life, or completely loses the game.
+                </p>
+                <p>
+                    The second state that is crucial to the game is the paused state. In this state the main game loop / thread does not execute and thus all of the sprites stay still in place. No bullets can be fired and no sprite can die. To switch between this state and the play state a button on the breadboard is pressed. Allowing the user to seamlessly transition between paused and play.
+                </p>
+                <p>
+                    The third state is the death state. In this state the player has been hit by an enemy bullet and has the life counter decremented. The game gets paused and all of the bullets get cleared and the user reset to its initial coordinates. From this state the user can unpause the game to continue playing.
+
+                </p>
+                <p>
+                    The next state is the lost state. In this state the player has lost all of his lives and thus the game is over. In this state the game is paused, but unlike the previous states the user cannot unpause the game to continue playing. The user is only allowed to press the restart button to begin the game anew.
+
+                </p>
+                <p>
+                    Another way that was implemented to change game state is the restart button. This button allows the user to switch from any current state to the beginning of a new game. It does this by clearing everything on the screen, resetting ammo back to full, health to full, and the score to zero. When the unpause button is pressed the game starts from the beginning.
+                </p>
+                </div>
+
+            </div>
+        </section>
+        <section class = "main-content">
+            <h2>
+                Results
+            </h2>
+            <button type="button" class ="collapsible"> Open Results </button>
+            <div class = "content">
+                <!--Demo Video-->
+                <div>
+                    <h3>
+                        Demo Video
+                    </h3>
+                    <iframe width="420" height="315"
+                        src="https://www.youtube.com/watch?v=g0m5_1Oc-8U">
+                    </iframe>
+                    <p>
+                        If the above video does not work
+                        <a href="https://www.youtube.com/watch?v=g0m5_1Oc-8U"> Click Here </a>
+                        to see the Demo Video.
+                    </p>
+                </div>
+                <!--Test Data-->
+                <div>
+                    <h3>
+                        Test Data
+                    </h3>
+                    <p>
+                        Rather than testing the implementation of the game mechanics using a dedicated test script, we tested by displaying the game to the VGA display and playing it. To test player movement, we moved our finger up and down over the proximity sensor. From doing this, we found that the sensor’s range was very limited and extremely sensitive. In the early stages of our game, we tested shooting and collision mechanics by inputting values into the serial terminal corresponding to a certain action. When we eventually added buttons to our game, we could shoot, pause, and restart the game without using the serial terminal. Playing the game for the first time with buttons, we realized that the first five bullets fired would not collide properly with the enemies. We debugged this issue by printing various game variables to the serial monitor, which showed us that the boundaries of the bullet were not being set correctly. To test the lives system, we would intentionally run into bullets to lose lives. By doing this, we found that the life system was functional. It also showed us a flaw in our design. If there were multiple bullets close together, and one of them hit the player, then it was likely that the player would instantly lose another life after the game was unpaused. This made the gameplay experience unpleasant. To fix this problem, we cleared the bullets on the screen after a life was lost. To find and resolve other quality of life issues like this one, we asked our classmates to playtest our game and give feedback on what could have been improved.
+
+                    </p>
+                </div>
+                <!--Speed of Execution-->
+                <div>
+                    <h3>
+                        Speed of Execution
+                    </h3>
+                    <p>
+                        The speed of execution was represented by the spare time label on the VGA-display. A set amount of time is allocated for each cycle on the RP2040. If spare time is positive, there should be very little latency. For most game events and interactions, our spare time was about 30,000. It is safe to say that the speed of execution of our code was acceptable.
+
+                    </p>
+                </div>
+                <!--Safety-->
+                <div>
+                    <h3>
+                        Safety
+                    </h3>
+                    <p>
+                        To ensure that it was safe to play our game, we made sure that all jumper wires were positioned relatively far away from the proximity sensor, so the user won’t accidentally tear out the wires. This also made sure that the user won’t accidentally touch an exposed wire. Also, we positioned the buttons relatively far away from the MCU to make sure the user didn’t accidentally cut their finger on a soldered pin.
+                    </p>
+                </div>
+                <!--Usability-->
+                <div>
+                    <h3>
+                        Usability
+                    </h3>
+                    <p>
+                        To test usability, we asked our classmates and TAs to playtest our game and give feedback on what could be improved. From very early on, we realized that the sensitivity of the main control was unpleasant, which inspired us to lowpass the user inputs. After doing that, most people agreed that the game was playable
+
+                    </p>
+                </div>
+            </div>
+        </section>
+        <section class = "main-content">
+            <h2>
+                Conclusions
+            </h2>
+            <button type="button" class ="collapsible">Open Conclusions </button>
+            <div class = "content">
+                <!--ResultsVExpectations-->
+                <div>
+                    <h3>
+                        Results vs. Expectations
+                    </h3>
+                    <p>
+                        Compared to our project proposal, we did not create a control glove for the abilities of the ship. We felt that this would be an unnecessary gimmick that would not add to the core ideas of our project. Also, we expected that the proximity sensor would have greater range. Other than that, we feel that we accomplished what we set out to do. The game experience was polished, and the ship feels good to control.
+
+                    </p>
+                </div>
+                <h3>
+                    Next Time
+                </h3>
+                <p>
+                    Next time for this project, instead of statically allocating memory. we would try to implement dynamic memory allocation so that we would not have had to bloat the code by having two functions for each type of struct that does the exact same thing. Instead there would be one struct that is sized dynamically for the type of sprite it is trying to represent and as a result we could reduce functions like draw() and drawBig() to just draw().
+                </p>
+                <p>
+                    As mentioned before in the hardware / software trade offs section, the detection range of the APDS-9960 is limited to 5 inches away from it. This means that the proximity sensor is extremely sensitive to small hand movements and natural handshaking. To improve user experience, we could replace the proximity sensor with a larger range distance sensor. This would reduce the need to aggressively lowpass the user input and allow the user to play the game with higher accuracy.
+                </p>
+                <p>
+                    Currently the enemy movement does not depend on how many enemies are still alive. To make our game more faithful to the original Galaga, we could make the enemies reverse direction only when the rightmost or leftmost enemy reaches the edge of the screen.
+                </p>
+                <p>
+                    Additionally, we would like to add more buttons to the game corresponding to special abilities. This would add more depth and player expression to the game.
+                </p>
+                <h3>
+                    Intellectual Property Considerations
+                </h3>
+                <p>
+                    Our sprites are heavily inspired by the sprites from the original Galaga game. However, our sprites have slight variations in color and design. Our hardware and software design was created using the skills we learned from the previous labs. Our sound effects are variations of the sound profiles that we synthesized in lab 1. All game logic and game mechanics were created without referencing other code. We reused snippets of code from previous labs, but we did not use someone else’s design. We did not use any of Altera’s IP. We did not use code on the public domain. We reverse engineered certain game mechanics from the original Galaga, in our own unique way. We did not have to sign an NDA to get a sample part. There are not patent opportunities for our project
+                </p>
+                <p>
+                    The code for formatting the collapsibles was found from the W3 School <a href=https://www.w3schools.com/howto/howto_js_collapsible.asp> Here </a>
+                </p>
+                <p>
+                    The stylesheets for this website were taken from the same style sheets used for ECE 3140's final project report.
+                </p>
+            </div>
+        </section>
+        <section class = "main-content">
+            <h2>
+                Appendix A: Approval
+            </h2>
+            <p>
+                The group approves this report for inclusion on the course website.<br>
+                The group approves the video for inclusion on the course Youtube channel. 
+            </p>
+        </section>
+        <section class = "main-content">
+            <h2>
+                Appendix B: Code
+            </h2>
+            <button type="button" class ="collapsible"> Open Appendix B: Code </button>
+            <div class = "content">
+                <h3>
+                    Code:
+                </h3>
+                <a href="maincode.c"> Click Here to See the Code </a> <br>
+                <a href="adafruit.html"> Click Here to See the APDS-9960 Helper Functions</a>
+            </div>
+        </section>
+        <section class = "main-content">
+            <h2>
+                Appendix C: Data Sheets
+            </h2>
+            <button type="button" class ="collapsible"> Open Appendix C: Data Sheets </button>
+            <div class = "content">
+                <a href="https://content.arduino.cc/assets/Nano_BLE_Sense_av02-4191en_ds_apds-9960.pdf"> Data Sheet used for the APDS-9960 </a> <br>
+                <a href="https://www.w3schools.com/howto/howto_js_collapsible.asp"> Collapsible Formatting </a> <br>
+            </div>
+        </section>
+
+
+        <!--Script Taken from https://www.w3schools.com/howto/howto_js_collapsible.asp -->
+        <script>
+            var coll = document.getElementsByClassName("collapsible");
+            var i;
+            for (i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    var content = this.nextElementSibling;
+                    if (content.style.display === "block") {
+                    content.style.display = "none";
+                    } else {
+                    content.style.display = "block";
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>

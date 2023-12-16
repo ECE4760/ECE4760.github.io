@@ -1,0 +1,45 @@
+<html>
+    <head>
+        <title>
+            ADPS-9960 Helper Code
+        </title>
+    </head>
+    <body>
+        <pre><code>
+            /**
+ * Thomas Figura & Steven Sun
+ *  
+*/
+
+#include "hardware/i2c.h"
+#include "adafruit.h"
+#include <stdio.h>
+
+
+
+void adaFruitReset(){
+
+    uint8_t enable[] = {0x80, 0x00};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, enable, 2, false);
+
+    //Enables the Proximity Detection
+    uint8_t PENandPIEN[] = {0x80, 0b00100101};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, PENandPIEN, 2, false);
+
+    uint8_t PPulsePPLen[] = {0x8E, 0b01000111};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, PPulsePPLen, 2, false);
+
+
+}
+int adaFruitRead_pos(){
+    uint8_t buffer[1];
+    uint8_t position_val = 0x9C;
+    i2c_write_blocking(I2C_CHAN, ADDRESS, &position_val, 1, true);
+    i2c_read_blocking(I2C_CHAN, ADDRESS, buffer, 1, false);
+
+    //srintf("\n%d", buffer[0]);
+    return buffer[0];
+}
+        </code> </pre>
+    </body>
+</html>
