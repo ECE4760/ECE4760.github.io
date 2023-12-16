@@ -1,0 +1,213 @@
+
+<!DOCTYPE html>
+<head>
+    <style>
+        formatted
+        {
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <formatted>
+        <code>
+            /**
+ * V. Hunter Adams (vha3@cornell.edu)
+ * 
+ * This demonstration utilizes the MPU6050.
+ * It gathers raw accelerometer/gyro measurements, scales
+ * them, and plots them to the VGA display. The top plot
+ * shows gyro measurements, bottom plot shows accelerometer
+ * measurements.
+ * 
+ * HARDWARE CONNECTIONS
+ *  - GPIO 16 ---> VGA Hsync
+ *  - GPIO 17 ---> VGA Vsync
+ *  - GPIO 18 ---> 330 ohm resistor ---> VGA Red
+ *  - GPIO 19 ---> 330 ohm resistor ---> VGA Green
+ *  - GPIO 20 ---> 330 ohm resistor ---> VGA Blue
+ *  - RP2040 GND ---> VGA GND
+ *  - GPIO 8 ---> MPU6050 SDA
+ *  - GPIO 9 ---> MPU6050 SCL
+ *  - 3.3v ---> MPU6050 VCC
+ *  - RP2040 GND ---> MPU6050 GND
+ */
+ 
+// #include <stdbool.h>
+// // Include standard libraries
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+// #include <string.h>
+#include "sensor.h"
+// Include PICO libraries
+#include "pico/stdlib.h"
+#include "pico/multicore.h"
+// Include hardware libraries
+#include "hardware/pwm.h"
+#include "hardware/dma.h"
+#include "hardware/irq.h"
+#include "hardware/adc.h"
+#include "hardware/gpio.h"
+#include "hardware/i2c.h"
+// #include "hardware/gpio.h"
+// Include custom libraries
+#include "mpu6050.h"
+
+//might need to use newrange and oldrange here
+// Global variables
+// int screen_x = 320; // Middle of the screen 
+// int screen_y = 240; // Middle of the screen
+// #define BUTTON_PIN 10  // whatever pin we use this is GPIO number, define this is in main controller
+fix15 reference_orientation[6]; // stores reference data 3 for accel, 3 for gyro
+//detect button presses
+// volatile bool userClicked = false;
+// //detect calibrate button press
+// volatile bool is_calibrated = false;
+//button_pressed; // define this as a macro 
+//fix15 acceleration[3], gyro[3];
+#define scale_factor 2.0
+
+void setup() {
+    i2c_init(I2C_CHAN, I2C_BAUD_RATE);
+    gpio_set_function(SDA_PIN, GPIO_FUNC_I2C);
+    gpio_set_function(SCL_PIN, GPIO_FUNC_I2C);
+    gpio_pull_up(SDA_PIN);
+    gpio_pull_up(SCL_PIN);
+    mpu6050_reset();
+}
+
+// Process gyroscope data to determine horizontal movement
+int process_gyro_data_for_y(fix15 *gyro) {
+    // Gyro data on the x-axis
+    fix15 gyro_y = gyro[0];
+
+    // Convert gyro data to x movement
+    // Scale factor determines sensitivity of cursor movement
+    //float scale_factor = 1.0f; // random scale value
+    int dy = (int)(fix2float15(gyro_y) * scale_factor);
+
+    return dy;
+}
+
+
+// Process gyroscope data to determine horizontal movement
+int process_gyro_data_for_x(fix15 *gyro) {
+    // Gyro data on the x-axis
+    fix15 gyro_x = gyro[2];
+
+    // Convert gyro data to x movement
+    // Scale factor determines sensitivity of cursor movement
+    //float scale_factor = 1.0f; // random scale value
+    int dx = (int)(fix2float15(gyro_x) * scale_factor);
+
+    return dx;
+}
+// Process accelerometer data to determine vertical movement
+int process_acceleration_data_for_y(fix15 *acceleration) {
+    // Acceleration data on the y-axis
+    fix15 accel_y = acceleration[1];
+
+    // Convert acceleration data to y movement
+    // Scale factor determines sensitivity of cursor movement
+    float y_scale_factor = 3.0f; // Also random 
+    int dy = (int)(fix2float15(accel_y) * y_scale_factor);
+
+    return dy;
+}
+
+//helps againt big jumps
+int clamp_movement(int movement) {
+    const int max_movement = 5; // random value not sure what we want to use for this
+    if (movement > max_movement) return max_movement;
+    if (movement < -max_movement) return -max_movement;
+    return movement;
+}
+
+//main loop, We could implement this as a threat as well
+void getData(volatile bool userClicked, volatile bool *is_calibrated, volatile int* screen_x, volatile int* screen_y) {
+    //Check for button press to set reference orientation
+    // if (digitalRead(BUTTON_PIN) == 1 && !is_calibrated) {//
+    //     mpu6050_read_raw(reference_orientation, reference_orientation + 3); // First 3 for accel, next 3 for gyro
+    //     is_calibrated = true;
+    // }
+    //Check for button press to set reference orientation
+    // printf("check?");
+    if (userClicked && !*is_calibrated) {//get userClicked from main controller
+        // printf("here1");
+        mpu6050_read_raw(reference_orientation, reference_orientation + 3); // First 3 for accel, next 3 for gyro
+        *is_calibrated = true;
+    }
+
+    if (*is_calibrated) {
+        fix15 current_orientation[6]; // Current IMU data
+        mpu6050_read_raw(current_orientation, current_orientation + 3);
+
+        // Calculate relative movement
+        int dx, dy;
+        calculate_relative_movement(reference_orientation, current_orientation, &dx, &dy);
+        dx = process_gyro_data_for_x(current_orientation + 3);
+        dy = process_gyro_data_for_y(current_orientation + 3);
+        // Map to screen coordinates (implement this function based on your screen dimensions and desired scaling)
+        map_to_screen_coordinates(dx, dy, screen_x, screen_y);
+
+        // Update cursor on VGA display
+        //update_cursor_on_VGA(screen_x, screen_y);
+    }
+}
+
+
+void calculate_relative_movement(fix15 *reference, fix15 *current, int *dx, int *dy) {
+    // Calculate the differences
+    fix15 diff_accel_x = current[0] - reference[0]; // X-axis accelerometer
+    fix15 diff_gyro_y = current[4] - reference[4];  // Y-axis gyroscope
+
+    // Translate to movement
+    //float scale_factor = 1.0f; // Adjust this based on testing
+    *dx = (int)(fix2float15(diff_gyro_y) * scale_factor);  // Horizontal movement
+    *dy = (int)(fix2float15(diff_accel_x) * scale_factor); // Vertical movement
+    //might need to play around with this
+}
+
+
+void map_to_screen_coordinates(int dx, int dy, volatile int* screen_x,volatile int* screen_y) {
+    // Constants for screen dimensions, can define this at the top later too
+    const int screen_width = 640;
+    const int screen_height = 480;
+
+    // Scale factors, can also define these at the top when we get it working 
+    const float x_scale = 1.0f; 
+    const float y_scale = -2.0f;
+
+    // Update screen coordinates based on the scaled movement, need to adjust this, have this is lab 3 as well 
+    *screen_x += (int)(dx * x_scale);
+    *screen_y += (int)(dy * y_scale);
+
+    // Clamp the screen coordinates to the screen dimensions
+    if (*screen_x < 0) *screen_x = 0;
+    if (*screen_x >= screen_width) *screen_x = screen_width - 1;
+    if (*screen_y < 0) *screen_y = 0;
+    if (*screen_y >= screen_height) *screen_y = screen_height - 1;
+}
+// we will do this in the main thread instead
+// void update_cursor_on_VGA(int x, int y) {
+//     // Define cursor 
+//     const int cursor_size = 5;
+//     const int cursor_color = WHITE;
+//     const int bg_color = BLACK; // whatever colors we want to use
+
+//     // Erase previous cursor
+//     fillRect(screen_x, screen_y, cursor_size, cursor_size, bg_color);
+
+//     // Draw the cursor at new position
+//     fillRect(x, y, cursor_size, cursor_size, cursor_color);
+
+//     // Update cursor position variables
+//     screen_x = x;
+//     screen_y = y;
+// }
+        </code>
+    </formatted>
+</body>

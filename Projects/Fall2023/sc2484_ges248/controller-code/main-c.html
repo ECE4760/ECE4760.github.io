@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+<head>
+    <style>
+        formatted
+        {
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <formatted>
+        <code>
+          // Include standard libraries
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+#include "bluetooth.h"
+#include "sensor.h"
+// Include Pico libraries
+#include "pico/stdlib.h"
+#include "pico/divider.h"
+#include "pico/multicore.h"
+// Include hardware libraries
+#include "hardware/gpio.h"
+
+// Include protothreads
+#include "pt_cornell_rp2040_v1.h"
+
+#define LED 25
+#define BUTTON_PIN      6 // Replace with our actual GPIO
+#define CALIBRATE_BUTTON_PIN 7
+
+//Buffer variable for sending messages
+char bluetooth_send_buffer[50];
+//User request variables
+volatile bool userClicked = false;
+volatile bool is_calibrated = false;
+//Current cursor position
+volatile int screen_x = 320;
+volatile int screen_y = 240;
+// Simple LED thread to ensure execution is taking place
+static PT_THREAD (protothread_led(struct pt *pt))
+{
+  // Mark beginning of thread
+  PT_BEGIN(pt);
+  // initBluetooth(38400, 4, 5, 1);
+  // configMaster();
+  while(1) 
+  {
+    gpio_put(LED, !gpio_get(LED));
+    PT_YIELD_usec(30000) ;
+
+    sprintf(pt_serial_out_buffer, "Userclicked: %d, Is_calibrated: %d\r\n", userClicked, is_calibrated);
+    serial_write;
+    serial_read;
+
+  }
+
+  PT_END(pt);
+}
+//Main bluetooth thread for gathering data and sending it to main Pico
+static PT_THREAD (protothread_bluetooth(struct pt *pt))
+{
+    PT_BEGIN(pt);
+    // stores user input
+    setup();
+    // wait for 0.1 sec
+    initBluetooth(9600, 4, 5, 0);
+    PT_YIELD_usec(1000000) ;
+    while(1) {
+      getData(userClicked, &is_calibrated, &screen_x, &screen_y); // function that calculates and updates the poistion to VGA screen 
+      sleep_ms(1000);
+      //Constructing message to be sent over bluetooth
+      sprintf(bluetooth_send_buffer, "POS:%d-%d|CALIBRATE:%d|CLICK:%d|", screen_x, screen_y, is_calibrated, userClicked);
+      sendBluetoothData(bluetooth_send_buffer);
+      userClicked = false;
+
+      //Simple serial interface controls for sending clicked or calibration requests
+      if(strcmp(pt_serial_in_buffer, "SET+CLICKED") == 0)
+      {
+        userClicked = true;
+      }
+      if(strcmp(pt_serial_in_buffer, "SET+CAL") == 0)
+      {
+        userClicked = true;
+        is_calibrated = false;
+        screen_x = 320;
+        screen_y = 240;
+      }
+      
+    PT_YIELD_usec(1000);
+    } // END WHILE(1)
+  PT_END(pt);
+} // bluetooth thread
+
+//Interrupt functions, not used but kept for reference as this was the intended way the buttons would be read
+// void setUserClicked()
+// {
+//   sleep_ms(10);
+//   userClicked = true;
+// }
+// void setIsCalibrated()
+// {
+//   sleep_ms(10);
+//   is_calibrated = true;
+// }
+
+int main()
+{
+  stdio_init_all();
+  //init gpio for led
+  gpio_init(LED) ;
+  gpio_set_dir(LED, GPIO_OUT) ;
+  gpio_put(LED, 0) ;
+  
+
+/*
+GPIO ATTEMPTS FOR CALIBRATION BUTTON AND INTERACTION BUTTON
+KEPT AS REFERENCE
+*/
+
+  // gpio_init(BUTTON_PIN);
+  // gpio_pull_down(BUTTON_PIN); // Use pull-up or pull-down as appropriate
+  // gpio_init(CALIBRATE_BUTTON_PIN);
+  // gpio_pull_down(CALIBRATE_BUTTON_PIN);
+  // gpio_set_irq_enabled_with_callback(BUTTON_PIN, GPIO_IRQ_EDGE_FALL, true, &setUserClicked);
+  // gpio_set_irq_enabled_with_callback(CALIBRATE_BUTTON_PIN, GPIO_IRQ_EDGE_FALL, true, &setIsCalibrated);
+  // // //init gpio for button
+  // gpio_init(BUTTON_PIN);
+  // gpio_set_dir(BUTTON_PIN, GPIO_IN);
+
+  // gpio_init(CALIBRATE_BUTTON_PIN);
+  // gpio_set_dir(CALIBRATE_BUTTON_PIN, GPIO_IN);
+
+  
+  pt_add_thread(protothread_bluetooth);
+  pt_add_thread(protothread_led);
+
+  pt_schedule_start;
+}
+
+
+/*
+BLUETOOTH SETUP CODE 
+-> MODULES NEED TO BE SETUP ONCE SO THIS WAS DONE DURING IMPLEMENTATION, NOT NEEDED AGAIN BUT KEPT HERE FOR REFERENCE
+        // while(!uart_is_writable(uart1));
+        // uart_puts(uart1, "AT\r\n");
+        // sleep_ms(500);
+        //sprintf(pt_serial_out_buffer, "wrote");
+        // int bt_recieve_count = 0;
+        // while(uart_is_readable(uart1))
+        // {
+        // bluetooth_recieve_buffer[bt_recieve_count] = uart_getc(uart1);
+        // bt_recieve_count++;
+        // }
+        // sprintf(pt_serial_out_buffer, bluetooth_recieve_buffer);
+        // serial_write;
+        // sprintf(pt_serial_out_buffer, "Enter command: ");
+        // serial_write;
+        // serial_read;
+        // if(strcmp(pt_serial_in_buffer, "CHECK") == 0)
+        // {
+        //   while(!uart_is_writable(uart1));
+        //   uart_puts(uart1, "AT\r\n");
+        // }
+        // if(strcmp(pt_serial_in_buffer, "ROLE") == 0)
+        // {
+        //   while(!uart_is_writable(uart1));
+        //   uart_puts(uart1, "AT+ROLE?\r\n");
+        // }
+        // if(strcmp(pt_serial_in_buffer, "ADDR") == 0)
+        // {
+        //   while(!uart_is_writable(uart1));
+        //   uart_puts(uart1, "AT+ADDR?\r\n");
+        // }
+        // if(strcmp(pt_serial_in_buffer, "SET-NAME") == 0)
+        // {
+        //   while(!uart_is_writable(uart1));
+        //   uart_puts(uart1, "AT+NAME=MASTER\r\n");
+        // }
+        // if(strcmp(pt_serial_in_buffer, "SET-ROLE") == 0)
+        // {
+        //   while(!uart_is_writable(uart1));
+        //   uart_puts(uart1, "AT+ROLE=1\r\n");
+        // }
+        // if(strcmp(pt_serial_in_buffer, "SET-MODE") == 0)
+        // {
+        //   while(!uart_is_writable(uart1));
+        //   uart_puts(uart1, "AT+CMODE=0\r\n");
+        // }
+        // if(strcmp(pt_serial_in_buffer, "SET-ADDR") == 0)
+        // {
+        //   while(!uart_is_writable(uart1));
+        //   uart_puts(uart1, "AT+BIND=5856,00,004C1B\r\n");
+        // }
+        // if(strcmp(pt_serial_in_buffer, "RESET") == 0)
+        // {
+        //   while(!uart_is_writable(uart1));
+        //   uart_puts(uart1, "AT+RESET\r\n");
+        // }
+        // readBluetoothResponse(bt_buffer);
+        // sleep_ms(100);
+        // sprintf(pt_serial_out_buffer, bt_buffer);
+        // serial_write;
+        // memset(pt_serial_out_buffer, 0, pt_buffer_size);
+        // memset(bt_buffer, 0, 50);
+
+
+*/
+        </code>
+    </formatted>
+</body>

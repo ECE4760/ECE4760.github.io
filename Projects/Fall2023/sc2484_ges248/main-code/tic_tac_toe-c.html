@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<head>
+    <style>
+        formatted
+        {
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <formatted>
+        <code>
+            
+// Include standard libraries
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+// Include the VGA grahics library
+#include "vga_graphics.h"
+//can map these to controllers later on
+#define EMPTY 0
+#define PLAYER_X 1
+#define PLAYER_O 2
+#define SIZE 3
+#define VGA_WIDTH 640
+#define VGA_HEIGHT 480
+
+int moveCount = 0;
+int board[SIZE][SIZE]; //thinking me might be able to change have a flexible size if we have time
+const int cellWidth = VGA_WIDTH / SIZE;
+const int cellHeight = VGA_HEIGHT / SIZE;
+
+void initializeBoard() {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            board[i][j] = EMPTY;
+        }
+    }
+}
+
+void drawField() {
+    // Draw vertical lines
+    for (int i = 1; i < SIZE; i++) {
+        int x = i * cellWidth;
+        drawLine(x, 0, x, VGA_HEIGHT, WHITE); // Change color if needed
+    }
+
+    // Draw horizontal lines
+    for (int j = 1; j < SIZE; j++) {
+        int y = j * cellHeight;
+        drawLine(0, y, VGA_WIDTH, y, WHITE); // Change color if needed
+    }
+}
+
+void displayBoard() {
+
+    // //Draw grid lines, might want to do this as seperate function for speed. 
+    // for (int i = 1; i < SIZE; i++) {
+    //     drawLine(cellWidth * i, 0, cellWidth * i, VGA_HEIGHT, WHITE); // Vertical lines
+    //     drawLine(0, cellHeight * i, VGA_WIDTH, cellHeight * i, WHITE); // Horizontal lines
+    // }
+    //draw characters
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            int topLeftX = i * cellWidth;
+            int topLeftY = j * cellHeight;
+
+            switch (board[i][j]) {
+                case PLAYER_X:
+                    // Draw X
+                    drawLine(topLeftX, topLeftY, topLeftX + cellWidth, topLeftY + cellHeight, RED); // Diagonal line 
+                    drawLine(topLeftX, topLeftY + cellHeight, topLeftX + cellWidth, topLeftY, RED); // Diagonal line /
+                    break;
+                case PLAYER_O:
+                    // Draw O
+                    int centerX = topLeftX + cellWidth / 2;
+                    int centerY = topLeftY + cellHeight / 2;
+                    int radius = (cellWidth < cellHeight ? cellWidth : cellHeight) / 4; // Adjust size here
+                    drawCircle(centerX, centerY, radius, RED); //circle
+                    break;
+            }
+        }
+    }
+}
+
+
+
+int isMoveLegal(int x, int y) {
+    if (x >= 0 && x < SIZE && y >= 0 && y < SIZE && board[x][y] == EMPTY) {
+        return 1; // The move is legal
+    }
+    return 0; 
+}
+
+void playerMove(int player, int cursorX, int cursorY) {
+    // Convert cursor position to board coordinates
+    int boardX = cursorX / (VGA_WIDTH / SIZE);
+    int boardY = cursorY / (VGA_HEIGHT / SIZE);
+
+    if (isMoveLegal(boardX, boardY)) {
+        board[boardX][boardY] = player;
+        moveCount++;
+    }
+}
+
+
+int isBoardFull() {
+    return moveCount >= (SIZE * SIZE);
+}
+
+int checkWinner() {
+    // Check rows and columns for a win
+    for (int i = 0; i < SIZE; i++) {
+        if ((board[i][0] == board[i][1] && board[i][1] == board[i][2] && board[i][0] != EMPTY) ||
+            (board[0][i] == board[1][i] && board[1][i] == board[2][i] && board[0][i] != EMPTY)) {
+            return board[i][i]; // Return the winner (PLAYER_X or PLAYER_O)
+        }
+    }
+
+    // Check diagonals for a win
+    if ((board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[0][0] != EMPTY) ||
+        (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[0][2] != EMPTY)) {
+        return board[1][1];
+    }
+
+    // No winner yet
+    return 0;
+}
+
+int startGame() {
+    //setup(); // Initialize the sensor
+    int currentPlayer = PLAYER_X;
+    int winner = EMPTY;
+
+    initializeBoard();
+    drawField(); 
+
+    while (!isBoardFull() && winner == EMPTY) {
+        //loop(); // Update cursor position based on sensor data, also comes from sensor file
+
+        displayBoard(); // Display the current state of the game board
+
+        // Check for button press
+        if (userClicked) { 
+            playerMove(currentPlayer, screen_x, screen_y);
+            currentPlayer = (currentPlayer == PLAYER_X) ? PLAYER_O : PLAYER_X;
+            winner = checkWinner(); // Check if there is a winner
+        }
+
+        //update_cursor_on_VGA(screen_x, screen_y); // Draw the cursor on the VGA screen
+    }
+
+    displayBoard(); // Final board display
+    if (winner == PLAYER_X) {
+        printf("Player X wins!\n");
+    } else if (winner == PLAYER_O) {
+        printf("Player O wins!\n");
+    } else {
+        printf("It's a draw!\n");
+    }
+    sleep_ms(5000); // shows result for 5 seconds
+    
+    return 0;
+}
+
+
+        </code>
+    </formatted>
+</body>

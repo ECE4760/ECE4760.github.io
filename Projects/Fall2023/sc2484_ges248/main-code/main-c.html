@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<head>
+    <style>
+        formatted
+        {
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <formatted>
+        <code>
+/**
+ *
+ * HARDWARE CONNECTIONS
+ *  - GPIO 16 ---> VGA Hsync
+ *  - GPIO 17 ---> VGA Vsync
+ *  - GPIO 18 ---> 330 ohm resistor ---> VGA Red
+ *  - GPIO 19 ---> 330 ohm resistor ---> VGA Green
+ *  - GPIO 20 ---> 330 ohm resistor ---> VGA Blue
+ *  - RP2040 GND ---> VGA GND
+ *
+ * RESOURCES USED
+ *  - PIO state machines 0, 1, and 2 on PIO instance 0
+ *  - DMA channels 0, 1
+ *
+ */
+
+// Include the VGA grahics library
+//#include "tic_tac_toe.h"
+#include "vga_graphics.h"
+//Include menu library
+#include "menu.h"
+//Include bluetooth library
+#include "bluetooth.h"
+// Include standard libraries
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+// Include Pico libraries
+#include "pico/stdlib.h"
+#include "pico/divider.h"
+#include "pico/multicore.h"
+// Include hardware libraries
+#include "hardware/pio.h"
+#include "hardware/dma.h"
+#include "hardware/clocks.h"
+#include "hardware/pll.h"
+// Include protothreads
+#include "pt_cornell_rp2040_v1.h"
+
+
+// === the fixed point macros ========================================
+typedef signed int fix15 ;
+#define multfix15(a,b) ((fix15)((((signed long long)(a))*((signed long long)(b)))>>15))
+#define float2fix15(a) ((fix15)((a)*32768.0)) // 2^15
+#define fix2float15(a) ((float)(a)/32768.0)
+#define absfix15(a) abs(a) 
+#define int2fix15(a) ((fix15)(a << 15))
+#define fix2int15(a) ((int)(a >> 15))
+#define char2fix15(a) (fix15)(((fix15)(a)) << 15)
+#define divfix(a,b) (fix15)(div_s64s64( (((signed long long)(a)) << 15), ((signed long long)(b))))
+
+#define LED             25
+#define BUTTON_PIN      10 // Replace with our actual GPIO
+#define SCOPE_PIN       14
+//Declaring game functions
+int placeholder();
+void initializeBoard();
+void displayBoard();
+bool isMoveLegal(int x, int y);
+void playerMove(int player, int cursorX, int cursorY);
+bool isBoardFull();
+int checkWinner();
+int startGame();
+
+//Variables used to keep track of user requests like the user clicked or the calibration
+volatile bool userClicked = false;
+volatile bool is_calibrated = false;
+//Volatile variables for updating the cursor position
+int screen_x = 0;
+int screen_y = 0;
+volatile int x = 0;
+volatile int y = 0;
+// ==================================================
+// === users serial input thread
+// ==================================================
+
+//Simple placeholder function for other buttons in menu system that do nothing
+int placeholder()
+{
+  return 0;
+}
+//Global variable for the main menu displayed on start up.
+//Kept as global so it can be used in multiple places to clear or draw menu
+menu_t menu;
+
+//Serial thread not used in final implementation
+static PT_THREAD (protothread_serial(struct pt *pt))
+{
+    PT_BEGIN(pt);
+    // stores user input
+    static int parameter_input;
+    static int user_value;
+    // wait for 0.1 sec
+    PT_YIELD_usec(1000000) ;
+    // announce the threader version
+    sprintf(pt_serial_out_buffer, "Protothreads RP2040 v1.0\n\r");
+    // non-blocking write
+    serial_write ;
+    // int x,y, result;
+      while(1) {
+        // print prompt
+        // sprintf(pt_serial_out_buffer, "ENTER VALID BT MESSAGE: ");
+        // // non-blocking write
+        // serial_write ;
+        // serial_read;
+        
+        //result = parseResponse("POS:001-001|CALIBRATE:F|USERCLICKED:T", &data);
+        //sprintf(pt_serial_out_buffer, "%d ,%d, %d, %d", data.x, data.y, data.calibrate, data.userClicked);
+        // // spawn a thread to do the non-blocking serial read
+        // serial_read ;
+
+        // sscanf(pt_serial_in_buffer, "%d", &parameter_input);
+        // if(parameter_input == 0)
+        // {
+        //   sprintf(pt_serial_out_buffer, "X-Coord for Cursor: \n\r ");
+        //   serial_write;
+        //   serial_read;
+        //   sscanf(pt_serial_in_buffer, "%d", &user_value);
+        //   cursorX = user_value;
+        //   sprintf(pt_serial_out_buffer, "%d", cursorX);
+        //   serial_write;
+        // }
+        // if(parameter_input == 1)
+        // {
+        //   sprintf(pt_serial_out_buffer, "Y-Coord for Cursor: ");
+        //   serial_write;
+        //   serial_read;
+        //   sscanf(pt_serial_in_buffer, "%d", &user_value);
+        //   cursorY = user_value;
+        // }
+      PT_YIELD_usec(1000000);
+      } // END WHILE(1)
+  PT_END(pt);
+} // timer thread
+
+//Menu Animation & State handled by Core 0
+static PT_THREAD (protothread_menu(struct pt *pt))
+{
+  // Mark beginning of thread
+  PT_BEGIN(pt);
+
+
+  //Initializing menu items and adding them to the global menu struct declared previously
+  menuItem_t startButton;
+  menuItem_t button2;
+  menuItem_t button3;
+  menuItem_t button4;
+  initMenu(&menu, RED, WHITE, 320, 240, 400, 400);
+  initMenuItem(&startButton, "Start Game", &startGame);
+  initMenuItem(&button2, "Single Player", &placeholder);
+  initMenuItem(&button3, "Multiplayer", &placeholder);
+  initMenuItem(&button4, "Settings", &placeholder);
+  addMenuItem(&menu, &startButton);
+  addMenuItem(&menu, &button2);
+  addMenuItem(&menu, &button3);
+  addMenuItem(&menu, &button4);
+  setCursor(180, 100);
+  setTextColor(WHITE);
+  setTextSize(2);
+  writeString("WELCOME TO THE PICO WII");
+  
+  while(1)
+  {
+    gpio_put(SCOPE_PIN, 1);
+    //Draw menu on every thread call, leads to a bit of flickering but nothing too crazy
+    drawMenu(&menu);
+    setCursor(180, 100);
+    setTextColor(WHITE);
+    setTextSize(2);
+    writeString("WELCOME TO THE PICO WII");
+    //Handles input based on location of cursor
+    handleInput(&menu, x, y, userClicked);
+    gpio_put(SCOPE_PIN, 0);
+
+    PT_YIELD_usec(100000); 
+
+  }
+
+    
+  PT_END(pt);
+} // animation thread
+
+//Bluetooth message buffers
+char bluetooth_recieve_buffer[50];
+char bluetooth_parse_buffer[50];
+
+// Master bluetooth communication handles by Core 1
+static PT_THREAD (protothread_bluetooth(struct pt *pt))
+{
+  // Mark beginning of thread
+  PT_BEGIN(pt);
+  //Initialize bluetooth
+  initBluetooth(9600, 4, 5, 1);
+  //Response variable used to react to parsed messages
+  static int response;
+  //Temp x and y cursor variables so not every parsed message updates the cursor. Allows us more control as to when the cursor should be updated
+  static int temp_x, temp_y;
+  const int cursor_size = 10;
+  const int cursor_color = WHITE;
+  const int bg_color = BLACK; // whatever colors we want to use
+  while(1) 
+  {
+    gpio_put(LED, !gpio_get(LED));
+    PT_YIELD_usec(30000) ;
+    // sendBluetoothData("sending data?");
+    //get x and y coordinate from bluetooth then use thiose to draw cursor here
+    //Reset userclicked on each pass through
+    if(userClicked == true)
+    {
+      userClicked = false;
+    }
+    //Read recieved bluetoth message
+    readBluetoothResponse(bluetooth_recieve_buffer);
+    //Transfer message into buffer for parsing
+    snprintf(bluetooth_parse_buffer, 50, bluetooth_recieve_buffer);
+    //Parse message and save response for later use
+    response = parseBluetoothResponse(bluetooth_parse_buffer, &temp_x, &temp_y, &is_calibrated, &userClicked);
+    //Print message to serial monitor
+    sprintf(pt_serial_out_buffer, bluetooth_parse_buffer);
+    serial_write;
+    //If response is 2, successful positional parse so update curor positions
+    if(response == 2)
+    {
+      x = temp_x;
+      y = temp_y;
+    } 
+    //If the device has never been calibrated or is requesting calibration, center cursor on screen
+    if(is_calibrated == false)
+    {
+      x = 320;
+      y = 240;
+    }
+
+    // Erase previous cursor
+    fillRect(screen_x, screen_y, cursor_size, cursor_size, bg_color);
+
+    // Draw the cursor at new position
+    fillRect(x, y, cursor_size, cursor_size, cursor_color);
+
+    // Update cursor position variables
+    screen_x = x;
+    screen_y = y;
+    
+    sleep_ms(500);
+  }
+
+  PT_END(pt);
+} // animation thread
+
+// ========================================
+// === core 1 main -- started in main below
+// ========================================
+void core1_main(){
+  // Add animation thread
+  pt_add_thread(protothread_menu);
+  // Start the scheduler
+  pt_schedule_start ;
+
+}
+
+// ========================================
+// === main
+// ========================================
+// USE ONLY C-sdk library
+int main(){
+  // initialize stio
+  stdio_init_all() ;
+
+  // initialize VGA
+  initVGA() ;
+
+  // //init gpio for button
+  // gpio_init(BUTTON_PIN);
+  // gpio_set_dir(BUTTON_PIN, GPIO_);
+  // gpio_pull_up(BUTTON_PIN); // Use pull-up or pull-down as appropriate
+
+  //init gpio for scoping
+  gpio_init(SCOPE_PIN);
+  gpio_set_dir(SCOPE_PIN, GPIO_OUT);
+  gpio_put(SCOPE_PIN, 0);
+  //init gpio for led
+  gpio_init(LED) ;
+  gpio_set_dir(LED, GPIO_OUT) ;
+  gpio_put(LED, 0) ;
+
+  // start core 1 
+  multicore_reset_core1();
+  multicore_launch_core1(&core1_main);
+  // add threads
+  //pt_add_thread(protothread_serial);
+  pt_add_thread(protothread_bluetooth);
+  
+  // start scheduler
+  pt_schedule_start ;
+} 
+
+//can map these to controllers later on
+#define EMPTY 0
+#define PLAYER_X 1
+#define PLAYER_O 2
+#define SIZE 3
+#define VGA_WIDTH 640
+#define VGA_HEIGHT 480
+
+int moveCount = 0;
+int board[SIZE][SIZE]; //thinking me might be able to change have a flexible size if we have time
+const int cellWidth = VGA_WIDTH / SIZE;
+const int cellHeight = VGA_HEIGHT / SIZE;
+
+//initializes global board variable
+void initializeBoard() {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            board[i][j] = EMPTY;
+        }
+    }
+}
+
+//draws game board to screen
+void drawField() {
+    // Draw vertical lines
+    for (int i = 1; i < SIZE; i++) {
+        int x = i * cellWidth;
+        drawLine(x, 0, x, VGA_HEIGHT, WHITE); // Change color if needed
+    }
+
+    // Draw horizontal lines
+    for (int j = 1; j < SIZE; j++) {
+        int y = j * cellHeight;
+        drawLine(0, y, VGA_WIDTH, y, WHITE); // Change color if needed
+    }
+}
+
+//Draws the board with any required x's and o's
+void displayBoard() {
+    //draw characters
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            int topLeftX = i * cellWidth;
+            int topLeftY = j * cellHeight;
+
+            if(board[i][j] == PLAYER_X)
+            {
+            // Draw X
+            drawLine(topLeftX, topLeftY, topLeftX + cellWidth, topLeftY + cellHeight, RED); // Diagonal line 
+            drawLine(topLeftX, topLeftY + cellHeight, topLeftX + cellWidth, topLeftY, RED); // Diagonal line 
+            } else if (board[i][j] == PLAYER_O)
+            {
+              int centerX = topLeftX + cellWidth / 2;
+              int centerY = topLeftY + cellHeight / 2;
+              int radius = (cellWidth < cellHeight ? cellWidth : cellHeight) / 4; // Adjust size here
+              drawCircle(centerX, centerY, radius, RED); //circle
+            }
+          
+        }
+    }
+}
+
+//Ensures the inputted move is legal
+bool isMoveLegal(int x, int y) {
+    if (x >= 0 && x < SIZE && y >= 0 && y < SIZE && board[x][y] == EMPTY) {
+        return 1; // The move is legal
+    }
+    return 0; 
+}
+
+//Initiates a player moved
+void playerMove(int player, int cursorX, int cursorY) {
+    // Convert cursor position to board coordinates
+    int boardX = cursorX / (VGA_WIDTH / SIZE);
+    int boardY = cursorY / (VGA_HEIGHT / SIZE);
+
+    if (isMoveLegal(boardX, boardY)) {
+        board[boardX][boardY] = player;
+        moveCount++;
+    }
+}
+
+//Checks whether board is full
+bool isBoardFull() {
+    return moveCount >= (SIZE * SIZE);
+}
+
+//Checks possible win conditions and ouputs whether someone won and who
+int checkWinner() {
+    // Check rows and columns for a win
+    for (int i = 0; i < SIZE; i++) {
+        if ((board[i][0] == board[i][1] && board[i][1] == board[i][2] && board[i][0] != EMPTY) ||
+            (board[0][i] == board[1][i] && board[1][i] == board[2][i] && board[0][i] != EMPTY)) {
+            return board[i][i]; // Return the winner (PLAYER_X or PLAYER_O)
+        }
+    }
+
+    // Check diagonals for a win
+    if ((board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[0][0] != EMPTY) ||
+        (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[0][2] != EMPTY)) {
+        return board[1][1];
+    }
+
+    // No winner yet
+    return 0;
+}
+//Starts game, does all required setup for game
+int startGame() {
+    //setup(); // Initialize the sensor
+    int currentPlayer = PLAYER_X;
+    int winner = EMPTY;
+    clearMenu(&menu, BLACK);
+    initializeBoard();
+    drawField(); 
+    int count = 0;
+
+    while (!isBoardFull() && winner == EMPTY) {
+        displayBoard(); // Display the current state of the game board
+
+        // Check for button press
+        if (userClicked) { 
+            playerMove(currentPlayer, x, y);
+            currentPlayer = (currentPlayer == PLAYER_X) ? PLAYER_O : PLAYER_X;
+            winner = checkWinner(); // Check if there is a winner       
+        }
+    }
+
+    displayBoard(); // Final board display
+    //If a player wins, update screen to show it
+    if (winner == PLAYER_X) {
+        setCursor(180, 100);
+        setTextColor(WHITE);
+        setTextSize(2);
+        writeString("PLAYER X WINS");
+        printf("Player X wins!\n");
+    } else if (winner == PLAYER_O) {
+        setCursor(180, 100);
+        setTextColor(WHITE);
+        setTextSize(2);
+        writeString("PLAYER O WINS");
+        printf("Player O wins!\n");
+    } else {
+        setCursor(180, 100);
+        setTextColor(WHITE);
+        setTextSize(2);
+        writeString("ITS A DRAW!");
+        printf("It's a draw!\n");
+    }
+    sleep_ms(10000); // shows result for 5 seconds
+    fillRect(0,0,640,480, BLACK);
+    return 0;
+}
+
+    </code>
+    </formatted>
+</body>

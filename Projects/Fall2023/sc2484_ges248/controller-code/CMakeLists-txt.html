@@ -1,0 +1,13 @@
+add_executable(final_lab_controller)
+
+add_compile_options(-Ofast)
+
+
+# must match with executable name and source file names
+target_sources(final_lab_controller PRIVATE main.c bluetooth.c sensor.c mpu6050.c)
+
+# Pull in our pico_stdlib which pulls in commonly used features
+target_link_libraries(final_lab_controller PRIVATE pico_stdlib pico_divider pico_multicore pico_bootsel_via_double_reset hardware_gpio hardware_pio hardware_dma hardware_adc hardware_irq hardware_clocks hardware_pll hardware_i2c hardware_pwm)
+
+# create map/bin/hex file etc.
+pico_add_extra_outputs(final_lab_controller)

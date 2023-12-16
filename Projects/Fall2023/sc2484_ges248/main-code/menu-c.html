@@ -1,0 +1,305 @@
+
+<!DOCTYPE html>
+<head>
+    <style>
+        formatted
+        {
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <formatted>
+        <code>
+            #include "menu.h"
+
+//Initalize Menu Struct
+void initMenu(menu_t *menu, enum colors itemColor, enum colors textColor, int centerX, int centerY, int bWidth, int bHeight)
+{
+    menu->center[0] = centerX;
+    menu->center[1] = centerY;
+    menu->bound[0] = bWidth;
+    menu->bound[1] = bHeight;
+    menu->itemColor = itemColor;
+    menu->textColor = textColor;
+    menu->itemCount = 0;
+}
+//Initialize Menu Item
+void initMenuItem(menuItem_t *item, char *text, int (*f) ())
+{
+    //Copies a static string into an array of characters, used to avoid malloc since infinite characters are not practical
+    snprintf(item->text, 20, "%s", text);
+    item->stringLen = strlen(item->text);
+    item->clickAction = f;
+    item->highlight = 0;
+}
+
+//Adds a menu item to a menu struct and returns 1 on success
+int addMenuItem(menu_t *menu, menuItem_t *menuItem)
+{
+    //Get number of items in menu
+    int indx = menu->itemCount;
+    //If already more than four items, return
+    if(indx == 4) return 0;
+    menu->menuItems[indx] = menuItem;
+    menu->itemCount++;
+    
+    return 1;
+}
+char result[50];
+//Handles Input associated with a given menu struct
+int handleInput(menu_t *menu, int cursorX, int cursorY, int userClicked)
+{
+    //Check if within bounding box, otherwise return (quick check)
+    int topLeftX = menu->center[0] - (menu->bound[0] / 2);
+    int topLeftY = menu->center[1] - (menu->bound[1] / 2);
+    int menuX = menu->center[0];
+    int menuY = menu->center[1];
+    int itemWidth = (int) menu->bound[0] * 0.7;
+    int itemHeight = (int) menu->bound[1] * .1;
+    int cursorWithinBoundingBox = (cursorX >= topLeftX && cursorX <= topLeftX + menu->bound[0]) && (cursorY >= topLeftY && cursorY <= topLeftY + menu->bound[0]);
+    //if(!cursorWithinBoundingBox) return 0;
+    //Loop through each item, useful since we can keep track of which item has the cursor within the bounding box
+    //One item is drawn a bit differently, so it must be handled differently
+    if(menu->itemCount == 1)
+    {
+        //First item x position is half the width of the item subtracted from the center position. Ensures item is centered in bounding box
+        int itemX =  menuX - (itemWidth >> 1);
+        //Same premise for an item's y position
+        int itemY = menuY - (itemHeight >> 1);
+        //Checks if the given cursor position is within the items box
+        int cursorWithinItem = (cursorX >= itemX && cursorX <= itemX + itemWidth) && (cursorY >= itemY && cursorY <= itemY + itemHeight);
+        if(cursorWithinItem)
+        {
+            menu->menuItems[0]->highlight = 1;
+            //Initiate click action if user indeed clicked
+            if(userClicked) menu->menuItems[0]->clickAction;
+            return 1;
+        } 
+        else 
+        {
+            menu->menuItems[0]->highlight = 0;
+        }
+    }
+    if(menu->itemCount == 2) 
+    {
+        int spacerY = itemHeight >> 1;
+        //First item x position is half the width of the item subtracted from the center position. Ensures item is centered in bounding box
+        int itemX =  menuX - (itemWidth >> 1);
+        //Same premise for an item's y position
+        int itemY = menuY - itemHeight - spacerY;
+        for(int item = 0; item < menu->itemCount; item++)
+        {
+            //Checks if the given cursor position is within the items box
+            int cursorWithinItem = (cursorX >= itemX && cursorX <= itemX + itemWidth) && (cursorY >= itemY && cursorY <= itemY + itemHeight);
+            if(cursorWithinItem)
+            {
+                //highlight box
+                menu->menuItems[item]->highlight = 1;
+                //Initiate click action if user indeed clicked
+                if(userClicked) menu->menuItems[item]->clickAction;
+                return 1;
+            }
+            else 
+            {
+                menu->menuItems[item]->highlight = 0;
+            }
+                
+            itemY = itemY + itemHeight + spacerY;
+        }
+    }
+    if(menu->itemCount == 3)
+    {
+        int spacerY = itemHeight >> 1;
+        //First item x position is half the width of the item subtracted from the center position. Ensures item is centered in bounding box
+        int itemX =  menuX - (itemWidth >> 1);
+        //Same premise for an item's y position
+        int itemY = menuY - (itemHeight >> 1) - (itemHeight) - spacerY;
+
+        for(int item = 0; item < menu->itemCount; item++)
+        {
+            //Check if cursor is within item's box
+            int cursorWithinItem = (cursorX >= itemX && cursorX <= itemX + itemWidth) && (cursorY >= itemY && cursorY <= itemY + itemHeight);
+            if(cursorWithinItem)
+            {
+                //highlight box
+                menu->menuItems[item]->highlight = 1;
+
+                //Initiate click action if user indeed clicked
+                if(userClicked) menu->menuItems[item]->clickAction;
+                return 1;
+            }
+            else 
+            {
+                menu->menuItems[item]->highlight = 0;
+            }
+            itemY = itemY + itemHeight + spacerY;
+        }
+    }
+
+    if(menu->itemCount == 4)
+    {
+        int spacerY = itemHeight >> 1;
+        //First item x position is half the width of the item subtracted from the center position. Ensures item is centered in bounding box
+        int itemX =  menuX - (itemWidth >> 1);
+        //Same premise for an item's y position
+        int itemY = menuY - (2*itemHeight) - 2*spacerY;
+
+        for(int item = 0; item < menu->itemCount; item++)
+        {
+            //Check if cursor is within item's box
+            int cursorWithinItem = (cursorX >= itemX && cursorX <= itemX + itemWidth) && (cursorY >= itemY && cursorY <= itemY + itemHeight);
+            if(cursorWithinItem)
+            {
+                //highlight box
+                menu->menuItems[item]->highlight = 1;
+                //Initiate click action if user indeed clicked
+                if(userClicked) menu->menuItems[item]->clickAction(userClicked, cursorX, cursorY);
+            }
+            else
+            {
+                menu->menuItems[item]->highlight = 0;
+            }
+            itemY = itemY + itemHeight + spacerY;
+        }
+    }
+
+    return 0;
+    
+    
+    //Check if within menu item box
+        //If in menu item box, highlight menu item
+        //If userClicked, perform menu item action
+    //Else return
+}
+
+//Draws a menu associated with a menu struct
+void drawMenu(menu_t *menu)
+{
+    //Calculate where to place boxes dependent on item count, center position, and bound box
+    // 1 item -> 5%-10% height of bound box, 70% width of bound box centered in height/width, centered width/height
+    // 2 - 4 items -> same dimensions as 1 item, 5-10% spacing centered width/height 
+    int menuX = menu->center[0];
+    int menuY = menu->center[1];
+    int itemWidth = (int) menu->bound[0] * 0.7;
+    int itemHeight = (int) menu->bound[1] * .1;
+    int topLeftX = menu->center[0] - (menu->bound[0] / 2);
+    int topLeftY = menu->center[1] - (menu->bound[1] / 2);
+    //Amount of menu items affects how the menu is drawn, but general process is the same
+    if(menu->itemCount == 1)
+    {
+        //First item x position is half the width of the item subtracted from the center position. Ensures item is centered in bounding box
+        int itemX =  menuX - (itemWidth >> 1);
+        //Same premise for an item's y position
+        int itemY = menuY - (itemHeight >> 1);
+        fillRect(itemX, itemY, itemWidth, itemHeight, menu->itemColor);
+        //Text scaling, used to attempt to center any text in a menu item
+        float scale = (-.02)*(menu->menuItems[0]->stringLen) + .46;
+        setCursor(itemX+(int)(scale * itemWidth), itemY+10);
+        setTextColor(menu->textColor);
+        setTextSize(2);
+        writeString(menu->menuItems[0]->text);
+        //Menu item requires highlighting
+        if(menu->menuItems[0]->highlight)
+        {
+            drawRect(itemX, itemY, itemWidth, itemHeight, YELLOW);
+            drawRect(itemX+1, itemY+1, itemWidth-2, itemHeight-2, YELLOW);
+            drawRect(itemX+2, itemY+2, itemWidth-4, itemHeight-4, YELLOW);
+        }
+
+    }
+    if(menu->itemCount == 2)
+    {
+        int spacerY = itemHeight >> 1;
+        //First item x position is half the width of the item subtracted from the center position. Ensures item is centered in bounding box
+        int itemX =  menuX - (itemWidth >> 1);
+        //Same premise for an item's y position
+        int itemY = menuY - itemHeight - spacerY;
+
+        for(int item = 0; item < menu->itemCount; item++)
+        {
+            fillRect(itemX, itemY, itemWidth, itemHeight, menu->itemColor);
+            float scale = (-.02)*(menu->menuItems[item]->stringLen) + .46;
+            setCursor(itemX+(int)(scale * itemWidth), itemY+10);
+            setTextColor(menu->textColor);
+            setTextSize(2);
+            writeString(menu->menuItems[item]->text);
+            itemY = itemY + itemHeight + spacerY;
+            if(menu->menuItems[item]->highlight)
+            {
+                drawRect(itemX, itemY, itemWidth, itemHeight, YELLOW);
+                drawRect(itemX+1, itemY+1, itemWidth-2, itemHeight-2, YELLOW);
+                drawRect(itemX+2, itemY+2, itemWidth-4, itemHeight-4, YELLOW);
+            }
+        }
+    }
+    if(menu->itemCount == 3)
+    {
+        //spacer is half the height of a menu item
+        int spacerY = itemHeight >> 1;
+        int itemX = menuX - (itemWidth >> 1);
+        //items y position is two spacers up and an item menu item (since theres three items)
+        int itemY = menuY - (itemHeight >> 1) - itemHeight - spacerY;
+        for(int item = 0; item < menu->itemCount; item++)
+        {
+            fillRect(itemX, itemY, itemWidth, itemHeight, menu->itemColor);
+            float scale = (-.02)*(menu->menuItems[item]->stringLen) + .46;
+            setCursor(itemX+(int)(scale * itemWidth), itemY+10);
+            setTextColor(menu->textColor);
+            setTextSize(2);
+            writeString(menu->menuItems[item]->text);
+            itemY = itemY + itemHeight + spacerY;
+            if(menu->menuItems[item]->highlight)
+            {
+                drawRect(itemX, itemY, itemWidth, itemHeight, YELLOW);
+                drawRect(itemX+1, itemY+1, itemWidth-2, itemHeight-2, YELLOW);
+                drawRect(itemX+2, itemY+2, itemWidth-4, itemHeight-4, YELLOW);
+            }
+        }
+    }
+    if(menu->itemCount == 4)
+    {
+        int spacerY = itemHeight >> 1;
+        //First item x position is half the width of the item subtracted from the center position. Ensures item is centered in bounding box
+        int itemX =  menuX - (itemWidth >> 1);
+        //Same premise for an item's y position, except two items up
+        int itemY = menuY - 2*itemHeight - 2*spacerY;
+
+        for(int item = 0; item < menu->itemCount; item++)
+        {
+            fillRect(itemX, itemY, itemWidth, itemHeight, menu->itemColor);
+            float scale = (-.02)*(menu->menuItems[item]->stringLen) + .46;
+            setCursor(itemX+(int)(scale * itemWidth), itemY+10);
+            setTextColor(menu->textColor);
+            setTextSize(2);
+            writeString(menu->menuItems[item]->text);
+            if(menu->menuItems[item]->highlight)
+            {
+                drawRect(itemX, itemY, itemWidth, itemHeight, YELLOW);
+                drawRect(itemX+1, itemY+1, itemWidth-2, itemHeight-2, YELLOW);
+                drawRect(itemX+2, itemY+2, itemWidth-4, itemHeight-4, YELLOW);
+            }
+            itemY = itemY + itemHeight + spacerY;
+        }
+    }
+
+
+    
+    
+    //Draw boxes and text for each menu item 
+}
+//Clears menu by drawing a bg color box around the menu's bounding box
+void clearMenu(menu_t *menu, enum colors bg)
+{
+    int menuX = menu->center[0];
+    int menuY = menu->center[1];
+    int topLeftX = menuX - (menu->bound[0] >> 1);
+    int topLeftY = menuY - (menu->bound[1] >> 1);
+
+    fillRect(topLeftX, topLeftY, menu->bound[0], menu->bound[1], bg);
+}
+        </code>
+    </formatted>
+</body>

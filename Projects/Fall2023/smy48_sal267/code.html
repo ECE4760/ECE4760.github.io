@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kitchen Carousel [ECE4760]</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="" />
+<meta name="author" content="http://webthemez.com" />
+<!-- css -->
+<link href="css/bootstrap.min.css" rel="stylesheet" />
+<link href="css/fancybox/jquery.fancybox.css" rel="stylesheet">
+<link href="css/jcarousel.css" rel="stylesheet" />
+<link href="css/flexslider.css" rel="stylesheet" />
+<link href="css/style.css" rel="stylesheet" />
+ 
+<!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+<!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+</head>
+<body>
+<div id="wrapper">
+
+	<!-- start header -->
+		<header>
+        <div class="navbar navbar-default navbar-static-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                  <a class="navbar-brand" href="overview.html"><img src="img/cornell_banner.png" alt="cornell"/></a>
+                </div>
+                <div class="navbar-collapse collapse ">
+                    <ul class="nav navbar-nav">
+						<li><a href="overview.html">Overview</a></li> 
+						<li><a href="hardware.html">Hardware</a></li>
+                        <li><a href="code.html">Code</a></li>
+						<li><a href="weekly.html">Weekly Progress</a></li>
+						<li><a href="performace.html">Performance</a></li>
+                        <li><a href="appendix.html">Appendix</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+	</header><!-- end header -->
+	<section id="inner-headline">
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-12">
+				<h2 class="pageTitle">Code Discussion & Full Listing</h2>
+			</div>
+		</div>
+	</div>
+	</section>
+	<section id="content">
+	<div class="container">
+					
+					<div class="about">
+					
+						<div class="row"> 
+							<div class="col-md-12">
+								<div class="about-logo">
+									<h3>RP2040<span class="color"> </span></h3>
+									<p>
+										For the RP2040, we are utlizing Hunter-Adams Stepper Motor library 
+										and starter code as our base. Try to implement the stepper motor control logic
+										was agruablely the harest part for us. We had tried to implement
+										many variations of Hunter's library to varying success. It was a mix due to trying
+										to understand the library aviable to us, how the motor controller expects communcation, and 
+										our difficulty with correct wiring and current. We found the Code below to work the best. 
+										We also use semi-FSM logic to determine the direction required for the motor. 
+										First we read in the values from the RF receiver and the gesture sensor. 
+										To stream the the outputs of the receiver to the display, we output a high wire for either
+										L or R depending on who went high first. If both are high, select Left. 
+									</p>
+									<p>
+										To prevent a double read from the reciever, the PICO must see a high low high from 
+										either pin to see a new action. This is the same as double clicking the button on the key fob. 
+										The Reciever has precendent over the gesutre sensor. If the reciever is low, then the board
+										will check the gesutre sesor and act accordingly. Sadly, we had wished for the PICO to handle the 
+										gesture sensor data read in as well, but due to difficulties with the motor and our time constraint, 
+										this was taken off the table
+									</p>
+									<h3>Elegoo UNO R3<span class="color"> </span></h3>
+									<p>
+										For display, we utilized a Elegoo UNO R3. We can easily follow UNO's docummentation for 
+										hookup of the LCD display and leverage their library to set the pins and communcation accordingly. 
+										We had initially planned for the UNO to read the Reciever and output and take and input for the 
+										gesture from the PICO, but due to many issues, this was changed.
+										The UNO handles the gesture sensing via Adafruit's library for it. It initializes the sensor
+										and reads it on a timed interval. After a given action has been processed the direction of the 
+										rotation is then dispayed for about 1 sec while the motor rotates. 
+									</p>
+									<h3>Code Appendix<span class="color"> </span></h3>
+									<h4>RP2040 Full Code<span class="color"> </span></h4>
+									<pre>
+// Citation, Adotped from Hunter 
+/**
+ * V. Hunter Adams
+ * vha3@cornell.edu
+ * September, 2021
+ * 
+ * This demonstrates position and velocity control
+ * of two ULN2003 steppers. If each of those steppers
+ * is attached to the knob of an etch-a-sketch with a timing
+ * belt, this demo draws the Lorenz curve on the etch-a-sketch.
+ * 
+ * https://vanhunteradams.com/Pico/Steppers/Lorenz.html
+ * 
+ * 
+*/
+
+// Final Pico Software for Kitchen
+
+#include "motor_library.h"
+#include <math.h>
+
+// Stepper Motor input ports
+#define MOTOR1_IN1 2
+
+#define LED  25
+
+// RF Reciver input ports
+#define Reciever_A  16
+#define Reciever_B  17
+
+// RF Reviever output ports for display
+#define RecieverA_Out  20
+#define RecieverB_Out  21
+
+// Ports for Gesture sensor
+#define Left   18
+#define Right  19
+
+// Variables to hold motor speed
+volatile unsigned int motorspeed = 416200;
+
+
+// Delay variables
+volatile int delay = 0 ;
+
+// Motor directions
+unsigned int motor1_direction ;
+
+
+//Reading RF
+bool A = 0;
+bool flagA = 0;
+bool B = 0;
+bool flagB = 0;
+
+//Reading gesture 
+bool R = 0;
+bool L  = 0;
+
+int count = 0; 
+int state = 0;
+
+bool repeating_timer_callback(struct repeating_timer *t) {
+
+    //Read RF
+    A = gpio_get(Reciever_A);
+    B = gpio_get(Reciever_B);
+
+    //Read Gesture
+    L = gpio_get(Left);
+    R = gpio_get(Right);
+
+    //State Logic for output
+    if( state == 0){
+        gpio_put(RecieverA_Out, 0) ;
+        gpio_put(RecieverB_Out, 0) ;
+    if(L){
+        gpio_put(LED, 1) ;
+    }
+    else if(R){
+        gpio_put(LED, 1) ;
+    }
+    else if(A){
+        gpio_put(LED, 1) ;
+    }
+    else if(B){
+        gpio_put(LED, 1) ;
+    }
+    else {
+        gpio_put(LED, 0) ;
+    }
+
+    if(flagA || flagB){
+        if (A==0){
+            flagA = false;
+        }
+        if (B==0){
+            flagB = false;
+        }
+    }
+
+    if ((A || B) && !(flagA || flagB)) {
+        if(A){
+            SET_DIRECTION_MOTOR_1(CLOCKWISE) ;
+            state = 1;
+            flagA = true;
+             gpio_put(RecieverA_Out, 1) ;
+        }
+        else{
+             SET_DIRECTION_MOTOR_1(COUNTERCLOCKWISE) ;
+             state = 2;
+             flagB = true;
+              gpio_put(RecieverB_Out, 1) ;
+        }
+    }
+    else if (L || R){
+        if(L){
+            SET_DIRECTION_MOTOR_1(CLOCKWISE) ;
+            state = 1;
+        }
+        else{
+            SET_DIRECTION_MOTOR_1(COUNTERCLOCKWISE) ;
+            state = 2;
+        }
+    }
+    else{
+         SET_DIRECTION_MOTOR_1(STOPPED);
+    }
+    }
+    if(state != 0) {
+    count = count + 1;
+    }
+
+    if(count > 5 ){
+        SET_DIRECTION_MOTOR_1(STOPPED);
+        count = 0;
+        state = 0;
+    }
+
+
+    return true;
+}
+
+// Position control interrupts
+void pio0_interrupt_handler() {
+    pio_interrupt_clear(pio_0, 0) ;
+    MOVE_STEPS_MOTOR_1(0xFFFFFFFF) ;
+}
+
+int main() {
+    stdio_init_all();
+
+    // Setup motor
+    setupMotor1(MOTOR1_IN1, pio0_interrupt_handler) ;
+
+    //Setup LED, used for verification
+    gpio_init(LED) ;
+    gpio_set_dir(LED, GPIO_OUT) ;
+    gpio_put(LED, 0) ;
+
+    //Setup I/O pins
+    gpio_init(Reciever_A) ;
+    gpio_set_dir(Reciever_A, GPIO_IN) ;
+    gpio_put(Reciever_A, 0) ;
+    gpio_pull_down(Reciever_A);
+
+    gpio_init(Reciever_B) ;
+    gpio_set_dir(Reciever_B, GPIO_IN) ;
+    gpio_put(Reciever_B, 0) ;
+    gpio_pull_down(Reciever_B);
+
+    gpio_init(Left) ;
+    gpio_set_dir(Left, GPIO_IN) ;
+    gpio_put(Left, 0) ;
+    gpio_pull_down(Left);
+
+    gpio_init(Right) ;
+    gpio_set_dir(Right, GPIO_IN) ;
+    gpio_put(Right, 0) ;
+    gpio_pull_down(Right);
+
+    gpio_init(RecieverA_Out) ;
+    gpio_set_dir(RecieverA_Out, GPIO_OUT) ;
+    gpio_put(RecieverA_Out, 0) ;
+
+    gpio_init(RecieverB_Out) ;
+    gpio_set_dir(RecieverB_Out, GPIO_OUT) ;
+    gpio_put(RecieverB_Out, 0) ;
+
+    // Create a repeating timer that calls repeating_timer_callback.
+    struct repeating_timer timer;
+
+    // Negative delay so means we will call repeating_timer_callback, and call it again
+    // 65ms  later regardless of how long the callback took to execute
+    add_repeating_timer_ms(-65, repeating_timer_callback, NULL, &timer);
+    
+    // Call the interrupt handlers
+    pio0_interrupt_handler() ;
+
+    while (true) {
+    }
+}
+</pre>
+								</div>
+							</div>
+						</div>  
+						<br>
+						<div class="about">
+					
+							<div class="row"> 
+								<div class="col-md-12">
+									<div class="about-logo">
+										<h4>Elegoo UNO R3 Full Code<span class="color"> </span></h4>
+										<pre>
+#include < Adafruit_APDS9960.h >
+#include < LiquidCrystal.h >
+#include "Adafruit_APDS9960.h"
+Adafruit_APDS9960 apds;
+
+//LED Inputs
+const int rs = 4, en = 6, d4 = 10, d5 = 11, d6 = 12, d7 = 13;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+int tim = 1000;  //the value of delay time, 1 secs
+int signal = 250; //Hold for 250ms
+int Left_out  = 2;
+int Right_out = 5; 
+
+int A_in = 15;
+int B_in = 17;
+
+int A_read = 0;
+int B_read = 0;
+
+
+// the setup function runs once when you press reset or power the board
+void setup() {
+  Serial.begin(115200);
+  lcd.begin(16, 2);
+  lcd.setCursor(4, 0);
+
+  pinMode(Left_out, OUTPUT);
+  pinMode(Right_out, OUTPUT);
+
+  pinMode(A_in, INPUT);
+  pinMode(B_in, INPUT);
+  
+  if(!apds.begin()){
+  }
+  else{
+  } 
+  // Serial.println("Device initialized!");
+
+  lcd.clear();
+
+  //gesture mode will be entered once proximity mode senses something close
+  apds.enableProximity(true);
+  apds.enableGesture(true);
+}
+void loop() {
+    lcd.setCursor(4, 0);
+    A_read = digitalRead(A_in);
+    B_read = digitalRead(B_in);
+    if(A_read == 1){
+      lcd.print("LEFT");
+      delay(tim);
+    }
+    else if (B_read == 1){
+      lcd.print("RIGHT");
+      delay(tim);
+    }
+  //read a gesture from the device
+   else{ uint8_t gesture = apds.readGesture();
+    if(gesture == APDS9960_LEFT){
+      digitalWrite(Left_out, HIGH);
+      lcd.print("LEFT");
+      delay(signal);
+      digitalWrite(Left_out, LOW);
+      delay(tim);
+    }
+    else if(gesture == APDS9960_RIGHT){
+      lcd.print("RIGHT");
+      digitalWrite(Right_out, HIGH);
+      delay(signal);
+      digitalWrite(Right_out, LOW);
+      delay(tim);
+    }
+   }
+    lcd.clear();  //Clears the LCD screen and positions the cursor in the upper-left corner.
+}				
+										</pre>
+									</div>
+								</div>
+							</div>  
+							<br>
+	<footer>
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-3">
+				<div class="widget">
+					<h5 class="widgetheading">Students</h5>
+					<p>
+						<i class="icon-envelope-alt"></i> Steven Lambert (SAL267) <br>
+						<i class="icon-envelope-alt"></i> Shota Yamamoto (SMY48)
+					</p>
+				</div>
+			</div>
+			<div class="col-lg-3">
+				<div class="widget">
+					<h5 class="widgetheading">Course Site</h5>
+					<ul class="link-list">
+						<li><a href="https://ece4760.github.io/" target="_blank">ECE 4760</a></li>
+					</ul>
+				</div>
+			</div>
+	<div id="sub-footer">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-6">
+					<div class="copyright">
+						<p>
+							<span>&copy; Above Site All right reserved. Adapted From Template By </span><a href="http://webthemez.com" target="_blank">WebThemez</a>
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	</footer>
+</div>
+<a href="#" class="scrollup"><i class="fa fa-angle-up active"></i></a>
+<!-- javascript
+    ================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="js/jquery.js"></script>
+<script src="js/jquery.easing.1.3.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/jquery.fancybox.pack.js"></script>
+<script src="js/jquery.fancybox-media.js"></script> 
+<script src="js/portfolio/jquery.quicksand.js"></script>
+<script src="js/portfolio/setting.js"></script>
+<script src="js/jquery.flexslider.js"></script>
+<script src="js/animate.js"></script>
+<script src="js/custom.js"></script>
+</body>
+</html>

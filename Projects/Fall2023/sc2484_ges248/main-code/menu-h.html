@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<head>
+    <style>
+        formatted
+        {
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <formatted>
+        <code>
+            #ifndef MENU_H
+#define MENU_H
+
+#include "vga_graphics.h"
+//#include "pt_cornell_rp2040_v1.h"
+#include <stdio.h>
+#include <string.h>
+
+typedef struct MenuItem 
+{
+    char text[20];
+    int highlight;
+    size_t stringLen;
+    int (*clickAction)();
+} menuItem_t;
+
+typedef struct Menu
+{
+    /**
+    Center defines a center position for the menu where:
+    center[0] is x 
+    center[1] is y
+    **/
+    int center[2];
+    /**
+    Bound defines a bounding box centered on menu center where: 
+    bound[0] is width of bounding box
+    bound[1] is height of bounding box
+    **/
+    int bound[2];
+    //Keeps track of number of items added to menu
+    int itemCount;
+    //Keeps pointers to menu items
+    menuItem_t *menuItems[4];
+    enum colors itemColor;
+    enum colors textColor;
+
+
+} menu_t;
+
+
+
+void initMenu(menu_t *menu, enum colors itemColor, enum colors textColor, int centerX, int centerY, int bWidth, int bHeight);
+
+void initMenuItem(menuItem_t *item, char* text, int (*f)()); 
+
+int addMenuItem(menu_t *menu, menuItem_t *menuItem);
+
+int handleInput(menu_t *menu, int cursorX, int cursorY, int userClicked);
+
+void drawMenu(menu_t *menu);
+
+void clearMenu(menu_t *menu, enum colors bg);
+
+void drawMenuItem(menuItem_t *menuItem);
+
+#endif
+        </code>
+    </formatted>
+</body>

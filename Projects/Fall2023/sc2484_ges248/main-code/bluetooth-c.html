@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<head>
+    <style>
+        formatted
+        {
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <formatted>
+        <code>
+            #include "bluetooth.h"
+            #include <stdio.h>
+            #include <string.h>
+            // Initialize UART for Bluetooth communication
+            
+            #define UART_ID uart1
+            #define AT_EN_PIN 15
+            
+            
+            //Initialize UART for bluetooth module
+            void initBluetooth(uint baudrate, uint tx_pin, uint rx_pin, int master) {
+                uart_init(UART_ID, baudrate);
+                gpio_set_function(tx_pin, GPIO_FUNC_UART);
+                gpio_set_function(rx_pin, GPIO_FUNC_UART);
+                if(master)
+                {
+                    //Initialise AT_EN gpio
+                    gpio_init(AT_EN_PIN);
+                    gpio_set_dir(AT_EN_PIN, GPIO_OUT);
+                    gpio_put(AT_EN_PIN, true);
+                    sleep_ms(1000);
+                }
+            
+            }
+            
+            // Send data over Bluetooth using UART
+            int sendBluetoothData(const char* data) {
+                if(uart_is_writable(UART_ID)) 
+                {
+                    uart_puts(UART_ID, data);
+                    return 1;
+                }
+                else return 0;
+                
+            }
+            //Simple function that sends a series of setup commands to the bluetooth master
+            void configMaster()
+            {
+                //Initialization of Master HC-05 (really only needs to be done once, but is done on init just in case)
+                sendATCommand("AT+NAME=Master");
+                sleep_ms(1000);
+                sendATCommand("AT+ROLE=1");
+                sleep_ms(1000);
+                sendATCommand("AT+CMODE=0");
+                sleep_ms(1000);
+                sendATCommand("AT+BIND=5856,00,004C1B");
+                sleep_ms(1000);
+                sendATCommand("AT+RESET");
+                sleep_ms(1000);
+                gpio_put(AT_EN_PIN, 0);
+            }
+            
+            
+            //Simple function that sends a command to the bluetooth module, similar to send bluetooth data
+            void sendATCommand(const char* cmd) {
+            
+                if(uart_is_writable(UART_ID)) uart_puts(UART_ID, cmd);
+                    // uart_puts(UART_ID, "\r\n"); // Send AT command
+                  // Newline characters for end of command
+            }
+            
+            
+            //Reads from the uart buffer and populates the inputted buffer
+            bool readBluetoothResponse(char* buffer) {
+                int i = 0;
+                while(uart_is_readable(UART_ID) && i < 50) 
+                {
+                    buffer[i] = uart_getc(UART_ID);
+                    i++;
+                }
+                //buffer[i] = '\0';  // Ensure buffer is terminated
+                return true;  // Return false if no data was read
+            }
+            
+            //Parsing Algorithm to Parse Bluetooth Message of form POS:X-Y|CALIBRATE:<0/1>|CLICK:<0/1>|
+            int parseBluetoothResponse(const char* btMessage, int*x, int*y, volatile bool* calibrate, volatile bool* userClicked) {
+                // Copy the message to a temporary buffer because strtok modifies the string
+                char tempBuffer[100];
+                strncpy(tempBuffer, btMessage, sizeof(tempBuffer) - 1);
+                tempBuffer[sizeof(tempBuffer) - 1] = '\0'; // Ensure null-termination
+            
+                char *token;
+                char *delimiter = "|";
+                char *save_ptr;
+            
+                // Get the first token
+                token = strtok_r(tempBuffer, delimiter, &save_ptr);
+                int count = 0;
+                *calibrate = false;
+                *userClicked = false;
+                // Walk through other tokens
+                while (token != NULL && count < 3) {
+                    if (strncmp(token, "POS:", 4) == 0) {
+                        // Parse position data
+                        sscanf(token, "POS:%d-%d", x, y);
+                    } else if (strncmp(token, "CALIBRATE:1", 11) == 0) {
+                        *calibrate = true;
+                    } else if (strncmp(token, "CLICK:1", 7) == 0) {
+                        *userClicked = true;
+                         printf("CLICKED\r\n");
+                         return 2;
+                    } 
+                    //Get next token 
+                    token = strtok_r(NULL, delimiter, &save_ptr);
+                    count++;
+                    if(count == 3) break;
+                }
+                if(count == 3) return 2;
+            }
+            
+            
+            /* 
+            COMMENTED, UNUSED CODE FROM A PREVIOUS IMPLEMENTATION
+            KEPT HERE FOR REFERENCE
+            */
+            /*for some reason, the pico does not use the standard strchr so a custom one was made*/
+            // const char* pico_strchr(const char* str, int c)
+            // {
+            //     while(*str != '\0')
+            //     {
+            //         if(*str == c) return str;
+            //         str++;
+            //     }
+            //     return NULL;
+            // }
+            // int parseResponse(char* bt_response, int* x, int*y)
+            // {
+            //     /*
+            //     This function outputs x&y values passed into function,
+            //     returns 2 on successful parse and population of x/y
+            //     returns 1 on reception of calibrate
+            //     returns 0 on reception of useclicked
+            //     returns -1 if message could not be successfully parses
+            
+            //     BLUETOOTH MESSAGING FOR EASY DATA TRANSFER
+            //         POS:X-Y|CALIBRATE:<T/F>|USERCLICKED:<T/F>
+            //         (Last two have empty data portions as sending these messages assumes you would like to calibrate or initiate a click)
+            //     */
+            //    const char* delimiter = pico_strchr(bt_response, ':');
+            
+            //    if(delimiter != NULL)
+            //    {
+            //     //Should give the length of the keyword, i.e., of POS, CALIBRATE, or USERCLICKED
+            //     size_t keywordLen = delimiter - bt_response;
+            //     //Create a temporary char array to hold the keyword for later comparison
+            //     char keyword[keywordLen + 1];
+            //     //Populate char array with keyword
+            //     strncpy(keyword, bt_response, keywordLen);
+            //     //One position past delimiter should be data
+            //     const char* data = delimiter + 1;
+            //     if(strcmp(keyword, "POS") == 0)
+            //     {
+            //         sscanf(bt_response, "POS:%d-%d",x, y);
+                    
+            //         return 2;
+            //     }
+            //     if(strcmp(keyword, "CALIBRATE") == 0)
+            //     {
+            //         return 1;
+            //     }
+            //     if(strcmp(keyword, "USERCLICKED") == 0)
+            //     {
+            //         return 0;
+            //     }
+            
+            //    }
+            //    else return -1;
+            // }
+            
+        </code>
+    </formatted>
+</body>
