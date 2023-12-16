@@ -1,0 +1,429 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>ECE 4760 Final Project</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper" class="divided">
+
+				<!-- One -->
+					<section class="banner style1 orient-left content-align-left image-position-right fullscreen onload-image-fade-in onload-content-fade-right">
+						<div class="content">
+							<h1>ECE 4760 Final Project: Theremin with 3D Image</h1>
+							<p class="major">Dive into a unique audiovisual experience as you interact with our project: a theremin that controls the movement of a floating cube. </p>
+							<p class="major">Becky Lee (bl478), Annabel Lian (ayl48), Erica Li (el549) </p>
+						</div>
+						<div class="image">
+							<img src="images/Screen Shot 2023-12-15 at 1.17.28 PM.png" alt="" />
+						</div>
+					</section>
+
+				<!-- Two -->
+					<section class="wrapper style1 align-left">
+						<div class="inner">
+							<h2>Introduction</h2>
+							<h3>Project</h3>
+							<p>The theremin works using an ultrasonic distance sensor that measures the distance of the user’s hand with sound pulse detection, subsequently altering the sound based on the measured distance. Then, based on the distance, we would change the amplitude and frequency of the sound wave we were synthesizing to produce a new sound.
+Using Pepper’s ghost effect, we projected an image of a cube that rotates about both the x and y axes onto a 45-degree angled plastic pane called a Pepper’s Ghost reflector. The cube rotates clockwise or counterclockwise depending on the direction of our hand’s motion in front of the distance sensor. 
+Concurrently, users hear varying sounds and observe changes in the cube’s rotation in response to the distance measured by the ultrasonic sensor. </p>
+							<h3>Rationale</h3>
+							<p>Becky and Erica are interested in audio synthesis and music, and Annabel became interested in Pepper’s Ghost effect after watching a Magic School Bus episode. After brainstorming project ideas, we thought it would be interesting to combine our ideas into an interactive audio visual project.  </p>
+						</div>
+					</section>
+
+				<!-- Three -->
+					<section class="wrapper style1 align-left">
+						<div class="inner">
+							<h2>High Level Design</h2>
+							<h3>Design Components</h3>
+							<ul> <li> Ultrasonic sensor: This sensor detects the distance that the user’s hand is from the instrument using pulses. If the distance read from the sensor is between certain intervals, the instrument will play different notes. Depending on whether the distance from the hand to the sensor increases or decreases, the cube will change orientation. 
+							</li><li> VGA display: This display on the computer monitor shows the cube, changing its orientation according to the distance as aforementioned. 
+							</li><li> Box for Pepper’s Ghost Effect: This is a box with a flat plastic face angled diagonally in it to create the effect of our image appearing in the air. </li>
+								<p> </p>
+								
+							<h3>Theremin</h3>
+							<p> A theremin creates an electromagnetic field around the two metal antennas attached on the two sides of the theremin. Players could change both the pitch and volume of the note produced by the theremin by moving his or her hands in different directions around two metal antennas. 
+								</p> <p> For our implementation of the theremin, we decided to use additive direct digital synthesis (DDS) so that we could produce sounds that had one fundamental frequency and harmonic overtones. Direct digital synthesis is where a digital signal is generated based on mathematical computations and manipulations of formulas such as cosine and sine waves based on time. Depending on the time, the frequency of the signal would change and thus a new sound would be produced. Also, the attack, sustain, and decay times that determined how fast the sound would ramp up, sustain that sound, and then let the sound die out respectively could be changed in order to change the overall sound of the note. Then, this digital signal is converted into an analog signal that can be relayed to a DAC (digital to audio converter) and then to an external speaker. Additive DDS is just the addition of multiple waves in order to create a new signal.</p> 
+							<p> We started to make the notes based on the following fundamental frequencies: </p>
+							<ul>
+							<li> E5 </li>
+							<li> A4 </li>
+							<li> D4 </li>
+							<li> G3 </li>
+							</ul>
+							
+							<p> In order to create the harmonics, we used the following procedure: </p>
+							<ol type="1">
+  							<li>One octave above the fundamental frequency</li>
+  							<li>Two octaves above the fundamental frequency</li>
+							<li>One octave and a fifth above the fundamental frequency</li>
+							<li>Two octaves and a third above the fundamental frequency</li>
+							</ol>
+
+							<p> In the table below is the following conversions we made for the four fundamental frequencies mentioned above and their four respective harmonics: </p>
+							<div class="image">
+							<img src="Notes_table.png" alt="" />
+							</div>
+							
+							<p> From the fundamental frequencies and harmonics as described above, we were able to make distinct notes albeit a bit distorted which will be described below in the programming/hardware section. 
+							</p><p> For each note, we used a simple sine wave of the form sin(pi*frequency*time) and added together each frequency (fundamental frequency and harmonic frequencies). Then, instead of the frequency changing based on time, we chose to make the frequency change with distance in order to mimic the behavior of a theremin. 
+							</p><p> Depending on the distance, the fundamental frequency would change which would result in a different pitch. 
+							</p><p> We had two ways of using the distance to change the sound being produced. </p>
+							<ol type="1">
+  							<li>The first method which we called discrete notes was where depending on the distance our hands were from the sensor, we would produce distinct notes such as E5, A4, D4, and G3.</li>
+  							<li>The second method which we called continuous notes/sound was where the distance measured by the sensor would be used as an input to the actual synthesis of the sound we were trying to produce. Both the amplitude and the frequency of the sine wave would continuously change as the distance changed which would result in a wider range of notes that could be produced. </li>
+							</ol>
+							<p> Since we did not want to limit the user to only being able to hear a certain set of notes, we decided to create two modes based on an external button press. 
+							</p><p> When the button was not pressed, we would be in the mode of discrete notes. When the button was pressed, we would be in continuous notes mode.
+							</p><p> The software trade off faced by the sound production was that the time that it took for the distance to be calculated from the ultrasonic sensor created delays which slowed down the speed needed in order to enter the interrupt service routine to produce the sound. Therefore, even if we were sampling at around 40 kHz or so, the delay due to measurements from the ultrasonic sensor ultimately created some distortion when producing the sound and thus led to some unexpected behavior which we describe more in detail in the analysis section. 
+							</p>
+							
+							<h3>Graphics</h3>
+							<div class="image">
+							<img src="Ghost_Image.png" alt="" />
+							</div>
+							<p> The central element of our visual element is our Pepper’s Ghost effect box. We followed the tutorial from this <a href="https://www.youtube.com/watch?v=QPM1LwEzzwU">link</a> to make our own. However, we adjusted the dimensions to accommodate a larger image. Pepper’s Ghost effect is a visually appealing illusion technique that can be traced to the mid 16th century. A clear pane faces the “ghost” at a 45 degree angle. The “ghost” can be a real or recorded image. When the audience looks at the pane, they see a reflected image that appears to have depth. In our project, the VGA screen will create the ghost image. </p>
+							<p> To draw the cube, we had to rely on matrix operations. We started out by determining the coordinates of a unit cube (offset from the origin by 1).  </p>
+							<div class="image">
+							<img src="images/UnitCube.png" width="500" />
+							</div>
+								
+							<p> Then we put these coordinates into an 8 by 3 matrix C as shown below. In our code the matrix is made up of 8 row vectors. The first column contains the x coordinates, second contains the y coordinates, and third contains the z coordinates. We used a function to transpose the row vectors into column vectors so that we could perform matrix multiplication for the rotations. The standard 3 by 3 rotation matrices are shown along with the projection matrix. To rotate each point about the x and y axes, we had to multiply their column vectors with both the x and y rotation matrices. To obtain a 2D projection of each point for our VGA drawing, we multiplied the resulting column vectors by the projection matrix. </p>
+							<div class="image">
+							<img src="images/Math.jpeg" width ="700" />
+							</div>
+								
+							<h3>Theremin and Graphics Tradeoffs</h3>
+							<p> Both the theremin and graphics had the hardware tradeoff between using an ultrasonic distance sensor and a radar sensor. While the radar sensor may have been able to detect the distance more accurately, we ultimately decided to use the ultrasonic distance sensor since there was already direct compatibility between the analog measurements being made and the conversion to digital outputs which were to be used by the RP 2040. 
+								</p> <p> In regards to the software tradeoffs, both the theremin and graphics relied on the distance measurements from the ultrasonic sensor which came from a thread called protothread_core_0. Therefore, in order to ensure that the graphics and the audio did not interfere with each other, we decided to put them both in the interrupt service routine rather than in two separate threads which could cause timing issues and delay either the graphics, sound production, or both. 
+								</p> <p> If one of the threads was taking too long, that thread could block all of the other threads from running and then that would interfere with both the graphics and sound production as well as the distance measurements. 
+							</p>
+							
+							<h3>Patents, Copyrights, Trademarks</h3>
+							<p> As far as we know, there is no direct patent, copyright, or trademark in regards to the overall result of our project. The theremin itself was patented in 1928 (<a href="https://www.smithsonianmag.com/smart-news/theremin-100-years-anniversary-instrument-music-history-180976437/#:~:text=To%20manipulate%20Theremin's%20original%20design,or%20lower%20the%20music's%20tone">[1]</a>). However, since we did not directly use the theremin in our project but instead created our own rendition of what we thought a theremin should behave like, we believe that we did not violate the patent of the theremin.
+							</p> <p> The idea for the structure used to create Pepper’s Ghost effect was drawn from this YouTube Video. However, we changed the dimensions and swapped out materials to suit our own project (<a href= "https://www.youtube.com/watch?v=QPM1LwEzzwU">[2]</a>). 
+							</p> <p> The fundamental coding logic for the cube graphic was taken from this Python YouTube video and converted it into C code for integration into our project (<a href="https://www.youtube.com/watch?v=qw0oY6Ld-L0&t=276s">[3]</a>). 
+							</p>
+						</div>
+					</section>
+
+				<!-- Four -->
+					<section class="wrapper style1 align-left">
+						<div class="inner">
+							<h2>Hardware Design</h2>
+							<h3>Ultrasonic Sensor (HC-SR04) </h3>
+							<p>We used an ultrasonic sensor (HC-SR04) that measured distance based on ultrasonic waves. In order to power up the ultrasonic sensor, we needed to supply 5V. WE accomplished this by using an external power supply provided to us in the lab. 
+							</p> <p> The ultrasonic sensor’s trigger pin was connected to the RP2040’s GPIO 15 and the ultrasonic sensor’s echo pin was connected to the RP2040’s GPIO 14. 
+							</p> <p> As per the datasheet and in the figure shown below, in order for the ultrasonic sensor to detect the distance an object is from the ultrasonic sensor, a 10 microsecond square wave pulse must be sent from the trigger pin. The trigger signal would result in an 8 cycle sonic burst at 40 kHz from the ultrasonic sensor in order to trigger the echo pin. Then, the time between the sending of the trigger signal and receiving of the signal by the echo pin would be calculated. The difference in the time would be used to calculate the distance. </p>
+							<div class="image">
+							<img src="utrasonic_sensor_timing_diag.png" alt="" />
+							</div>
+							<p> For the hardware, we used a digital to audio converter (DAC) and external speakers in order to listen to the sound being produced via the additive DDS algorithm. The DAC would sample the signal at 40 kHz and take the digital signal produced by the code and  turn it into an analog signal which would be sent out to the speakers. </p>
+							<p> Also, we used an external button to change modes between discrete and continuous sounds. The external button was connected to a 300 ohm resistor. The 300 Ohm resistor was then connected to GPIO 11 on the RP2040. </p>
+							<h3>VGA Screen and Pepper's Ghost Box</h3>
+							<p> The physical setup for the visual aspect of our project is depicted below. We laid the VGA screen on its side on top of boxes so its screen was horizontal. We then placed the Pepper’s Ghost box on top of the VGA screen so that the square opening was on the screen. 
+							</p>
+							<div class="image">
+							<img src="vga_disp_cube.png" />
+							</div>
+							<p> The VGA plug connections are shown below. For the red, green, and blue connections, it is important to remember to connect them to the RP2040 through 330 ohm resistors. </p>
+							<div class="image">
+							<img src="vga_pinout.png" />
+							</div>
+							
+							<p> Overall Hardware Schematic: </p>
+							<div class="image">
+							<img src="hardware_schem.png" alt="" />
+							</div>
+							
+						</div>
+					</section>
+				
+				<!-- Five -->
+					<section class="wrapper style1 align-left">
+						<div class="inner">
+							<h2>Software Design</h2>
+							<p>The audio synthesis code takes input from the distance measurements and from button presses to determine the specific state that must be used when entering the ISR. If the button is not pressed, the range that the distance measurement falls under determines the specific state that must be entered in the ISR (with each state corresponding to a different note being produced). We called this mode discrete notes. If the button was pressed, then we immediately go to the state in the ISR that produces continuous sounds. The continuous sounds are produced by taking in the scaled version of the distance measurement as an input for modifying both the frequency and amplitude of the sine wave. 
+							</p> <p> The graphics code for the rotating cube relies on the VGA driver given to us by Hunter Adams. All the drawing functions are implemented in the vga_graphics.c file and we include its header file in our project code. Before we discuss the functions that are used to generate the cube animation, it is important to discuss the global variables that will be used in the matrix operations involved. Given that C does not have built-in matrix operation functions, we had to develop our own implementations. We have multiple matrix multiplication functions for each calculation because reusing the same multiplication function for different array parameters proved to be more inconvenient for us in C. Each matrix multiplication function will utilize its own intermediate array variable to store its result. </p>
+							
+							<table>
+							<tr>
+							    <th>Global Variable</th>
+							    <th>Description</th>
+							  </tr>
+							  <tr>
+							    <td>float scale = 50; </td>
+							    <td>Multiplier used to change the size of the rotating cube. </td>
+							  </tr>
+							  <tr>
+							    <td>float angle = 0; </td>
+							    <td>Keeps track of the cube angle. Variable will be increased or decreased depending on the distance. </td>
+							  </tr>
+							  <tr>
+							    <td>float points[8][3] </td>
+							    <td>Stores 3D coordinates of the cube’s 8 vertices. The cube coordinates stored here are the coordinates of a unit cube that we can scale with a multiplier.</td>
+							  </tr>
+							  <tr>
+							    <td>float proj[3][3]</td>
+							    <td>Projection matrix that maps 3D coordinates onto 2D. Used to multiply </td>
+							  </tr>
+							  <tr>
+							    <td>float proj_points</td>
+							    <td>Stores 2D projected points that will be drawn on the VGA</td>
+							  </tr>
+							  <tr>
+							    <td>volatile float dist</td>
+							    <td>Stores the currently detected distance from the distance sensor. </td>
+							  </tr>
+							  <tr>
+							    <td>volatile float prev_dist</td>
+							    <td>This variable keeps track of the previous distance of an object or hand from the distance sensor. This variable will be used for comparison with the current distance to determine which direction the cube will rotate. </td>
+							  </tr>
+							  <tr>
+							    <td> float rotated_x[3][1];
+								<br> float rotated_y[3][1];
+								<br> float projected2d[3][1];
+								<br> float reshaped_vector[3][1];
+							    </td>
+							    <td> 3 by 1 arrays that will be used to store intermediate results from our matrix operations. </td>
+							  </tr>
+							</table>
+							
+							<table>
+							<tr>
+							    <th>Code</th>
+							    <th>Description</th>
+							</tr>
+							<tr> 
+							<td> float getPulse(int trigPin, int echoPin)</td>
+							<td> For the getPulse() function, we created two variables called begin_time and end_time. We kept track of the time by using an internal clock in the RP2040 called time_us_32(). The begin_time would keep track of when the trigger pin first received the signal from the trigger pin which is determined by the echo pin going high. The end_time would keep track of when the echo pin finished receiving the signal from the trigger pin which is determined by the echo pin going low.
+								<p></p> The difference between the end_time and the begin_time is the time that it took for the pulse from the trigger pin to reach the echo pin. 
+								<p></p> Depending on where we placed our hand in relation to the ultrasonic sensor, it would take either a shorter or longer period of time for the pulse to be received by the echo pin. When we put our hands further away from the ultrasonic sensor, it resulted in a longer time for the pulse to reach the echo pin. When we placed our hands closer to the ultrasonic sensor, it took less time for the pulse to reach the echo pin
+							</td>
+							</tr>
+							<tr>
+							    <td>float getCm(int trigPin, int echoPin)</td>
+							    <td>In the getCm() function, we just multiplied the pulse length by a constant 0.0172 as described in the datasheet for the ultrasonic sensor in order to convert the pulse length to a distance measurement in centimeters. </td>
+							</tr>
+							<tr>
+							    <td>static PT_THREAD (protothread_trigpulse(struct pt *pt))</td>
+							    <td>trig_pulse  created a 10 microsecond square wave pulse. The trigger pin was first set to low for 1 millisecond and then set to high for 10 microseconds and then back to low for 10 milliseconds. </td>
+							</tr>
+							<tr>
+							    <td>void connect_points (int i, int j)</td>
+							    <td>Draws a line between two vertices with indices i and j. This function uses the draw line function from the vga_graphics file. </td>
+							</tr>
+							<tr>
+							    <td>void reshape(float vector[3])</td>
+							    <td>Reshapes a 1 by 3 vector to a 3 by 1 column vector for our matrix multiplication operations. The result is stored in reshaped_vector.  </td>
+							</tr>
+							<tr>
+							    <td>void mult_x(float matrix[3][3] , float b[3][1])</td>
+							    <td>Matrix multiplication function used to multiply the x-rotation matrix with the reshaped_vector. This rotates the cube vertex about the x-axis. The resulting vertex is stored in rotated_x. </td>
+							</tr>
+							<tr>
+							    <td>void mult_y(float matrix[3][3] , float b[3][1])</td>
+							    <td>Matrix multiplication function used to multiply the y-rotation matrix with the rotated_x. This adds rotation about the y-axis. The resulting vertex is stored in rotated_y. </td>
+							</tr>
+							<tr>
+							    <td>void mult_project(float matrix[3][3] , float b[3][1])</td>
+							    <td>Matrix multiplication function used to multiply the projection matrix with rotated_y. This maps our 3D points onto 2D points that we can draw on the VGA. The result is stored in projected2d.</td>
+							</tr>
+							<tr>
+							    <td>void drawCube()</td>
+							    <td>Draws one instance of a cube on the VGA screen. Starts by clearing the screen of the last instance first. Calculates rotation matrix based on the current angle. In a for loop, the following is completed for all 8 cube vertices:
+								<ol> <li> Rotate point about x-axis
+									</li> <li> Rotate point about y-axis
+									</li> <li> 2D projected point of 3D point is calculated. 
+									</li> <li> Point is scaled and moved to the correct location of the VGA screen.
+									</li> <li> A circle is drawn on the VGA screen at the point. </li>
+								    </ol> <p> After all the points are drawn, lines are drawn between specific points to create the cube visual.
+							</p> </td>
+							</tr>
+							<tr>
+								<td>static PT_THREAD (protothread_core_0(struct pt *pt))</td>
+								<td>We created one thread in core 0 called protothread_core_0 that would take distance measurements. Depending on the distance measurements, we would transition to different states in the interrupt service routine (ISR) where the states would correspond to different notes being played. 
+								</p> <p> Protothread_core_0 would first get the distance measurement from the function getCm() and store it in a global variable called dist which would get referenced later in the thread. 
+								</p> </p> Then, we go into different conditional statements based on whether the button was pressed or not (pressed meaning the button had a value of 0 and not pressed meaning the button had a value of 1).
+								</p> <p> If the button was not pressed, then we would go to state 5 which would produce a continuous sound (described later when we explain the ISR part of the code).
+								</p> <p> If the button was pressed, then we would look at the distance measured by the ultrasonic sensor and determine which state we could go to in the ISR. 
+						</p> <ul>
+						<li> If the distance was between 45 and 60 cm, then we would go to state 2 which would play a G-note.
+						</li> <li> If the distance was between 30 and 45 cm, then we would go to state 3 which would play a D-note. 
+						</li> <li> If the distance was less than 30 cm, then we would go to state 4 which would play an E-note.
+						</li> <li> Otherwise, the state would remain at the default 0 and play an A-note.
+						</ul> 
+						<p> Then, after we ran through the conditionals in our thread to see which if any were met, we would set a flag high (in this case GPIO 2 would be set to high) and we would enter the ISR.
+						</p> </td>
+							</tr>
+							<tr>
+							    <td>static PT_THREAD (protothread_core_0(struct pt *pt))</td>
+							    <td> In the ISR, there are 5 states. Each state used the variable amplitude which defines the volume of the sound we were trying to produce. The default value of amplitude was 1. Each state also had its own attack, sustain, and decay time as defined below so that we could produce different sounds.
+
+								<p> The following are the initializations for the attack, sustain, and decay times:
+								<br> SWOOP_DURATION = 5200
+								<br> CHIRP_DURATION  = 5720
+								<br> CONT_DURATION = 10000
+								<br> ATTACK_TIME =  2000
+								<br> DECAY_TIME = 500
+								<br> SUSTAIN_TIME = 1000 </p> 
+								<p> After the ISR finished the audio synthesis, the flag would be set back to low (in this case GPIO 2 would be set to low) which allows another thread to run. </p> </td>
+							</tr>
+							</table>
+							
+						<p> Below is a description of each of the states in the ISR. </p>
+							<table>
+							<tr> 
+								<td> State </td>
+								<td> Description </td>
+							</tr>
+							<tr> 
+								<td> State0 </td>
+								<td> We created an A-note by adding together pure sine waves using   the fundamental frequency and harmonics as described in the theremin part of the concept section. 
+								<p> </p> Each sine wave took in a variable called count_0 in order to increment the phase of the sine wave. After we added the sine waves together to create the A_note, we would increment the phase_accum_main_0 which would be used to figure out the correct sine wave to output to the DAC. The sine wave sent to the DAC would come from a sin look-up table that took in phase_accum_main_0 as the input.
+								</p> <p> Then, the sound that was generated from the DAC was determined by the attack time which we called SWOOP_DURATION for this state in order to ramp up the amplitude. Also, the attack time - decay time which we called SWOOP_DURATION  - DECAY_TIME in this state determined how fast the amplitude decayed. 
+								</p> The sine wave would go to output channel B of the DAC which would connect to the external speakers via serial peripheral interface (SPI).
+								Then, we would increment the count_0 and start the process over again until count_0 is equal to our attack time (SWOOP_DURATION). Once count_0 equals SWOOP_DURATION, we go back to state 1 which would bring us back to the thread we came from and set count_0 back to 0.</td>
+							</tr> 
+							<tr> 
+								<td> State1 </td>
+								<td> Default state that does not do anything; allows other threads to run</td>
+							</tr> 
+							<tr> 
+								<td> State2 </td>
+								<td> The same format for state 0 was used in state 2. However, instead of the note being A, the note being produced was the G-note. Also, instead of the attack time being defined by SWOOP_DURATION, the attack time was defined by CHIRP_DURATION.
+								</td>
+							</tr> 
+							<tr> 
+								<td> State3 </td>
+								<td> The same format for state 0 was used in state 2. However, instead of the note being A, the note being produced was the D-note. Also, instead of the attack time being defined by SWOOP_DURATION, the attack time was defined by CHIRP_DURATION.
+								</td>
+							</tr> 
+							<tr> 
+								<td> State4 </td>
+								<td> The same format for state 0 was used in state 2. However, instead of the note being A, the note being produced was the E-note. Also, instead of the attack time being defined by SWOOP_DURATION, the attack time was defined by CHIRP_DURATION. </td>
+							</tr> 
+							<tr> 
+								<td> State5 </td>
+								<td> For this state, since we wanted a continuous sound, we used the distance measurement from the variable dist and scaled it by 10 so that we could use the distance as the input to our audio synthesis. The calculations for the continuous sound were similar in format to the states described above except the frequency and amplitude of the sine wave were determined by the variable dist_scaled rather than by the time count_0.  The phase_accum_main_0 would be incremented based on calculations made using the distance measurement (which were stored in the variable cont_sound).
+Also, the attack time used in this state was CONT_DURATION instead of SWOOP_DURATION or CHIRP_DURATION. 
+<p>Other than the changes mentioned above, the rest of the calculations and format of the code for this state was the same as the previous states.
+							</p> </td>
+							</tr> 
+							</table>
+						
+							<p> ***For the distance measurement, we used code from a previous final project by Katherine Fernandes and Tiffany Guo. ***
+<br> ***For the audio synthesis, we used a similar structure to that of lab 1 which involved an ISR with different states to produce different sounds.****
+							</p>
+							<h3> Integration of Theremin and Graphics Code </h3>
+							<p> When integrating the theremin and graphics code, we simply created two separate threads for sound production (called protothread_core_0, as mentioned before) and projecting the cube (protothread_graphic). The graphic thread used a few helper functions as well to draw lines between different vertices, rotating the cube, reshaping vectors for matrix operations, and essentially drawing the entire cube, which we added below the getPulse and getCm functions. We added both of these threads to core 0. 
+							</p> <p> We created two volatile floats called dist and prev_dist to store the currently detected distance from the ultrasonic sensor and the previously read distance, both of which we initialized to be 0. These variables were made volatile so that we could easily access and edit these two floats across different threads, as they were used across both the theremin and the graphics threads. While only the dist variable was used in the theremin thread so that the pitch would change according to the current distance, both variables were used in the graphics code in order to determine the direction that the cube should spin in. If we found the previous distance to be less than the current distance, the angle of the cube would increase to spin it one way, and vice versa. At the end of the graphics thread, we would set the current distance to be the previous distance so that we could continuously compare the values and have the cube’s direction change rapidly in response. 
+							</p>
+							
+						</div>
+					</section>
+				
+				<!-- Six -->
+					<section class="wrapper style1 align-left">
+						<div class="inner">
+							<h2>Things We Tried That Didn't Work</h2>
+							<p>For the theremin, we thought about using frequency modulation (FM) synthesis so that we could arbitrarily create different notes by playing around with the attack, sustain, and decay time values and tweaking the sound by ear so that we could get a sound that resembled an instrument. 
+							</p> <p> However, this method proved to be difficult since we wanted to put the FM synthesis into a thread so that the sound could continuously change based on the distance. When we tested this implementation of the FM synthesis thread with the ultrasonic sensor measurements, the two threads ended up conflicting with each other resulting in the two threads fighting for resources. 
+							</p> <p> We tried to resolve this issue by adding longer yield times in the thread. However, this did not resolve the issue since no matter how long we increased the yield time, there was always one thread that would take up most of the resources on the RP2040 resulting in the other thread being unable to run long enough in order to produce a result. 
+							</p> <p> We also tried creating a conditional so that when the distance measurement was taken, then this would signal to the FM synthesis thread to begin running. Then, once the FM synthesis finished producing a note, the FM synthesis thread would signal back to the ultrasonic sensor thread to run again. This solution also did not work since according to the design of the RP2040, threads are continuously running so even though we made conditional statements, a thread (ie ultrasonic sensor thread) could see that there is an opportunity to begin in between the signal being sent and the signal being received by the other thread  (ie FM synthesis thread) to start running. Thus, before the other thread (ie FM synthesis thread) even receives the signal, the first thread (ie ultrasonic sensor thread) could start running again and block the other thread which in turn creates this blocking situation.
+							</p> <p> Ultimately, we could not resolve the blocking issue in the time span allotted and chose to go for the simpler audio synthesis DDS. </p>
+							<p>On the graphics side, we attempted to create a vivid image of a jellyfish using bitmaps at first. However, after realizing that there was limited memory on the RP2040 and limited color options in the given VGA driver, we opted for the cube. The cube was still intriguing and interactive, so it was a good proof of concept. In the future, if we were to expand this project, we might choose to use a different MCU. </p>
+						</div>
+					</section>
+				
+				<!-- Seven -->
+					<section class="wrapper style1 align-left">
+						<div class="inner">
+							<h2>Results</h2>
+							<p>We tested the code by running it in the MPU6050_IMU_Demo folder from the course’s demo folder. </p>
+							<p> From testing and debugging, we were able to accurately measure the distance our hand was away from the sensor albeit with a bit of error due to the inaccuracy of the sensor itself. 
+							</p> <p> The sound produced from our audio synthesis (in both the discrete and continuous sound modes) was able to respond fairly accurately when the ultrasonic sensor detected a change in the distance between the hand and the sensor. 
+							</p> <p> For our graphics, the cube was able to rotate and change directions based on the change in distance.
+							</p> <p> Below are videos demonstrating our results: </p>
+							<iframe width="420" height="315"src="https://www.youtube.com/embed/Qy2WE9b66us"> </iframe>
+							<p>Discrete sound demonstration: </p>
+							<iframe width="420" height="315"src="https://www.youtube.com/embed/LzhUIRLwv4k"> </iframe>
+							<p>Continuous sound demonstration: </p>
+							<iframe width="420" height="315"src="https://www.youtube.com/embed/6chG5GPgA2M"> </iframe>
+						</div>
+					</section>
+				
+				<!-- Seven -->
+					<section class="wrapper style1 align-left">
+						<div class="inner">
+							<h2>Conclusion</h2>
+							<p>Our original idea was to display vivid images on the VGA and synthesize sounds of instruments. However, after realizing this idea was not viable given the time and technical constraints, we opted to adapt our project to be more compatible with the RP2040 and its constraints. Even though we did not meet our original expectations, we did meet the baseline expectations of our project which was to create a visual and audio experience based on changes in distance. Through testing and debugging, we were able to make a new product that had its own unique qualities to it in terms of sound and visuals instead of simply recreating something that already exists.
+							</p> <p> Some things that we might do to improve our design is to use FM synthesis instead of additive DDS so that we could get a wider range of notes being produced. Also, we could add in a serial interface so that the user could change the values of the attack, sustain, and decay time of the notes being produced so that the sound could represent different instruments such as pianos or violins or to create interesting sound effects.
+							</p> <p> With the addition of a serial interface, we could also change the mode from discrete sounds to continuous sounds by typing in a number such as 1 for discrete sounds and 0 for continuous sounds instead of having to press down on an external button to change between discrete and continuous sounds. 
+							</p> <p> For the graphics, we could add additional colors to the VGA driver so that it could support a greater variety of images which would allow for a more interesting visual experience. Furthermore, this would allow us to use bitmaps so that instead of manually drawing each line as we did to create the cube, we could draw pixelated images.
+							</p> <h3> Intellectual Properties
+							</h3> <p> We used code from a previous final project by Katherine Fernandes and Tiffany Guo in order to implement the distance measurements from the ultrasonic sensor. 
+							</p> <p> We referenced the code from the YouTube channel Pythonista_ in order to create the 3D projection of a cube onto the VGA display by adapting his Python code to C code and changing some of the parameters to fit our specific purpose. 
+							</p> <p>Also, we built off of previous lab demo codes from this course (mainly lab 1).
+						</div>
+					</section>
+				
+				<!-- Eight -->
+					<section class="wrapper style1 align-left">
+						<div class="inner">
+							<h2>Appendices</h2>
+							<h3>Appendix A: Permissions</h3>
+							<p>This group approves this report for inclusion on the course website. <br> This group approves the video for inclusion on the course YouTube channel. </p>
+							
+							<h3>Appendix B: Sources to Cite & References </h3>
+							<p> <a href="https://www.smithsonianmag.com/smart-news/theremin-100-years-anniversary-instrument-music-history-180976437/#:~:text=To%20manipulate%20Theremin's%20original%20design,or%20lower%20the%20music's%20tone">[1] The Smithsonian: The Soviet Spy Who Invented the First Major Electronic Instrument</a></p>		
+							<p> <a href="https://www.youtube.com/watch?v=QPM1LwEzzwU">[2] How to Make 3D Hologram</a></p>				
+							<p> <a href="https://www.youtube.com/watch?v=qw0oY6Ld-L0&t=276s">[3] How to Make a 3D Projection</a></p>
+							<p> <a href="https://microcontrollerslab.com/raspberry-pi-pico-pinout-features-programming-peripherals/"> RP2040 Pinout</a></p>
+							<p> <a href="http://hyperphysics.phy-astr.gsu.edu/hbase/Music/violin.html#:~:text=The%20violin%2C%20the%20most%20commonly,the%20A4%20%3D%20440Hz%20standard">Fundamental Frequency of Notes</a></p>
+							<p> <a href="https://montgomeryphilharmonic.org/index.php/members/violin-harmonics/#:~:text=There%20are%20four%20natural%20harmonic,fourth%20finger%20lightly%20above%20it">Harmonics of Notes</a></p>
+							<p> <a href="https://cosmosmagazine.com/science/physics/the-science-behind-the-peppers-ghost-illusion/">The Science Behind the Pepper's Ghost Illusion</a></p>
+							<p> <a href="https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf?_gl=1*stkhvt*_ga*MTY1MjcyNDU0LjE3MDI2NTQ3MTc.*_ga_T369JS7J9N*MTcwMjY1NDcxNi4xLjAuMTcwMjY1NDcxNi42MC4wLjA">The Pepper's Ghost Effect</a></p>
+							<p> <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Geometry">Cube Image</a></p>
+							<p> <a href="https://ece4760.github.io/Projects/Fall2022/tg382_kaf245/index.html#hardware-design">Code for Ultrasonic Sensor</a></p>
+							<p> <a href="https://www-users.cse.umn.edu/~rogness/math1155/soundwaves/">Mathematics for How to Make Notes</a></p>
+							<p> <a href="https://electronics.howstuffworks.com/gadgets/audio-music/theremin.htm">How a Theremin Works</a></p>
+							
+							<h3>Appendix C: Datasheets</h3>
+							<p> <a href="https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf">Ultrasonic Sensor Datasheet</a> </p>
+							<p> <a href="https://vanhunteradams.com/Pico/Birds/DAC.pdf">DAC datasheet</a> </p>
+							<p> <a href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf">RP2040 Datasheet</a> </p>
+						
+							<h3>Appendix D: Code</h3>
+							<p> The link to the code can <a href="https://github.coecis.cornell.edu/bl478/ECE-4760-Final-Project/blob/main/final_project_code.c">be found here.</a>
+								
+							<h3>Appendix E: Work Distribution</h3> 
+							<p> Annabel designed and implemented the graphics part of the project and integrated it with the audio part of the project. Both Erica and Becky worked on the design, testing, and debugging of the audio synthesis part of the project. Erica integrated the audio part of the project with the graphics part of the project and also did the webpage. </p>
+						
+							<h3>Appendix F: Budget/Materials</h3>
+							<div class="image">
+							<img src="images/BOM.png" alt="" />
+							</div>
+						</div>
+					</section>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
