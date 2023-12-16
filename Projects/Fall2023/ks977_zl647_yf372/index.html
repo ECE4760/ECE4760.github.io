@@ -1,0 +1,459 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Starter Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <!-- <link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet"> -->
+
+    <!-- Custom styles for this template -->
+    <link href="starter-template.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <!-- <script src="../../assets/js/ie-emulation-modes-warning.js"></script> -->
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <!-- For videos and pictures -->
+    <style>
+      .newvideo {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 1.5em 0; 
+      }
+      .newvideo > * {
+        margin: 0 1em;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Gyroscope-Controlled 2D Labyrinth Game</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#intro">INTRO</a></li>
+            <li><a href="#Software">Software Design</a></li>
+            <li><a href="#Hardware">Hardware Design</a></li>
+            <li><a href="#Result&Conclusion">Result&Conclusion</a></li>
+            <li><a href="#Appendix">Appendix</a></li>
+            <li><a href="https://github.com/SKL119/ECE5730_Final_Project">Source Code</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+
+      <div class="starter-template">
+        <h1>Gyroscope-Controlled 2D Labyrinth Game</h1>
+        <p class="lead">Designed by<br>Kailing Shen(ks977), Ziyuan Lin(zl647), Yifan Feng (yf372)</p>
+      </div>
+
+      <hr>
+      <div class="center-block">
+          <iframe width="640" height="360" src="https://www.youtube.com/embed/onVuS9nOsp4" frameborder="0" allowfullscreen></iframe>
+          <h4 style="text-align:center;">Demonstration Video</h4>
+      </div>
+
+      <hr id="intro">
+
+      <div style="text-align:center;">
+        <h1>Introduction</h1>
+        <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+          We propose to create an interactive Labyrinth game controlled via a gyroscope, utilizing two Raspberry Pi Pico microcontrollers to facilitate wireless communication and game display.
+        </p>
+        <div style="text-align:left;padding: 0px 30px; font-weight: bolder;font-size:24px;">
+          <li>Summary</li>
+        </div>
+        <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+          In the ever-evolving world of interactive gaming, the integration of simple yet powerful technology can lead to intriguing and enjoyable experiences. 
+          Our project embodies this concept by introducing an interactive Labyrinth game, ingeniously controlled through a gyroscope and powered by two Raspberry Pi Pico microcontrollers. 
+          This innovative setup transforms traditional gameplay into a modern, immersive experience.
+        </p>
+        <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+          The core of our design revolves around the seamless integration of hardware and wireless communication. 
+          One Raspberry Pi PicoW acts as the heart of the controller, interfaced with a gyroscope to detect and interpret the player's movements. 
+          This Pico is also equipped with a Wi-Fi module, enabling it to communicate wirelessly. 
+          The player's physical tilts and turns are translated into digital signals, creating an intuitive and engaging control mechanism for the game.
+        </p>
+        <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+          The second Raspberry Pi Pico plays a crucial role in visualizing the game. It connects to a VGA display, bringing the Labyrinth to life with vivid graphics and real-time response to the player's actions.
+          Another Wi-Fi module on this PicoW ensures a constant and smooth flow of data between the controller and the display.
+          This wireless connection not only simplifies the setup but also enhances the flexibility and appeal of the game, allowing for a clutter-free environment.
+        </p>
+        <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+          Our project is not just a game; it's a testament to the power of combining classic gaming concepts with modern technology. 
+          By leveraging the capabilities of the Raspberry Pi Pico and the intuitive control offered by a gyroscope, we create an engaging and novel gaming experience.
+          This Labyrinth game stands as a prime example of how technology can reinvent and revitalize traditional entertainment forms, making them more accessible and enjoyable in the digital age.
+        </p>
+      </div>
+
+    <hr id='Software'>
+
+          <!-- <img class="img-rounded" src="pics/Robot.jpg" alt="Generic placeholder image" width="240" height="180"> -->
+      <div style="text-align:center;">
+          <h1 style="text-align:center;">Software Design</h1>
+          <p style="text-align: left;padding: 0px 30px; font-size: 15px;" >
+            Our project's software architecture is intricately designed, divided into two principal modules: the Control and Data Transmission Module, and the Data Reception and Game Logic Module. 
+            These modules are engineered to perform distinct, specialized functions that collectively ensure a seamless and interactive gaming experience.
+          </p>
+      </div>
+      <div style="text-align:left;padding: 0px 30px; font-weight: bolder;font-size:24px;">
+        <li>Control and Data Transmission Module</li>
+      </div>
+      <div style="text-align:center;">
+          <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+            This module is responsible for acquiring angle measurements from the Inertial Measurement Unit (IMU), which includes an accelerometer, and processing two button-press signals. The processed control data are then transmitted through UDP. The module's functionality is achieved through a timer interrupt and a dedicated thread.
+          </p>
+          <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+            <ul style="text-align:left; font-size: 16px;font-weight: bolder;">
+              <li type="circle"> Timer Interrupt for Data Measurements</li>
+            </ul>
+          </p>
+          <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+            Activated by the interrupt, the system commences a process to retrieve raw data from the Inertial Measurement Unit (IMU).
+            This data acquisition is a critical step in determining the tilt angles of the plane along both the x and y axes.
+            The procedure involves a crucial computation using the arctangent function (arctan), which effectively translates the raw IMU data into meaningful angular measurements. 
+            These angles are then further processed, undergoing a transformation into their corresponding cosine values.
+          </p>
+          <pre style="text-align: left; padding: 0px 30px; font-size: 15px; height: 200px; width: 70%;margin: auto;overflow: auto; margin-bottom: 20px; ">
+            <code>
+              accel_x = acceleration[0];
+              accel_y = acceleration[1];
+              accel_z = acceleration[2];
+              angle_v_rad = atan2(-accel_x, accel_z) + M_PI/2;
+              angle_h_rad = atan2(-accel_y, accel_z) + M_PI/2;
+              cos_angle_v = float2fix15(cos(angle_v_rad));
+              cos_angle_h = float2fix15(cos(angle_h_rad));
+            </code>
+          </pre>
+          <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+            This conversion is an essential step, as it refines the angular data into a format that is more suitable for the subsequent stages of the control logic. 
+            The cosine values thus obtained play a pivotal role in the game’s mechanics, directly influencing the movement and interaction of the quad within the virtual maze.  
+          </p>
+          <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+            Button press signals are concurrently recorded and, alongside the cosine values, are buffered for transmission. A flag is set to notify the data transmission thread that data is ready for sending.
+          </p>
+          <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+            <ul style="text-align:left; font-size: 16px;font-weight: bolder;">
+              <li type="circle"> UDP Data Send Thread</li>
+            </ul>
+          </p>
+          <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+            A dedicated thread handles data transmission using UDP. This approach follows the protocol established in the example project "Symmetric UDP send/receive from PicoW to PIcoW," ensuring efficient and reliable data communication.
+          </p>
+      </div>
+      <div style="text-align:left;padding: 0px 30px; font-weight: bolder;font-size:24px;">
+        <li>Data Reception and Game Logic Module</li>
+      </div>
+      <div style="text-align:center;">
+        <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+          This module is tasked with receiving the tilt angle cosine values and button pressing signals, applying these to the game logic to determine the position of the quad within the maze and to make game state decisions, such as win/loss determinations, 
+          and displaying the game interface on a VGA screen. It involves a timer interrupt and two threads.
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          <ul style="text-align:left; font-size: 16px;font-weight: bolder;">
+            <li type="circle"> Timer Interrupt for Game Logic</li>
+          </ul>
+        </p>
+        <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+          The timer interrupts serve the game logic. Using the received cosine values of the tilt angles, the module calculates the acceleration of the quad. Applying motion formulas that consider friction, it computes the displacement of the quad, thereby determining its position on the maze plane. 
+          This position is then used for collision detection with the maze walls and to assess whether the quad has reached the endpoint or fallen into a trap.
+        </p>
+        <img class="img-rounded" src="pics/state_machine2.png" alt="Game Logic" style="width:50%;">
+        <p>
+          <span class="caption text-muted"> Game Logic</span>
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          <ul style="text-align:left; font-size: 16px;font-weight: bolder;">
+            <li type="circle"> UDP Data Send Thread</li>
+          </ul>
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          A dedicated thread handles data transmission using UDP. This approach follows the protocol established in the example project "Symmetric UDP send/receive from PicoW to PIcoW," ensuring efficient and reliable data communication.
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          <ul style="text-align:left; font-size: 16px;font-weight: bolder;">
+            <li type="circle"> VGA Display Thread</li>
+          </ul>
+        </p>
+        <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+          The VGA display thread is split into two parts: displaying setting options (like restart, difficulty levels, and maze levels) and showing the maze plane.
+        </p>
+        <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+          The setting options are controlled by two buttons. One button moves the selection downward, with the selected option highlighted in green. The other button confirms the selection, instantly updating the game settings to the chosen option.
+        </p>
+        <img class="img-rounded" src="pics/state_machine1.png" alt="Game Logic in VGA" style="width:50%;">
+        <p>
+          <span class="caption text-muted"> VGA Logic</span>
+        </p>
+        <p style="text-align: left;padding: 0px 30px; font-size: 15px;">
+          The maze plane display shows the maze layout and the real-time position of the quad. Due to memory constraints of the PicoW, the maze map is divided into 8x11 blocks, significantly reducing memory requirements. The collision detection in the timer interrupts translates the new position of the quad into its respective block and position within that block. 
+          This information is then used for collision detection, only requiring data from a 9x12 2D array that stores the wall information of the maze.
+        </p>
+      </div>  
+
+
+    <hr id='Hardware'>
+      
+      <div style="text-align:center;">
+        <h1>Hardware Design</h1>        
+      </div>
+      <div style="text-align:left;padding: 0px 30px; font-weight: bolder;font-size:24px;">
+        <li>Top Level Design</li>
+      </div>
+      <div style="text-align:center;">
+        <img class="img-rounded" src="pics/Top_Level.png" alt="Top Level Design" style="width:60%;">
+        <p>
+          <span class="caption text-muted"> Block Diagram of Top Level Design</span>
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          According to top level module, we can see that this project is built around two Raspberry Pi Pico W microcontrollers, each serving a specific function in the game setup, and making use of the versatile capabilities of the Pico W platform. 
+          Here is the PicoW datasheet to better show illustrate our connectivity.
+        </p>
+        <img class="img-rounded" src="pics/PicoW.png" alt="PicoW" style="width:50%;">
+        <p>
+          <span class="caption text-muted"> PicoW</span>
+        </p>
+      </div>
+      <div style="text-align:left;padding: 0px 30px; font-weight: bolder;font-size: 24px;">
+        <li>Display Unit(PicoW #1)</li>
+      </div>
+      <div style="text-align:center;">
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          The first Raspberry Pi Pico W, referred to as PicoW 1, is dedicated to game visualization and Wi-Fi communication. It plays a pivotal role in displaying the maze on a VGA monitor, creating an immersive visual experience for the player. 
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          The hardware configuration for PicoW 1 includes:
+          <ul style="text-align:left; font-size: 15px;">
+            <li type="circle"> RP2040 GPIO 2 connected to 3.3V, powering the Wi-Fi module for wireless communication.</li>
+            <li type="circle"> GPIO 16 and 17 are used for VGA Horizontal and Vertical sync signals, respectively, ensuring the monitor displays images correctly.</li>
+            <li type="circle"> GPIOs 18, 19, and 20, each connected through a 330 ohm resistor to the VGA's Red, Green, and Blue inputs, control the color output on the VGA display.</li>
+            <li type="circle">
+              A connection from RP2040 GND to VGA GND is established for grounding and signal integrity.
+            </li>
+          </ul>
+        </p>
+        <img class="img-rounded" src="pics/PicoW-1.jpg" alt="Physical connectivity diagram" style="width:30%;">
+        <p>
+          <span class="caption text-muted"> Physical connectivity diagram</span>
+        </p>
+       
+      </div>
+      <div style="text-align:left;padding: 0px 30px; font-weight: bolder;font-size: 24px;">
+        <li>Controller Unit(PicoW #2)</li>
+      </div>
+      <div style="text-align:center;">
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          The second Raspberry Pi Pico W, named PicoW 2, is engineered for control and input. It interfaces with a gyroscope sensor and buttons, translating physical inputs into game actions. 
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          The hardware setup for PicoW 2 includes:
+           <ul style="text-align:left; font-size: 15px;">
+            <li type="circle"> GPIOs 8 and 9 connected to the MPU6050 gyroscope sensor's SDA and SCL lines, enabling motion sensing.</li>
+            <li type="circle"> 3.3v and GND connections to the MPU6050 for power and grounding.</li>
+            <li type="circle"> GPIO 15 and 21 connected to two buttons, designed for menu navigation and selection within the game.</li>
+           </ul>
+        </p>
+        <img class="img-rounded" src="pics/PicoW-2.jpg" alt="Physical connectivity diagram" style="width:30%;">
+        <p>
+          <span class="caption text-muted"> Physical connectivity diagram</span>
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          This dual-Pico W setup creates a dynamic and responsive gaming system. PicoW 2, with its sensor and buttons, captures player inputs and transmits these parameters via Wi-Fi to PicoW 1. 
+          PicoW 1, in turn, processes these inputs to adjust the game's visuals in real-time on the VGA display, offering an engaging and interactive labyrinth navigating experience. 
+          This project highlights the potential of Raspberry Pi Pico W microcontrollers in creating sophisticated, yet accessible, gaming and interactive systems.
+        </p> 
+      </div>
+      <div style="text-align:left;padding: 0px 30px; font-weight: bolder;font-size: 24px;">
+        <li>Wi-Fi Module</li>
+      </div>
+      <div style="text-align:center;">
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          In our Wi-Fi module, we are implementing this function to send and receive the data we want to process. The protocl we used is UDP, which is a connectionless protocol. 
+          UDP uses a simple connectionless communication model with a minimum of protocol mechanisms. UDP provides checksums for data integrity, and port numbers for addressing different functions at the source and destination of the datagram. 
+          It has no handshaking dialogues and thus exposes the user's program to any unreliability of the underlying network; there is no guarantee of delivery, ordering, or duplicate protection. 
+        </p>
+        <img class="img-rounded" src="pics/UDP.png" alt="UDP" style="width:50%;">
+        <p>
+          <span class="caption text-muted"> UDP schematic diagram</span>
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          The Picow has a WIFI module that can be used to connect to the internet, using the LWIP package running on the rp2040. 
+          This project uses the UDP protocol to send/receive data between two picoW's on their own subnet. One picoW is configured as a WIFI access point to which the other picoW attaches. 
+          Both run the same program. 
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          The selection of WIFI access point (AP) versus WIFI station is determined by connecting gpio2 to Vdd to select the AP function. 
+          The main function selects AP vs station, then assigns addresses so that each knows the IP address of the other. As soon as the threads are started, the code running on each picoW is the same. 
+          Either AP or station prompts for a string to send, then sends it, followed by another packet containing the time and a shared packet count. The receive ISR is required for async packet arrival by LWIP. 
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          The following image illustrates our use of putty to display the data sent from the sending end to the receiving end in Putty in the computer. 
+          We can see that the parameters we need to calculate the direction and speed of movement, and whether the button is pressed or not are transmitted to the receiver over UDP.
+        </p>
+        <img class="img-rounded" src="pics/Putty.png" alt="Putty" style="width:50%;">
+        <p>
+          <span class="caption text-muted"> Data transmission displayed in Putty</span>
+        </p>
+      </div>
+      
+
+      <hr id='Result&Conclusion'>
+      
+      <div style="text-align:center;">
+          <h1>Result&Conclusion</h1>        
+      </div>
+      <div div style="text-align:center;">
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          By completing this final project, we created a Labyrinth Game that was able to be controlled by the wireless sensor. 
+          The implementation was done by using two Raspberry Pi Pico W units for VGA display and sensor respectively. 
+          We included customization features such that the user will be able to initial conditions of the Game, which will eventually lead to different game experiences. 
+          The transmission of the sensor's parameters is realized through UDP, so that the movement of our cube is always smooth and very sensitive, and there is no delay visible to the naked eye, thus obtaining a better performance of the wireless control function. 
+          Following are some demonstration pictures of our Labyrinth Game, and the screenshot of the content which WiFi sends.
+        </p>
+        <!-- TODO: Add pictures and videos completed -->
+        <ul style="text-align:left; font-size: 15px; margin: 1.5em 0;">
+          <li type="circle">
+            According to this picture below we can see that the left half of the screen is the menu interface, where the player can select the desired difficulty as well as the level by clicking the select button up and down, and then confirming it with the confirm button. 
+            This picture shows the situation of Level 1, at this time there is no map, there are only small squares and the end.
+          </li>
+        </ul>
+        <img class="img-rounded" src="pics/Level1.jpg" alt="UDP" style="width:50%;">
+        <p>
+          <span class="caption text-muted"> Level 1</span>
+        </p>
+        <p></p>
+        <ul style="text-align:left; font-size: 15px; margin: 1.5em 0;">
+          <li type="circle">When level 2 is reached, the map will appear on the screen and we can control the movement of the cube by controlling the sensors in order to reach the finish line.</li>
+        </ul>
+        <p></p>
+        <img class="img-rounded" src="pics/Level2.jpg" alt="UDP" style="width:50%;">
+        <p>
+          <span class="caption text-muted"> Level 2</span>
+        </p>
+        <ul style="text-align:left; font-size: 15px; margin: 1.5em 0;">
+          <li type="circle">In level 3, we added obstacles to increase the difficulty of the game, that is, the red square area shown in the image when the square touches the obstacle in the process of movement is regarded as a game failure, which to some extent increases the game's fun and playability.</li>
+        </ul>
+        <img class="img-rounded" src="pics/Level3.jpg" alt="UDP" style="width:50%;">
+        <p>
+          <span class="caption text-muted"> Level 3</span>
+        </p>
+        <ul style="text-align:left; font-size: 15px; margin: 1.5em 0;">
+          <li type="circle">In Level 4, in addition to the obstacles option, we have added a countdown timer, so that if the blocks do not reach the finish line within the time limit, the game is also considered a failure.</li>
+        </ul>
+        <img class="img-rounded" src="pics/Level4.jpg" alt="UDP" style="width:50%;">
+        <p>
+          <span class="caption text-muted"> Level 4</span>
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          In these demonstrations, we can see that different initial conditions and particle directions will lead to very different system behavior. It would definitely be more interesting to add more obstacles into this project, but due to our current design and resource utilization, we were not able to add such features within the time limit.
+        </p> 
+      </div>
+      <div style="text-align:left;padding: 0px 30px; font-weight: bolder;font-size: 24px;">
+        <li>Conclusion</li>
+      </div>
+      <div style="text-align:center;">
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          The Labyrinth Game, developed using Raspberry Pi Pico W microcontrollers, represents a significant achievement in the realm of interactive gaming and technology. This project successfully integrates hardware control, wireless communication, and creative programming to create an engaging and dynamic gaming experience.
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          Following are some features that we may be able to achieve if given more time:
+          <ul style="text-align:left; font-size: 15px;">
+            <li type="circle">Add/remove obstacles to add complexity to the Maze area</li>
+            <li type="circle">Increase the number of maps to accommodate different types and difficulty settings to increase playability</li>
+            <li type="circle">Improve the user interface, realize the distinction between the menu interface and the game interface, as well as the jump between the interfaces, to enhance user interactivity.</li>
+          </ul>
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          A lot of parts of our design/architecture were inspired by the Helicopter lab and other previous projects. They have been surprisingly useful when we were considering ways of  parallelization. Many thanks to Hunter and Bruce for the abundant resources and documentation!
+        </p>
+      </div>    
+
+
+      <hr id='Appendix'>
+      
+      <div style="text-align:center;">
+          <h1>Appendix</h1>        
+      </div>
+      <div style="text-align:left;padding: 0px 30px; font-weight: bolder;font-size: 24px;">
+        <li>Appendix A</li>
+      </div>
+      <div style="text-align:center;">
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          <mark>The group approves this report for inclusion on the course website.</mark>
+        </p>
+        <p style="text-align: left; padding: 0px 30px; font-size: 15px;">
+          <mark>The group approves the video for inclusion on the course youtube channel.</mark>
+        </p>
+      </div>  
+      <div style="text-align:left;padding: 0px 30px; font-weight: bolder;font-size: 24px;">
+        <li>Appendix B</li>
+      </div>
+      <div style="text-align:center;">
+        <p style="text-align: left; padding: 0px 30px;font-size: 15px;"><a href="https://ece4760.github.io/" class="link-primary">Course Website</a></p>
+        <p style="text-align: left; padding: 0px 30px;font-size: 15px;"><a href="https://people.ece.cornell.edu/land/courses/ece4760/RP2040/C_SDK_LWIP/UDP_symmetric_send_receive/index_udp_symmetric.html" class="link-primary">Wifi Module</a></p>
+        <p style="text-align: left; padding: 0px 30px;font-size: 15px;"><a href="https://en.wikipedia.org/wiki/User_Datagram_Protocol" class="link-primary">UDP</a></p>
+        <p style="text-align: left; padding: 0px 30px;font-size: 15px;"><a href="https://www.raspberrypi.org/documentation/pico/getting-started/" class="link-primary">PicoW Dara sheet</a></p>
+      </div>
+      <div style="text-align:left;padding: 0px 30px; font-weight: bolder;font-size: 24px;">
+        <li>Task Distribution</li> 
+      </div>
+      <div style="text-align:center;">
+        <p style="text-align: left; padding: 0px 30px;font-size: 15px;">
+          Kailing: Software Engineer, Architect, UI/UX Designer, Design Verification Engineer, Documentation
+        </p>
+        <p style="text-align: left; padding: 0px 30px;font-size: 15px;">
+          Ziyuan: Hardware Engineer, UI/UX Designer, Design Verification Engineer, Documentation
+        </p>
+        <p style="text-align: left; padding: 0px 30px;font-size: 15px;">
+          Yifan: Design Verification Engineer, Documentation
+        </p>
+      </div>
+
+    </div><!-- /.container -->
+
+
+
+
+
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
+    <script src="dist/js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <!-- <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script> -->
+  </body>
+</html>
