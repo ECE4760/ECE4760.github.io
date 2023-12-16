@@ -1,0 +1,731 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta content="width=device-width,initial-scale=1.0" name=viewport><meta content="light dark" name=color-scheme><meta content="Code listing for our DLA project." name=description><title>DLA - Code</title><link href=../img/favicon-32x32.png rel=icon sizes=32x32 type=image/png><link href=../img/favicon-16x16.png rel=icon sizes=16x16 type=image/png><link href=../img/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=https://fonts.googleapis.com rel=preconnect><link crossorigin href=https://fonts.gstatic.com rel=preconnect><link href="https://fonts.googleapis.com/css2?family=Signika&display=swap" rel=stylesheet><style>body{--primary-color:#698bcf;--primary-pale-color:#698bcf1c;--text-color:#3c4043;--text-pale-color:#9aa2b9;--bg-color:#fff;--highlight-mark-color:#5f75b045;--callout-note-color:#698bcf;--callout-important-color:#9971d9;--callout-warning-color:#c99054;--callout-alert-color:#d35757;--callout-question-color:#4985a2;--callout-tip-color:#3ea06f;--main-font:'Signika',ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";--code-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--homepage-max-width:750px;--main-max-width:750px;--avatar-size:70px;--paragraph-font-size:18px;--paragraph-line-height:1.75;--aside-font-size:16px;--img-border-radius:0;--inline-code-border-radius:2px}body.dark{--primary-color:#698bcf;--primary-pale-color:#698bcf1c;--text-color:#9197a5;--text-pale-color:#5d6470;--bg-color:#202124;--highlight-mark-color:#5f75b045;--callout-note-color:#698bcf;--callout-important-color:#9971d9;--callout-warning-color:#c99054;--callout-alert-color:#d35757;--callout-question-color:#4985a2;--callout-tip-color:#3ea06f}</style><link href=../main.css rel=stylesheet><link crossorigin href=https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.css integrity=sha384-3UiQGuEI4TTMaFmGIZumfRPtfKQ3trwQE2JgosJxCnGmQpL/lJdjpcHkaaFwHlcI rel=stylesheet><script crossorigin defer integrity=sha384-G0zcxDFp5LWZtDuRMnBkk3EphCK1lhEf4UEyEM693ka574TZGwo4IWwS6QLzM/2t src=https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.js></script><script crossorigin defer integrity=sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05 src=https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/contrib/auto-render.min.js></script><script>document.addEventListener("DOMContentLoaded",function(){renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})})</script><body class=prose-page><script>if(localStorage.getItem('theme')=='dark'){document.body.classList.add('dark');const a=document.querySelector('link#hl');if(a)a.href='/hl-dark.css'}</script><header class=blur><div id=header-wrapper><nav><a href=../index.html>{nathanielnrn, ayc62, wty5}</a><span class=separator>::</span><a href=../dla/index.html>DLA</a></nav><div id=btns><button aria-label="theme switch" data-moon-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z" fill="currentColor"></path></svg>' data-sun-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18ZM12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16ZM11 1H13V4H11V1ZM11 20H13V23H11V20ZM3.51472 4.92893L4.92893 3.51472L7.05025 5.63604L5.63604 7.05025L3.51472 4.92893ZM16.9497 18.364L18.364 16.9497L20.4853 19.0711L19.0711 20.4853L16.9497 18.364ZM19.0711 3.51472L20.4853 4.92893L18.364 7.05025L16.9497 5.63604L19.0711 3.51472ZM5.63604 16.9497L7.05025 18.364L4.92893 20.4853L3.51472 19.0711L5.63604 16.9497ZM23 11V13H20V11H23ZM4 11V13H1V11H4Z" fill="currentColor"></path></svg>' id=theme-toggle><svg viewbox="0 0 24 24" height=24 width=24 xmlns=http://www.w3.org/2000/svg><path d="M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z" fill=currentColor></path></svg></button></div></div></header><div id=wrapper><main><div><div data-check-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="currentColor"></path></svg>' data-copy-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z" fill="currentColor"></path></svg>' id=copy-cfg style=display:none></div><article data-backlink-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M9.41421 8L18.0208 16.6066L16.6066 18.0208L8 9.41421V17H6V6H17V8H9.41421Z" fill="currentColor"></path></svg>' class=prose><p>See the <a href=../dla/index.html>documentation</a> of this code.<pre class=language-C data-lang=C style=background:#282a36;color:#f8f8f2><code class=language-C data-lang=C><span>
+</span><span style=color:#6272a4>/**
+</span><span style=color:#6272a4> * nrn25, ayc62, wty5
+</span><span style=color:#6272a4> *
+</span><span style=color:#6272a4> * This produces DLA using an RP2040. Some DLA parameters are controllable via
+</span><span style=color:#6272a4> * an IMU
+</span><span style=color:#6272a4> *
+</span><span style=color:#6272a4> * HARDWARE CONNECTIONS
+</span><span style=color:#6272a4> *  - (White) GPIO 16 ---> VGA Hsync
+</span><span style=color:#6272a4> *  - (Black) GPIO 17 ---> VGA Vsync
+</span><span style=color:#6272a4> *  - GPIO 18 ---> 330 ohm resistor ---> VGA Red
+</span><span style=color:#6272a4> *  - GPIO 19 ---> 330 ohm resistor ---> VGA Green
+</span><span style=color:#6272a4> *  - GPIO 20 ---> 330 ohm resistor ---> VGA Blue
+</span><span style=color:#6272a4> *  - (Brown board 18) RP2040 GND ---> VGA GND
+</span><span style=color:#6272a4> *
+</span><span style=color:#6272a4> *
+</span><span style=color:#6272a4> *  - 3.3V    ---> IMU Vin
+</span><span style=color:#6272a4> *  - (Grey board 2) RP2040 GND ---> IMU GND
+</span><span style=color:#6272a4> *  - (Purple board 11) GPIO 8 ---> MPU6050 SDA
+</span><span style=color:#6272a4> *  - (White board 12)  GPIO 9 ---> MPU6050 SCL
+</span><span style=color:#6272a4> *
+</span><span style=color:#6272a4> * RESOURCES USED
+</span><span style=color:#6272a4> *  - PIO state machines 0, 1, and 2 on PIO instance 0
+</span><span style=color:#6272a4> *  - DMA channels 0, 1
+</span><span style=color:#6272a4> *  - 153.6 kBytes of RAM (for pixel color data)
+</span><span style=color:#6272a4> *
+</span><span style=color:#6272a4> *  - GPIO 28 - used for ISR mapping, used for oscilliscope.
+</span><span style=color:#6272a4> *
+</span><span style=color:#6272a4> *
+</span><span style=color:#6272a4> *
+</span><span style=color:#6272a4> * ANGLE ORIENTATIONS
+</span><span style=color:#6272a4> *
+</span><span style=color:#6272a4> * X to the right
+</span><span style=color:#6272a4> * Vertical is around X axis
+</span><span style=color:#6272a4> *
+</span><span style=color:#6272a4> * Y is forward
+</span><span style=color:#6272a4> * Horizontal is around Y
+</span><span style=color:#6272a4> */
+</span><span>
+</span><span style=color:#6272a4>// Include the VGA grahics library
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"vga_graphics.h"
+</span><span style=color:#6272a4>// Include standard libraries
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>&LTmath.h>
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>&LTstdio.h>
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>&LTstdlib.h>
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>&LTstring.h>
+</span><span style=color:#6272a4>// Include Pico libraries
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"pico/divider.h"
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"pico/multicore.h"
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"pico/stdlib.h"
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"pico/time.h"
+</span><span style=color:#6272a4>// Include hardware libraries
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"hardware/clocks.h"
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"hardware/dma.h"
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"hardware/i2c.h"
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"hardware/pio.h"
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"hardware/pll.h"
+</span><span>
+</span><span style=color:#6272a4>// Include protothreads
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"pt_cornell_rp2040_v1.h"
+</span><span style=color:#6272a4>// Include IMU libraries
+</span><span style=color:#ff79c6>#include </span><span style=color:#f1fa8c>"mpu6050.h"
+</span><span>
+</span><span style=color:#6272a4>// === the fixed point macros ========================================
+</span><span>
+</span><span style=color:#6272a4>// NOTE: we are actually using fix16, see mpu6050.h
+</span><span style=font-style:italic;color:#8be9fd>typedef signed int </span><span>fix15;
+</span><span>
+</span><span style=color:#6272a4>// Wall detection
+</span><span style=color:#ff79c6>#define </span><span style=color:#50fa7b>hitBottom</span><span>(</span><span style=font-style:italic;color:#ffb86c>b</span><span>) (b </span><span style=color:#ff79c6>> </span><span style=color:#50fa7b>int2fix15</span><span>(</span><span style=color:#bd93f9>380</span><span>))
+</span><span style=color:#ff79c6>#define </span><span style=color:#50fa7b>hitTop</span><span>(</span><span style=font-style:italic;color:#ffb86c>b</span><span>) (b </span><span style=color:#ff79c6>< </span><span style=color:#50fa7b>int2fix15</span><span>(</span><span style=color:#bd93f9>100</span><span>))
+</span><span style=color:#ff79c6>#define </span><span style=color:#50fa7b>hitLeft</span><span>(</span><span style=font-style:italic;color:#ffb86c>a</span><span>) (a </span><span style=color:#ff79c6>< </span><span style=color:#50fa7b>int2fix15</span><span>(</span><span style=color:#bd93f9>100</span><span>))
+</span><span style=color:#ff79c6>#define </span><span style=color:#50fa7b>hitRight</span><span>(</span><span style=font-style:italic;color:#ffb86c>a</span><span>) (a </span><span style=color:#ff79c6>> </span><span style=color:#50fa7b>int2fix15</span><span>(</span><span style=color:#bd93f9>540</span><span>))
+</span><span>
+</span><span style=color:#6272a4>// uS per frame
+</span><span style=color:#ff79c6>#define </span><span>FRAME_RATE </span><span style=color:#bd93f9>33000
+</span><span style=color:#ff79c6>#define </span><span>LED_PIN </span><span style=color:#bd93f9>25
+</span><span>
+</span><span style=color:#ff79c6>#define </span><span>ABS_ARENA_LEFT </span><span style=color:#bd93f9>30
+</span><span style=color:#ff79c6>#define </span><span>ABS_ARENA_TOP </span><span style=color:#bd93f9>20
+</span><span style=color:#ff79c6>#define </span><span>ABS_ARENA_BOT </span><span style=color:#bd93f9>220
+</span><span style=color:#ff79c6>#define </span><span>ABS_ARENA_RIGHT </span><span style=color:#bd93f9>319
+</span><span style=color:#ff79c6>#define </span><span>ARENA_HEIGHT (ABS_ARENA_BOT </span><span style=color:#ff79c6>-</span><span> ABS_ARENA_TOP)
+</span><span style=color:#ff79c6>#define </span><span>ARENA_WIDTH (ABS_ARENA_RIGHT </span><span style=color:#ff79c6>-</span><span> ABS_ARENA_LEFT)
+</span><span>
+</span><span style=color:#ff79c6>#define </span><span>NINETY_FIX </span><span style=color:#bd93f9>5898240
+</span><span>
+</span><span style=color:#6272a4>// the color of freely moving particles, initially dim green
+</span><span style=font-style:italic;color:#8be9fd>char</span><span> active_color </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>
+</span><span style=color:#6272a4>// #define PARTICLE_COUNT 1000
+</span><span style=color:#ff79c6>#define </span><span>PARTICLE_COUNT </span><span style=color:#bd93f9>8000
+</span><span>
+</span><span style=color:#ff79c6>#define </span><span>SPEED </span><span style=color:#bd93f9>2
+</span><span>
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> max_speed </span><span style=color:#ff79c6>=</span><span> SPEED;
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> min_speed </span><span style=color:#ff79c6>= -</span><span>SPEED;
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> max_x_speed </span><span style=color:#ff79c6>=</span><span> SPEED;
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> min_x_speed </span><span style=color:#ff79c6>= -</span><span>SPEED;
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> max_y_speed </span><span style=color:#ff79c6>=</span><span> SPEED;
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> min_y_speed </span><span style=color:#ff79c6>= -</span><span>SPEED;
+</span><span>
+</span><span>fix15 acceleration_arr[</span><span style=color:#bd93f9>20</span><span>] </span><span style=color:#ff79c6>= </span><span style=color:#fff>{</span><span style=color:#bd93f9>0</span><span style=color:#fff>}</span><span>;
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> acceleration_counter </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>fix15 acceleration_sum </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>fix15 acceleration_variance;
+</span><span>fix15 FIX20 </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>int2fix15</span><span>(</span><span style=color:#bd93f9>20</span><span>);
+</span><span>
+</span><span style=color:#6272a4>// features
+</span><span style=font-style:italic;color:#8be9fd>bool</span><span> tilt_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=font-style:italic;color:#8be9fd>bool</span><span> speed_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=font-style:italic;color:#8be9fd>bool</span><span> cyclic_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span style=font-style:italic;color:#8be9fd>bool</span><span> reset_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span style=font-style:italic;color:#8be9fd>bool</span><span> seed_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> seed_x </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> seed_y </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> old_seed_x </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> old_seed_y </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>
+</span><span style=color:#6272a4>// boid structure
+</span><span style=font-style:italic;color:#8be9fd>struct </span><span>particle </span><span style=color:#fff>{
+</span><span>  </span><span style=font-style:italic;color:#8be9fd>short</span><span> x;
+</span><span>  </span><span style=font-style:italic;color:#8be9fd>short</span><span> y;
+</span><span>  </span><span style=font-style:italic;color:#8be9fd>char</span><span> color;
+</span><span>  </span><span style=font-style:italic;color:#8be9fd>short</span><span> cyclic_counter;  </span><span style=color:#6272a4>// tracks "age" of aggregated particle
+</span><span style=color:#fff>}</span><span>;
+</span><span>
+</span><span style=font-style:italic;color:#8be9fd>bool</span><span> aggregate[ARENA_HEIGHT][ARENA_WIDTH];
+</span><span style=font-style:italic;color:#8be9fd>struct</span><span> particle particles[PARTICLE_COUNT];
+</span><span>
+</span><span style=color:#6272a4>// fps and timing info
+</span><span style=color:#ff79c6>static </span><span style=font-style:italic;color:#8be9fd>int</span><span> spare_time_0;
+</span><span style=color:#ff79c6>static </span><span style=font-style:italic;color:#8be9fd>int</span><span> spare_time_acc_0 </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=color:#ff79c6>static </span><span style=font-style:italic;color:#8be9fd>int</span><span> avg_spare_time_0 </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=color:#ff79c6>static </span><span style=font-style:italic;color:#8be9fd>int</span><span> frame_count_0 </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=color:#ff79c6>static </span><span style=font-style:italic;color:#8be9fd>int</span><span> grad_incr </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>
+</span><span style=color:#ff79c6>volatile </span><span style=font-style:italic;color:#8be9fd>float</span><span> filtered_ay </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=color:#ff79c6>volatile </span><span style=font-style:italic;color:#8be9fd>float</span><span> filtered_az </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=color:#ff79c6>volatile </span><span style=font-style:italic;color:#8be9fd>float</span><span> filtered_ax </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>fix15 vertical_accel_angle;
+</span><span>fix15 horizontal_accel_angle;
+</span><span>fix15 vertical_complementary_angle;
+</span><span>fix15 horizontal_complementary_angle;
+</span><span style=color:#6272a4>// Arrays in which raw measurements will be stored
+</span><span>fix15 acceleration[</span><span style=color:#bd93f9>3</span><span>], gyro[</span><span style=color:#bd93f9>3</span><span>];
+</span><span>
+</span><span style=color:#ff79c6>#define </span><span>AVG_SPARE_TIME_FRAME_COUNT </span><span style=color:#bd93f9>512
+</span><span>
+</span><span style=font-style:italic;color:#8be9fd>int</span><span> current_fps </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>30</span><span>;
+</span><span style=color:#ff79c6>static </span><span style=font-style:italic;color:#8be9fd>int</span><span> rand_idx </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=color:#ff79c6>static </span><span style=font-style:italic;color:#8be9fd>int</span><span> rand_arr[</span><span style=color:#bd93f9>4</span><span>] </span><span style=color:#ff79c6>= </span><span style=color:#fff>{</span><span style=color:#bd93f9>3</span><span>, </span><span style=color:#bd93f9>4</span><span>, </span><span style=color:#ff79c6>-</span><span style=color:#bd93f9>5</span><span>, </span><span style=color:#ff79c6>-</span><span style=color:#bd93f9>6</span><span style=color:#fff>}</span><span>;
+</span><span>
+</span><span style=color:#6272a4>// assume this is only used for brownian motion. SHOULD CHANGE TO NORMAL
+</span><span style=font-style:italic;color:#8be9fd>int </span><span style=color:#50fa7b>uniform_rand</span><span>(</span><span style=font-style:italic;color:#8be9fd>int </span><span style=font-style:italic;color:#ffb86c>min</span><span>, </span><span style=font-style:italic;color:#8be9fd>int </span><span style=font-style:italic;color:#ffb86c>max</span><span>) </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#ff79c6>return </span><span>(</span><span style=color:#8be9fd>rand</span><span>() </span><span style=color:#ff79c6>% </span><span>(max </span><span style=color:#ff79c6>-</span><span> min </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>)) </span><span style=color:#ff79c6>+</span><span> min;
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#ff79c6>inline </span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>bound_particle</span><span>(</span><span style=font-style:italic;color:#8be9fd>struct</span><span> particle </span><span style=color:#ff79c6>*</span><span style=font-style:italic;color:#ffb86c>particle</span><span>) </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#6272a4>// return;
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(particle</span><span style=color:#ff79c6>-></span><span>x </span><span style=color:#ff79c6><</span><span> ABS_ARENA_LEFT </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>)
+</span><span>    particle</span><span style=color:#ff79c6>-></span><span>x </span><span style=color:#ff79c6>=</span><span> ABS_ARENA_LEFT </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>;
+</span><span>  </span><span style=color:#ff79c6>else if </span><span>(particle</span><span style=color:#ff79c6>-></span><span>x </span><span style=color:#ff79c6>></span><span> ABS_ARENA_RIGHT </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>)
+</span><span>    particle</span><span style=color:#ff79c6>-></span><span>x </span><span style=color:#ff79c6>=</span><span> ABS_ARENA_RIGHT </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>;
+</span><span>
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(particle</span><span style=color:#ff79c6>-></span><span>y </span><span style=color:#ff79c6><</span><span> ABS_ARENA_TOP </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>)
+</span><span>    particle</span><span style=color:#ff79c6>-></span><span>y </span><span style=color:#ff79c6>=</span><span> ABS_ARENA_TOP </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>;
+</span><span>  </span><span style=color:#ff79c6>else if </span><span>(particle</span><span style=color:#ff79c6>-></span><span>y </span><span style=color:#ff79c6>></span><span> ABS_ARENA_BOT </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>)
+</span><span>    particle</span><span style=color:#ff79c6>-></span><span>y </span><span style=color:#ff79c6>=</span><span> ABS_ARENA_BOT </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>;
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>drawInfo</span><span>() </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#50fa7b>setCursor</span><span>(</span><span style=color:#bd93f9>5</span><span>, </span><span style=color:#bd93f9>10</span><span>);
+</span><span>
+</span><span>  </span><span style=color:#50fa7b>setTextSize</span><span>(</span><span style=color:#bd93f9>1</span><span>);
+</span><span>  </span><span style=color:#50fa7b>setTextColor2</span><span>(RED, BLACK);
+</span><span>
+</span><span>  </span><span style=font-style:italic;color:#8be9fd>char</span><span> string[</span><span style=color:#bd93f9>200</span><span>];
+</span><span>  </span><span style=color:#8be9fd>sprintf</span><span>(string, </span><span style=color:#f1fa8c>"Var: </span><span style=color:#bd93f9>%f</span><span style=color:#f1fa8c>"</span><span>, </span><span style=color:#50fa7b>fix2float15</span><span>(acceleration_variance));
+</span><span>  </span><span style=color:#50fa7b>writeString</span><span>(string);
+</span><span>
+</span><span>  </span><span style=color:#50fa7b>setCursor</span><span>(</span><span style=color:#bd93f9>5</span><span>, </span><span style=color:#bd93f9>20</span><span>);
+</span><span>
+</span><span>  </span><span style=color:#50fa7b>setTextSize</span><span>(</span><span style=color:#bd93f9>1</span><span>);
+</span><span>  </span><span style=color:#50fa7b>setTextColor2</span><span>(RED, BLACK);
+</span><span>
+</span><span>  </span><span style=color:#8be9fd>sprintf</span><span>(string, </span><span style=color:#f1fa8c>"sum: </span><span style=color:#bd93f9>%f</span><span style=color:#f1fa8c>"</span><span>, </span><span style=color:#50fa7b>fix2float15</span><span>(acceleration_sum));
+</span><span>  </span><span style=color:#50fa7b>writeString</span><span>(string);
+</span><span>
+</span><span>  </span><span style=color:#50fa7b>setCursor</span><span>(</span><span style=color:#bd93f9>5</span><span>, </span><span style=color:#bd93f9>30</span><span>);
+</span><span>
+</span><span>  </span><span style=color:#50fa7b>setTextSize</span><span>(</span><span style=color:#bd93f9>1</span><span>);
+</span><span>  </span><span style=color:#50fa7b>setTextColor2</span><span>(RED, BLACK);
+</span><span>
+</span><span>  </span><span style=color:#8be9fd>sprintf</span><span>(string, </span><span style=color:#f1fa8c>"maxy: </span><span style=color:#bd93f9>%d</span><span style=color:#f1fa8c> miny: </span><span style=color:#bd93f9>%d</span><span style=color:#f1fa8c>"</span><span>, max_y_speed, min_y_speed);
+</span><span>  </span><span style=color:#50fa7b>writeString</span><span>(string);
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#6272a4>// this reads from the IMU!
+</span><span style=font-style:italic;color:#8be9fd>bool </span><span style=color:#50fa7b>update_angles</span><span>() </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#50fa7b>gpio_put</span><span>(LED_PIN, </span><span style=color:#ff79c6>!</span><span style=color:#50fa7b>gpio_get</span><span>(LED_PIN));
+</span><span>  </span><span style=color:#50fa7b>gpio_put</span><span>(</span><span style=color:#bd93f9>28</span><span>, </span><span style=color:#bd93f9>1</span><span>);  </span><span style=color:#6272a4>// for testing of ISR length
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// // Read the IMU
+</span><span>  </span><span style=color:#6272a4>// // NOTE! This is in 15.16 fixed point. Accel in g's, gyro in deg/s
+</span><span>  </span><span style=color:#6272a4>// // If you want these values in floating point, call fix2float15() on
+</span><span>  </span><span style=color:#6272a4>// // the raw measurements.
+</span><span>
+</span><span>  filtered_ax </span><span style=color:#ff79c6>=</span><span> filtered_ax </span><span style=color:#ff79c6>+ </span><span>((</span><span style=font-style:italic;color:#8be9fd>int</span><span>)((</span><span style=font-style:italic;color:#8be9fd>float</span><span>)acceleration[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>-</span><span> filtered_ax) </span><span style=color:#ff79c6>>> </span><span style=color:#bd93f9>2</span><span>);
+</span><span>  filtered_ay </span><span style=color:#ff79c6>=</span><span> filtered_ay </span><span style=color:#ff79c6>+ </span><span>((</span><span style=font-style:italic;color:#8be9fd>int</span><span>)((</span><span style=font-style:italic;color:#8be9fd>float</span><span>)acceleration[</span><span style=color:#bd93f9>1</span><span>] </span><span style=color:#ff79c6>-</span><span> filtered_ay) </span><span style=color:#ff79c6>>> </span><span style=color:#bd93f9>2</span><span>);
+</span><span>  filtered_az </span><span style=color:#ff79c6>=</span><span> filtered_az </span><span style=color:#ff79c6>+ </span><span>((</span><span style=font-style:italic;color:#8be9fd>int</span><span>)((</span><span style=font-style:italic;color:#8be9fd>float</span><span>)acceleration[</span><span style=color:#bd93f9>2</span><span>] </span><span style=color:#ff79c6>-</span><span> filtered_az) </span><span style=color:#ff79c6>>> </span><span style=color:#bd93f9>2</span><span>);
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// // 0 is hanging down!!!
+</span><span>  </span><span style=color:#6272a4>// // this returns -180 to 180
+</span><span>  </span><span style=color:#6272a4>// note this is z over y
+</span><span>  vertical_accel_angle </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>multfix15</span><span>(</span><span style=color:#50fa7b>float2fix15</span><span>(</span><span style=color:#8be9fd>atan2</span><span>(filtered_ay, filtered_az)), oneeightyoverpi);
+</span><span>  horizontal_accel_angle </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>multfix15</span><span>(</span><span style=color:#50fa7b>float2fix15</span><span>(</span><span style=color:#8be9fd>atan2</span><span>(</span><span style=color:#ff79c6>-</span><span>filtered_ax, filtered_az)), oneeightyoverpi);
+</span><span>
+</span><span>  vertical_complementary_angle </span><span style=color:#ff79c6>=</span><span> vertical_accel_angle;
+</span><span>  horizontal_complementary_angle </span><span style=color:#ff79c6>=</span><span> horizontal_accel_angle;
+</span><span>
+</span><span>  </span><span style=color:#50fa7b>gpio_put</span><span>(</span><span style=color:#bd93f9>28</span><span>, </span><span style=color:#bd93f9>0</span><span>);  </span><span style=color:#6272a4>// for testing of ISR length
+</span><span>
+</span><span>  </span><span style=color:#ff79c6>return </span><span style=color:#bd93f9>true</span><span>;
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#6272a4>// Create a particle
+</span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>spawnParticle</span><span>(</span><span style=font-style:italic;color:#8be9fd>struct</span><span> particle </span><span style=color:#ff79c6>*</span><span style=font-style:italic;color:#ffb86c>particle</span><span>) </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#6272a4>// Start in random place
+</span><span>  particle</span><span style=color:#ff79c6>-></span><span>x </span><span style=color:#ff79c6>= </span><span>(</span><span style=font-style:italic;color:#8be9fd>short</span><span>)(</span><span style=color:#50fa7b>uniform_rand</span><span>(ABS_ARENA_LEFT, ABS_ARENA_RIGHT));
+</span><span>  particle</span><span style=color:#ff79c6>-></span><span>y </span><span style=color:#ff79c6>= </span><span>(</span><span style=font-style:italic;color:#8be9fd>short</span><span>)(</span><span style=color:#50fa7b>uniform_rand</span><span>(ABS_ARENA_TOP, ABS_ARENA_BOT));
+</span><span>  particle</span><span style=color:#ff79c6>-></span><span>cyclic_counter </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>
+</span><span>  </span><span style=color:#50fa7b>bound_particle</span><span>(particle);
+</span><span>
+</span><span>  particle</span><span style=color:#ff79c6>-></span><span>color </span><span style=color:#ff79c6>=</span><span> active_color;
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=font-style:italic;color:#8be9fd>bool </span><span style=color:#50fa7b>in_bound</span><span>(</span><span style=font-style:italic;color:#8be9fd>short </span><span style=font-style:italic;color:#ffb86c>x</span><span>, </span><span style=font-style:italic;color:#8be9fd>short </span><span style=font-style:italic;color:#ffb86c>y</span><span>) </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#ff79c6>return </span><span>((x </span><span style=color:#ff79c6>></span><span> ABS_ARENA_LEFT) </span><span style=color:#ff79c6>&& </span><span>(x </span><span style=color:#ff79c6><</span><span> ABS_ARENA_RIGHT) </span><span style=color:#ff79c6>&& </span><span>(y </span><span style=color:#ff79c6>></span><span> ABS_ARENA_TOP) </span><span style=color:#ff79c6>&& </span><span>(y </span><span style=color:#ff79c6><</span><span> ABS_ARENA_BOT));
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#ff79c6>inline </span><span style=font-style:italic;color:#8be9fd>bool </span><span style=color:#50fa7b>is_aggregated</span><span>(</span><span style=font-style:italic;color:#8be9fd>struct</span><span> particle </span><span style=color:#ff79c6>*</span><span style=font-style:italic;color:#ffb86c>particle</span><span>) </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#6272a4>//>0 cause BLACK is 0 and 2 lsb are green (see vga_graphics.h).
+</span><span>  </span><span style=color:#ff79c6>return</span><span> particle</span><span style=color:#ff79c6>-></span><span>color </span><span style=color:#ff79c6>!= </span><span style=color:#bd93f9>1 </span><span style=color:#ff79c6>&&</span><span> particle</span><span style=color:#ff79c6>-></span><span>color </span><span style=color:#ff79c6>> </span><span style=color:#bd93f9>0</span><span>;
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#6272a4>// instead of simple yes/no, we will aggregate if sum of neighbors is bigger than some threshold
+</span><span style=color:#6272a4>// threshold needs to be 3 if we only have 1 starting seed
+</span><span style=color:#6272a4>// can be 6 if we have 2 seeds next to each other, etc.
+</span><span style=font-style:italic;color:#8be9fd>char</span><span> aggregation_threshold </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>15</span><span>;
+</span><span style=font-style:italic;color:#8be9fd>bool </span><span style=color:#50fa7b>touching_aggregate</span><span>(</span><span style=font-style:italic;color:#8be9fd>short </span><span style=font-style:italic;color:#ffb86c>x</span><span>, </span><span style=font-style:italic;color:#8be9fd>short </span><span style=font-style:italic;color:#ffb86c>y</span><span>) </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(</span><span style=color:#ff79c6>!</span><span style=color:#50fa7b>in_bound</span><span>(x, y)) </span><span style=color:#ff79c6>return </span><span style=color:#bd93f9>false</span><span>;
+</span><span>
+</span><span>  </span><span style=font-style:italic;color:#8be9fd>char</span><span> sum </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>  </span><span style=font-style:italic;color:#8be9fd>char</span><span> curr_color </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>
+</span><span>  curr_color </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>getPixel</span><span>(x </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>, y);
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(curr_color </span><span style=color:#ff79c6>!=</span><span> active_color)
+</span><span>    sum </span><span style=color:#ff79c6>+=</span><span> curr_color;
+</span><span>  curr_color </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>getPixel</span><span>(x </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>, y);
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(curr_color </span><span style=color:#ff79c6>!=</span><span> active_color)
+</span><span>    sum </span><span style=color:#ff79c6>+=</span><span> curr_color;
+</span><span>  curr_color </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>getPixel</span><span>(x, y </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>);
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(curr_color </span><span style=color:#ff79c6>!=</span><span> active_color)
+</span><span>    sum </span><span style=color:#ff79c6>+=</span><span> curr_color;
+</span><span>  curr_color </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>getPixel</span><span>(x, y </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>);
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(curr_color </span><span style=color:#ff79c6>!=</span><span> active_color)
+</span><span>    sum </span><span style=color:#ff79c6>+=</span><span> curr_color;
+</span><span>  curr_color </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>getPixel</span><span>(x </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>, y </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>);
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(curr_color </span><span style=color:#ff79c6>!=</span><span> active_color)
+</span><span>    sum </span><span style=color:#ff79c6>+=</span><span> curr_color;
+</span><span>  curr_color </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>getPixel</span><span>(x </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>, y </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>);
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(curr_color </span><span style=color:#ff79c6>!=</span><span> active_color)
+</span><span>    sum </span><span style=color:#ff79c6>+=</span><span> curr_color;
+</span><span>  curr_color </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>getPixel</span><span>(x </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>, y </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>);
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(curr_color </span><span style=color:#ff79c6>!=</span><span> active_color)
+</span><span>    sum </span><span style=color:#ff79c6>+=</span><span> curr_color;
+</span><span>  curr_color </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>getPixel</span><span>(x </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>, y </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>);
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(curr_color </span><span style=color:#ff79c6>!=</span><span> active_color)
+</span><span>    sum </span><span style=color:#ff79c6>+=</span><span> curr_color;
+</span><span>
+</span><span>  </span><span style=color:#ff79c6>return</span><span> sum </span><span style=color:#ff79c6>>=</span><span> aggregation_threshold;
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>move_crystal</span><span>(</span><span style=font-style:italic;color:#8be9fd>struct</span><span> particle </span><span style=color:#ff79c6>*</span><span style=font-style:italic;color:#ffb86c>particle</span><span>, </span><span style=font-style:italic;color:#8be9fd>short </span><span style=font-style:italic;color:#ffb86c>dx</span><span>, </span><span style=font-style:italic;color:#8be9fd>short </span><span style=font-style:italic;color:#ffb86c>dy</span><span>) </span><span style=color:#fff>{
+</span><span>  fix15 fix_dx </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>short2fix15</span><span>(dx);
+</span><span>  fix15 fix_dy </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>short2fix15</span><span>(dy);
+</span><span>  fix15 abs_dx </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>absfix15</span><span>(fix_dx);
+</span><span>  fix15 abs_dy </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>absfix15</span><span>(fix_dy);
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// alpha = 1, beta = 1/4
+</span><span>  fix15 len </span><span style=color:#ff79c6>= </span><span>((abs_dx </span><span style=color:#ff79c6>></span><span> abs_dy) </span><span style=color:#ff79c6>?</span><span> abs_dx </span><span style=color:#ff79c6>:</span><span> abs_dy) </span><span style=color:#ff79c6>+ </span><span>(((abs_dx </span><span style=color:#ff79c6>></span><span> abs_dy) </span><span style=color:#ff79c6>?</span><span> abs_dy </span><span style=color:#ff79c6>:</span><span> abs_dx) </span><span style=color:#ff79c6>>> </span><span style=color:#bd93f9>2</span><span>);
+</span><span>
+</span><span>  len </span><span style=color:#ff79c6>= </span><span>(len </span><span style=color:#ff79c6>& </span><span>(</span><span style=color:#bd93f9>0xFFFF0000</span><span>));  </span><span style=color:#6272a4>// mask off decimal bits
+</span><span>
+</span><span>  fix15 lil_dx </span><span style=color:#ff79c6>= </span><span>(len </span><span style=color:#ff79c6>!= </span><span style=color:#bd93f9>0</span><span>) </span><span style=color:#ff79c6>? </span><span style=color:#50fa7b>divfix</span><span>(fix_dx, len) </span><span style=color:#ff79c6>: </span><span style=color:#bd93f9>0</span><span>;
+</span><span>  fix15 lil_dy </span><span style=color:#ff79c6>= </span><span>(len </span><span style=color:#ff79c6>!= </span><span style=color:#bd93f9>0</span><span>) </span><span style=color:#ff79c6>? </span><span style=color:#50fa7b>divfix</span><span>(fix_dy, len) </span><span style=color:#ff79c6>: </span><span style=color:#bd93f9>0</span><span>;
+</span><span>
+</span><span>  fix15 particle_x </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>short2fix15</span><span>(particle</span><span style=color:#ff79c6>-></span><span>x);
+</span><span>  fix15 particle_y </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>short2fix15</span><span>(particle</span><span style=color:#ff79c6>-></span><span>y);
+</span><span>
+</span><span>  </span><span style=font-style:italic;color:#8be9fd>short</span><span> short_particle_x;
+</span><span>  </span><span style=font-style:italic;color:#8be9fd>short</span><span> short_particle_y;
+</span><span>
+</span><span>  </span><span style=color:#ff79c6>for </span><span>(</span><span style=font-style:italic;color:#8be9fd>short</span><span> i </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>; i </span><span style=color:#ff79c6>< </span><span style=color:#50fa7b>fix2short15</span><span>(len); i</span><span style=color:#ff79c6>++</span><span>) </span><span style=color:#fff>{
+</span><span>    </span><span style=color:#6272a4>// for (short i = 0; i < 8; i++) {
+</span><span>    short_particle_x </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>fix2short15</span><span>(particle_x);
+</span><span>    short_particle_y </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>fix2short15</span><span>(particle_y);
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(</span><span style=color:#50fa7b>touching_aggregate</span><span>(short_particle_x, short_particle_y) </span><span style=color:#ff79c6>&& </span><span style=color:#50fa7b>getPixel</span><span>(particle</span><span style=color:#ff79c6>-></span><span>x, particle</span><span style=color:#ff79c6>-></span><span>y) </span><span style=color:#ff79c6>==</span><span> BLACK) </span><span style=color:#fff>{
+</span><span>      particle</span><span style=color:#ff79c6>-></span><span>x </span><span style=color:#ff79c6>=</span><span> short_particle_x;
+</span><span>      particle</span><span style=color:#ff79c6>-></span><span>y </span><span style=color:#ff79c6>=</span><span> short_particle_y;
+</span><span>      particle</span><span style=color:#ff79c6>-></span><span>color </span><span style=color:#ff79c6>=</span><span> WHITE;
+</span><span>      particle</span><span style=color:#ff79c6>-></span><span>cyclic_counter </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>      </span><span style=color:#ff79c6>return</span><span>;
+</span><span>    </span><span style=color:#fff>}
+</span><span>    particle_x </span><span style=color:#ff79c6>+=</span><span> lil_dx;
+</span><span>    particle_y </span><span style=color:#ff79c6>+=</span><span> lil_dy;
+</span><span>  </span><span style=color:#fff>}
+</span><span>
+</span><span>  short_particle_x </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>fix2short15</span><span>(particle_x);
+</span><span>  short_particle_y </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>fix2short15</span><span>(particle_y);
+</span><span>  particle</span><span style=color:#ff79c6>-></span><span>x </span><span style=color:#ff79c6>=</span><span> short_particle_x;
+</span><span>  particle</span><span style=color:#ff79c6>-></span><span>y </span><span style=color:#ff79c6>=</span><span> short_particle_y;
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>calculate_tilt_parameters</span><span>() </span><span style=color:#fff>{
+</span><span>  fix15 vertical_ratio </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>divfix</span><span>(vertical_complementary_angle, NINETY_FIX);
+</span><span>  fix15 horizontal_ratio </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>divfix</span><span>(horizontal_complementary_angle, NINETY_FIX);
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(vertical_ratio </span><span style=color:#ff79c6>< </span><span style=color:#bd93f9>0</span><span>) </span><span style=color:#fff>{  </span><span style=color:#6272a4>// GO UP
+</span><span>    max_y_speed </span><span style=color:#ff79c6>=</span><span> max_speed </span><span style=color:#ff79c6>+ </span><span style=color:#50fa7b>fix2int15</span><span>(</span><span style=color:#50fa7b>multfix15</span><span>(</span><span style=color:#50fa7b>int2fix15</span><span>(max_speed), vertical_ratio));
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(max_speed </span><span style=color:#ff79c6>== </span><span style=color:#bd93f9>1</span><span>) min_y_speed </span><span style=color:#ff79c6>=</span><span> min_y_speed </span><span style=color:#ff79c6>+ </span><span style=color:#50fa7b>fix2int15</span><span>(</span><span style=color:#50fa7b>multfix15</span><span>(</span><span style=color:#50fa7b>int2fix15</span><span>(max_speed), vertical_ratio));
+</span><span>  </span><span style=color:#fff>} </span><span style=color:#ff79c6>else </span><span style=color:#fff>{  </span><span style=color:#6272a4>// GO DOWN
+</span><span>    min_y_speed </span><span style=color:#ff79c6>=</span><span> min_speed </span><span style=color:#ff79c6>- </span><span style=color:#50fa7b>fix2int15</span><span>(</span><span style=color:#50fa7b>multfix15</span><span>(</span><span style=color:#50fa7b>int2fix15</span><span>(max_speed), </span><span style=color:#ff79c6>-</span><span>vertical_ratio));
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(max_speed </span><span style=color:#ff79c6>== </span><span style=color:#bd93f9>1</span><span>) max_y_speed </span><span style=color:#ff79c6>=</span><span> max_y_speed </span><span style=color:#ff79c6>- </span><span style=color:#50fa7b>fix2int15</span><span>(</span><span style=color:#50fa7b>multfix15</span><span>(</span><span style=color:#50fa7b>int2fix15</span><span>(max_speed), </span><span style=color:#ff79c6>-</span><span>vertical_ratio));
+</span><span>  </span><span style=color:#fff>}
+</span><span>
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(horizontal_ratio </span><span style=color:#ff79c6>> </span><span style=color:#bd93f9>0</span><span>) </span><span style=color:#fff>{  </span><span style=color:#6272a4>// GO RIGHT
+</span><span>    min_x_speed </span><span style=color:#ff79c6>=</span><span> min_speed </span><span style=color:#ff79c6>- </span><span style=color:#50fa7b>fix2int15</span><span>(</span><span style=color:#50fa7b>multfix15</span><span>(</span><span style=color:#50fa7b>int2fix15</span><span>(max_speed), </span><span style=color:#ff79c6>-</span><span>horizontal_ratio));
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(max_speed </span><span style=color:#ff79c6>== </span><span style=color:#bd93f9>1</span><span>) max_x_speed </span><span style=color:#ff79c6>=</span><span> max_x_speed </span><span style=color:#ff79c6>- </span><span style=color:#50fa7b>fix2int15</span><span>(</span><span style=color:#50fa7b>multfix15</span><span>(</span><span style=color:#50fa7b>int2fix15</span><span>(max_speed), </span><span style=color:#ff79c6>-</span><span>horizontal_ratio));
+</span><span>  </span><span style=color:#fff>} </span><span style=color:#ff79c6>else </span><span style=color:#fff>{  </span><span style=color:#6272a4>// GO LEFT
+</span><span>    max_x_speed </span><span style=color:#ff79c6>=</span><span> max_speed </span><span style=color:#ff79c6>+ </span><span style=color:#50fa7b>fix2int15</span><span>(</span><span style=color:#50fa7b>multfix15</span><span>(</span><span style=color:#50fa7b>int2fix15</span><span>(max_speed), horizontal_ratio));
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(max_speed </span><span style=color:#ff79c6>== </span><span style=color:#bd93f9>1</span><span>) min_x_speed </span><span style=color:#ff79c6>=</span><span> min_x_speed </span><span style=color:#ff79c6>+ </span><span style=color:#50fa7b>fix2int15</span><span>(</span><span style=color:#50fa7b>multfix15</span><span>(</span><span style=color:#50fa7b>int2fix15</span><span>(max_speed), horizontal_ratio));
+</span><span>  </span><span style=color:#fff>}
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// cap everything
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(min_y_speed </span><span style=color:#ff79c6>> -</span><span style=color:#bd93f9>1</span><span>) min_y_speed </span><span style=color:#ff79c6>= -</span><span style=color:#bd93f9>1</span><span>;
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(min_x_speed </span><span style=color:#ff79c6>> -</span><span style=color:#bd93f9>1</span><span>) min_x_speed </span><span style=color:#ff79c6>= -</span><span style=color:#bd93f9>1</span><span>;
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(max_y_speed </span><span style=color:#ff79c6>< </span><span style=color:#bd93f9>1</span><span>) max_y_speed </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(max_x_speed </span><span style=color:#ff79c6>< </span><span style=color:#bd93f9>1</span><span>) max_x_speed </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>set_speed_parameters</span><span>() </span><span style=color:#fff>{
+</span><span>  fix15 variance </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>  fix15 avg </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>  fix15 sum </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>
+</span><span>  avg </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>divfix</span><span>(acceleration_sum, FIX20);
+</span><span>  </span><span style=color:#ff79c6>for </span><span>(</span><span style=font-style:italic;color:#8be9fd>int</span><span> i </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>; i </span><span style=color:#ff79c6>< </span><span style=color:#bd93f9>20</span><span>; i</span><span style=color:#ff79c6>++</span><span>) </span><span style=color:#fff>{
+</span><span>    fix15 diff </span><span style=color:#ff79c6>= </span><span>(acceleration_arr[i] </span><span style=color:#ff79c6>-</span><span> avg);
+</span><span>    sum </span><span style=color:#ff79c6>+= </span><span style=color:#50fa7b>multfix15</span><span>(diff, diff);
+</span><span>  </span><span style=color:#fff>}
+</span><span>  </span><span style=color:#6272a4>// multiply by 16 to get a good scaling, this caps around 6 or 7 empirically.
+</span><span>  variance </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>divfix</span><span>(sum, FIX20) </span><span style=color:#ff79c6><< </span><span style=color:#bd93f9>4</span><span>;
+</span><span>
+</span><span>  acceleration_variance </span><span style=color:#ff79c6>=</span><span> variance;
+</span><span>  </span><span style=font-style:italic;color:#8be9fd>int</span><span> acceleration_variance_int </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>fix2int15</span><span>(acceleration_variance);
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(acceleration_variance_int </span><span style=color:#ff79c6>> </span><span style=color:#bd93f9>0</span><span>) </span><span style=color:#fff>{
+</span><span>    min_speed </span><span style=color:#ff79c6>= -</span><span>acceleration_variance_int;
+</span><span>    max_speed </span><span style=color:#ff79c6>=</span><span> acceleration_variance_int;
+</span><span>  </span><span style=color:#fff>} </span><span style=color:#ff79c6>else </span><span style=color:#fff>{
+</span><span>    min_speed </span><span style=color:#ff79c6>= -</span><span style=color:#bd93f9>1</span><span>;
+</span><span>    max_speed </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>  </span><span style=color:#fff>}
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#6272a4>// responsible for updating cyclic counter and spawning new particle on decay.
+</span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>decay</span><span>(</span><span style=font-style:italic;color:#8be9fd>struct</span><span> particle </span><span style=color:#ff79c6>*</span><span style=font-style:italic;color:#ffb86c>particle</span><span>) </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(</span><span style=color:#50fa7b>is_aggregated</span><span>(particle)) </span><span style=color:#fff>{
+</span><span>    particle</span><span style=color:#ff79c6>-></span><span>cyclic_counter </span><span style=color:#ff79c6>+= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>    </span><span style=color:#6272a4>// tune here
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(particle</span><span style=color:#ff79c6>-></span><span>cyclic_counter </span><span style=color:#ff79c6>%</span><span> grad_incr </span><span style=color:#ff79c6>== </span><span style=color:#bd93f9>0 </span><span style=color:#ff79c6>&&</span><span> particle</span><span style=color:#ff79c6>-></span><span>color </span><span style=color:#ff79c6>> </span><span style=color:#bd93f9>2</span><span>) </span><span style=color:#fff>{
+</span><span>      particle</span><span style=color:#ff79c6>-></span><span>color </span><span style=color:#ff79c6>-= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>    </span><span style=color:#fff>}
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(particle</span><span style=color:#ff79c6>-></span><span>cyclic_counter </span><span style=color:#ff79c6>>=</span><span> grad_incr </span><span style=color:#ff79c6>* </span><span style=color:#bd93f9>16</span><span>) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#6272a4>// get rid of i.e respawn
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(particle</span><span style=color:#ff79c6>-></span><span>x, particle</span><span style=color:#ff79c6>-></span><span>y, BLACK);
+</span><span>      </span><span style=color:#50fa7b>spawnParticle</span><span>(particle);
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// }
+</span><span>  </span><span style=color:#fff>}
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#6272a4>// Detect wallstrikes, update velocity and position
+</span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>resetPixel</span><span>(</span><span style=font-style:italic;color:#8be9fd>struct</span><span> particle </span><span style=color:#ff79c6>*</span><span style=font-style:italic;color:#ffb86c>particle</span><span>) </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#50fa7b>drawPixel</span><span>(particle</span><span style=color:#ff79c6>-></span><span>x, particle</span><span style=color:#ff79c6>-></span><span>y, BLACK);
+</span><span>  </span><span style=color:#50fa7b>spawnParticle</span><span>(particle);
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#6272a4>// Detect wallstrikes, update velocity and position
+</span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>updatePosAndVel</span><span>(</span><span style=font-style:italic;color:#8be9fd>struct</span><span> particle </span><span style=color:#ff79c6>*</span><span style=font-style:italic;color:#ffb86c>particle</span><span>) </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#6272a4>// needs to be both for when restart/transition visibility
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(particle</span><span style=color:#ff79c6>-></span><span>color </span><span style=color:#ff79c6>== </span><span style=color:#bd93f9>1 </span><span style=color:#ff79c6>||</span><span> particle</span><span style=color:#ff79c6>-></span><span>color </span><span style=color:#ff79c6>==</span><span> BLACK) </span><span style=color:#fff>{
+</span><span>    particle</span><span style=color:#ff79c6>-></span><span>color </span><span style=color:#ff79c6>=</span><span> active_color;
+</span><span>
+</span><span>    </span><span style=font-style:italic;color:#8be9fd>short</span><span> dx </span><span style=color:#ff79c6>= </span><span>(</span><span style=font-style:italic;color:#8be9fd>short</span><span>)</span><span style=color:#50fa7b>uniform_rand</span><span>(min_x_speed, max_x_speed);
+</span><span>    </span><span style=font-style:italic;color:#8be9fd>short</span><span> dy </span><span style=color:#ff79c6>= </span><span>(</span><span style=font-style:italic;color:#8be9fd>short</span><span>)(</span><span style=color:#50fa7b>uniform_rand</span><span>(min_y_speed, max_y_speed));
+</span><span>
+</span><span>    </span><span style=color:#50fa7b>move_crystal</span><span>(particle, dx, dy);
+</span><span>
+</span><span>    </span><span style=color:#50fa7b>bound_particle</span><span>(particle);
+</span><span>
+</span><span>  </span><span style=color:#fff>} </span><span style=color:#ff79c6>else if </span><span>(cyclic_feature </span><span style=color:#ff79c6>&& </span><span style=color:#50fa7b>is_aggregated</span><span>(particle)) </span><span style=color:#fff>{
+</span><span>    </span><span style=color:#50fa7b>decay</span><span>(particle);
+</span><span>  </span><span style=color:#fff>}
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#6272a4>// Draw the boundaries
+</span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>drawArena</span><span>() </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#50fa7b>drawVLine</span><span>(ABS_ARENA_LEFT, ABS_ARENA_TOP, ARENA_HEIGHT, BLACK);   </span><span style=color:#6272a4>// Left Line
+</span><span>  </span><span style=color:#50fa7b>drawVLine</span><span>(ABS_ARENA_RIGHT, ABS_ARENA_TOP, ARENA_HEIGHT, BLACK);  </span><span style=color:#6272a4>// Right Line
+</span><span>  </span><span style=color:#50fa7b>drawHLine</span><span>(ABS_ARENA_LEFT, ABS_ARENA_TOP, ARENA_WIDTH, BLACK);    </span><span style=color:#6272a4>// Top Line
+</span><span>  </span><span style=color:#50fa7b>drawHLine</span><span>(ABS_ARENA_LEFT, ABS_ARENA_BOT, ARENA_WIDTH, BLACK);    </span><span style=color:#6272a4>// Bottom Line
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#6272a4>// ==================================================
+</span><span style=color:#6272a4>// === users serial input thread
+</span><span style=color:#6272a4>// ==================================================
+</span><span style=color:#ff79c6>static </span><span style=color:#50fa7b>PT_THREAD</span><span>(</span><span style=color:#50fa7b>protothread_serial</span><span>(</span><span style=font-style:italic;color:#8be9fd>struct</span><span> pt </span><span style=color:#ff79c6>*</span><span>pt)) </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#50fa7b>PT_BEGIN</span><span>(pt);
+</span><span>  </span><span style=color:#6272a4>// stores user input
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// wait for 0.1 sec
+</span><span>  </span><span style=color:#50fa7b>PT_YIELD_usec</span><span>(</span><span style=color:#bd93f9>1000000</span><span>);
+</span><span>  </span><span style=color:#6272a4>// announce the threader version
+</span><span>  </span><span style=color:#8be9fd>sprintf</span><span>(pt_serial_out_buffer, </span><span style=color:#f1fa8c>"Protothreads RP2040 v1.0</span><span style=color:#ff79c6>\n\r</span><span style=color:#f1fa8c>"</span><span>);
+</span><span>  </span><span style=color:#6272a4>// non-blocking write
+</span><span>  serial_write;
+</span><span>
+</span><span>  </span><span style=color:#ff79c6>while </span><span>(</span><span style=color:#bd93f9>1</span><span>) </span><span style=color:#fff>{
+</span><span>    </span><span style=font-style:italic;color:#8be9fd>char</span><span> user_input[</span><span style=color:#bd93f9>16</span><span>];
+</span><span>    </span><span style=font-style:italic;color:#8be9fd>int</span><span> value_x;
+</span><span>    </span><span style=font-style:italic;color:#8be9fd>int</span><span> value_y;
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// print prompt
+</span><span>    </span><span style=color:#8be9fd>sprintf</span><span>(pt_serial_out_buffer, </span><span style=color:#f1fa8c>"input a command:"</span><span>);
+</span><span>    </span><span style=color:#6272a4>// non-blocking write
+</span><span>    serial_write;
+</span><span>    </span><span style=color:#6272a4>// spawn a thread to do the non-blocking serial read
+</span><span>    serial_read;
+</span><span>    </span><span style=color:#6272a4>// convert input string to number
+</span><span>    </span><span style=color:#8be9fd>sscanf</span><span>(pt_serial_in_buffer, </span><span style=color:#f1fa8c>"</span><span style=color:#bd93f9>%s %d %d</span><span style=color:#f1fa8c>"</span><span>, user_input, </span><span style=color:#ff79c6>&</span><span>value_x, </span><span style=color:#ff79c6>&</span><span>value_y);
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// tilt feature
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'t'</span><span>) </span><span style=color:#fff>{
+</span><span>      tilt_feature </span><span style=color:#ff79c6>= !</span><span>tilt_feature;
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// speed feature
+</span><span>    </span><span style=color:#ff79c6>else if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'s'</span><span>) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#ff79c6>if </span><span>(value_x </span><span style=color:#ff79c6>== </span><span style=color:#bd93f9>0</span><span>) </span><span style=color:#fff>{
+</span><span>        speed_feature </span><span style=color:#ff79c6>= !</span><span>speed_feature;
+</span><span>      </span><span style=color:#fff>} </span><span style=color:#ff79c6>else </span><span style=color:#fff>{
+</span><span>        min_speed </span><span style=color:#ff79c6>= -</span><span>(value_x);
+</span><span>        max_speed </span><span style=color:#ff79c6>=</span><span> value_x;
+</span><span>        speed_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>      </span><span style=color:#fff>}
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>else if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'c'</span><span>) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#ff79c6>if </span><span>(value_x </span><span style=color:#ff79c6>== </span><span style=color:#bd93f9>0</span><span>) </span><span style=color:#fff>{
+</span><span>        cyclic_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>        grad_incr </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>      </span><span style=color:#fff>} </span><span style=color:#ff79c6>else </span><span style=color:#fff>{
+</span><span>        cyclic_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>        grad_incr </span><span style=color:#ff79c6>=</span><span> value_x;
+</span><span>      </span><span style=color:#fff>}
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>else if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'v'</span><span>) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#ff79c6>if </span><span>(active_color </span><span style=color:#ff79c6>== </span><span style=color:#bd93f9>1</span><span>) </span><span style=color:#fff>{
+</span><span>        active_color </span><span style=color:#ff79c6>=</span><span> BLACK;
+</span><span>      </span><span style=color:#fff>} </span><span style=color:#ff79c6>else if </span><span>(active_color </span><span style=color:#ff79c6>==</span><span> BLACK) </span><span style=color:#fff>{
+</span><span>        active_color </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>      </span><span style=color:#fff>}
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>else if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'R'</span><span>) </span><span style=color:#fff>{
+</span><span>      reset_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>      cyclic_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>      grad_incr </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>      speed_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>      min_speed </span><span style=color:#ff79c6>= -</span><span style=color:#bd93f9>1</span><span>;
+</span><span>      max_speed </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>      tilt_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>      active_color </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>      aggregation_threshold </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>15</span><span>;
+</span><span>      seed_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>else if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'r'</span><span>) </span><span style=color:#fff>{
+</span><span>      reset_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>else if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'l'</span><span>) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#ff79c6>if </span><span>(value_x </span><span style=color:#ff79c6>></span><span> ABS_ARENA_LEFT </span><span style=color:#ff79c6>&&</span><span> value_x </span><span style=color:#ff79c6>< </span><span>(ABS_ARENA_RIGHT </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>) </span><span style=color:#ff79c6>&&</span><span> value_y </span><span style=color:#ff79c6>< </span><span>(ABS_ARENA_BOT </span><span style=color:#ff79c6>- </span><span style=color:#bd93f9>1</span><span>) </span><span style=color:#ff79c6>&&</span><span> value_y </span><span style=color:#ff79c6>></span><span> ABS_ARENA_TOP) </span><span style=color:#fff>{
+</span><span>        seed_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>        old_seed_x </span><span style=color:#ff79c6>=</span><span> seed_x;
+</span><span>        old_seed_y </span><span style=color:#ff79c6>=</span><span> seed_y;
+</span><span>        seed_x </span><span style=color:#ff79c6>=</span><span> value_x;
+</span><span>        seed_y </span><span style=color:#ff79c6>=</span><span> value_y;
+</span><span>      </span><span style=color:#fff>}
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>else if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'p'</span><span>) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#6272a4>// print prompt
+</span><span>      </span><span style=color:#8be9fd>sprintf</span><span>(pt_serial_out_buffer, </span><span style=color:#f1fa8c>"speed: </span><span style=color:#bd93f9>%d</span><span style=color:#f1fa8c> tilt: </span><span style=color:#bd93f9>%d</span><span style=color:#f1fa8c> cyclic: </span><span style=color:#bd93f9>%d</span><span style=color:#f1fa8c> aggregate: </span><span style=color:#bd93f9>%d </span><span style=color:#f1fa8c>"</span><span>,
+</span><span>              max_speed, tilt_feature, grad_incr, aggregation_threshold);
+</span><span>      </span><span style=color:#6272a4>// non-blocking write
+</span><span>      serial_write;
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>else if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'a'</span><span>) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#ff79c6>if </span><span>(value_x </span><span style=color:#ff79c6>> </span><span style=color:#bd93f9>1</span><span>) </span><span style=color:#fff>{
+</span><span>        aggregation_threshold </span><span style=color:#ff79c6>=</span><span> value_x;
+</span><span>      </span><span style=color:#fff>}
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// seed in the middle and very responsive. Can tilt all to one side and
+</span><span>    </span><span style=color:#6272a4>// then "launch" from that side to get interesting effects
+</span><span>    </span><span style=color:#ff79c6>else if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'1'</span><span>) </span><span style=color:#fff>{
+</span><span>      min_speed </span><span style=color:#ff79c6>= -</span><span style=color:#bd93f9>5</span><span>;
+</span><span>      max_speed </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>5</span><span>;
+</span><span>      tilt_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>      grad_incr </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>      aggregation_threshold </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>15</span><span>;
+</span><span>
+</span><span>      seed_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// tilt and speed both on.
+</span><span>    </span><span style=color:#ff79c6>else if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'2'</span><span>) </span><span style=color:#fff>{
+</span><span>      speed_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>      tilt_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// sets seed to corner, leave tilting and can begin to "pulse"
+</span><span>    </span><span style=color:#ff79c6>else if </span><span>(user_input[</span><span style=color:#bd93f9>0</span><span>] </span><span style=color:#ff79c6>== </span><span style=color:#f1fa8c>'3'</span><span>) </span><span style=color:#fff>{
+</span><span>      min_speed </span><span style=color:#ff79c6>= -</span><span style=color:#bd93f9>1</span><span>;
+</span><span>      max_speed </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>      tilt_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>      grad_incr </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>2</span><span>;
+</span><span>      aggregation_threshold </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>15</span><span>;
+</span><span>
+</span><span>      seed_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>      old_seed_x </span><span style=color:#ff79c6>=</span><span> seed_x;
+</span><span>      old_seed_y </span><span style=color:#ff79c6>=</span><span> seed_y;
+</span><span>      seed_x </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>32</span><span>;
+</span><span>      seed_y </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>218</span><span>;
+</span><span>    </span><span style=color:#fff>}
+</span><span>  </span><span style=color:#fff>}
+</span><span>  </span><span style=color:#50fa7b>PT_END</span><span>(pt);
+</span><span style=color:#fff>}  </span><span style=color:#6272a4>// timer thread
+</span><span>
+</span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>update_accel</span><span>() </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#6272a4>// acceleration logic
+</span><span>  fix15 abs_z_accel </span><span style=color:#ff79c6>= </span><span style=color:#8be9fd>abs</span><span>(acceleration[</span><span style=color:#bd93f9>2</span><span>]);
+</span><span>  acceleration_sum </span><span style=color:#ff79c6>+=</span><span> abs_z_accel </span><span style=color:#ff79c6>-</span><span> acceleration_arr[acceleration_counter];
+</span><span>  acceleration_arr[acceleration_counter] </span><span style=color:#ff79c6>=</span><span> abs_z_accel;
+</span><span>
+</span><span>  acceleration_counter </span><span style=color:#ff79c6>+= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>  </span><span style=color:#ff79c6>if </span><span>(acceleration_counter </span><span style=color:#ff79c6>> </span><span style=color:#bd93f9>19</span><span>) </span><span style=color:#fff>{
+</span><span>    acceleration_counter </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>  </span><span style=color:#fff>}
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#6272a4>// Animation on core 0
+</span><span style=color:#ff79c6>static </span><span style=color:#50fa7b>PT_THREAD</span><span>(</span><span style=color:#50fa7b>protothread_anim</span><span>(</span><span style=font-style:italic;color:#8be9fd>struct</span><span> pt </span><span style=color:#ff79c6>*</span><span>pt)) </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#6272a4>// Mark beginning of thread
+</span><span>  </span><span style=color:#50fa7b>PT_BEGIN</span><span>(pt);
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// Variables for maintaining frame rate
+</span><span>  </span><span style=color:#ff79c6>static </span><span style=font-style:italic;color:#8be9fd>int</span><span> begin_time;
+</span><span>
+</span><span>  </span><span style=color:#6272a4>//  We will start drawing at column 81
+</span><span>  </span><span style=color:#ff79c6>static </span><span style=font-style:italic;color:#8be9fd>int</span><span> xcoord </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>40</span><span>;
+</span><span>  </span><span style=color:#6272a4>// Rescale the measurements for display
+</span><span>  </span><span style=color:#ff79c6>static </span><span style=font-style:italic;color:#8be9fd>float</span><span> NewRange </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>75.</span><span>;  </span><span style=color:#6272a4>// (looks nice on VGA)
+</span><span>  </span><span style=color:#6272a4>// Control rate of drawing
+</span><span>  </span><span style=color:#ff79c6>static </span><span style=font-style:italic;color:#8be9fd>int</span><span> throttle;
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// Draw the static aspects of the display
+</span><span>  </span><span style=color:#50fa7b>setTextSize</span><span>(</span><span style=color:#bd93f9>1</span><span>);
+</span><span>  </span><span style=color:#50fa7b>setTextColor</span><span>(WHITE);
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// Spawn a particle
+</span><span>  </span><span style=color:#ff79c6>for </span><span>(</span><span style=font-style:italic;color:#8be9fd>int</span><span> i </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>; i </span><span style=color:#ff79c6><</span><span> PARTICLE_COUNT; </span><span style=color:#ff79c6>++</span><span>i) </span><span style=color:#fff>{
+</span><span>    </span><span style=color:#50fa7b>spawnParticle</span><span>(</span><span style=color:#ff79c6>&</span><span>particles[i]);
+</span><span>  </span><span style=color:#fff>}
+</span><span>
+</span><span>  </span><span style=color:#ff79c6>while </span><span>(</span><span style=color:#bd93f9>1</span><span>) </span><span style=color:#fff>{
+</span><span>    </span><span style=color:#50fa7b>mpu6050_read_raw</span><span>(acceleration, gyro);
+</span><span>    </span><span style=color:#50fa7b>update_angles</span><span>();
+</span><span>    </span><span style=color:#50fa7b>update_accel</span><span>();
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// Measure time at start of thread
+</span><span>    begin_time </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>time_us_32</span><span>();
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(</span><span style=color:#ff79c6>!</span><span>seed_feature) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(ABS_ARENA_LEFT </span><span style=color:#ff79c6>+</span><span> ARENA_WIDTH </span><span style=color:#ff79c6>/ </span><span style=color:#bd93f9>2</span><span>, ABS_ARENA_TOP </span><span style=color:#ff79c6>+</span><span> ARENA_HEIGHT </span><span style=color:#ff79c6>/ </span><span style=color:#bd93f9>2</span><span>, WHITE);
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>else </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(ABS_ARENA_LEFT </span><span style=color:#ff79c6>+</span><span> ARENA_WIDTH </span><span style=color:#ff79c6>/ </span><span style=color:#bd93f9>2</span><span>, ABS_ARENA_TOP </span><span style=color:#ff79c6>+</span><span> ARENA_HEIGHT </span><span style=color:#ff79c6>/ </span><span style=color:#bd93f9>2</span><span>, BLACK);
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(old_seed_x, old_seed_y, BLACK);
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(old_seed_x </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>, old_seed_y, BLACK);
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(old_seed_x, old_seed_y </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>, BLACK);
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(old_seed_x </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>, old_seed_y </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>, BLACK);
+</span><span>
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(seed_x, seed_y, WHITE);
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(seed_x </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>, seed_y, WHITE);
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(seed_x, seed_y </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>, WHITE);
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(seed_x </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>, seed_y </span><span style=color:#ff79c6>+ </span><span style=color:#bd93f9>1</span><span>, WHITE);
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(reset_feature) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#ff79c6>for </span><span>(</span><span style=font-style:italic;color:#8be9fd>int</span><span> i </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>; i </span><span style=color:#ff79c6><</span><span> PARTICLE_COUNT; </span><span style=color:#ff79c6>++</span><span>i)
+</span><span>        </span><span style=color:#50fa7b>resetPixel</span><span>(</span><span style=color:#ff79c6>&</span><span>particles[i]);
+</span><span>      reset_feature </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    min_x_speed </span><span style=color:#ff79c6>=</span><span> min_speed;
+</span><span>    min_y_speed </span><span style=color:#ff79c6>=</span><span> min_speed;
+</span><span>    max_x_speed </span><span style=color:#ff79c6>=</span><span> max_speed;
+</span><span>    max_y_speed </span><span style=color:#ff79c6>=</span><span> max_speed;
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(tilt_feature) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#50fa7b>calculate_tilt_parameters</span><span>();
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(speed_feature) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#50fa7b>set_speed_parameters</span><span>();
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// Measure time at start of thread
+</span><span>    begin_time </span><span style=color:#ff79c6>= </span><span style=color:#50fa7b>time_us_32</span><span>();
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>for </span><span>(</span><span style=font-style:italic;color:#8be9fd>int</span><span> i </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>; i </span><span style=color:#ff79c6><</span><span> PARTICLE_COUNT; </span><span style=color:#ff79c6>++</span><span>i) </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#6272a4>// draw particle if valid
+</span><span>
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(particles[i]</span><span style=color:#ff79c6>.</span><span style=color:#fff>x</span><span>, particles[i]</span><span style=color:#ff79c6>.</span><span style=color:#fff>y</span><span>, BLACK);
+</span><span>      </span><span style=color:#6272a4>// update particle's position and velocity
+</span><span>      </span><span style=color:#50fa7b>updatePosAndVel</span><span>(</span><span style=color:#ff79c6>&</span><span>particles[i]);
+</span><span>      </span><span style=color:#6272a4>// draw the particle at its new position
+</span><span>      </span><span style=color:#50fa7b>drawPixel</span><span>(particles[i]</span><span style=color:#ff79c6>.</span><span style=color:#fff>x</span><span>, particles[i]</span><span style=color:#ff79c6>.</span><span style=color:#fff>y</span><span>, particles[i]</span><span style=color:#ff79c6>.</span><span style=color:#fff>color</span><span>);
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// draw the boundaries
+</span><span>    </span><span style=color:#50fa7b>drawArena</span><span>();
+</span><span>    </span><span style=color:#6272a4>// drawInfo();
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// delay in accordance with frame rate
+</span><span>    spare_time_0 </span><span style=color:#ff79c6>=</span><span> FRAME_RATE </span><span style=color:#ff79c6>- </span><span>(</span><span style=color:#50fa7b>time_us_32</span><span>() </span><span style=color:#ff79c6>-</span><span> begin_time);
+</span><span>    spare_time_acc_0 </span><span style=color:#ff79c6>+=</span><span> spare_time_0;
+</span><span>    frame_count_0 </span><span style=color:#ff79c6>+= </span><span style=color:#bd93f9>1</span><span>;
+</span><span>
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(frame_count_0 </span><span style=color:#ff79c6>>=</span><span> AVG_SPARE_TIME_FRAME_COUNT) </span><span style=color:#fff>{
+</span><span>      avg_spare_time_0 </span><span style=color:#ff79c6>=</span><span> spare_time_acc_0 </span><span style=color:#ff79c6>/</span><span> AVG_SPARE_TIME_FRAME_COUNT;
+</span><span>      frame_count_0 </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>      spare_time_acc_0 </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>0</span><span>;
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// calc current fps
+</span><span>    </span><span style=color:#ff79c6>if </span><span>(spare_time_0 </span><span style=color:#ff79c6>>= </span><span style=color:#bd93f9>0</span><span>) </span><span style=color:#fff>{
+</span><span>      current_fps </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>30</span><span>;
+</span><span>    </span><span style=color:#fff>} </span><span style=color:#ff79c6>else </span><span style=color:#fff>{
+</span><span>      </span><span style=color:#ff79c6>if </span><span>(FRAME_RATE </span><span style=color:#ff79c6>-</span><span> spare_time_0 </span><span style=color:#ff79c6>!= </span><span style=color:#bd93f9>0</span><span>) </span><span style=color:#fff>{
+</span><span>        current_fps </span><span style=color:#ff79c6>= </span><span style=color:#bd93f9>1000000 </span><span style=color:#ff79c6>/ </span><span>(FRAME_RATE </span><span style=color:#ff79c6>-</span><span> spare_time_0);
+</span><span>      </span><span style=color:#fff>}
+</span><span>    </span><span style=color:#fff>}
+</span><span>
+</span><span>    </span><span style=color:#6272a4>// yield for necessary amount of time
+</span><span>    </span><span style=color:#50fa7b>PT_YIELD_usec</span><span>(spare_time_0);
+</span><span>  </span><span style=color:#fff>}
+</span><span>  </span><span style=color:#50fa7b>PT_END</span><span>(pt);
+</span><span style=color:#fff>}  </span><span style=color:#6272a4>// animation thread
+</span><span>
+</span><span style=font-style:italic;color:#8be9fd>void </span><span style=color:#50fa7b>core1_entry</span><span>() </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#50fa7b>pt_add_thread</span><span>(protothread_serial);
+</span><span>  pt_schedule_start;
+</span><span style=color:#fff>}
+</span><span>
+</span><span style=color:#6272a4>// ========================================
+</span><span style=color:#6272a4>// === main
+</span><span style=color:#6272a4>// ========================================
+</span><span style=color:#6272a4>// USE ONLY C-sdk library
+</span><span style=font-style:italic;color:#8be9fd>int </span><span style=color:#50fa7b>main</span><span>() </span><span style=color:#fff>{
+</span><span>  </span><span style=color:#6272a4>// screw it lets overclock
+</span><span>  </span><span style=color:#6272a4>// set_sys_clock_khz(250000, true);
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// initialize stio
+</span><span>  </span><span style=color:#50fa7b>stdio_init_all</span><span>();
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// initialize VGA
+</span><span>  </span><span style=color:#50fa7b>initVGA</span><span>();
+</span><span>  </span><span style=color:#50fa7b>gpio_init</span><span>(LED_PIN);
+</span><span>  </span><span style=color:#50fa7b>gpio_set_dir</span><span>(LED_PIN, GPIO_OUT);
+</span><span>  </span><span style=color:#50fa7b>gpio_init</span><span>(</span><span style=color:#bd93f9>28</span><span>);
+</span><span>  </span><span style=color:#50fa7b>gpio_set_dir</span><span>(</span><span style=color:#bd93f9>28</span><span>, GPIO_OUT);
+</span><span>
+</span><span>  </span><span style=color:#50fa7b>i2c_init</span><span>(I2C_CHAN, I2C_BAUD_RATE);
+</span><span>  </span><span style=color:#50fa7b>gpio_set_function</span><span>(SDA_PIN, GPIO_FUNC_I2C);
+</span><span>  </span><span style=color:#50fa7b>gpio_set_function</span><span>(SCL_PIN, GPIO_FUNC_I2C);
+</span><span>  </span><span style=color:#50fa7b>gpio_pull_up</span><span>(SDA_PIN);
+</span><span>  </span><span style=color:#50fa7b>gpio_pull_up</span><span>(SCL_PIN);
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// MPU6050 initialization
+</span><span>  </span><span style=color:#50fa7b>mpu6050_reset</span><span>();
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// start core 1
+</span><span>  </span><span style=color:#50fa7b>multicore_reset_core1</span><span>();
+</span><span>  </span><span style=color:#50fa7b>multicore_launch_core1</span><span>(</span><span style=color:#ff79c6>&</span><span>core1_entry);
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// add threads
+</span><span>  </span><span style=color:#50fa7b>pt_add_thread</span><span>(protothread_anim);
+</span><span>
+</span><span>  </span><span style=color:#6272a4>// start scheduler
+</span><span>  pt_schedule_start;
+</span><span style=color:#fff>}
+</span><span>
+</span></code></pre></article></div><footer><div class=copyright><p>© 2023 <your-name> <div class=credits>powered by <a rel="noreferrer noopener" href=https://www.getzola.org target=_blank>zola</a> and <a rel="noreferrer noopener" href=https://github.com/isunjn/serene target=_blank>serene</a></div> <script src=../js/lightense.min.js></script> <script src=../js/main.js></script> 

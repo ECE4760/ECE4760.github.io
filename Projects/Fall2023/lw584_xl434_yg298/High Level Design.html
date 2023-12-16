@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<!-- saved from url=(0047)https://xl434.github.io/ece4760_web/high_level/ -->
+<html lang="en-US" class="js">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+
+  <title>High Level Design</title>
+  <meta name="description" content="">
+  <style type="text/css">
+    svg:not(:root).svg-inline--fa {
+      overflow: visible
+    }
+
+    .svg-inline--fa {
+      display: inline-block;
+      font-size: inherit;
+      height: 1em;
+      overflow: visible;
+      vertical-align: -.125em
+    }
+
+    .svg-inline--fa.fa-lg {
+      vertical-align: -.225em
+    }
+
+    .svg-inline--fa.fa-w-1 {
+      width: .0625em
+    }
+
+    .svg-inline--fa.fa-w-2 {
+      width: .125em
+    }
+
+    .svg-inline--fa.fa-w-3 {
+      width: .1875em
+    }
+
+    .svg-inline--fa.fa-w-4 {
+      width: .25em
+    }
+
+    .svg-inline--fa.fa-w-5 {
+      width: .3125em
+    }
+
+    .svg-inline--fa.fa-w-6 {
+      width: .375em
+    }
+
+    .svg-inline--fa.fa-w-7 {
+      width: .4375em
+    }
+
+    .svg-inline--fa.fa-w-8 {
+      width: .5em
+    }
+
+    .svg-inline--fa.fa-w-9 {
+      width: .5625em
+    }
+
+    .svg-inline--fa.fa-w-10 {
+      width: .625em
+    }
+
+    .svg-inline--fa.fa-w-11 {
+      width: .6875em
+    }
+
+    .svg-inline--fa.fa-w-12 {
+      width: .75em
+    }
+
+    .svg-inline--fa.fa-w-13 {
+      width: .8125em
+    }
+
+    .svg-inline--fa.fa-w-14 {
+      width: .875em
+    }
+
+    .svg-inline--fa.fa-w-15 {
+      width: .9375em
+    }
+
+    .svg-inline--fa.fa-w-16 {
+      width: 1em
+    }
+
+    .svg-inline--fa.fa-w-17 {
+      width: 1.0625em
+    }
+
+    .svg-inline--fa.fa-w-18 {
+      width: 1.125em
+    }
+
+    .svg-inline--fa.fa-w-19 {
+      width: 1.1875em
+    }
+
+    .svg-inline--fa.fa-w-20 {
+      width: 1.25em
+    }
+
+    .svg-inline--fa.fa-pull-left {
+      margin-right: .3em;
+      width: auto
+    }
+
+    .svg-inline--fa.fa-pull-right {
+      margin-left: .3em;
+      width: auto
+    }
+
+    .svg-inline--fa.fa-border {
+      height: 1.5em
+    }
+
+    .svg-inline--fa.fa-li {
+      width: 2em
+    }
+
+    .svg-inline--fa.fa-fw {
+      width: 1.25em
+    }
+
+    .fa-layers svg.svg-inline--fa {
+      bottom: 0;
+      left: 0;
+      margin: auto;
+      position: absolute;
+      right: 0;
+      top: 0
+    }
+
+    .fa-layers {
+      display: inline-block;
+      height: 1em;
+      position: relative;
+      text-align: center;
+      vertical-align: -.125em;
+      width: 1em
+    }
+
+    .fa-layers svg.svg-inline--fa {
+      -webkit-transform-origin: center center;
+      transform-origin: center center
+    }
+
+    .fa-layers-counter,
+    .fa-layers-text {
+      display: inline-block;
+      position: absolute;
+      text-align: center
+    }
+
+    .fa-layers-text {
+      left: 50%;
+      top: 50%;
+      -webkit-transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%);
+      -webkit-transform-origin: center center;
+      transform-origin: center center
+    }
+
+    .fa-layers-counter {
+      background-color: #ff253a;
+      border-radius: 1em;
+      -webkit-box-sizing: border-box;
+      box-sizing: border-box;
+      color: #fff;
+      height: 1.5em;
+      line-height: 1;
+      max-width: 5em;
+      min-width: 1.5em;
+      overflow: hidden;
+      padding: .25em;
+      right: 0;
+      text-overflow: ellipsis;
+      top: 0;
+      -webkit-transform: scale(.25);
+      transform: scale(.25);
+      -webkit-transform-origin: top right;
+      transform-origin: top right
+    }
+
+    .fa-layers-bottom-right {
+      bottom: 0;
+      right: 0;
+      top: auto;
+      -webkit-transform: scale(.25);
+      transform: scale(.25);
+      -webkit-transform-origin: bottom right;
+      transform-origin: bottom right
+    }
+
+    .fa-layers-bottom-left {
+      bottom: 0;
+      left: 0;
+      right: auto;
+      top: auto;
+      -webkit-transform: scale(.25);
+      transform: scale(.25);
+      -webkit-transform-origin: bottom left;
+      transform-origin: bottom left
+    }
+
+    .fa-layers-top-right {
+      right: 0;
+      top: 0;
+      -webkit-transform: scale(.25);
+      transform: scale(.25);
+      -webkit-transform-origin: top right;
+      transform-origin: top right
+    }
+
+    .fa-layers-top-left {
+      left: 0;
+      right: auto;
+      top: 0;
+      -webkit-transform: scale(.25);
+      transform: scale(.25);
+      -webkit-transform-origin: top left;
+      transform-origin: top left
+    }
+
+    .fa-lg {
+      font-size: 1.33333em;
+      line-height: .75em;
+      vertical-align: -.0667em
+    }
+
+    .fa-xs {
+      font-size: .75em
+    }
+
+    .fa-sm {
+      font-size: .875em
+    }
+
+    .fa-1x {
+      font-size: 1em
+    }
+
+    .fa-2x {
+      font-size: 2em
+    }
+
+    .fa-3x {
+      font-size: 3em
+    }
+
+    .fa-4x {
+      font-size: 4em
+    }
+
+    .fa-5x {
+      font-size: 5em
+    }
+
+    .fa-6x {
+      font-size: 6em
+    }
+
+    .fa-7x {
+      font-size: 7em
+    }
+
+    .fa-8x {
+      font-size: 8em
+    }
+
+    .fa-9x {
+      font-size: 9em
+    }
+
+    .fa-10x {
+      font-size: 10em
+    }
+
+    .fa-fw {
+      text-align: center;
+      width: 1.25em
+    }
+
+    .fa-ul {
+      list-style-type: none;
+      margin-left: 2.5em;
+      padding-left: 0
+    }
+
+    .fa-ul>li {
+      position: relative
+    }
+
+    .fa-li {
+      left: -2em;
+      position: absolute;
+      text-align: center;
+      width: 2em;
+      line-height: inherit
+    }
+
+    .fa-border {
+      border: solid .08em #eee;
+      border-radius: .1em;
+      padding: .2em .25em .15em
+    }
+
+    .fa-pull-left {
+      float: left
+    }
+
+    .fa-pull-right {
+      float: right
+    }
+
+    .fa.fa-pull-left,
+    .fab.fa-pull-left,
+    .fal.fa-pull-left,
+    .far.fa-pull-left,
+    .fas.fa-pull-left {
+      margin-right: .3em
+    }
+
+    .fa.fa-pull-right,
+    .fab.fa-pull-right,
+    .fal.fa-pull-right,
+    .far.fa-pull-right,
+    .fas.fa-pull-right {
+      margin-left: .3em
+    }
+
+    .fa-spin {
+      -webkit-animation: fa-spin 2s infinite linear;
+      animation: fa-spin 2s infinite linear
+    }
+
+    .fa-pulse {
+      -webkit-animation: fa-spin 1s infinite steps(8);
+      animation: fa-spin 1s infinite steps(8)
+    }
+
+    @-webkit-keyframes fa-spin {
+      0% {
+        -webkit-transform: rotate(0);
+        transform: rotate(0)
+      }
+
+      100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes fa-spin {
+      0% {
+        -webkit-transform: rotate(0);
+        transform: rotate(0)
+      }
+
+      100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg)
+      }
+    }
+
+    .fa-rotate-90 {
+      -webkit-transform: rotate(90deg);
+      transform: rotate(90deg)
+    }
+
+    .fa-rotate-180 {
+      -webkit-transform: rotate(180deg);
+      transform: rotate(180deg)
+    }
+
+    .fa-rotate-270 {
+      -webkit-transform: rotate(270deg);
+      transform: rotate(270deg)
+    }
+
+    .fa-flip-horizontal {
+      -webkit-transform: scale(-1, 1);
+      transform: scale(-1, 1)
+    }
+
+    .fa-flip-vertical {
+      -webkit-transform: scale(1, -1);
+      transform: scale(1, -1)
+    }
+
+    .fa-flip-horizontal.fa-flip-vertical {
+      -webkit-transform: scale(-1, -1);
+      transform: scale(-1, -1)
+    }
+
+    :root .fa-flip-horizontal,
+    :root .fa-flip-vertical,
+    :root .fa-rotate-180,
+    :root .fa-rotate-270,
+    :root .fa-rotate-90 {
+      -webkit-filter: none;
+      filter: none
+    }
+
+    .fa-stack {
+      display: inline-block;
+      height: 2em;
+      position: relative;
+      width: 2em
+    }
+
+    .fa-stack-1x,
+    .fa-stack-2x {
+      bottom: 0;
+      left: 0;
+      margin: auto;
+      position: absolute;
+      right: 0;
+      top: 0
+    }
+
+    .svg-inline--fa.fa-stack-1x {
+      height: 1em;
+      width: 1em
+    }
+
+    .svg-inline--fa.fa-stack-2x {
+      height: 2em;
+      width: 2em
+    }
+
+    .fa-inverse {
+      color: #fff
+    }
+
+    .sr-only {
+      border: 0;
+      clip: rect(0, 0, 0, 0);
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      padding: 0;
+      position: absolute;
+      width: 1px
+    }
+
+    .sr-only-focusable:active,
+    .sr-only-focusable:focus {
+      clip: auto;
+      height: auto;
+      margin: 0;
+      overflow: visible;
+      position: static;
+      width: auto
+    }
+  </style>
+  <link rel="canonical" href="https://xl434.github.io/ece4760_web/high_level/">
+
+
+  <script>
+    /* Cut the mustard */
+    if ('querySelector' in document && 'addEventListener' in window) {
+      document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + 'js';
+    }
+  </script>
+
+  <link rel="stylesheet" href="./High Level Design_files/main.css">
+  <link rel="stylesheet" href="./High Level Design_files/default.css">
+  <!-- start custom head snippets -->
+
+  <!-- insert favicons. use http://realfavicongenerator.net/ -->
+
+  <!-- end custom head snippets -->
+
+</head>
+
+
+<body class="layout--page  high-level-design" data-new-gr-c-s-check-loaded="14.1146.0" data-gr-ext-installed="">
+  <nav class="skip-links">
+    <h2 class="screen-reader-text">Skip links</h2>
+    <ul>
+      <li><a href="https://xl434.github.io/ece4760_web/high_level/#primary-nav" class="screen-reader-shortcut">Skip to
+          primary navigation</a></li>
+      <li><a href="https://xl434.github.io/ece4760_web/high_level/#main" class="screen-reader-shortcut">Skip to
+          content</a></li>
+      <li><a href="https://xl434.github.io/ece4760_web/high_level/#footer" class="screen-reader-shortcut">Skip to
+          footer</a></li>
+    </ul>
+  </nav>
+
+
+  <div class="navigation-wrapper">
+    <a href="https://xl434.github.io/ece4760_web/high_level/#menu-toggle" id="menu-toggle">Menu</a>
+    <nav id="primary-nav" class="site-nav animated drop">
+      <ul>
+        <li><a href="./index.html">Intro</a></li>
+        <li><a href="./High Level Design.html">High Level</a></li>
+        <li><a href="./Hardware.html">Hardware</a></li>
+        <li><a href="./Software Design.html">Software</a></li>
+        <li><a href="./Conclusion.html">Conclusion</a></li>
+      </ul>
+    </nav>
+  </div><!-- /.navigation-wrapper -->
+
+
+  <header class="masthead">
+    <div class="wrap">
+
+      <a href="https://xl434.github.io/ece4760_web/" class="site-logo" rel="home" title="ECE 4760 Final Project">
+        <img src="./High Level Design_files/logo.png" class="site-logo-img animated fadeInDown"
+          alt="ECE 4760 Final Project">
+      </a>
+
+
+
+
+      <div class="site-title animated fadeIn"><a href="https://xl434.github.io/ece4760_web/">ECE 4760 Final Project</a>
+      </div>
+
+      <p class="site-description animated fadeIn" itemprop="description"></p>
+
+    </div>
+  </header><!-- /.masthead -->
+
+
+  <main id="main" class="main-content" aria-label="Content">
+    <article>
+
+
+      <div class="page-wrapper">
+        <header class="page-header">
+
+
+          <h1 id="page-title" class="page-title">High Level Design</h1>
+
+        </header>
+        <div class="page-content">
+          <h3 id="rationale-and-sources-of-our-project-idea">Rationale and sources of our project idea</h3>
+          <ul>
+            <li>The inspiration of “Pi-Looper” emerged from a shared passion of music of all three members. We noticed
+              that sometimes it’s very difficult for solo performers to create a full and dynamic sound without
+              additional band members. With our experience in Lab1, where we synthesized bird songs using a DAC, we saw
+              the potential to record, process, and playback audio using Raspberry Pi Pico. Therefore, we decided to
+              build a loop station that allows solo performers to build up layers during a live performance and create
+              intricate arrangements that appear as multiple musicians are playing simultaneously.</li>
+          </ul>
+
+          <h3 id="background-math">Background math</h3>
+          <h4 id="non-inverting-amplifier-circuit">Non-inverting Amplifier Circuit</h4>
+          <p>A non-inverting amplifier circuit is an operational amplifier (op-amp) configuration where the input signal
+            is connected to the non-inverting terminal (+) and the feedback is applied to the inverting terminal (-).
+            The output is taken from the opamp’s output terminal. The key characteristic of a non-inverting amplifier is
+            that it provides a voltage gain, which means the output voltage is amplified in relation to the input
+            voltage.</p>
+          <figure style="width: 500px" class="align-center">
+            <img src="./High Level Design_files/image16.png" alt="">
+          </figure>
+
+          <p>In an ideal op amp, we assume Vp = Vn and Ip=In =0 in a linear region. Since Vn=Vin, we can get Vp=Vn=Vin.
+            This simplifies the amplifier circuit to a voltage divider circuit:</p>
+          <figure style="width: 500px" class="align-center">
+            <img src="./High Level Design_files/image17.png" alt="">
+          </figure>
+
+          <p>Thus, Vout=((R1+R2)/R1)Vin=(1+R2/R1)Vin. This equation can be rearranged to obtain the gain (A) of the
+            circuit: A=(1+R2/R1). This background is essential for us to incorporate amplifier circuits for instrumental
+            signal in our loop station design.</p>
+          <figure style="width: 900px" class="align-center">
+            <img src="./High Level Design_files/image7.png" alt="">
+          </figure>
+
+          <h4 id="low-pass-filter">Low pass filter</h4>
+          <p>Low low-pass filter is a circuit that allows low-frequency signals to pass through while blocking
+            higher-frequency signals. Instrumental signals, especially from a guitar or other electronic instruments,
+            may contain high-frequency noises. A low pass filter helps to eliminate higher frequencies to form a cleaner
+            audio signal. It can also prevent aliasing in digital processing. Aliasing happens when high-frequency
+            components in the input signal exceed half of the digital sampling rate, in our case 8kHz, which could lead
+            to distortion or unwanted sound effects. The diagram below shows a capacitive low-pass filter. The cutoff
+            frequency of the circuit is calculated by f=1/(2πRC).</p>
+          <figure style="width: 400px" class="align-center">
+            <img src="./High Level Design_files/image23.png" alt="">
+          </figure>
+
+          <h4 id="high-pass-filter">High pass filter</h4>
+          <p>A high-pass filter is a circuit that passes signals with high frequencies while attenuating lower-frequency
+            signals. A high-pass filter is very efficient in filtering out low-frequency noises such as electrical hum,
+            interference, or background rumble. The cutoff frequency of the high-pass filter in the diagram below can be
+            calculated as: f=1/(2πRC).</p>
+          <figure style="width: 500px" class="align-center">
+            <img src="./High Level Design_files/image21.png" alt="">
+          </figure>
+
+          <h4 id="nyquistshannon-sampling-theorem">Nyquist–Shannon sampling theorem</h4>
+          <p>The theorem suggests that a continuous signal can be completely represented in its samples and fully
+            reconstructed from those samples if the sampling frequency is greater than twice the highest frequency of
+            the signal. The recording aspect of the loop station is a sampling process of converting a continuous-time
+            signal into a discrete-time signal by taking measurements of the signal at fixed time intervals.
+            The ** Nyquist rate ** is defined as twice the maximum frequency present in the signal. For example, the
+            highest effective frequency of an electrical guitar signal is 5 kHz, the Nyquist rate should be 10 kHz to
+            ensure that the original signal can be accurately represented by its samples.
+            ** Aliasing ** happens if a signal is sampled below its Nyquist rate. It is the phenomenon when different
+            signals become indistinguishable during sampling processes. High-frequency components of the signal can be
+            reflected into a lower frequency range, causing distortion of the sample.</p>
+
+          <h4 id="superposition-of-waves">Superposition of waves</h4>
+          <p>In order to implement looper’s basic function of adding different tracks of music together, we utilized the
+            principle of superposition by summing up the individual track value. To prevent from value overflow, we
+            first attenuated the amplitude of each track by 50% and then summed them up.</p>
+
+          <h3 id="hardware">High-Level Hardware Diagram</h3>
+          <figure style="width: 800px" class="align-center">
+            <img src="./High Level Design_files/hardware-higher.jpg" alt="">
+          </figure>
+          <p>The guitar signal to be stored in the buffer is first amplifed and high-passed, then sampled through Pico's
+            internal Analog to Digital Convertor(ADC). To play the signal stored, data in buffer is sent to an external
+            digital and analog convertor(DAC) and the output of the DAC is connected to one channel the audio jack of a
+            speaker.</p>
+          <p>To allow the guitar to be heard without any delay, we also connect the amplified guitar signal directly to
+            the other channel of the audio jack. This way the musician can hear the recorded sound and their own playing
+            simultaneously. </p>
+
+          <h3 id="logical-structure">logical structure</h3>
+          <p>We didn’t have a specific FSM when we implemented, instead, we used state variables to switch between
+            different stages: first-time recording, recording, playing, pause, clear.</p>
+
+          <h4 id="recording">Recording</h4>
+          <figure style="width: 500px" class="align-center">
+            <img src="./High Level Design_files/image19.png" alt="">
+          </figure>
+
+          <p>For the state change between Recording and Not Recording, there are three methods:</p>
+          <ol>
+            <li>Pressing the recording button when the recording is on, doesn’t care about if playing or not.</li>
+            <li>In recording mode, the recording time limit is up (10 seconds), it will automatically go to not
+              recording and turn on playing.</li>
+            <li>Press the playing button when in recording mode, when play is also on, will stop the playing and
+              recording</li>
+          </ol>
+
+          <h4 id="playing">Playing</h4>
+          <figure style="width: 500px" class="align-center">
+            <img src="./High Level Design_files/image12.png" alt="">
+          </figure>
+
+          <p>For the state change between Recording and Not Recording, there are two methods:
+            Pressing the playing button when it’s not the first time recording and not already playing will allow you to
+            play back the previous recordings.
+            If pressing it when already playing, then it will pause.</p>
+
+          <h4 id="first-recording">First Recording</h4>
+          <figure style="width: 500px" class="align-center">
+            <img src="./High Level Design_files/image10.jpg" alt="">
+          </figure>
+
+          <p>For the state change between First Recording and Not First Recording:
+            Pressing the recording button when it’s at first recording will change it to not first recording
+            Pressing the clear button when it’s not first recording will change it to first recording</p>
+
+          <h3 id="hardwaresoftware-trade-offs">hardware/software trade-offs</h3>
+          <p>Trade-off in our design includes</p>
+          <ul>
+            <li>ADC noise</li>
+            <li>High-frequency noise because we didn’t have a low pass filter because we didn’t suspect that
+              high-frequency noise is predominant when sampling.</li>
+            <li>Memory restricting the length of each track</li>
+            <li>Noise due to low sampling rate of 8k when guitar can produce 5k (Nyquist-Shar)
+              Discuss existing patents, copyrights, and trademarks which are relevant to your project.</li>
+          </ul>
+
+
+
+        </div>
+      </div>
+    </article>
+  </main>
+
+
+  <footer id="footer" class="site-footer">
+    <!-- start custom footer snippets -->
+
+    <!-- end custom footer snippets -->
+    <div class="copyright">
+
+      <p>© 2023 ECE 4760 Final Project. Powered by <a href="https://jekyllrb.com/" rel="nofollow">Jekyll</a> &amp; <a
+          href="https://github.com/mmistakes/so-simple-theme" rel="nofollow">So Simple</a>.</p>
+
+    </div>
+  </footer>
+
+  <script src="./High Level Design_files/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <script src="./High Level Design_files/main.min.js"></script>
+  <script src="./High Level Design_files/all.js"></script>
+
+
+
+
+
+</body><grammarly-desktop-integration data-grammarly-shadow-root="true"><template shadowrootmode="open">
+    <style>
+      div.grammarly-desktop-integration {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      div.grammarly-desktop-integration:before {
+        content: attr(data-content);
+      }
+    </style>
+    <div aria-label="grammarly-integration" role="group" tabindex="-1" class="grammarly-desktop-integration"
+      data-content="{&quot;mode&quot;:&quot;full&quot;,&quot;isActive&quot;:true,&quot;isUserDisabled&quot;:false}">
+    </div>
+  </template></grammarly-desktop-integration>
+
+</html>

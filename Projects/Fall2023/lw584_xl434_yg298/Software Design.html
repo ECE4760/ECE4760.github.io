@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<!-- saved from url=(0045)https://xl434.github.io/ece4760_web/software/ -->
+<html lang="en-US" class="js">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+
+  <title>Software Design</title>
+  <meta name="description" content="">
+  <style type="text/css">
+    svg:not(:root).svg-inline--fa {
+      overflow: visible
+    }
+
+    .svg-inline--fa {
+      display: inline-block;
+      font-size: inherit;
+      height: 1em;
+      overflow: visible;
+      vertical-align: -.125em
+    }
+
+    .svg-inline--fa.fa-lg {
+      vertical-align: -.225em
+    }
+
+    .svg-inline--fa.fa-w-1 {
+      width: .0625em
+    }
+
+    .svg-inline--fa.fa-w-2 {
+      width: .125em
+    }
+
+    .svg-inline--fa.fa-w-3 {
+      width: .1875em
+    }
+
+    .svg-inline--fa.fa-w-4 {
+      width: .25em
+    }
+
+    .svg-inline--fa.fa-w-5 {
+      width: .3125em
+    }
+
+    .svg-inline--fa.fa-w-6 {
+      width: .375em
+    }
+
+    .svg-inline--fa.fa-w-7 {
+      width: .4375em
+    }
+
+    .svg-inline--fa.fa-w-8 {
+      width: .5em
+    }
+
+    .svg-inline--fa.fa-w-9 {
+      width: .5625em
+    }
+
+    .svg-inline--fa.fa-w-10 {
+      width: .625em
+    }
+
+    .svg-inline--fa.fa-w-11 {
+      width: .6875em
+    }
+
+    .svg-inline--fa.fa-w-12 {
+      width: .75em
+    }
+
+    .svg-inline--fa.fa-w-13 {
+      width: .8125em
+    }
+
+    .svg-inline--fa.fa-w-14 {
+      width: .875em
+    }
+
+    .svg-inline--fa.fa-w-15 {
+      width: .9375em
+    }
+
+    .svg-inline--fa.fa-w-16 {
+      width: 1em
+    }
+
+    .svg-inline--fa.fa-w-17 {
+      width: 1.0625em
+    }
+
+    .svg-inline--fa.fa-w-18 {
+      width: 1.125em
+    }
+
+    .svg-inline--fa.fa-w-19 {
+      width: 1.1875em
+    }
+
+    .svg-inline--fa.fa-w-20 {
+      width: 1.25em
+    }
+
+    .svg-inline--fa.fa-pull-left {
+      margin-right: .3em;
+      width: auto
+    }
+
+    .svg-inline--fa.fa-pull-right {
+      margin-left: .3em;
+      width: auto
+    }
+
+    .svg-inline--fa.fa-border {
+      height: 1.5em
+    }
+
+    .svg-inline--fa.fa-li {
+      width: 2em
+    }
+
+    .svg-inline--fa.fa-fw {
+      width: 1.25em
+    }
+
+    .fa-layers svg.svg-inline--fa {
+      bottom: 0;
+      left: 0;
+      margin: auto;
+      position: absolute;
+      right: 0;
+      top: 0
+    }
+
+    .fa-layers {
+      display: inline-block;
+      height: 1em;
+      position: relative;
+      text-align: center;
+      vertical-align: -.125em;
+      width: 1em
+    }
+
+    .fa-layers svg.svg-inline--fa {
+      -webkit-transform-origin: center center;
+      transform-origin: center center
+    }
+
+    .fa-layers-counter,
+    .fa-layers-text {
+      display: inline-block;
+      position: absolute;
+      text-align: center
+    }
+
+    .fa-layers-text {
+      left: 50%;
+      top: 50%;
+      -webkit-transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%);
+      -webkit-transform-origin: center center;
+      transform-origin: center center
+    }
+
+    .fa-layers-counter {
+      background-color: #ff253a;
+      border-radius: 1em;
+      -webkit-box-sizing: border-box;
+      box-sizing: border-box;
+      color: #fff;
+      height: 1.5em;
+      line-height: 1;
+      max-width: 5em;
+      min-width: 1.5em;
+      overflow: hidden;
+      padding: .25em;
+      right: 0;
+      text-overflow: ellipsis;
+      top: 0;
+      -webkit-transform: scale(.25);
+      transform: scale(.25);
+      -webkit-transform-origin: top right;
+      transform-origin: top right
+    }
+
+    .fa-layers-bottom-right {
+      bottom: 0;
+      right: 0;
+      top: auto;
+      -webkit-transform: scale(.25);
+      transform: scale(.25);
+      -webkit-transform-origin: bottom right;
+      transform-origin: bottom right
+    }
+
+    .fa-layers-bottom-left {
+      bottom: 0;
+      left: 0;
+      right: auto;
+      top: auto;
+      -webkit-transform: scale(.25);
+      transform: scale(.25);
+      -webkit-transform-origin: bottom left;
+      transform-origin: bottom left
+    }
+
+    .fa-layers-top-right {
+      right: 0;
+      top: 0;
+      -webkit-transform: scale(.25);
+      transform: scale(.25);
+      -webkit-transform-origin: top right;
+      transform-origin: top right
+    }
+
+    .fa-layers-top-left {
+      left: 0;
+      right: auto;
+      top: 0;
+      -webkit-transform: scale(.25);
+      transform: scale(.25);
+      -webkit-transform-origin: top left;
+      transform-origin: top left
+    }
+
+    .fa-lg {
+      font-size: 1.33333em;
+      line-height: .75em;
+      vertical-align: -.0667em
+    }
+
+    .fa-xs {
+      font-size: .75em
+    }
+
+    .fa-sm {
+      font-size: .875em
+    }
+
+    .fa-1x {
+      font-size: 1em
+    }
+
+    .fa-2x {
+      font-size: 2em
+    }
+
+    .fa-3x {
+      font-size: 3em
+    }
+
+    .fa-4x {
+      font-size: 4em
+    }
+
+    .fa-5x {
+      font-size: 5em
+    }
+
+    .fa-6x {
+      font-size: 6em
+    }
+
+    .fa-7x {
+      font-size: 7em
+    }
+
+    .fa-8x {
+      font-size: 8em
+    }
+
+    .fa-9x {
+      font-size: 9em
+    }
+
+    .fa-10x {
+      font-size: 10em
+    }
+
+    .fa-fw {
+      text-align: center;
+      width: 1.25em
+    }
+
+    .fa-ul {
+      list-style-type: none;
+      margin-left: 2.5em;
+      padding-left: 0
+    }
+
+    .fa-ul>li {
+      position: relative
+    }
+
+    .fa-li {
+      left: -2em;
+      position: absolute;
+      text-align: center;
+      width: 2em;
+      line-height: inherit
+    }
+
+    .fa-border {
+      border: solid .08em #eee;
+      border-radius: .1em;
+      padding: .2em .25em .15em
+    }
+
+    .fa-pull-left {
+      float: left
+    }
+
+    .fa-pull-right {
+      float: right
+    }
+
+    .fa.fa-pull-left,
+    .fab.fa-pull-left,
+    .fal.fa-pull-left,
+    .far.fa-pull-left,
+    .fas.fa-pull-left {
+      margin-right: .3em
+    }
+
+    .fa.fa-pull-right,
+    .fab.fa-pull-right,
+    .fal.fa-pull-right,
+    .far.fa-pull-right,
+    .fas.fa-pull-right {
+      margin-left: .3em
+    }
+
+    .fa-spin {
+      -webkit-animation: fa-spin 2s infinite linear;
+      animation: fa-spin 2s infinite linear
+    }
+
+    .fa-pulse {
+      -webkit-animation: fa-spin 1s infinite steps(8);
+      animation: fa-spin 1s infinite steps(8)
+    }
+
+    @-webkit-keyframes fa-spin {
+      0% {
+        -webkit-transform: rotate(0);
+        transform: rotate(0)
+      }
+
+      100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes fa-spin {
+      0% {
+        -webkit-transform: rotate(0);
+        transform: rotate(0)
+      }
+
+      100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg)
+      }
+    }
+
+    .fa-rotate-90 {
+      -webkit-transform: rotate(90deg);
+      transform: rotate(90deg)
+    }
+
+    .fa-rotate-180 {
+      -webkit-transform: rotate(180deg);
+      transform: rotate(180deg)
+    }
+
+    .fa-rotate-270 {
+      -webkit-transform: rotate(270deg);
+      transform: rotate(270deg)
+    }
+
+    .fa-flip-horizontal {
+      -webkit-transform: scale(-1, 1);
+      transform: scale(-1, 1)
+    }
+
+    .fa-flip-vertical {
+      -webkit-transform: scale(1, -1);
+      transform: scale(1, -1)
+    }
+
+    .fa-flip-horizontal.fa-flip-vertical {
+      -webkit-transform: scale(-1, -1);
+      transform: scale(-1, -1)
+    }
+
+    :root .fa-flip-horizontal,
+    :root .fa-flip-vertical,
+    :root .fa-rotate-180,
+    :root .fa-rotate-270,
+    :root .fa-rotate-90 {
+      -webkit-filter: none;
+      filter: none
+    }
+
+    .fa-stack {
+      display: inline-block;
+      height: 2em;
+      position: relative;
+      width: 2em
+    }
+
+    .fa-stack-1x,
+    .fa-stack-2x {
+      bottom: 0;
+      left: 0;
+      margin: auto;
+      position: absolute;
+      right: 0;
+      top: 0
+    }
+
+    .svg-inline--fa.fa-stack-1x {
+      height: 1em;
+      width: 1em
+    }
+
+    .svg-inline--fa.fa-stack-2x {
+      height: 2em;
+      width: 2em
+    }
+
+    .fa-inverse {
+      color: #fff
+    }
+
+    .sr-only {
+      border: 0;
+      clip: rect(0, 0, 0, 0);
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      padding: 0;
+      position: absolute;
+      width: 1px
+    }
+
+    .sr-only-focusable:active,
+    .sr-only-focusable:focus {
+      clip: auto;
+      height: auto;
+      margin: 0;
+      overflow: visible;
+      position: static;
+      width: auto
+    }
+  </style>
+  <link rel="canonical" href="https://xl434.github.io/ece4760_web/software/">
+
+
+  <script>
+    /* Cut the mustard */
+    if ('querySelector' in document && 'addEventListener' in window) {
+      document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + 'js';
+    }
+  </script>
+
+  <link rel="stylesheet" href="./Software Design_files/main.css">
+  <link rel="stylesheet" href="./Software Design_files/default.css">
+  <!-- start custom head snippets -->
+
+  <!-- insert favicons. use http://realfavicongenerator.net/ -->
+
+  <!-- end custom head snippets -->
+
+</head>
+
+
+<body class="layout--page  software-design" data-new-gr-c-s-check-loaded="14.1146.0" data-gr-ext-installed="">
+  <nav class="skip-links">
+    <h2 class="screen-reader-text">Skip links</h2>
+    <ul>
+      <li><a href="https://xl434.github.io/ece4760_web/software/#primary-nav" class="screen-reader-shortcut">Skip to
+          primary navigation</a></li>
+      <li><a href="https://xl434.github.io/ece4760_web/software/#main" class="screen-reader-shortcut">Skip to
+          content</a></li>
+      <li><a href="https://xl434.github.io/ece4760_web/software/#footer" class="screen-reader-shortcut">Skip to
+          footer</a></li>
+    </ul>
+  </nav>
+
+
+  <div class="navigation-wrapper">
+    <a href="https://xl434.github.io/ece4760_web/software/#menu-toggle" id="menu-toggle">Menu</a>
+    <nav id="primary-nav" class="site-nav animated drop">
+      <ul>
+        <li><a href="./index.html">Intro</a></li>
+        <li><a href="./High Level Design.html">High Level</a></li>
+        <li><a href="./Hardware.html">Hardware</a></li>
+        <li><a href="./Software Design.html">Software</a></li>
+        <li><a href="./Conclusion.html">Conclusion</a></li>
+      </ul>
+    </nav>
+  </div><!-- /.navigation-wrapper -->
+
+
+  <header class="masthead">
+    <div class="wrap">
+
+      <a href="https://xl434.github.io/ece4760_web/" class="site-logo" rel="home" title="ECE 4760 Final Project">
+        <img src="./Software Design_files/logo.png" class="site-logo-img animated fadeInDown"
+          alt="ECE 4760 Final Project">
+      </a>
+
+
+
+
+      <div class="site-title animated fadeIn"><a href="https://xl434.github.io/ece4760_web/">ECE 4760 Final Project</a>
+      </div>
+
+      <p class="site-description animated fadeIn" itemprop="description"></p>
+
+    </div>
+  </header><!-- /.masthead -->
+
+
+  <main id="main" class="main-content" aria-label="Content">
+    <article>
+
+
+      <div class="page-wrapper">
+        <header class="page-header">
+
+
+          <h1 id="page-title" class="page-title">Software Design</h1>
+
+        </header>
+        <div class="page-content">
+          <h2 id="software-program-details">Software program details</h2>
+
+          <h3 id="general">General</h3>
+          <p><strong>Consideration in memory</strong>: The current track is stored in a char buffer of size 80000. Since
+            the sampling and output frequency are both 8k Hz, this buffer size corresponds to 10 seconds. That is, our
+            looper is capable of recording and layering on top of a track of maximum length 10 seconds. This buffer is
+            stored in Pico’s RAM, which has a capacity of 256 kB. Since the buffer is 800000 bytes in size,
+            corresponding to 80kb, it occupies a rather significant amount of RAM, considering that there are a number
+            of other variables we monitor for. We therefore introduce external memory FRAM to implement functionalities
+            in saving recorded tracks.</p>
+
+          <p><strong>Considerations in state transitions</strong>: There are four state variables: recording, playing,
+            and first_record, and blink red. These states are changed by both button presses and logic within the code.
+            Since button presses are not the only source of change in state, and one button press does not necessarily
+            corresponds to only one change, tthere are a bit more logic to consider when buttons are pressed. For
+            example, we do not want to record when the track is not playing. Therefore, on transition of recording state
+            from low to high, if playing is low, we would force it to high. Another example is when we press record for
+            the frist time, the recording state should not become high immediately, since we need the red led to blink
+            first. Therefore, recording would only be set to high after blink_red becomes low.</p>
+
+          <p><strong>Valid combination of states</strong> (in typical sequence)</p>
+          <figure style="width: 500px" class="align-center">
+            <img src="./Software Design_files/image0.png" alt="">
+          </figure>
+
+          <h3 id="threads">Threads</h3>
+
+          <h4 id="led">LED</h4>
+          <p>The <code class="language-plaintext highlighter-rouge">led_thread</code> is responsible for managing the
+            LED indicators of the system. It toggles the LED based on the states. The red LED indicates whether or not
+            the system is recording. The green LED indicates whether or not the system is playing. The yellow LED
+            indicates whether or not the track is ready for first-time record and/or recording for the first time.
+            The red LED also flashes three times right before the start of first-time record so that the musician can
+            get ready, and a blink_red state is set accordingly. Whenever blink_red is high, playing is set to low,
+            recording is set to low, and the red LED would turn on for half a second, off for half a second and repeat
+            three times. The delay is implemented with sleep rather than YIELD since we do not want any button presses
+            and releases to be detected during this period, which might interfere with the states and cause the program
+            to enter an invalid combination of states.</p>
+
+          <h4 id="serial">Serial</h4>
+          <p>The <code class="language-plaintext highlighter-rouge">serial_thread</code> handles serial communication to
+            save track to FRAM and play tracks saved in FRAM based on user input. User can first enter either ‘save’ or
+            ‘play’, then select the track number they would like to save or play.
+            On a save operation, a file is first opened, then the buffer is written into the opened file using <code
+              class="language-plaintext highlighter-rouge">fWrite()</code>. Finally the file is closed. We use an array
+            of int to track the length of the tracks saved to each file in FRAM so that when it gets played, the loop
+            has the appropriate length. This list is updated when a track is saved.
+            On a play operation, the file is first opened, and data in the file is written into the buffer, and lastly
+            the file is closed. The length is fetched from the array and stored into <code
+              class="language-plaintext highlighter-rouge">track_length</code> variable. If a track selected for play
+            has not been saved before, the data will not be loaded into the buffer, and there will be a prompt to let
+            the user know.</p>
+
+          <h3 id="irq-handler">IRQ handler</h3>
+
+          <h4 id="timer-interrupt">Timer interrupt</h4>
+          <p>The timer interrupt is set up to be serviced at a frequency of 8k Hz, corresponding to the sampling rate
+            and the rate at which data is sent to audio jack through DAC.
+            If the system is playing, the data in appropriate position will be sent to DAC, in order to be played by the
+            speaker. Note that the data is sent before being modified, in the case that the track is also in recording
+            mode. This is due to the fact that we have one of the two channels of the speaker connected to the amplified
+            guitar sound directly, and the other channel connected to DAC output.
+            If the system is currently in recording, then data will be read from Pico’s onboard ADC, right-shifted by 3
+            bits (since the last 3 bits are all noise). If we are recording a track for the first time, the ADC data
+            will be directly stored in the appropriate position in the buffer. Otherwise, the current data in buffer and
+            ADC data will be halved then added, in order to prevent overflow.
+            When the system is recording for the first time, there is a <code
+              class="language-plaintext highlighter-rouge">track_length_counter</code> to keep track of the number of
+            samples taken on the first record. If the counter exceeds length of the buffer, then the track_length is set
+            to be length of buffer, and the first record would end. In later playing and recording, a <code
+              class="language-plaintext highlighter-rouge">track_position</code> is incremented when the system is
+            playing, and reset when it reaches <code class="language-plaintext highlighter-rouge">track_length</code>.
+          </p>
+
+          <h4 id="gpio-interrupt">GPIO interrupt</h4>
+          <p>We monitor for falling edge on the three buttons, and change the state based on input and the current state
+            (much like a mealy machine). One interesting note is that the Pico SDK does not support having multiple
+            service routine for GPIO interrupts (so one routine for each button is now allowed). Instead, we need to
+            handle all gpio interrupt in one routine and service the interrupt based on the channel that triggers the
+            interrupt. The most important thing we need to make sure is that we never enter an invalid combination of
+            states, since the system would have unpredictable behavior in such cases.
+            If play is pressed, the state of playing is simply flipped. And after the modification, if the system is not
+            playing, <code class="language-plaintext highlighter-rouge">recording</code> will also be set to low.
+            If clear is pressed, playing, recording, and blink_red are all set to low, and first_record is set to high.
+            Everything in buffer is cleared, track_length counter and track_length is resetted.
+            If recording is pressed, we first determine if this is the track’s first time recording and if the track is
+            currently recording or not. If the track is not currently recording, then first recording is started.
+            Otherwise, the first recording is ended and <code
+              class="language-plaintext highlighter-rouge">track_length</code> would be updated to match <code
+              class="language-plaintext highlighter-rouge">track_length_count</code>. If the track is not in its first
+            recording, then recording is simply toggled, and playing would be turned on if recording is high after being
+            toggled.<br>
+            Be sure to specifically reference any design or code you used from someone else.
+            Amplifier circuit https://www.tomshardware.com/news/raspberry-pi-pico-guitar-midi-converter
+            Fram code https://people.ece.cornell.edu/land/courses/ece4760/RP2040/C_SDK_memory/index_memory.html
+            Things you tried which did not work
+            Bandpassing signal from dac before feeding into speaker jack
+            We think this was because the values of R and C aren’t right and resulting in a wrong cut-off frequency. It
+            failed because, after bandpassing the signal, we couldn’t hear anything outputting from the speaker.
+            Gpio_set_irq_enable_with_callback ignores the GPIO parameter, event on different gpio would enter the same
+            handler LOL
+            Therefore we combined the GPIO callback functions into one and used conditional statement to determine which
+            one is interrupting the program and to service which GPIO.</p>
+
+
+
+        </div>
+      </div>
+    </article>
+  </main>
+
+
+  <footer id="footer" class="site-footer">
+    <!-- start custom footer snippets -->
+
+    <!-- end custom footer snippets -->
+    <div class="copyright">
+
+      <p>© 2023 ECE 4760 Final Project. Powered by <a href="https://jekyllrb.com/" rel="nofollow">Jekyll</a> &amp; <a
+          href="https://github.com/mmistakes/so-simple-theme" rel="nofollow">So Simple</a>.</p>
+
+    </div>
+  </footer>
+
+  <script src="./Software Design_files/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <script src="./Software Design_files/main.min.js"></script>
+  <script src="./Software Design_files/all.js"></script>
+
+
+
+
+
+</body><grammarly-desktop-integration data-grammarly-shadow-root="true"><template shadowrootmode="open">
+    <style>
+      div.grammarly-desktop-integration {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      div.grammarly-desktop-integration:before {
+        content: attr(data-content);
+      }
+    </style>
+    <div aria-label="grammarly-integration" role="group" tabindex="-1" class="grammarly-desktop-integration"
+      data-content="{&quot;mode&quot;:&quot;full&quot;,&quot;isActive&quot;:true,&quot;isUserDisabled&quot;:false}">
+    </div>
+  </template></grammarly-desktop-integration>
+
+</html>
