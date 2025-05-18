@@ -1,0 +1,2239 @@
+<!DOCTYPE HTML>
+<!--
+	Editorial by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Appendix</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<div id="main">
+						<div class="inner">
+
+							<!-- Header -->
+								<header id="header">
+								<a href="index.html" class="logo"><strong>Nuclear Fission Simulator</strong> by Andrew Shim, Tyler Wisniewski, <br />and another group member</a>									
+									<!-- <ul class="icons">
+										<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
+										<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
+										<li><a href="#" class="icon brands fa-snapchat-ghost"><span class="label">Snapchat</span></a></li>
+										<li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+										<li><a href="#" class="icon brands fa-medium-m"><span class="label">Medium</span></a></li>
+									</ul> -->
+									ECE 5730 Digital System Design using Microcontrollers<br />
+									Cornell University<br />
+								</header>
+
+							<!-- Content -->
+								<section>
+									<header class="main">
+										<h1>Code</h1>
+									</header>
+
+                  <h3>vga16_graphics.h</h3>
+                  <pre><code>
+uint16_t readNeutronBackground(int x, int y) ;
+short readPixel(short x, short y) ;
+                  </code></pre>
+
+									<h3>vga16_graphics.c</h3>
+                  <pre><code>
+uint16_t readNeutronBackground(int x, int y) {
+  //returns the color of 2x2 pixel square at index
+  //index is the top left pixel in the array
+  int pixel = ((640 * y) + x) ;
+
+  short pix1 = readPixel(x, y) ;
+  short pix2 = readPixel(x+1, y) ;
+  short pix3 = readPixel(x, y+1) ;
+  short pix4 = readPixel(x+1, y+1) ;
+
+  return (pix1 << 12) | (pix2 << 8) | (pix3 << 4) | pix4 ;
+}
+
+// get the color of a pixel
+short readPixel(short x, short y) {
+  // Which pixel is it?
+  int pixel = ((640 * y) + x) ;
+  short color ;
+  // Is this pixel stored in the first 4 bits
+  // of the vga data array index, or the second
+  // 4 bits? Check, then mask.
+  if (pixel & 1) {
+      color = vga_data_array[pixel>>1] >> 4 ;
+  }
+  else {
+      color = vga_data_array[pixel>>1] & 0xf  ;
+  }
+  if (color == 8 || color == 14) color = 0 ; // if color is RED/LIGHT_PINK, overlapped neutrons, return BLACK
+  return color ;
+}
+                  </code></pre>
+
+									<!-- Preformatted Code -->
+									                                <h3>animation.c</h3>
+													<pre><code>
+/**
+ * Andrew Shim, Tyler Wisniewski, Unnamed
+ * 
+ * built off of code by:
+ * Hunter Adams (vha3@cornell.edu)
+ * 
+ * Chenobyl-style RBMK reactor simulation on RP2040
+ * 
+ *
+ * HARDWARE CONNECTIONS
+ *  - GPIO 16 ---> VGA Hsync
+ *  - GPIO 17 ---> VGA Vsync
+ *  - GPIO 18 ---> 470 ohm resistor ---> VGA Green 
+ *  - GPIO 19 ---> 330 ohm resistor ---> VGA Green
+ *  - GPIO 20 ---> 330 ohm resistor ---> VGA Blue
+ *  - GPIO 21 ---> 330 ohm resistor ---> VGA Red
+ *  - RP2040 GND ---> VGA GND
+ * 
+ *  - GPIO 2  ---> Button 1
+ *  - GPIO 4  ---> Button 2
+ *  - GPIO 5  ---> Button 3
+ *  - GPIO 3  ---> Button 4
+ * 
+ *  - GPIO 27 +
+ *  - GPIO 26 ---> Encoder 1
+ *  - GPIO 6  +
+ *  - GPIO 7  ---> Encoder 2
+ *  - GPIO 28 +
+ *  - GPIO 22 ---> Encoder 3
+ *  - GPIO 8  +
+ *  - GPIO 9  ---> Encoder 4
+ * 
+ *
+ * RESOURCES USED
+ *  - PIO state machines 0, 1, and 2 on PIO instance 0
+ *  - DMA channels (2, by claim mechanism)
+ *  - 153.6 kBytes of RAM (for pixel color data)
+ *
+ */
+
+// Include the VGA grahics library
+#include "vga16_graphics.h"
+// Include standard libraries
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+#include <time.h>
+// Include Pico libraries
+#include "pico/stdlib.h"
+#include "pico/divider.h"
+#include "pico/multicore.h"
+// Include hardware libraries
+#include "hardware/pio.h"
+#include "hardware/dma.h"
+#include "hardware/spi.h"
+#include "hardware/clocks.h"
+#include "hardware/pll.h"
+// Include protothreads
+#include "pt_cornell_rp2040_v1_3.h"
+
+// Fixed-point arithmetic definitions
+typedef signed int fix15;
+#define multfix15(a,b) ((fix15)((((signed long long)(a))*((signed long long)(b)))>>15))
+#define float2fix15(a) ((fix15)((a)*32768.0)) 
+#define fix2float15(a) ((float)(a)/32768.0)
+#define absfix15(a) abs(a)
+#define int2fix15(a) ((fix15)(a << 15))
+#define fix2int15(a) ((int)(((a) + 0x4000) >> 15))
+#define divfix(a,b) (fix15)(div_s64s64( (((signed long long)(a)) << 15), ((signed long long)(b))))
+
+// Add at top with other function declarations
+void collisionNucleus(int nuc_index, int neutron_index);
+void spontaneous(void);
+void redrawScreen(void);
+
+// Declare sim_speed_state globally
+static volatile int sim_speed_state = 0; // 0 for normal speed, 1 for increased speed
+
+//========================================================Audio DMA==========================================================
+
+#define dds_sine_table_size 256
+
+// Sine table
+int raw_sin[dds_sine_table_size] ;
+
+// Table of values to be sent to DAC
+unsigned short DAC_data[dds_sine_table_size] ;
+
+// Pointer to the address of the DAC data table
+unsigned short * address_pointer2 = &DAC_data[0] ;
+
+// A-channel, 1x, active
+#define DAC_config_chan_A 0b0011000000000000
+
+//SPI configurations
+#define PIN_MISO 12  // Update to GPIO 12 for spi1
+#define PIN_CS   13  // Update to GPIO 13 for spi1
+#define PIN_SCK  10  // Update to GPIO 10 for spi1
+#define PIN_MOSI 11  // Update to GPIO 11 for spi1
+#define SPI_PORT spi1  // Change to spi1
+
+// Number of DMA transfers per event
+const uint32_t transfer_count = dds_sine_table_size ;
+
+int data_chan ;
+int ctrl_chan ;
+
+//==========================================================================================================================
+
+typedef signed int fix15 ;
+#define multfix15(a,b) ((fix15)((((signed long long)(a))*((signed long long)(b)))>>15))
+#define float2fix15(a) ((fix15)((a)*32768.0)) // 2^15
+#define fix2float15(a) ((float)(a)/32768.0)
+#define absfix15(a) abs(a) 
+#define int2fix15(a) ((fix15)(a << 15))
+#define fix2int15(a) ((int)(((a) + 0x4000) >> 15)) // Add 0x4000 for rounding
+#define char2fix15(a) (fix15)(((fix15)(a)) << 15)
+#define divfix(a,b) (fix15)(div_s64s64( (((signed long long)(a)) << 15), ((signed long long)(b))))
+
+// Wall detection
+#define hitBottom(b) (b>int2fix15(242))
+#define hitTop(b) (b<int2fix15(0))
+#define hitLeft(a) (a<int2fix15(0))
+#define hitRight(a) (a>int2fix15(640))
+
+//TODO short fix5
+typedef signed short fix10 ;
+
+// uS per frame
+#define FRAME_RATE 33000
+
+// the color of the boid
+char color = WHITE ;
+
+// Boid on core 0
+fix15 boid0_x ;
+fix15 boid0_y ;
+fix15 boid0_vx ;
+fix15 boid0_vy ;
+
+//===========================================================Nucleus==========================================================
+
+//Nucleus arrays
+#define row_size_nuclei 28
+#define col_size_nuclei 10
+
+struct Nucleus {
+  fix15 x ;
+  fix15 y ;
+  short type ; 
+  //0 for non-fissile
+  //1 for uranium
+  //2 for xenon
+  uint16_t water_state;
+} ;
+
+struct Nucleus nuclei[row_size_nuclei*col_size_nuclei] ;
+
+short uraniumNuclei[row_size_nuclei*col_size_nuclei] ;
+short num_uranium_active = 50 ;
+short xenonNuclei[row_size_nuclei*col_size_nuclei] ;
+short num_xenon_active = 30 ;
+short non_fissileNuclei[row_size_nuclei*col_size_nuclei] ;
+short num_non_fissile_active ;
+
+//nucleus starting positions
+fix15 startx = int2fix15(23) ;
+fix15 starty = int2fix15(23) ;
+
+int nucleusTypeToColor(short type){
+  if (type == 0) return WHITE ;       //non-fissile
+  else if (type == 1) return GREEN ;  //uranium
+  else return BLACK ;   //xenon
+}
+
+int waterStateToColor(short state){
+  if (state < 1024) return DARK_BLUE ;
+  else if(state < 2048) return BLUE ;
+  else if(state < 3072) return LIGHT_BLUE;
+  else return CYAN ;
+}
+
+int randNucleusIndx(){
+  // Randomly return a nucleus index 0-279
+  int rand_nuc = 280; // Initialize to a value greater than 279
+  while(rand_nuc > 279){
+    rand_nuc = (rand() & 0x1ff) ;
+  }
+  return rand_nuc ;
+}
+
+void initNucleus()
+{
+  //define x and y coords for all nuclei
+  for (int i = 0; i < col_size_nuclei; i ++){
+    for (int j = 0; j < row_size_nuclei; j++){
+      int index = i*row_size_nuclei + j ;
+      nuclei[index].x = startx + int2fix15(j*22) ;
+      nuclei[index].y = starty + int2fix15(i*22) ;
+      nuclei[index].type = 0 ;
+      nuclei[index].water_state = 0 ;
+    }
+  }
+
+  //build uranium array (initalized to -1)
+  for (int i = 0; i < row_size_nuclei*col_size_nuclei; i++){
+    uraniumNuclei[i] = -1 ;
+  }
+
+  // Randomly assign uranium nuclei
+  for (int i = 0; i < num_uranium_active; i++){
+    int rand_nuc = randNucleusIndx() ;
+    if (nuclei[rand_nuc].type == 1 || nuclei[rand_nuc].type == 2){
+      //if uranium or xenon already, decrement i
+      i-- ;
+    }
+    else if (nuclei[rand_nuc].type == 0){
+      //if non-fissile, assign uranium
+      nuclei[rand_nuc].type = 1 ;
+      uraniumNuclei[i] = rand_nuc ;
+    }
+  }
+
+  //build xenon array (initalized to -1)
+  for (int i = 0; i < row_size_nuclei*col_size_nuclei; i++){
+    xenonNuclei[i] = -1 ;
+  }
+
+  //Randomly assign xenon nuclei
+  for (int i = 0; i < num_xenon_active; i++){
+    int rand_nuc = randNucleusIndx() ;
+    if (nuclei[rand_nuc].type == 2 || nuclei[rand_nuc].type == 1){
+      //if uranium or xenon already, decrement i
+      i-- ;
+    }
+    else if (nuclei[rand_nuc].type == 0 ){
+      //if non-fissile, assign xenon
+      nuclei[rand_nuc].type = 2 ;
+      xenonNuclei[i] = rand_nuc ;
+    }
+  }
+
+  //build non-fissile array (initalized to -1)
+  for (int i = 0; i < row_size_nuclei*col_size_nuclei; i++){
+    non_fissileNuclei[i] = -1 ;
+  }
+
+  int non_fissile_count = 0;
+  for (int i = 0; i < row_size_nuclei*col_size_nuclei; i++) {
+    if (nuclei[i].type == 0) {
+      // If non-fissile, assign to non-fissile array
+      non_fissileNuclei[non_fissile_count++] = i;
+    }
+  }
+  num_non_fissile_active = non_fissile_count; // Update the count of active non-fissile nuclei
+}
+
+void removeUraniumNucleus(int index) {
+  for (int i = 0; i < num_uranium_active; i++) {
+      if (uraniumNuclei[i] == index) {
+          nuclei[index].type = 0;
+
+          // Shift array down
+          for (int j = i; j < num_uranium_active - 1; j++) {
+              uraniumNuclei[j] = uraniumNuclei[j + 1];
+          }
+
+          // Clear the last element
+          uraniumNuclei[num_uranium_active - 1] = -1;
+
+          // Decrement number of uranium nuclei
+          num_uranium_active--;
+          // add to non-fissile nuclei count if space is available
+          if (num_non_fissile_active < row_size_nuclei * col_size_nuclei) {
+              non_fissileNuclei[num_non_fissile_active] = index;
+              num_non_fissile_active++;
+          } else {
+              printf("Error: non_fissileNuclei array is full.\n");
+          }
+
+          //redraw
+          fillCircle(fix2int15(nuclei[index].x), fix2int15(nuclei[index].y), 4, nucleusTypeToColor(nuclei[index].type));
+          return;
+      }
+  }
+}
+
+
+void removeXenonNucleus(int index){
+  //removes xenon nucleus from array
+  //and shifts array down
+  for (int i = 0; i < num_xenon_active; i++){
+    if (xenonNuclei[i] == index){
+      nuclei[index].type = 0 ;
+      
+      //shift array down
+      for (int j = i; j < num_xenon_active - 1; j++){
+        xenonNuclei[j] = xenonNuclei[j+1] ;
+      }
+      
+      // Clear the last element
+      xenonNuclei[num_xenon_active - 1] = -1;
+
+      //decrement number of xenon nuclei
+      num_xenon_active-- ;
+      //increment non-fissile nuclei count
+      if (num_non_fissile_active < row_size_nuclei * col_size_nuclei) {
+        non_fissileNuclei[num_non_fissile_active] = index;
+      } else {
+        printf("Error: non_fissileNuclei array is full.\n");
+      }
+      num_non_fissile_active++ ;
+      
+      //redraw
+      fillCircle(fix2int15(nuclei[index].x), fix2int15(nuclei[index].y), 4, nucleusTypeToColor(nuclei[index].type));
+
+      // Exit the loop after processing the target index
+      return;
+    }
+  }
+}
+
+void removeNonFissileNucleus(int index) {
+  for (int i = 0; i < num_non_fissile_active; i++) {
+      if (non_fissileNuclei[i] == index) {
+          // Shift array down
+          for (int j = i; j < num_non_fissile_active - 1; j++) {
+              non_fissileNuclei[j] = non_fissileNuclei[j + 1];
+          }
+
+          // Clear the last element
+          non_fissileNuclei[num_non_fissile_active - 1] = -1;
+
+          // Decrement number of non-fissile nuclei
+          num_non_fissile_active--;
+          return;
+      }
+  }
+}
+
+void drawNucleus(){
+  for (int i = 0; i < (row_size_nuclei*col_size_nuclei); i++) {
+    fillCircle(fix2int15(nuclei[i].x), fix2int15(nuclei[i].y), 4, nucleusTypeToColor(nuclei[i].type)) ;
+  }
+}
+
+
+#define cell_size 22
+#define cell_size_fix15 int2fix15(22)
+#define grid0_x (startx - (cell_size_fix15 >> 1))  // 12.0 in fix15
+#define grid0_y (starty - (cell_size_fix15 >> 1))  // 12.0 in fix15
+
+
+int returnNucleusIndex(fix15 x, fix15 y){
+  // returns the index of nucleus based on grid cell
+
+  // Shift origin to top-left corner of grid cell 0
+  fix15 dx = x - grid0_x;
+  fix15 dy = y - grid0_y;
+
+  int x_index = dx / cell_size_fix15;
+  int y_index = dy / cell_size_fix15;
+
+  if (x_index < 0) x_index = 0;
+  else if (x_index >= row_size_nuclei) x_index = row_size_nuclei - 1;
+
+  if (y_index < 0) y_index = 0;
+  else if (y_index >= col_size_nuclei) y_index = col_size_nuclei - 1;
+
+  return (y_index * row_size_nuclei + x_index);
+}
+
+
+//=================================================Nucleus Debug================================================
+
+void checkUraniumNuclei(){
+  // printf("=========================\n") ;
+  for (int i = 0; i < num_uranium_active; i++){
+    if (uraniumNuclei[i] == -1){
+      printf("Error 1\n") ;
+    }
+    // printf("Uranium Nucleus: %d\n", uraniumNuclei[i]) ;
+  }
+
+  for (int i = num_uranium_active; i < row_size_nuclei*col_size_nuclei; i++){
+    if (uraniumNuclei[i] != -1){
+      printf("Error 2\n") ;
+    }
+  }
+  // printf("rest of array: %d\n", uraniumNuclei[i]) ;
+}
+
+void checkXenonNuclei(){
+  for (int i = 0; i < num_xenon_active; i++){
+    if (xenonNuclei[i] == -1){
+      printf("Error 3\n") ;
+    }
+    // printf("Xenon Nucleus: %d\n", xenonNuclei[i]) ;
+  }
+
+  for (int i = num_xenon_active; i < row_size_nuclei*col_size_nuclei; i++){
+    if (xenonNuclei[i] != -1){
+      printf("Error 4\n") ;
+    }
+  }
+  // printf("rest of array: %d\n", xenonNuclei[i]) ;
+}
+
+void checkNonFissileNuclei(){
+  // printf("=========================\n") ;
+  for (int i = 0; i < num_non_fissile_active; i++){
+    if (non_fissileNuclei[i] == -1){
+      printf("Error 5\n") ;
+      // printf("non fissile Nucleus: %d\n", non_fissileNuclei[i]) ;
+    }
+    // printf("Non-fissile Nucleus: %d\n", non_fissileNuclei[i]) ;
+  }
+
+  for (int i = num_non_fissile_active; i < row_size_nuclei*col_size_nuclei; i++){
+    if (non_fissileNuclei[i] != -1){
+      printf("Error 6\n") ;
+    }
+  }
+  // printf("rest of array: %d\n", non_fissileNuclei[i]) ;
+}
+
+//========================================================Nuetron============================================================
+#define neutrons_max 2000
+int neutrons_active = 50;
+volatile int numNeutronSpawn = 2;
+#define neutron_starting_energy 24000
+#define neutron_thermal_threshold 16000
+#define neutron_energy_loss 60
+
+#define piOver2 1.57079632679
+#define sine_table_size 256
+fix15 sin_table[sine_table_size] ;
+
+struct Neutron {
+  fix15 x ;
+  fix15 y ;
+  fix15 vx ; 
+  fix15 vy ;
+  short active; // 0 for inactive, 1 for active
+  short energy ; // init to 12000 for fast, <8000 becomes thermal neutron
+  uint16_t background_color ; //stored color data for next frame
+  // [15:12] pixel 1    [11:8] pixel 2    
+  // [7:4]   pixel 3    [3:0]  pixel 4
+};
+
+struct Neutron neutrons[neutrons_max] ;
+
+uint16_t avail_Neutrons[neutrons_max] ;
+uint16_t avail_Neutrons_top;
+
+fix15 returnSin(int i){
+  i &= 0x3FF; // wrap to [0, 1023]
+
+  if (i < 256){
+    return sin_table[i];
+  } else if (i == 256){
+    return int2fix15(1);
+  } else if (i < 512){
+    return sin_table[512 - i];
+  } else if (i < 768){
+    return -sin_table[i - 512];
+  } else if (i == 768){
+    return int2fix15(-1);
+  } else {
+    return -sin_table[1024 - i];
+  }
+}
+
+
+fix15 returnCos(int i){
+  if (i < 768){
+    return returnSin(i + 256) ;
+  }
+  else{
+    return returnSin(i - 768) ;
+  }
+}
+
+void randNeutronVelocity(int index){
+  int direction_idx = rand() & 0x3ff ;
+  // neutrons[index].vx = multfix15(int2fix15(3), returnCos(direction_idx)) ;
+  neutrons[index].vx = returnCos(direction_idx) << 1 ;
+  // neutrons[index].vy = multfix15(int2fix15(3), returnSin(direction_idx)) ;
+  neutrons[index].vy = returnSin(direction_idx) << 1 ;
+}
+
+void clearNeutron(int index) {
+  struct Neutron* n = &neutrons[index];
+  int pix1 = (n->background_color >> 12) & 0x0F;
+  int pix2 = (n->background_color >> 8) & 0x0F;
+  int pix3 = (n->background_color >> 4) & 0x0F;
+  int pix4 = n->background_color & 0x0F;
+
+  // Draw background color
+  drawPixel(fix2int15(n->x), fix2int15(n->y), pix1);
+  drawPixel(fix2int15(n->x) +1, fix2int15(n->y), pix2);
+  drawPixel(fix2int15(n->x), fix2int15(n->y) +1, pix3);
+  drawPixel(fix2int15(n->x) + 1, fix2int15(n->y) + 1, pix4);
+}
+
+void initNeutron(){
+  for (int i = 0; i < neutrons_active; i++){
+        // Random x between 60-580
+        neutrons[i].x = int2fix15(60 + (rand() % 521));  // 521 = 580-60+1
+        // Random y between 40-200
+        neutrons[i].y = int2fix15(40 + (rand() % 161));  // 161 = 200-40+1
+        randNeutronVelocity(i) ;
+        neutrons[i].active = 1 ;
+        neutrons[i].energy = neutron_starting_energy ;
+        //add some random initialization to energy
+        //neutrons[i].energy += (rand() % 5000) ;
+    }
+
+  //initialize inactive neutrons
+  for (int i = neutrons_active; i < neutrons_max; i++){
+    neutrons[i].x = int2fix15(0) ;
+    neutrons[i].y = int2fix15(0) ;
+    neutrons[i].vx = int2fix15(0) ;
+    neutrons[i].vy = int2fix15(0) ;
+    neutrons[i].active = 0 ;
+    
+    avail_Neutrons[neutrons_max - i - 1] = i ;
+  }
+}
+
+int spawnNeutron(fix15 x, fix15 y){
+  if (avail_Neutrons_top == 0) return -1; // no available slots
+  
+  uint16_t avail_index = avail_Neutrons[--avail_Neutrons_top] ;
+  //activate neutron
+  neutrons[avail_index].x = x ;
+  neutrons[avail_index].y = y ;
+  randNeutronVelocity(avail_index) ;
+  neutrons[avail_index].active = 1 ; 
+  neutrons[avail_index].energy = neutron_starting_energy ;
+  neutrons_active++ ;
+
+  return avail_index ;
+}
+
+void deactivateNeutron(int index){
+  if (neutrons[index].active == 0) return ; //already inactive
+
+  //deactivate neutron and return to available neutrons array
+  clearNeutron(index) ;
+  neutrons[index].active = 0 ;
+  neutrons[index].energy = 0 ;
+
+  neutrons[index].x = int2fix15(0) ;
+  neutrons[index].y = int2fix15(0) ;
+  neutrons[index].vx = int2fix15(0) ;
+  neutrons[index].vy = int2fix15(0) ;
+
+  avail_Neutrons[avail_Neutrons_top++] = index ;
+
+  neutrons_active-- ;
+}
+
+int neutronEnergyToColor(short energy){
+  if (energy > neutron_thermal_threshold) return RED ; //FAST
+  else return LIGHT_PINK; //THERMAL
+}
+
+void drawNeutron(int index){
+  struct Neutron* n = &neutrons[index] ;
+
+  //store overwritten color data
+  n->background_color = readNeutronBackground(fix2int15(n->x), fix2int15(n->y)) ;
+
+  drawRect(fix2int15(n->x), fix2int15(n->y), 2, 2, neutronEnergyToColor(n->energy)) ;
+}
+
+//=======================================================Water============================================================
+
+static fix15 EAP = int2fix15(840);
+static volatile float waterFlow = 15.0f ;
+
+void fillRectAroundCircle(short x, short y, char color) {
+  fillRect(x - 8, y - 8, 17, 4, color)  ; // Fill the top rectangle
+  fillRect(x - 8, y + 5, 17, 4, color)  ; // Fill the bottom rectangle
+  fillRect(x - 8, y - 4, 4,  9, color)  ; // Fill the left rectangle
+  fillRect(x + 5, y - 4, 4,  9, color)  ; // Fill the right rectangle
+  drawHLine(x - 4, y - 4, 3, color) ;
+  drawHLine(x + 2, y - 4, 3, color) ;
+  drawHLine(x - 4, y + 4, 3, color) ;
+  drawHLine(x + 2, y + 4, 3, color) ;
+  drawVLine(x -4, y - 3, 2, color) ;
+  drawVLine(x + 4, y - 3, 2, color) ;
+  drawVLine(x -4, y + 2, 2, color) ;
+  drawVLine(x + 4, y + 2, 2, color) ;
+}
+
+void drawWater(int index){
+  fillRectAroundCircle(fix2int15(nuclei[index].x), fix2int15(nuclei[index].y), waterStateToColor(nuclei[index].water_state) );
+}
+
+void initWater(){
+  for (int i = 0; i < (row_size_nuclei*col_size_nuclei); i++){
+    drawWater(i) ;
+  }
+}
+
+void waterModeration(int neutron_index){
+  struct Neutron* targetNeutron = &neutrons[neutron_index] ;
+  int targetNucleusIndex = returnNucleusIndex(targetNeutron->x, targetNeutron->y) ;
+  struct Nucleus* targetNucleus = &nuclei[targetNucleusIndex] ;
+  //if water, not steam
+  if (targetNucleus->water_state < 3500){
+    //before redraw 
+    int before = targetNucleus->water_state >> 10 ;
+    //increment water state
+    targetNucleus->water_state += neutron_energy_loss ;
+    //check if need to redraw
+    if (targetNucleus->water_state >>10 != before){
+      //draw water
+      EAP -= int2fix15(1);  // Decrement EAP when moderating
+      drawWater(targetNucleusIndex) ;
+    }
+
+    uint16_t isFastNeutron = 0 ;
+    //check for fast neutron -> thermal conversion
+    if (targetNeutron->energy > neutron_thermal_threshold){
+      isFastNeutron = 1 ;
+    }
+    //decrement neutron energy
+    targetNeutron->energy -= neutron_energy_loss ;
+
+    //check for neutron fast -> thermal conversion
+    if (isFastNeutron && targetNeutron->energy < neutron_thermal_threshold){
+      //half velocity
+      targetNeutron->vx = targetNeutron->vx >> 1 ;
+      targetNeutron->vy = targetNeutron->vy >> 1 ;
+    }
+
+    //check if neutron is out of energy
+    if (targetNeutron->energy < 0){
+      deactivateNeutron(neutron_index) ;
+    }
+  }
+}
+
+
+void waterCooling() {
+    // Decrement water state of all nuclei
+    for (int i = 0; i < (row_size_nuclei * col_size_nuclei); i++) {
+        if (nuclei[i].water_state > waterFlow) {
+            int before = nuclei[i].water_state >> 10;
+
+            nuclei[i].water_state -= waterFlow;
+
+            if (nuclei[i].water_state >> 10 != before) {
+                // Draw water
+                EAP += int2fix15(1);  // Increment EAP when cooling
+                drawWater(i);
+            }
+        }
+    }
+}
+
+//==========================================Graphite Moderator================================================
+
+#define graphite_width 5
+#define graphite_height 220
+
+struct Graphite {
+  short x ;
+  short y ;
+} ;
+
+struct Graphite graphite_rods[8] ;
+
+void drawGraphite(int x, int y){
+  fillRect(x, y, graphite_width, graphite_height, YELLOW) ;
+}
+
+void initGraphite(){
+  //initialize graphite rods
+  for (int i = 0; i < 8; i++){
+    graphite_rods[i].x = 23-13 + (i * (88)) ;
+    graphite_rods[i].y = 23- 8 - 3 ;
+
+    drawGraphite(graphite_rods[i].x, graphite_rods[i].y) ;
+  }
+}
+
+void graphiteModeration(int neutron_index){
+  struct Neutron* n = &neutrons[neutron_index] ;
+  int n_x = fix2int15(n->x) ;
+  int n_y = fix2int15(n->y) ;
+
+  // //only if fast neutron
+  // if (n->energy > neutron_thermal_threshold){  //DONE IN ANIMATION LOOP
+
+    //check if neutron is in graphite rod
+    for (int i = 0; i < 8; i++){
+      if (n_x > graphite_rods[i].x - 2 && n_x < graphite_rods[i].x + graphite_width + 1
+      &&  n_y > graphite_rods[i].y - 2 && n_y < graphite_rods[i].y + graphite_height + 1) {
+              
+        //half neutron energy
+        n->energy = n->energy >> 1 ;
+        //half velocity
+        n->vx = n->vx >> 1 ;
+        n->vy = n->vy >> 1 ;
+
+        //bounce 
+        //hit side of rod
+        if (n_y > graphite_rods[i].y - 1 && n_y < graphite_rods[i].y + graphite_height){
+          n->vx = (-n->vx) ;
+        } else {
+          //hit top or bottom of rod
+          n->vy = (-n->vy) ;
+        }
+      }
+    }
+  // }
+}
+
+//============================================Control Rods================================================
+
+static volatile int neutrons_target_num = 60;         
+
+fix15 controlRods_x[7];
+volatile fix15 controlRods_y;
+fix15 ControlRods_vy = float2fix15(1.2) ; 
+
+fix15 prev_controlRods_y;
+
+// Global variables for encoder position and control rod position
+static volatile fix15 control_rod_target_y = int2fix15(-105);  // Target position for control rods
+
+
+void drawControlRods(fix15 x, fix15 y){
+  int int_x = fix2int15(x) ;
+  int int_y = fix2int15(y) ;
+
+  printf("Drawing control rods at x: %d, y: %d\n", int_x, int_y);
+
+  fillRect(int_x, 1, 5, 240, BLACK) ;
+
+  //if y < 1, partially off-screen
+  if (int_y < 1){
+    fillRect(int_x, 1, graphite_width, int_y + 219, DARK_GREEN) ;
+  } else {
+    fillRect(int_x, int_y, graphite_width, graphite_height, DARK_GREEN) ;
+  }
+}
+
+void initControlRods(){
+  //initialize control rods
+  controlRods_y = int2fix15(-105 );
+  for (int i = 0; i < 7; i++){
+    controlRods_x[i] = int2fix15( 23-13 + 44+ (i * (88)) );
+
+    drawControlRods(controlRods_x[i], controlRods_y) ;
+  }
+}
+
+void quickDrawControlRods(){
+  int y_now = fix2int15(controlRods_y);
+  int y_prev = fix2int15(prev_controlRods_y);
+
+  for (int i = 0; i < 7; i++) {
+    int x = fix2int15(controlRods_x[i]);
+
+    if (y_now > y_prev) {
+      // Moved down
+      drawHLine(x, y_now + 219, graphite_width, DARK_GREEN);  // draw new bottom
+      if (y_prev > -220) {
+        drawHLine(x, y_prev - 1, graphite_width, BLACK);      // erase old top
+      }
+    } else if (y_now < y_prev) {
+      // Moved up
+      drawHLine(x, y_now - 1, graphite_width, DARK_GREEN);    // draw new top
+      if (y_prev + 219 < 240) {
+        drawHLine(x, y_prev + 219, graphite_width, BLACK);    // erase old bottom
+      }
+    }
+    // If y_now == y_prev, do nothing
+  }
+}
+
+static volatile int auto_mode = 1; // Flag for auto mode
+
+void moveControlRods() {
+  prev_controlRods_y = controlRods_y;  // store old position
+
+  if (auto_mode == 1) {
+    if (neutrons_active > neutrons_target_num + (neutrons_target_num >> 2) ){ // too much
+        ControlRods_vy = float2fix15(0.4);  // move down
+    } else if( neutrons_active < neutrons_target_num - (neutrons_target_num >> 2) ){ // too little
+        ControlRods_vy = float2fix15(-0.4); // move up
+    } else {
+        ControlRods_vy = float2fix15(0); // stop moving
+    }
+    controlRods_y += ControlRods_vy;
+  
+    if (fix2int15(controlRods_y) < -213) {
+      controlRods_y = int2fix15(-213);
+    } else if (fix2int15(controlRods_y) > 12) {
+      controlRods_y = int2fix15(12);
+    } 
+  }
+
+  else if (auto_mode == 0) {
+    // Manual control mode
+    // Smoothly move the control rods toward the target position
+    if (controlRods_y < control_rod_target_y) {
+        controlRods_y += float2fix15(0.5);  // Move down
+        if (controlRods_y > control_rod_target_y) {
+            controlRods_y = control_rod_target_y;  // Snap to target
+        }
+    } else if (controlRods_y > control_rod_target_y) {
+        controlRods_y -= float2fix15(0.5);  // Move up
+        if (controlRods_y < control_rod_target_y) {
+            controlRods_y = control_rod_target_y;  // Snap to target
+        }
+    }
+  }
+  
+  quickDrawControlRods();
+}
+
+void controlRodCollision(int neutron_index){
+  struct Neutron* n = &neutrons[neutron_index] ;
+  int n_x = fix2int15(n->x) ;
+  int n_y = fix2int15(n->y) ;
+
+  //check if neutron is in control rod
+  for (int i = 0; i < 7; i++){
+    if (n_x > fix2int15(controlRods_x[i]) - 2 && n_x < fix2int15(controlRods_x[i]) + graphite_width + 1
+    &&  n_y > fix2int15(controlRods_y) - 2 && n_y < fix2int15(controlRods_y) + graphite_height + 1) {
+              
+      //deactivate neutron
+      deactivateNeutron(neutron_index) ;
+      break;
+    }
+  }
+}
+
+
+// Detect wallstrikes, update velocity and position
+void wallsAndEdges(int index)
+{
+  struct Neutron* n = &neutrons[index] ;
+
+  // Deactivate if we've hit a wall
+  if ( (hitTop(n->y)) || (hitBottom(n->y)) || (hitRight(n->x)) || (hitLeft(n->x)) ) {
+    deactivateNeutron(index) ;
+  } 
+  // Update position using velocity
+  n->x = n->x + n->vx ;
+  n->y = n->y + n->vy ;
+}
+
+
+// Draw the boundaries
+void drawArena() {
+  drawVLine(  0,   0, 243, WHITE) ;
+  drawVLine(640,   0, 243, WHITE) ;
+  drawHLine(  0,   0, 640, WHITE) ;
+  drawHLine(  0, 243, 639, WHITE) ;
+}
+
+static int spare_time ;
+
+void initStats() {
+  char stats_str[40];
+  uint32_t seconds = time_us_32() / 1000000;
+
+  // Spare time
+  setTextColor(BLACK);
+  setTextSize(1);
+  setTextWrap(0);
+
+  fillRect(549, 247, 120, 8, WHITE);
+  setCursor(549, 247);
+  sprintf(stats_str, "Spare: %d us", spare_time);
+  writeString(stats_str);
+  
+  // Active Neutrons
+  setTextColor(WHITE);
+  setTextSize(1);
+  setTextWrap(0);
+
+  fillRect(5, 260, 100, 8, BLACK);
+  setCursor(5, 260);
+  sprintf(stats_str, "Neutrons: %d", neutrons_active);
+  writeString(stats_str);
+
+  fillRect(85, 260, 60, 8, BLACK);
+  setCursor(85, 260);
+  sprintf(stats_str, "Target: %d", neutrons_target_num);
+  writeString(stats_str);
+
+  fillRect(155, 260, 60, 8, BLACK);
+  setCursor(155, 260);
+  sprintf(stats_str, "WaterFlow: %.1f", waterFlow);
+  writeString(stats_str);
+
+  fillRect(360, 260, 100, 8, BLACK);
+  setCursor(360, 260);
+  sprintf(stats_str, "Sim Speed: %d", 1/*sim_speed*/);  // Commented variable
+  writeString(stats_str);
+
+  fillRect(480, 260, 120, 8, BLACK);
+  setCursor(480, 260);
+  sprintf(stats_str, "N Decayed: %d", numNeutronSpawn);  // Commented variable
+  writeString(stats_str);
+}
+
+int stats_counter = 0;
+
+void refreshStats() {
+  char stats_str[40];
+  uint32_t seconds = time_us_32() / 1000000;
+
+  if (stats_counter == 0) {
+    // Spare time
+    setTextColor(BLACK);
+    setTextSize(1);
+    setTextWrap(0);
+    
+    fillRect(587, 247, 70, 8, WHITE);
+    setCursor(587, 247);
+    sprintf(stats_str, "%d us", spare_time);
+    writeString(stats_str);
+  } 
+  else if (stats_counter == 1) {
+    // Active Neutrons
+    setTextColor(WHITE);
+    setTextSize(1);
+    setTextWrap(0);
+
+    fillRect(58, 260, 25, 8, BLACK);
+    setCursor(58, 260);
+    sprintf(stats_str, "%d", neutrons_active);
+    writeString(stats_str);
+  } 
+  else if (stats_counter == 2){
+    // Target Neutrons
+    setTextColor(WHITE);
+    setTextSize(1);
+    setTextWrap(0);
+
+    fillRect(127, 260, 25, 8, BLACK);
+    setCursor(127, 260);
+    sprintf(stats_str, "%d", neutrons_target_num);
+    writeString(stats_str);
+  }
+  else if (stats_counter == 3){
+    // Water Flow
+    setTextColor(WHITE);
+    setTextSize(1);
+    setTextWrap(0);
+
+    fillRect(215, 260, 32, 8, BLACK);
+    setCursor(215, 260);
+    sprintf(stats_str, "%.1f", waterFlow);
+    writeString(stats_str);
+  } 
+  else if (stats_counter == 4){
+    setTextColor(RED);
+    setTextSize(1);
+    setTextWrap(0);
+
+    fillRect(300, 260, 40, 8, BLACK);
+    if (auto_mode == 1) {
+      setCursor(307, 260);
+      sprintf(stats_str, "Auto");
+    } else {
+      setCursor(303, 260);
+      sprintf(stats_str, "Manual");
+    }
+    writeString(stats_str);
+  }
+  else if (stats_counter == 5){
+      setTextColor(WHITE);
+      setTextSize(1);
+      setTextWrap(0);
+
+      fillRect(420, 260, 32, 8, BLACK);
+      setCursor(420, 260);
+      if (sim_speed_state == 0) {
+        sprintf(stats_str, "100%%");
+      } else{
+        sprintf(stats_str, "50%%");
+      }
+      writeString(stats_str);
+    }
+    else if (stats_counter == 6){
+      setTextColor(WHITE);
+      setTextSize(1);
+      setTextWrap(0);
+
+      fillRect(545, 260, 32, 8, BLACK);
+      setCursor(545, 260);
+      sprintf(stats_str, "%d", numNeutronSpawn);  // Commented variable
+      writeString(stats_str);
+    }
+
+
+  if (stats_counter == 7) {
+    stats_counter = 0;
+  }
+  else {
+    stats_counter++;
+  }
+}
+
+
+//=============================================Other On-screen Stuff=============================================
+
+// Add these chart-related defines and variables
+#define CHART_WIDTH 300
+#define CHART_HEIGHT 200
+#define LEFT_CHART_X 20
+#define RIGHT_CHART_X 320 
+#define CHART_Y 280
+#define AXIS_MARGIN 20
+
+// Modify Y axis length while keeping X axis length unchanged
+#define AXIS_LENGTH_X (CHART_WIDTH - 2*AXIS_MARGIN)
+#define AXIS_LENGTH_Y 150  // Shorter Y axis
+#define MAX_Y_VALUE 100
+#define TICK_LENGTH 5   // Length of axis ticks
+
+// Add time tracking near other global variables
+static uint32_t start_time = 0;
+
+// Add near other global variables
+static int uranium_collision_count = 0;
+static int last_collision_time = 0;
+static int collision_history[AXIS_LENGTH_X] = {0};
+static int collision_index = 0;
+
+// Add shared variables at top
+static volatile int shared_num_xenon = 0;
+static volatile int shared_collision_count = 0;
+static volatile fix15 shared_control_y = 0;
+static volatile fix15 shared_eap = 0;
+
+// Add after chart-related defines and before any thread functions
+void drawChartBorder(int x0, int y0);  // Add prototype
+
+// Update chart drawing with proper labels and scaling
+void drawChartAxes(int x0, int y0) {
+    int axisX = x0 + AXIS_MARGIN;
+    int axisY = y0 + CHART_HEIGHT - AXIS_MARGIN;
+    
+    // Draw axes
+    drawVLine(axisX, axisY - AXIS_LENGTH_Y, AXIS_LENGTH_Y, WHITE);
+    drawHLine(axisX, axisY, AXIS_LENGTH_X, WHITE);
+    
+    // Draw ticks and labels
+    for(int i = 0; i <= 10; i++) {
+        // X axis ticks (time in seconds)
+        int tickX = axisX + (i * AXIS_LENGTH_X/10);
+        drawVLine(tickX, axisY, TICK_LENGTH, WHITE);
+        
+        // Y axis ticks (xenon count)
+        int tickY = axisY - (i * AXIS_LENGTH_Y/10);
+        drawHLine(axisX - TICK_LENGTH, tickY, TICK_LENGTH, WHITE);
+
+    }
+    
+    // Add axis labels
+    setCursor(x0 + CHART_WIDTH/2 - 20, y0 + CHART_HEIGHT - 10);
+    writeString("Time (s)");
+}
+
+void drawLegend(void) {
+  // Fixed coordinates for left edge of screen
+  int x0 = 10;
+  int y0 = 250;
+  int circle_radius = 4;
+  int spacing = 55;
+  int square_size = 8;
+  
+  // Draw filled circle in green
+  fillRect(0, 245, 640, 10, WHITE);
+  fillCircle(x0, y0, circle_radius, GREEN);
+  setCursor(x0 + 10, y0 - 3);
+  setTextColor(BLACK);
+  setTextSize(1);
+  writeString("U-235");
+
+  fillCircle(x0 + spacing -4, y0, circle_radius, BLACK);
+  setCursor(x0 + spacing -4 + 10, y0 - 3);
+  setTextColor(BLACK);
+  setTextSize(1);
+  writeString("Xe");
+
+  drawCircle(x0 + spacing * 1.5, y0, circle_radius, BLACK);
+  setCursor(x0 + spacing * 1.5 + 10, y0 - 3);
+  setTextColor(BLACK);
+  setTextSize(1);
+  writeString("Non-fissile");
+
+  int water_x = x0 + spacing * 3.25;
+  fillRect(water_x, y0 - 4, square_size, square_size, DARK_BLUE);
+  fillRect(water_x + square_size, y0 - 4, square_size, square_size, BLUE);
+  fillRect(water_x + square_size * 2, y0 - 4, square_size, square_size, LIGHT_BLUE);
+  
+  setCursor(water_x + square_size * 2.8 + 5, y0 - 3);
+  setTextColor(BLACK);
+  setTextSize(1);
+  writeString("Water");
+
+  int steam_x = water_x + square_size * 3 + 50; // Add spacing after "Water"
+  fillRect(steam_x, y0 - 4, square_size, square_size, CYAN);
+  
+  setCursor(steam_x + square_size + 5, y0 - 3);
+  setTextColor(BLACK);
+  setTextSize(1);
+  writeString("Steam");
+
+  int neutron_x = steam_x + spacing;
+  fillCircle(neutron_x, y0, 1, RED);
+  
+  setCursor(neutron_x + 5, y0 - 3);
+  setTextColor(BLACK);
+  setTextSize(1);
+  writeString("fast-n");
+
+  int therm_x = neutron_x + spacing;
+  fillCircle(therm_x, y0, 1, LIGHT_PINK);
+  
+  setCursor(therm_x + 5, y0 - 3);
+  setTextColor(BLACK);
+  setTextSize(1);
+  writeString("therm-n");
+
+  int rect_x = therm_x + spacing;
+  int rect_width = 3;
+  fillRect(rect_x, y0 - 4, rect_width, square_size, YELLOW);
+  setCursor(rect_x + rect_width + 5, y0 - 3);
+  setTextColor(BLACK);
+  setTextSize(1);
+  writeString("Graphite");
+
+  int control_x = rect_x + spacing +10;
+  fillRect(control_x, y0 - 4, rect_width, square_size, DARK_GREEN);
+  setCursor(control_x + rect_width + 5, y0 - 3);
+  setTextColor(BLACK);
+  setTextSize(1);
+  writeString("Control");
+
+  // Set text properties
+  setCursor(control_x + rect_width + 5 + spacing, y0 - 3);
+  setTextColor(BLACK);
+  setTextSize(1);
+  setTextWrap(0);
+  writeString("Spare: us");
+}
+
+float linear(float x) { return x; }
+float double_linear(float x) { return 2*x; }
+
+int counter1 = 0;
+int counter2 = 0;
+
+void redrawScreen() {
+  // Loop through two rows of nuclei
+  // repeated 5x 2 rows
+  drawWater(counter1) ;
+  drawWater(counter1+56) ;
+  drawWater(counter1+112) ;
+  drawWater(counter1+168) ;
+  drawWater(counter1+224) ;
+  fillCircle(fix2int15(nuclei[counter1].x), fix2int15(nuclei[counter1].y), 4, nucleusTypeToColor(nuclei[counter1].type)) ;
+  fillCircle(fix2int15(nuclei[counter1+56].x), fix2int15(nuclei[counter1+56].y), 4, nucleusTypeToColor(nuclei[counter1+56].type)) ;
+  fillCircle(fix2int15(nuclei[counter1+112].x), fix2int15(nuclei[counter1+112].y), 4, nucleusTypeToColor(nuclei[counter1+112].type)) ;
+  fillCircle(fix2int15(nuclei[counter1+168].x), fix2int15(nuclei[counter1+168].y), 4, nucleusTypeToColor(nuclei[counter1+168].type)) ;
+  fillCircle(fix2int15(nuclei[counter1+224].x), fix2int15(nuclei[counter1+224].y), 4, nucleusTypeToColor(nuclei[counter1+224].type)) ;
+  
+  if (counter1 == 55) {
+    counter1 = 0;
+  } else {
+    counter1++ ;
+  }
+
+  // loop through and draw all rods
+  if (counter2 >=0 && counter2 < 8) {
+    drawGraphite(graphite_rods[counter2].x, graphite_rods[counter2].y) ;
+  } else if (counter2 >= 8 && counter2 < 15) {
+    drawControlRods(controlRods_x[counter2 - 8], controlRods_y) ;
+  }
+
+  if (counter2 == 50) {
+    counter2 = 0;
+  } else {
+    counter2++ ;
+  }
+}
+
+
+//=============================================Hardware Inputs======================================================
+
+#define PIN_BUTTON_1 2 // GPIO pin for button 1
+#define PIN_BUTTON_2 4 // GPIO pin for button 2 -- AUTO mode
+#define PIN_BUTTON_3 5 // GPIO pin for button 3
+#define PIN_BUTTON_4 3 // GPIO pin for button 4
+
+
+//ENCODER 1 -- manual control of rods
+#define ENCODER_CLK 27
+#define ENCODER_DT  26
+static bool last_CLK_state;
+static int encoder_sensitivity = 1;
+
+//ENCODER 2 -- waterflow control
+#define ENCODER2_CLK 6  // GPIO pin for the second encoder's CLK
+#define ENCODER2_DT  7  // GPIO pin for the second encoder's DT
+static bool last_CLK_state2;  // Tracks the last state of the second encoder's CLK
+
+//ENCODER 3 -- set target number of neutrons
+#define ENCODER3_CLK 28  // GPIO pin for the third encoder's CLK
+#define ENCODER3_DT  22  // GPIO pin for the third encoder's DT
+static bool last_CLK_state3;  // Tracks the last state of the third encoder's CLK
+
+//ENCODER 4 -- set number of neutrons to spawn on collision -- default via physics is 2
+#define ENCODER4_CLK 8  // GPIO pin for the third encoder's CLK
+#define ENCODER4_DT  9  // GPIO pin for the third encoder's DT
+static bool last_CLK_state4;  // Tracks the last state of the third encoder's CLK
+
+
+int debouncer_state_button1 = 0; // Button 1 state
+int debouncer_state_button2 = 0; // Button 2 state
+int debouncer_state_button3 = 0; // Button 3 state
+int debouncer_state_button4 = 0; // Button 4 state
+
+static volatile int encoder_position = 0;  // Tracks the encoder's position
+
+
+void read_button1() {
+  int input = gpio_get(PIN_BUTTON_1);
+
+  if (debouncer_state_button1 == 0) { // Not pressed
+      debouncer_state_button1 = (input == 0) ? 1 : 0;
+
+  } else if (debouncer_state_button1 == 1) { // Maybe pressed
+      if (input == 0) {
+          debouncer_state_button1 = 2;
+
+          // Switch to manual mode
+          auto_mode = 0;
+          // Set control rod target to maximum height (12)
+          control_rod_target_y = int2fix15(12);
+          // Sync encoder position so it doesn't override this value
+          encoder_position = (12 + 105) / encoder_sensitivity;
+
+      } else {
+          debouncer_state_button1 = 0;
+      }
+
+  } else if (debouncer_state_button1 == 2) { // Pressed
+      debouncer_state_button1 = (input == 1) ? 3 : 2;
+
+  } else { // Maybe not pressed
+      debouncer_state_button1 = (input == 1) ? 0 : 2;
+  }
+}
+
+
+void read_button2() {
+  int input = gpio_get(PIN_BUTTON_2);
+
+  if (debouncer_state_button2 == 0) { // Not pressed
+      debouncer_state_button2 = (input == 0) ? 1 : 0;
+  } else if (debouncer_state_button2 == 1) { // Maybe pressed
+      if (input == 0) {
+          debouncer_state_button2 = 2;
+          auto_mode = 1;
+      } else {
+          debouncer_state_button2 = 0;
+      }
+  } else if (debouncer_state_button2 == 2) { // Pressed
+      debouncer_state_button2 = (input == 1) ? 3 : 2;
+  } else { // Maybe not pressed
+      debouncer_state_button2 = (input == 1) ? 0 : 2;
+  }
+}
+
+void read_button3() {
+  int input = gpio_get(PIN_BUTTON_3);
+
+  if (debouncer_state_button3 == 0) { // Not pressed
+      debouncer_state_button3 = (input == 0) ? 1 : 0;
+  } else if (debouncer_state_button3 == 1) { // Maybe pressed
+      if (input == 0) {
+          debouncer_state_button3 = 2;
+
+          control_rod_target_y = controlRods_y;
+          encoder_position = (fix2int15(controlRods_y) + 105) / encoder_sensitivity;
+          auto_mode = 0; // Switch to manual mode
+      } else {
+          debouncer_state_button3 = 0;
+      }
+  } else if (debouncer_state_button3 == 2) { // Pressed
+      debouncer_state_button3 = (input == 1) ? 3 : 2;
+  } else { // Maybe not pressed
+      debouncer_state_button3 = (input == 1) ? 0 : 2;
+  }
+}
+
+void read_button4() {
+  int input = gpio_get(PIN_BUTTON_4);
+
+  if (debouncer_state_button4 == 0) { // Not pressed
+      debouncer_state_button4 = (input == 0) ? 1 : 0;
+  } else if (debouncer_state_button4 == 1) { // Maybe pressed
+      if (input == 0) {
+          debouncer_state_button4 = 2;
+          
+          if(sim_speed_state == 1) {
+              sim_speed_state = 0; // Increase simulation speed
+          } else {
+              sim_speed_state = 1; // Decrease simulation speed
+          }
+
+      } else {
+          debouncer_state_button4 = 0;
+      }
+  } else if (debouncer_state_button4 == 2) { // Pressed
+      debouncer_state_button4 = (input == 1) ? 3 : 2;
+  } else { // Maybe not pressed
+      debouncer_state_button4 = (input == 1) ? 0 : 2;
+  }
+}
+
+static PT_THREAD(protothread_buttons(struct pt *pt)) {
+  PT_BEGIN(pt);
+
+  while (1) {
+      // Read all buttons
+      read_button1();
+      read_button2();
+      read_button3();
+      read_button4();
+
+      PT_YIELD_usec(1000);  // Run the thread at 1 kHz
+  }
+
+  PT_END(pt);
+}
+
+
+
+
+// Thread to update encoder position and control rod target
+static PT_THREAD(protothread_encoder(struct pt *pt)) {
+  PT_BEGIN(pt);
+
+  static bool current_CLK, current_DT;
+
+  while (1) {
+      // Read the encoder pins
+      current_CLK = gpio_get(ENCODER_CLK);
+      current_DT = gpio_get(ENCODER_DT);
+
+      // Update encoder position based on rotary encoder logic
+      if (current_CLK != last_CLK_state && current_CLK == 0) {
+          if (current_DT != current_CLK) {
+              encoder_position++;
+          } else {
+              encoder_position--;
+          }
+      }
+      last_CLK_state = current_CLK;
+
+      // Update control rod target position based on encoder position
+      control_rod_target_y = int2fix15(-105 + encoder_position * encoder_sensitivity);
+
+      // Clamp the control rod position to valid bounds
+      if (fix2int15(control_rod_target_y) < -213) {
+          control_rod_target_y = int2fix15(-213);
+      } else if (fix2int15(control_rod_target_y) > 12) {
+          control_rod_target_y = int2fix15(12);
+      }
+
+      PT_YIELD_usec(1000);  // Run the thread as fast as needed (1 kHz update rate)
+  }
+
+  PT_END(pt);
+}
+
+// Thread to update water cooling value based on the second encoder
+static PT_THREAD(protothread_encoder2(struct pt *pt)) {
+  PT_BEGIN(pt);
+
+  static bool current_CLK2, current_DT2;
+
+  while (1) {
+      // Read the encoder pins
+      current_CLK2 = gpio_get(ENCODER2_CLK);
+      current_DT2 = gpio_get(ENCODER2_DT);
+
+      // Update water cooling value based on rotary encoder logic
+      if (current_CLK2 != last_CLK_state2 && current_CLK2 == 0) {
+          if (current_DT2 != current_CLK2) {
+              waterFlow += 0.2;  // Increase water cooling value
+          } else {
+            waterFlow -= 0.2 ; // Decrease water cooling value
+          }
+      }
+      last_CLK_state2 = current_CLK2;
+
+      // Clamp the water cooling value to valid bounds (e.g., 1 to 50)
+      if (waterFlow < 1) {
+        waterFlow = 1;
+      } else if (waterFlow > 45) {
+        waterFlow = 45;
+      }
+      PT_YIELD_usec(1000);  // Run the thread as fast as needed (1 kHz update rate)
+  }
+
+  PT_END(pt);
+}
+
+// Thread to update neutron target count based on encoder3
+static PT_THREAD(protothread_encoder3(struct pt *pt)) {
+  PT_BEGIN(pt);
+
+  static bool current_CLK3, current_DT3;
+
+  while (1) {
+      // Read current states
+      current_CLK3 = gpio_get(ENCODER3_CLK);
+      current_DT3  = gpio_get(ENCODER3_DT);
+
+      // On falling edge of CLK
+      if (current_CLK3 != last_CLK_state3 && current_CLK3 == 0) {
+          if (current_DT3 != current_CLK3) {
+              neutrons_target_num++;  // Rotate CW
+          } else {
+              neutrons_target_num--;  // Rotate CCW
+          }
+      }
+      last_CLK_state3 = current_CLK3;
+
+      // Clamp value if needed (optional)
+      if (neutrons_target_num < 10) {
+          neutrons_target_num = 10;
+      } else if (neutrons_target_num > 100) {
+          neutrons_target_num = 100;  // Set a maximum limit
+      }
+
+      PT_YIELD_usec(1000);  // ~1 ms delay
+  }
+
+  PT_END(pt);
+}
+
+// Thread to update neutron spawn count based on encoder4
+// Thread to update neutron target count based on encoder3
+static PT_THREAD(protothread_encoder4(struct pt *pt)) {
+  PT_BEGIN(pt);
+
+  static bool current_CLK4, current_DT4;
+
+  while (1) {
+      // Read current states
+      current_CLK4 = gpio_get(ENCODER4_CLK);
+      current_DT4  = gpio_get(ENCODER4_DT);
+
+      // On falling edge of CLK
+      if (current_CLK4 != last_CLK_state4 && current_CLK4 == 0) {
+          if (current_DT4 != current_CLK4) {
+              numNeutronSpawn++;  // Rotate CW
+          } else {
+              numNeutronSpawn--;  // Rotate CCW
+          }
+      }
+      last_CLK_state4 = current_CLK4;
+
+      // Clamp value if needed (optional)
+      if (numNeutronSpawn < 0) {
+          numNeutronSpawn = 0;
+      } else if (numNeutronSpawn > 10) {
+          numNeutronSpawn = 10;  // Set a maximum limit
+      }
+
+      PT_YIELD_usec(1000);  // ~1 ms delay
+  }
+
+  PT_END(pt);
+}
+
+//====================================================Simulation==========================================================
+
+void collisionNucleus(int nuc_index, int neutron_index){
+  fix15 dx = nuclei[nuc_index].x - neutrons[neutron_index].x ;
+  fix15 dy = nuclei[nuc_index].y - neutrons[neutron_index].y ;
+
+  fix15 abs_dx = (dx < int2fix15(0)) ? multfix15( dx , float2fix15(-1.0) ) : dx ;
+  fix15 abs_dy = (dy < int2fix15(0)) ? multfix15( dy , float2fix15(-1.0) ) : dy ;
+
+  if (abs_dx < int2fix15(4) && abs_dy < int2fix15(4)){
+    //collision detected 
+
+    //detect if uranium nucleus
+    if (nuclei[nuc_index].type == 1){
+      uranium_collision_count++;  // Add this line
+      //remove uranium nucleus from array
+      removeUraniumNucleus(nuc_index) ;
+
+      if (!dma_channel_is_busy(data_chan)) {
+        dma_channel_set_read_addr(data_chan, DAC_data, false) ;
+        dma_start_channel_mask(1u << data_chan) ;
+      }
+
+      //update neutron velocity to random direction
+      randNeutronVelocity(neutron_index) ;
+      //update neutron position to center of nucleus
+      neutrons[neutron_index].x = nuclei[nuc_index].x ;
+      neutrons[neutron_index].y = nuclei[nuc_index].y ;     
+      neutrons[neutron_index].energy = neutron_starting_energy ;
+
+      //activate two addutional neutrons
+      for (int i=0; i < numNeutronSpawn; i++){
+        int new_neutron_index = spawnNeutron(nuclei[nuc_index].x, nuclei[nuc_index].y) ;
+        if (new_neutron_index != -1){
+        }
+      }
+    }
+
+    //else if xenon nucleus
+    else if (nuclei[nuc_index].type == 2) {
+      //remove xenon nucleus from array
+      removeXenonNucleus(nuc_index) ;
+      //remove neutron from array
+      deactivateNeutron(neutron_index) ;
+    }
+    // checkNonFissileNuclei() ;
+  }
+}
+
+#define URANIUM_REGEN_SCALING_1 float2fix15(0.005f)  // Scaling for the first linear function
+#define URANIUM_REGEN_SCALING_2 float2fix15(0.1f)   // Scaling for the second linear function
+#define URANIUM_NEUTRON_THRESHOLD 200               // Threshold for the second function
+#define URANIUM_REGEN_MIN_PROB  float2fix15(0.002f)  // ← Minimum floor to allow some activity
+
+#define XENON_REGEN_SCALING   float2fix15(0.0016f)   // Tunable
+#define XENON_REGEN_MIN_PROB  float2fix15(0.01f)   // Tunable
+
+void spontaneous() {
+  if (num_non_fissile_active > 30) { //leave 10% of non-fissile nuclei
+    uint16_t rand_num = rand() & 0x3FF; // 10-bit random number [0,1023]
+
+    // Compute the first linear function
+    fix15 uranium_gen_prob = multfix15(int2fix15(neutrons_active), URANIUM_REGEN_SCALING_1);
+
+    // Add the second linear function if neutrons_active > threshold
+    if (neutrons_active > URANIUM_NEUTRON_THRESHOLD) {
+      uranium_gen_prob += multfix15(int2fix15(neutrons_active), URANIUM_REGEN_SCALING_2);
+    }
+
+    // Add the minimum probability floor
+    uranium_gen_prob += URANIUM_REGEN_MIN_PROB;
+
+    // Cap to 1.0
+    if (uranium_gen_prob > float2fix15(1.0f)) {
+      uranium_gen_prob = float2fix15(1.0f);
+    }
+
+    fix15 uranium_gen_cutoff = multfix15(uranium_gen_prob, int2fix15(1024));
+
+    if (rand_num < fix2int15(uranium_gen_cutoff)) {
+      int rand_non_fissile_index = rand() % num_non_fissile_active;
+      int rand_index = non_fissileNuclei[rand_non_fissile_index];
+
+      if (rand_index >= 0) {
+        nuclei[rand_index].type = 1;
+        uraniumNuclei[num_uranium_active++] = rand_index;
+        removeNonFissileNucleus(rand_index);
+
+        checkUraniumNuclei();
+        checkNonFissileNuclei();
+      } else {
+        printf("Error: Invalid non-fissile index selected.\n");
+      }
+    }
+  } else {
+    printf("No uranium nuclei left\n");
+    // Optional: Signal visual or log error
+  }
+
+  //Xenon generation
+  if (num_non_fissile_active > 30) {
+    uint16_t rand_num = rand() & 0x3FF;
+
+    fix15 xenon_gen_prob = multfix15(int2fix15(neutrons_active), XENON_REGEN_SCALING) + XENON_REGEN_MIN_PROB;
+    if (xenon_gen_prob > float2fix15(1.0f)) xenon_gen_prob = float2fix15(1.0f);
+
+    fix15 xenon_gen_cutoff = multfix15(xenon_gen_prob, int2fix15(1024));
+
+    if (rand_num < fix2int15(xenon_gen_cutoff)) {
+      int rand_non_fissile_index = rand() % num_non_fissile_active;
+      int rand_index = non_fissileNuclei[rand_non_fissile_index];
+
+      if (rand_index >= 0) {
+        nuclei[rand_index].type = 2;
+        xenonNuclei[num_xenon_active++] = rand_index;
+        removeNonFissileNucleus(rand_index);
+
+        checkXenonNuclei();
+        checkNonFissileNuclei();
+      } else {
+        printf("Error: Invalid non-fissile index selected.\n");
+      }
+    }
+  } else {
+    printf("No xenon nuclei left\n");
+  }
+
+  // neutron emission
+
+  // non-fissile nuclei gives off nuclei once every 2 minutes (3600 frames)
+  // = 1/3600 = 0.0002777 prob per neutron per frame
+  uint16_t rand_num = rand() & 0x3ff ; //10 bits for 1024
+
+  fix15 neutron_gen_prob = multfix15( int2fix15(num_non_fissile_active), float2fix15(0.0008) ) ;
+  fix15 neutron_gen_cutoff = multfix15(neutron_gen_prob, int2fix15(1024)) ;
+  if (rand_num <= fix2float15(neutron_gen_cutoff)){
+
+    //select random index from non-fissile nuclei
+    int rand_non_fissile_index = rand() % num_non_fissile_active;
+    int rand_index = non_fissileNuclei[rand_non_fissile_index];
+    
+    //spawn neutron @ non-fissile nucleus
+    int new_neutron_index = spawnNeutron(nuclei[rand_index].x, nuclei[rand_index].y) ;
+    if (new_neutron_index == -1){
+      //TODO: failed, Signal MAX nuetron count
+    }
+  }
+}
+
+// ======================================== Core 1 Animation =======================================
+
+
+// Add after chart constants
+void drawChartBorder(int x0, int y0) {
+  // Draw border rectangle
+  drawHLine(x0, y0, CHART_WIDTH, WHITE);                       // Top
+  drawHLine(x0, y0 + CHART_HEIGHT, CHART_WIDTH, WHITE);       // Bottom  
+  drawVLine(x0, y0, CHART_HEIGHT, WHITE);                      // Left
+  drawVLine(x0 + CHART_WIDTH, y0, CHART_HEIGHT, WHITE);       // Right
+}
+
+// Fix fillRect calls in protothread_charts_core1
+static PT_THREAD (protothread_charts_core1(struct pt *pt)) {
+  PT_BEGIN(pt);
+  
+  static int plotX = LEFT_CHART_X + AXIS_MARGIN;
+  static int plotX_right = RIGHT_CHART_X + AXIS_MARGIN;
+  static bool charts_initialized = false;
+  
+  if (!charts_initialized) {
+      // Clear areas
+      fillRect(LEFT_CHART_X, CHART_Y, CHART_WIDTH, CHART_HEIGHT, BLACK);
+      fillRect(RIGHT_CHART_X, CHART_Y, CHART_WIDTH, CHART_HEIGHT, BLACK);
+      
+      // Draw borders and axes
+      drawChartBorder(LEFT_CHART_X, CHART_Y);
+      drawChartBorder(RIGHT_CHART_X, CHART_Y);
+      drawChartAxes(LEFT_CHART_X, CHART_Y);
+      drawChartAxes(RIGHT_CHART_X, CHART_Y);
+      
+      charts_initialized = true;
+  }
+
+  while(1) {
+      // Clear next columns
+      drawVLine(plotX + 1, CHART_Y + AXIS_MARGIN, 
+               CHART_HEIGHT - 2*AXIS_MARGIN, BLACK);
+      
+      // Plot left chart data
+      if (plotX > LEFT_CHART_X + AXIS_MARGIN) {
+          // Xenon line
+      int y_xenon = CHART_Y + CHART_HEIGHT - AXIS_MARGIN - 
+              (num_xenon_active * AXIS_LENGTH_Y / 100);
+      drawPixel(plotX, y_xenon, WHITE);
+      
+          // Control rod line
+      int y_rod = CHART_Y + CHART_HEIGHT - AXIS_MARGIN - 
+                  ((fix2int15(controlRods_y) + 213) * AXIS_LENGTH_Y / 225) - 1;
+      drawPixel(plotX, y_rod, DARK_GREEN);
+      
+          // EAP line
+      int y_eap = CHART_Y + CHART_HEIGHT - AXIS_MARGIN - 
+                     (2 + fix2int15(multfix15(divfix(EAP, int2fix15(840)), 
+                      int2fix15(AXIS_LENGTH_Y - 2))));
+      drawPixel(plotX, y_eap, BLUE);
+      }
+
+      // Update collision history every second
+      if ((time_us_32() - last_collision_time) >= 1000000) {
+          collision_history[collision_index] = uranium_collision_count;
+          collision_index = (collision_index + 1) % AXIS_LENGTH_X;
+          uranium_collision_count = 0;
+          last_collision_time = time_us_32();
+      }
+      
+      // Clear columns
+      drawVLine(plotX + 1, CHART_Y + AXIS_MARGIN, 
+               CHART_HEIGHT - 2*AXIS_MARGIN, BLACK);
+      drawVLine(plotX_right + 1, CHART_Y + AXIS_MARGIN, 
+               CHART_HEIGHT - 2*AXIS_MARGIN, BLACK);
+
+      // Plot left chart data
+      if (plotX > LEFT_CHART_X + AXIS_MARGIN) {
+          // ...existing xenon, rod and EAP plots...
+      }
+
+      // Draw collision history line segments
+      for(int i = 1; i < collision_index; i++) {
+          int x1 = RIGHT_CHART_X + AXIS_MARGIN + i - 1;
+          int x2 = RIGHT_CHART_X + AXIS_MARGIN + i;
+          int y1 = CHART_Y + CHART_HEIGHT - AXIS_MARGIN - 
+                  (collision_history[i-1] * AXIS_LENGTH_Y / 20);
+          int y2 = CHART_Y + CHART_HEIGHT - AXIS_MARGIN - 
+                  (collision_history[i] * AXIS_LENGTH_Y / 20);
+          drawLine(x1, y1, x2, y2, WHITE);
+      }
+
+      // Update positions
+      plotX++;
+      plotX_right++;
+      if (plotX >= LEFT_CHART_X + AXIS_MARGIN + AXIS_LENGTH_X) {
+          plotX = LEFT_CHART_X + AXIS_MARGIN;
+      }
+      if (plotX_right >= RIGHT_CHART_X + AXIS_MARGIN + AXIS_LENGTH_X) {
+          plotX_right = RIGHT_CHART_X + AXIS_MARGIN;
+      }
+      
+      PT_YIELD_usec(FRAME_RATE);
+  }
+  PT_END(pt);
+}
+
+
+void core1_main() {
+  pt_add_thread(protothread_charts_core1);
+  pt_add_thread(protothread_encoder);
+  pt_add_thread(protothread_encoder2);
+  pt_add_thread(protothread_encoder3);
+  pt_add_thread(protothread_encoder4);
+  pt_add_thread(protothread_buttons);  // Add the button thread
+  pt_schedule_start;
+}
+
+
+// ======================================== User Serial Input Thread =======================================
+
+static PT_THREAD (protothread_serial(struct pt *pt))
+{
+    PT_BEGIN(pt);
+    // stores user input
+    static int user_input ;
+    // wait for 0.1 sec
+    PT_YIELD_usec(1000000) ;
+    // announce the threader version
+    sprintf(pt_serial_out_buffer, "Protothreads RP2040 v1.0\n\r");
+    // non-blocking write
+    serial_write ;
+      while(1) {
+        // print prompt
+        sprintf(pt_serial_out_buffer, "input a number in the range 1-15:\n");
+        // non-blocking write
+        serial_write ;
+        // spawn a thread to do the non-blocking serial read
+        serial_read ;
+        // convert input string to number
+        sscanf(pt_serial_in_buffer,"%d", &user_input) ;
+        // update boid color
+        if ((user_input > 0) && (user_input < 16)) {
+          color = (char)user_input ;
+        }
+      } // END WHILE(1)
+  PT_END(pt);
+} // timer thread
+
+
+// =============================================== Main Animation Thread ========================================
+// Animation on core 0
+static PT_THREAD (protothread_anim(struct pt *pt))
+{
+    // Mark beginning of thread
+    PT_BEGIN(pt);
+
+    // Variables for maintaining frame rate
+    static int begin_time ;
+
+    initNucleus() ;
+    initWater();
+    drawNucleus() ;
+    initNeutron() ;
+    initGraphite() ;
+    initControlRods() ;
+    drawLegend() ;
+    initStats() ;
+
+    while(1) {
+      // Measure time at start of thread
+      begin_time = time_us_32() ; 
+
+      //For each neutron:
+      for (int i = 0; i < neutrons_max; i++){
+        if (neutrons[i].active == 1){ // skip inactive neutrons
+          // erase boid
+          clearNeutron(i) ;
+
+          //only if thermal neutron
+          if (neutrons[i].energy < neutron_thermal_threshold){
+            // Check against every Uranium nucleus
+            for (int j = 0; j < num_uranium_active; j++){
+              collisionNucleus(uraniumNuclei[j], i) ;
+            }
+            // Check against every Xenon nucleus
+            for (int j = 0; j < num_xenon_active; j++){
+              collisionNucleus(xenonNuclei[j], i) ;
+            }
+
+          } else{
+            //oly if fast neutron
+            //graphite moderation
+            graphiteModeration(i) ;
+          }
+
+          waterModeration(i) ;
+          controlRodCollision(i) ;
+          
+          // update boid's position and velocity
+          wallsAndEdges(i) ;
+          // draw the boid at its new position
+          drawNeutron(i) ;
+        }
+
+      }
+
+      waterCooling();
+      spontaneous() ; 
+      moveControlRods() ;
+      redrawScreen(); 
+
+      // draw the boundaries
+      drawArena() ;
+
+      refreshStats();
+      // delay in accordance with frame rate
+      if (sim_speed_state == 1) {
+        // Increase simulation speed
+        spare_time = (FRAME_RATE  * 2) - (time_us_32() - begin_time) ;
+      } else {
+        spare_time = FRAME_RATE   - (time_us_32() - begin_time) ;
+      }
+
+      // yield for necessary amount of time
+      PT_YIELD_usec(spare_time) ;
+     // NEVER exit while
+    } // END WHILE(1)
+  PT_END(pt);
+} // animation thread
+
+
+
+// ========================================
+// === main
+// ========================================
+// USE ONLY C-sdk library
+int main(){
+
+  // gpio_set_function(0, GPIO_FUNC_UART);
+  // gpio_set_function(1, GPIO_FUNC_UART);
+  // uart_init(uart0, 115200);
+
+  // initialize stio
+  stdio_init_all() ;
+  // Initialize SPI channel (channel, baud rate set to 20MHz)
+  spi_init(SPI_PORT, 20000000) ;
+
+  // Format SPI channel (channel, data bits per transfer, polarity, phase, order)
+  spi_set_format(SPI_PORT, 16, 0, 0, 0);
+
+  // Map SPI signals to GPIO ports, acts like framed SPI with this CS mapping
+  gpio_set_function(PIN_MISO, GPIO_FUNC_SPI);
+  gpio_set_function(PIN_CS, GPIO_FUNC_SPI) ;
+  gpio_set_function(PIN_SCK, GPIO_FUNC_SPI);
+  gpio_set_function(PIN_MOSI, GPIO_FUNC_SPI);
+  // Build sine table and DAC data table
+    int i;
+    float attack_factor;
+    for (i = 0; i < dds_sine_table_size; i++) {
+        // 4x base frequency, ultra-high harmonics
+        float base = sin((float)i * 25.132 / (float)dds_sine_table_size);
+        float harm1 = 0.95 * sin(2 * (float)i * 25.132 / (float)dds_sine_table_size);
+        float harm2 = 0.90 * sin(4 * (float)i * 25.132 / (float)dds_sine_table_size);
+        float harm3 = 0.85 * sin(8 * (float)i * 25.132 / (float)dds_sine_table_size);
+        float harm4 = 0.80 * sin(12 * (float)i * 25.132 / (float)dds_sine_table_size);
+        float harm5 = 0.75 * sin(14 * (float)i * 25.132 / (float)dds_sine_table_size);
+        float harm6 = 0.70 * sin(15 * (float)i * 25.132 / (float)dds_sine_table_size);
+        float harm7 = 0.65 * sin(16 * (float)i * 25.132 / (float)dds_sine_table_size);
+        
+        // Ultra-sharp attack
+        attack_factor = 1.0 - ((float)i / dds_sine_table_size);
+        attack_factor = pow(attack_factor, 0.15);
+        
+        // Enhanced combination with more harmonics
+        float combined = (base + harm1 + harm2 + harm3 + harm4 + harm5 + harm6 + harm7) * attack_factor;
+        combined = tanh(combined * 2.0); // More aggressive saturation
+        
+        // Scale to 12-bit range with slight boost
+        raw_sin[i] = (int)(2047 * combined + 2047);
+        
+        if (raw_sin[i] > 4095) raw_sin[i] = 4095;
+        if (raw_sin[i] < 0) raw_sin[i] = 0;
+        
+        DAC_data[i] = DAC_config_chan_A | (raw_sin[i] & 0x0fff);
+    }
+
+  
+  // Select DMA channels
+  data_chan = dma_claim_unused_channel(true);;
+  ctrl_chan = dma_claim_unused_channel(true);;
+
+  // Setup the control channel
+  dma_channel_config c = dma_channel_get_default_config(ctrl_chan);   // default configs
+  channel_config_set_transfer_data_size(&c, DMA_SIZE_32);             // 32-bit txfers
+  channel_config_set_read_increment(&c, false);                       // no read incrementing
+  channel_config_set_write_increment(&c, false);                      // no write incrementing
+  channel_config_set_chain_to(&c, data_chan);                         // chain to data channel
+
+  dma_channel_configure(
+      ctrl_chan,                          // Channel to be configured
+      &c,                                 // The configuration we just created
+      &dma_hw->ch[data_chan].read_addr,   // Write address (data channel read address)
+      &address_pointer2,                   // Read address (POINTER TO AN ADDRESS)
+      1,                                  // Number of transfers
+      false                               // Don't start immediately
+  );
+
+  // Setup the data channel
+  dma_channel_config c2 = dma_channel_get_default_config(data_chan);  // Default configs
+  channel_config_set_transfer_data_size(&c2, DMA_SIZE_16);            // 16-bit txfers
+  channel_config_set_read_increment(&c2, true);                       // yes read incrementing
+  channel_config_set_write_increment(&c2, false);                     // no write incrementing
+  // (X/Y)*sys_clk, where X is the first 16 bytes and Y is the second
+  // sys_clk is 125 MHz unless changed in code. Configured to ~44 kHz
+  dma_timer_set_fraction(0, 0x0017, 0xffff) ;
+  // 0x3b means timer0 (see SDK manual)
+  channel_config_set_dreq(&c2, 0x3b);                                 // DREQ paced by timer 0
+  // chain to the controller DMA channel
+  // channel_config_set_chain_to(&c2, ctrl_chan);                        // Chain to control channel
+
+
+  dma_channel_configure(
+      data_chan,                  // Channel to be configured
+      &c2,                        // The configuration we just created
+      &spi_get_hw(SPI_PORT)->dr,  // write address (SPI data register)
+      DAC_data,                   // The initial read address
+      dds_sine_table_size,            // Number of transfers
+      false                       // Don't start immediately.
+  );
+
+
+
+  //=================Simulation inits=========================
+  avail_Neutrons_top = 2000 - neutrons_active;
+  // num_non_fissile_active = 280 - num_uranium_active - num_xenon_active;
+
+
+  // initialize VGA
+  initVGA() ;
+
+  // Seed the random number generator with the current time
+  srand(time_us_32());
+
+  //generate sine table from 0 to pi/2
+  for (int i = 0; i < sine_table_size; i++){
+    sin_table[i] = float2fix15(sin((float)i * piOver2 / (float)(sine_table_size))) ;
+  } 
+
+  // start core 1 
+  multicore_reset_core1();
+  multicore_launch_core1(&core1_main);
+
+  //stdio_uart_init_full(uart0, 0, 0, 0);  // Disable UART0
+
+
+  gpio_init(ENCODER_CLK);
+  gpio_init(ENCODER_DT);
+  gpio_set_dir(ENCODER_CLK, GPIO_IN);
+  gpio_set_dir(ENCODER_DT, GPIO_IN);
+  gpio_pull_up(ENCODER_CLK);
+  gpio_pull_up(ENCODER_DT);
+  last_CLK_state = gpio_get(ENCODER_CLK);
+
+  // Initialize the second encoder GPIO pins
+  gpio_init(ENCODER2_CLK);
+  gpio_init(ENCODER2_DT);
+  gpio_set_dir(ENCODER2_CLK, GPIO_IN);
+  gpio_set_dir(ENCODER2_DT, GPIO_IN);
+  gpio_pull_up(ENCODER2_CLK);
+  gpio_pull_up(ENCODER2_DT);
+  last_CLK_state2 = gpio_get(ENCODER2_CLK);
+
+  gpio_init(ENCODER3_CLK);
+  gpio_set_dir(ENCODER3_CLK, GPIO_IN);
+  gpio_pull_up(ENCODER3_CLK);
+  gpio_init(ENCODER3_DT);
+  gpio_set_dir(ENCODER3_DT, GPIO_IN);
+  gpio_pull_up(ENCODER3_DT);
+  last_CLK_state3 = gpio_get(ENCODER3_CLK);
+
+  gpio_init(ENCODER4_CLK);
+  gpio_set_dir(ENCODER4_CLK, GPIO_IN);
+  gpio_pull_up(ENCODER4_CLK);
+  gpio_init(ENCODER4_DT);
+  gpio_set_dir(ENCODER4_DT, GPIO_IN);
+  gpio_pull_up(ENCODER4_DT);
+  last_CLK_state3 = gpio_get(ENCODER4_CLK);
+
+
+  //Button GPIO
+  gpio_init(PIN_BUTTON_1) ;
+  gpio_set_dir(PIN_BUTTON_1, GPIO_IN) ;
+  gpio_pull_up(PIN_BUTTON_1) ;
+
+  // add threads
+  pt_add_thread(protothread_serial);
+  pt_add_thread(protothread_anim);
+
+  // start scheduler
+  pt_schedule_start ;
+}									
+</code></pre>
+
+								</section>
+
+						</div>
+					</div>
+
+								<!-- Sidebar -->
+					<div id="sidebar">
+						<div class="inner">
+
+							<!-- Search
+								<section id="search" class="alt">
+									<form method="post" action="#">
+										<input type="text" name="query" id="query" placeholder="Search" />
+									</form>
+								</section> -->
+
+							<!-- Menu -->
+								<nav id="menu">
+									<header class="major">
+										<h2>Menu</h2>
+									</header>
+									<ul>
+										<li><a href="index.html">Homepage</a></li>
+										<li><a href="sd.html">Software Design</a></li>
+										<li><a href="hd.html">Hardware Design</a></li>
+										<li><a href="rc.html">Results and Conclusions</a></li>
+										<li><a href="ap.html">Appendix</a></li>
+										<!-- <li><a href="elements.html">Elements</a></li> -->
+										<!-- <li>
+											<span class="opener">Submenu</span>
+											<ul>
+												<li><a href="#">Lorem Dolor</a></li>
+												<li><a href="#">Ipsum Adipiscing</a></li>
+												<li><a href="#">Tempus Magna</a></li>
+												<li><a href="#">Feugiat Veroeros</a></li>
+											</ul>
+										</li>
+										<li><a href="#">Etiam Dolore</a></li>
+										<li><a href="#">Adipiscing</a></li>
+										<li>
+											<span class="opener">Another Submenu</span>
+											<ul>
+												<li><a href="#">Lorem Dolor</a></li>
+												<li><a href="#">Ipsum Adipiscing</a></li>
+												<li><a href="#">Tempus Magna</a></li>
+												<li><a href="#">Feugiat Veroeros</a></li>
+											</ul>
+										</li>
+										<li><a href="#">Maximus Erat</a></li>
+										<li><a href="#">Sapien Mauris</a></li>
+										<li><a href="#">Amet Lacinia</a></li> -->
+									</ul>
+								</nav>
+
+							<!-- Section
+								<section>
+									<header class="major">
+										<h2>Ante interdum</h2>
+									</header>
+									<div class="mini-posts">
+										<article>
+											<a href="#" class="image"><img src="images/pic07.jpg" alt="" /></a>
+											<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore aliquam.</p>
+										</article>
+										<article>
+											<a href="#" class="image"><img src="images/pic08.jpg" alt="" /></a>
+											<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore aliquam.</p>
+										</article>
+										<article>
+											<a href="#" class="image"><img src="images/pic09.jpg" alt="" /></a>
+											<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore aliquam.</p>
+										</article>
+									</div>
+									<ul class="actions">
+										<li><a href="#" class="button">More</a></li>
+									</ul>
+								</section>
+
+							 Section 
+								<section>
+									<header class="major">
+										<h2>Get in touch</h2>
+									</header>
+									<p>Sed varius enim lorem ullamcorper dolore aliquam aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore. Proin sed aliquam facilisis ante interdum. Sed nulla amet lorem feugiat tempus aliquam.</p>
+									<ul class="contact">
+										<li class="icon solid fa-envelope"><a href="#">information@untitled.tld</a></li>
+										<li class="icon solid fa-phone">(000) 000-0000</li>
+										<li class="icon solid fa-home">1234 Somewhere Road #8254<br />
+										Nashville, TN 00000-0000</li>
+									</ul>
+								</section> -->
+
+							<!-- Footer -->
+								<footer id="footer">
+									<p class="copyright">&copy; Nuclear Fission Simulator. All rights reserved.  Template: <a href="https://html5up.net">HTML5 UP</a>.</p>
+								</footer>
+
+						</div>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

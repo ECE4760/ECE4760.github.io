@@ -1,0 +1,272 @@
+<!DOCTYPE HTML>
+<!--
+	Editorial by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Nuclear Fission Simulator</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<div id="main">
+						<div class="inner">
+
+							<!-- Header -->
+								<header id="header">
+								<a href="index.html" class="logo"><strong>Nuclear Fission Simulator</strong> by Andrew Shim, Tyler Wisniewski, <br />and another group member</a>										<!-- <ul class="icons">
+										<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
+										<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
+										<li><a href="#" class="icon brands fa-snapchat-ghost"><span class="label">Snapchat</span></a></li>
+										<li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+										<li><a href="#" class="icon brands fa-medium-m"><span class="label">Medium</span></a></li>
+									</ul> -->
+									ECE 5730 Digital System Design using Microcontrollers<br />
+									Cornell University<br />
+								</header>
+
+							<!-- Banner -->
+								<section id="banner">
+									<div class="content">
+										<header>
+											<h1>Nuclear Fission Simulator</h1>
+											<p>using Raspberry Pi Pico</p>
+										</header>
+										<p>Our Project simulates the RBMK Nuclear Fission Reactor, notable for the infamous Chernobyl Disaster. The concept for this project was inspired by the <a href="https://www.youtube.com/watch?v=P3oKNE72EzU">Chernobyl Visually Explained</a> Video by Higgsino physics. Our Simulation is running on a Raspberry Pi Pico using the RP2040 Microcontroller, displaying visuals to a VGA display, synthesizing Geiger Counter audio via DMA channels, and enabling user input via buttons and encoders. </p>
+									
+									</div>
+									<span class="image object">
+										<!-- <img src="images/scan1.png" alt="" /> -->
+										 <iframe width="560" height="315" src="https://www.youtube.com/embed/SqB7Jm-Cdmk?si=W5wsr2Aiwp4IBOtj" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+									</span>
+								</section>
+								
+								
+								<!-- Content -->
+								<section>
+									<header class="main">
+										<h1>High Level Design</h1>
+									</header>
+
+									<!-- <span class="image main"><img src="images/pic11.jpg" alt="" /></span> -->
+
+									<p>Our project was heavily inspired by the <a href="https://www.youtube.com/watch?v=P3oKNE72EzU">Chernobyl Visually Explained</a> video. We aimed to recreate all parts of the simulation on the RP2040 using the 4-bit color VGA library. The simulation models the Soviet-era RBMK nuclear fission reactor. The nuclear fission of Uranium-235 is represented by the following equation:</p>
+									<p><span class="image fit"><image src="images/Capture2.PNG" style="width: 50vw; min-width: 330px;" alt="" /></span>
+									<p>We simulate a representative section of the fission reactor, including Uranium fuel, neutrons, and various other moderators. All decayed materials are represented as non-fissile nuclei in our simulation.</p>
+									<p>In addition to the simulation and real time statistics, we designed and implemented a user interface that can adjust various parameters of the simulation, including toggling automatic/manual control, adjusting the reactor cooling, target power, simulation speed, etc. Through this control panel, we are able to simulate both controlled and uncontrolled chain reactions.</p>
+									<p><span class="image fit"><image src="images/program.png" style="width: 40vw; min-width: 330px;" alt="" /></span>
+									<p>Core 0 and Core 1 Threads</p>
+									<p>Our program is organized as follows: The main simulation and animation takes place on core 0 of the RP2040. In addition, it draws timing sensitive statistics like the frame timing. Core 1 handles the peripheral logic like creating and drawing the graphs in the lower half of the screen. Core 1 also contains additional threads that poll the various hardware inputs. This organizaiton takes advantage of the multi-core architecture of the RP2040.</p>
+								</section>
+
+							<!-- Section
+								<section>
+									<header class="major">
+										<h2>Erat lacinia</h2>
+									</header>
+									<div class="features">
+										<article>
+											<span class="icon fa-gem"></span>
+											<div class="content">
+												<h3>Portitor ullamcorper</h3>
+												<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore. Proin aliquam facilisis ante interdum. Sed nulla amet lorem feugiat tempus aliquam.</p>
+											</div>
+										</article>
+										<article>
+											<span class="icon solid fa-paper-plane"></span>
+											<div class="content">
+												<h3>Sapien veroeros</h3>
+												<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore. Proin aliquam facilisis ante interdum. Sed nulla amet lorem feugiat tempus aliquam.</p>
+											</div>
+										</article>
+										<article>
+											<span class="icon solid fa-rocket"></span>
+											<div class="content">
+												<h3>Quam lorem ipsum</h3>
+												<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore. Proin aliquam facilisis ante interdum. Sed nulla amet lorem feugiat tempus aliquam.</p>
+											</div>
+										</article>
+										<article>
+											<span class="icon solid fa-signal"></span>
+											<div class="content">
+												<h3>Sed magna finibus</h3>
+												<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore. Proin aliquam facilisis ante interdum. Sed nulla amet lorem feugiat tempus aliquam.</p>
+											</div>
+										</article>
+									</div>
+								</section> -->
+
+							<!-- Section -->
+								<section>
+									<header class="major">
+										<h1>Detailed Design</h1>
+									</header>
+									<div class="posts">
+										<article>
+											<a href="#" class="image"><img src="images/scan1.png" alt="" /></a>
+											<h3>Software Design</h3>
+											<p>Understand how we navigated programming the simulation and how the code actually works.</p>
+											<ul class="actions">
+												<li><a href="sd.html" class="button">More</a></li>
+											</ul>
+										</article>
+										<article>
+											<a href="#" class="image"><img src="images/hd1.jpg" alt="" /></a>
+											<h3>Hardware Design</h3>
+											<p>Housing Design and Manufacturing, Component Selection, and System Integration</p>
+											<ul class="actions">
+												<li><a href="hd.html" class="button">More</a></li>
+											</ul>
+										</article>
+										<article>
+											<a href="#" class="image"><img src="images/test.png" alt="" /></a>
+											<h3>Results and Conclusions</h3>
+											<p>What we achieved, what went well, and what didn't. </p>
+											<ul class="actions">
+												<li><a href="rc.html" class="button">More</a></li>
+											</ul>
+										</article>
+										<article>
+											<a href="#" class="image"><img src="images/code.png" alt="" /></a>
+											<h3>Appendix</h3>
+											<p>Permisions, Code, Skematics, References, etc.</p>
+											<ul class="actions">
+												<li><a href="ap.html" class="button">More</a></li>
+											</ul>
+										</article>
+										<!-- <article>
+											<a href="#" class="image"><img src="images/pic05.jpg" alt="" /></a>
+											<h3>Feugiat lorem aenean</h3>
+											<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore. Proin aliquam facilisis ante interdum. Sed nulla amet lorem feugiat tempus aliquam.</p>
+											<ul class="actions">
+												<li><a href="#" class="button">More</a></li>
+											</ul>
+										</article>
+										<article>
+											<a href="#" class="image"><img src="images/pic06.jpg" alt="" /></a>
+											<h3>Amet varius aliquam</h3>
+											<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore. Proin aliquam facilisis ante interdum. Sed nulla amet lorem feugiat tempus aliquam.</p>
+											<ul class="actions">
+												<li><a href="#" class="button">More</a></li>
+											</ul>
+										</article> -->
+									</div>
+								</section>
+
+						</div>
+					</div>
+
+				<!-- Sidebar -->
+					<div id="sidebar">
+						<div class="inner">
+
+							<!-- Search
+								<section id="search" class="alt">
+									<form method="post" action="#">
+										<input type="text" name="query" id="query" placeholder="Search" />
+									</form>
+								</section> -->
+
+							<!-- Menu -->
+								<nav id="menu">
+									<header class="major">
+										<h2>Menu</h2>
+									</header>
+									<ul>
+										<li><a href="index.html">Homepage</a></li>
+										<li><a href="sd.html">Software Design</a></li>
+										<li><a href="hd.html">Hardware Design</a></li>
+										<li><a href="rc.html">Results and Conclusions</a></li>
+										<li><a href="ap.html">Appendix</a></li>
+										<!-- <li><a href="elements.html">Elements</a></li> -->
+										<!-- <li>
+											<span class="opener">Submenu</span>
+											<ul>
+												<li><a href="#">Lorem Dolor</a></li>
+												<li><a href="#">Ipsum Adipiscing</a></li>
+												<li><a href="#">Tempus Magna</a></li>
+												<li><a href="#">Feugiat Veroeros</a></li>
+											</ul>
+										</li>
+										<li><a href="#">Etiam Dolore</a></li>
+										<li><a href="#">Adipiscing</a></li>
+										<li>
+											<span class="opener">Another Submenu</span>
+											<ul>
+												<li><a href="#">Lorem Dolor</a></li>
+												<li><a href="#">Ipsum Adipiscing</a></li>
+												<li><a href="#">Tempus Magna</a></li>
+												<li><a href="#">Feugiat Veroeros</a></li>
+											</ul>
+										</li>
+										<li><a href="#">Maximus Erat</a></li>
+										<li><a href="#">Sapien Mauris</a></li>
+										<li><a href="#">Amet Lacinia</a></li> -->
+									</ul>
+								</nav>
+
+							<!-- Section
+								<section>
+									<header class="major">
+										<h2>Ante interdum</h2>
+									</header>
+									<div class="mini-posts">
+										<article>
+											<a href="#" class="image"><img src="images/pic07.jpg" alt="" /></a>
+											<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore aliquam.</p>
+										</article>
+										<article>
+											<a href="#" class="image"><img src="images/pic08.jpg" alt="" /></a>
+											<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore aliquam.</p>
+										</article>
+										<article>
+											<a href="#" class="image"><img src="images/pic09.jpg" alt="" /></a>
+											<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore aliquam.</p>
+										</article>
+									</div>
+									<ul class="actions">
+										<li><a href="#" class="button">More</a></li>
+									</ul>
+								</section>
+
+							 Section 
+								<section>
+									<header class="major">
+										<h2>Get in touch</h2>
+									</header>
+									<p>Sed varius enim lorem ullamcorper dolore aliquam aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore. Proin sed aliquam facilisis ante interdum. Sed nulla amet lorem feugiat tempus aliquam.</p>
+									<ul class="contact">
+										<li class="icon solid fa-envelope"><a href="#">information@untitled.tld</a></li>
+										<li class="icon solid fa-phone">(000) 000-0000</li>
+										<li class="icon solid fa-home">1234 Somewhere Road #8254<br />
+										Nashville, TN 00000-0000</li>
+									</ul>
+								</section> -->
+
+							<!-- Footer -->
+								<footer id="footer">
+									<p class="copyright">&copy; Nuclear Fission Simulator. All rights reserved.  Template: <a href="https://html5up.net">HTML5 UP</a>.</p>
+								</footer>
+
+						</div>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
