@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Voice Lockbox Final Project">
+  <meta name="author" content="Edwin Dake and Luke Altman">
+  <title>Pico-Fight (Combat Game)</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <ul class="nav-links">
+        <li><a href="#intro">Introduction</a></li>
+        <!-- <li><a href="#objective">Objective</a></li> -->
+        <li><a href="#design">High Level Design</a></li>
+        <li><a href="#prog">Program/Hardware Design</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#conclusion">Conclusion</a></li>
+        <li><a href="#Appendix A">Appendix</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <header class="header">
+    <h1>Pico-Fight (Fighting Game) </h1>
+    <p>Digital Systems Design Using Microcontrollers (ECE 4760) Final Project <br>By Albert Sun (ays48), Edwin Dake (ed433), Zoey Mo (zm73)
+    </p>
+  </header>
+
+  <section id="web_demo" class="section">
+    <div class="center-block">
+      <iframe id="gameFrame" src="https://cmdhl.github.io/ece4760-web-demo/" width="640" height="480"
+        style="border: 8px solid black; overflow: hidden; cursor: pointer;" scrolling="no"
+        allow="fullscreen"></iframe>
+      <p style="text-align:center;">
+      <h2 class="bounce">⬆ Click</h2>&nbsp;&nbsp;&nbsp;the game area above to play a computer version of our project!</p>
+      <p style="text-align:center;">Note: both players need to be pressing the same non-menu key to start.</p>
+    </div>
+    <div style="display: flex; gap: 16px; align-items: flex-start;">
+      <img src="images/key_mapping.png" alt="Key Mapping" style="height: 480px; width: auto;">
+      <img src="images/block_table.jpg" alt="Block Table" style="height: 480px; width: auto;">
+    </div>
+
+  </section>
+
+  <section id="intro" class="section">
+    <h2>Welcome to Pico-Fight</h2>
+    <div class="center-block">
+      <iframe width="640" height="360" src="https://www.youtube.com/embed/TFvBpbWbc1k" frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen>
+      </iframe>
+      <h4 style="text-align:center;">Demonstration Video</h4>
+    </div>
+    <p>
+      Our final project for ECE 4760 is a strategic two-person combat game inspired by the open source fighting game
+      "Footsies", a simple game designed to test the players spacing, timing and combat skills.
+      <br>
+      <br>
+
+      Our build leverages the Raspberry Pi Pico microcontroller connected to a VGA screen for visual display, with
+      player input handled through keypads inputs. The game allows players to execute a variety of combat maneuvers,
+      including attacks, blocks, shields, jumps, and crouches. The combat takes place in the critical "no man's land"
+      between fighters, where positioning and tactical decisions determine victory or defeat. The Pico microcontroller
+      processes player inputs with minimal latency, ensuring a responsive and fair competitive experience. Whether
+      you're trading blows at mid-range or executing a perfect defensive maneuver, the system offers an engaging and
+      intuitive gaming experience that captures the strategic depth of spacing-based combat games.
+    </p>
+    <figure>
+      <img src="images/team_pic2.jpg" alt="Introduction Image" class="section-img">
+      <figcaption>Figure 1: Team pic - Edwin, Zoey and Albert (from left to right)</figcaption>
+    </figure>
+  </section>
+
+  <!-- <section id="objective" class="section">
+        <h2>Project Objective</h2>
+        <p>
+            No Man's Land is a minimalist two-player fighting game inspired by Footsies, developed for the Raspberry Pi Pico microcontroller. Our objective is to create an accessible, strategic combat experience that focuses on the fundamental spacing and timing elements of fighting games. Players control pixel-art fighters using keypads to execute a variety of moves including attacks, blocks, shields, jumps, and crouches within a frame-based combat system. The game employs the Pico's dual-core capabilities, with one core dedicated to player animation and another to the user interface, all displayed on a VGA screen with audio feedback through a speaker. By implementing a health bar system, match timer, and intuitive controls, No Man's Land delivers an engaging local multiplayer experience that demonstrates embedded systems programming while being approachable for players of all skill levels.</p>
+    </section> -->
+
+  <section id="design" class="section">
+
+    <h2>High-level Design</h2>
+    <h4>Rationale</h4>
+    <p>Our goal for this project was to create a fun fighting game run off the Pico microcontroller. To do this
+      we drew inspiration from the open source fighting game "Footsies", a simple game designed to test the players
+      spacing, timing and combat skills.
+      Taking the core moves and sprites from the game, we built our own game with new mechanics, art and sound effects.
+    </p>
+
+    <h4>UI Structure</h4>
+    <p>Below shows the various UI screens and the state machine controlling the transistion between the UI screens. When
+      the game boots up it will display a title screen. From here, the players can press any key to enter the menu
+      screen where the players
+      can customize their character models and clothing. From here, both players can press the same key to enter the
+      game. Within the game, the players
+      can choose to pause the game and return to the title. When a player wins, the game will display a win screen based
+      on which character won.
+
+    </p>
+    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 24px 0;">
+      <figure style="flex: 1 1 18%; text-align: center; margin: 0;">
+        <img src="images/title.png" alt="Gameplay 1"
+          style="width: 100%; max-width: 160px; height: auto; border-radius: 8px;">
+        <figcaption>Title</figcaption>
+      </figure>
+      <figure style="flex: 1 1 18%; text-align: center; margin: 0;">
+        <img src="images/ready screen.png" alt="Gameplay 2"
+          style="width: 100%; max-width: 160px; height: auto; border-radius: 8px;">
+        <figcaption>Menu</figcaption>
+      </figure>
+      <figure style="flex: 1 1 18%; text-align: center; margin: 0;">
+        <img src="images/game screen.png" alt="Gameplay 3"
+          style="width: 100%; max-width: 160px; height: auto; border-radius: 8px;">
+        <figcaption>Game</figcaption>
+      </figure>
+      <figure style="flex: 1 1 18%; text-align: center; margin: 0;">
+        <img src="images/win.png" alt="Gameplay 4"
+          style="width: 100%; max-width: 160px; height: auto; border-radius: 8px;">
+        <figcaption>Win</figcaption>
+      </figure>
+
+    </div>
+    <figure>
+      <div style="display: flex; gap: 10px;">
+        <img src="images/ui_higher.jpg" alt="ui_higher.jpg" style="width: 50%;">
+        <img src="images/ui_lower.jpg" alt="ui_lower.jpg" style="width: 50%;">
+      </div>
+      <figcaption>Figure 2: UI state diagrams. <br>Left: higher level abstraction. Right: lower level implementation.
+      </figcaption>
+    </figure>
+
+
+    <h4>Game Structure</h4>
+    <p>Due to the amount of possible interactions between the player, we implement another state machine to
+      handle the game logic. At a high level, each player is in one of three possible positions: idle, crouching or
+      jumping.
+      Each of these positions has a set of possible actions that can be performed and rules that dictate the
+      interactions between the players.
+    </p>
+    <figure>
+      <img src="images/game_logic.jpg" alt="state_machine_diagram.png" class="section-img">
+      <figcaption>Figure 3: Game logic state machine</figcaption>
+    </figure>
+    <h5>Idle</h5>
+    <p>The idle state is the base state that each player starts in. In this state, the player can walk left or right and
+      has access to
+      a kick attack and a uppercut attack. In this state, the player can also block other standing attacks with shield.
+    </p>
+    <h5>Jump</h5>
+    <p>The jump state puts the player in the air. While in the air, if the player lands on the opponent, they will
+      perform a 'drop attack'.
+      A player is also able to block another 'drop attack' by jumping at the same time.
+    </p>
+    <h5>Crouch</h5>
+    <p>The crouch state causes the player to duck. In this state, the player can perform a crouch attack and block other
+      crouch attacks.
+    </p>
+
+
+    <h5>Shields / Hits</h5>
+    <p>
+      From each state, a player can be hit and will take damage. If a player is hit, no matter what state they are in
+      they will enter a 'hurt' state.
+      After the 'hurt' animation plays out, the player will return to the idle state. If a player takes damage, their
+      health
+      decreases depending on the attack. When a players health reaches 0, they lose the game.
+    </p>
+    <p>
+      An important mechanic in the game is the shield. Each player starts the game with 3 shields and can
+      use them to block different attacks. For the shield to be effective, the player must be performing the correct
+      action
+      before being hit (the blocks are shown above). If a player shields an attack, they will not take damage however
+      they will
+      lose a shield. If a player runs out of shields, they will take damage from any attack. To get shields back, the
+      player must
+      hit the opponent when the opponent shield. This adds a layer of strategy to the game as players must decide when
+      to shield and when to attack.
+    </p>
+    <figure>
+      <img src="images/shield_bar.png" alt="Shield Options" class="section-img">
+      <figcaption>Figure 4: Health and Shield bar. Health on top, shield on bottom</figcaption>
+    </figure>
+    <p>
+      The above figure displays the health and shield bar. The shield bar can be distinguished by the 3 sections,
+      each representing a shield.
+    </p>
+
+    <h4>Sprites and Art</h4>
+    <p>
+      The player sprites were drawn over the original footsies sprites using Procreate (iOS) and PixelStudio (Android).
+      The visual style is intentionally minimalist, limited to black and white. This allowed us to keep the same
+      outlines however different heads and clothing models from the Footsies game. To integrate these assets into our
+      game, we wrote a Python
+      script that converts each sprite into a two-dimensional C array.
+      <br>
+      <br>
+      For memory efficiency, our drawSprite function in C only takes the coordinates of either only black pixels or only
+      white pixels depending on which one is fewer, and renders those, effectively outlining the sprite without needing
+      to store full image data. Most of our animations consist of multiple frames – such as a five-frame attack sequence
+      (Figure 4.). For each frame, we store an array of pixels (Figure 5.), with each pixel representing a displacement
+      from the origin position of the player. This origin position is defined at the center of the player on the ground.
+      Offsets are scaled by 4 to make sprites look bigger on screen.
+    </p>
+    <figure>
+      <img src="images/original vs new.png" alt="Sprite Animation Frames" class="section-img">
+      <figcaption>Figure 5: Sample attack animation sprite sheet - Left: Reference sprite sheet from footsies. Right:
+        Our sprite sheet</figcaption>
+    </figure>
+    <figure>
+      <img src="images/pixel displacements.png" alt="Sprite Animation Frames" class="section-img">
+      <figcaption>Figure 6: Equivalent C arrays for each sprite in the attack animation (figure 4)</figcaption>
+    </figure>
+
+    <p>
+      In addition to the player sprite sheets, the game also includes a variety of art for the various display screens
+      and background parts. Each of these components was stored in similar C arrays and drawn modularly rather than
+      as a whole because many
+      either need to move (eg. background clouds) or need to be switched around (eg. character select screen).
+    </p>
+    <div
+      style="display: flex; gap: 24px; justify-content: center; align-items: flex-start; flex-wrap: wrap; margin: 32px 0;">
+      <figure style="flex: 1 1 320px; text-align: center; margin: 0;">
+        <img src="images/title_Z_full.png" alt="Gameplay Screenshot 1"
+          style="width: 100%; max-width: 320px; border-radius: 8px;">
+        <figcaption>Figure 7: Title screen sample head. Only the white part was recorded and rendered.</figcaption>
+      </figure>
+      <figure style="flex: 1 1 320px; text-align: center; margin: 0;">
+        <img src="images/clouds3_inside.png" alt="Gameplay Screenshot 2"
+          style="width: 100%; max-width: 320px; border-radius: 8px;">
+        <figcaption>Figure 8: Figure 4. The fillings of background clouds.
+          Converted to black for mass png-to-array conversion, but drawn in white on pico.
+        </figcaption>
+      </figure>
+    </div>
+
+    <h4>Background Music</h4>
+    <p>Behind the game, we have a looping background music track.</p>
+
+    <p>Concept: let 0=pause, 1=C, 2=D, 3=E, 4=F, 5=G, 6=A, 7=B, then the melody becomes</p>
+    <p style="text-align:center;">4760 447760 2 4760 447760 2<br>which represents ECE4760 group 2.</p>
+    <p>notes : F4, B4, A4, 0, F3, F4, B3, B4, A4, 0, D5, F5, B4, A4, 0, F5, F4, B4, B3, A3, 0, D4<br>
+      duration (1 unit = 130ms): 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 1</p>
+    <p>
+      <strong>Background Music:</strong>
+      <audio controls src="audio/theme.wav">Your browser does not support the audio element.</audio>
+    </p>
+    <h4>Sound Effects</h4>
+    <p>In addition to the background music, we also have a set of sound effects that play
+      when the player performs an action. These sounds include: whoosh sound when the player attacks,
+      thud sound when the player is hit, shield sound when the player blocks, announcer sound when the game starts.
+    </p>
+
+    <p>
+      <strong>Hit Sound:</strong>
+      <audio controls src="audio/hit.wav" style="margin-right: 12px;">Your browser does not support the audio
+        element.</audio>
+      <strong>Shield Sound:</strong>
+      <audio controls src="audio/shield.wav" style="margin-right: 12px;">Your browser does not support the audio
+        element.</audio>
+      <strong>Announcer "Fight":</strong>
+      <audio controls src="audio/fight.wav">Your browser does not support the audio element.</audio>
+      <strong>Whoosh Sound:</strong>
+      <audio controls src="audio/whosh.wav" style="margin-right: 12px;">Your browser does not support the audio
+        element.</audio>
+    </p>
+
+
+  </section>
+  <section id="prog" class="section">
+    <h2>Program/Hardware Design</h2>
+    <figure>
+      <img src="images/keypads_wired.png" alt="keypads_wired.png" class="section-img"
+        style="width: 75%; max-width: 500px;">
+      <figcaption>Figure 9: A photo of our hardware.</figcaption>
+
+
+    </figure>
+
+    <figure>
+      <img src="images/circuit diag.png" alt="keypads_wired.png" class="section-img"
+        style="width: 100%; max-width: 640px;">
+      <figcaption>Figure 10: Circuit Diagram.</figcaption>
+
+
+    </figure>
+    <p>
+      The input to the game utilizes 2 keypads. These matrix-like keypads work by setting the columns of the matrix high
+      one at a time. By then checking which GPIO receives an input we can determine which key is pressed at any time.
+
+      Because we needed many GPIO pins to write to the VGA screen and DAC we decided to let both keypads
+      share the same scan GPIO keys. That way we save on GPIO pins and a single scan
+      allows us to check both keypads.
+
+    </p>
+    <p>
+      For the audio, we utilize both channels of the DAC to
+      play sound effects and music. Initially, we struggled to play both sound effects and
+      music at the same time without significant noise. By utilizing stereo speakers, we can plug one DAC channel into
+      the right speaker and
+      one into the left. This minimizes the amount of interference between the sound effects and music and also allows
+      both
+      to play at the same time.
+
+    </p>
+    <h4>Player States and Frames</h4>
+    As with most fighting games, all of the timing is based on a frame timer system. Each frame corresponds to a step of
+    the game. Within one frame, we must parse inputs, check for all interaction between the players then update the VGA
+    screen. Utilizing frames also allows us to play the animations for the proper amount of time. For example the ‘hurt’
+    state in the figure below is a sequence of 4 sprites. When a player enters the ‘hurt’ state, we can simply draw one
+    sprite per frame to complete the animation.
+    <figure>
+      <img src="images/frame images.png" alt="keypads_wired.png" class="section-img"
+        style="width: 100%; max-width: 500px;">
+      <figcaption>Figure 11: Frames of hurt</figcaption>
+    </figure>
+
+    <p>Each player is represented by a struct consisting of many variables making up the player's current state. The
+      state of a player consists of information about the players game status (eg. health, shield, hitbox) as well as
+      what animation should be played on a given frame (eg. state, frame)
+    </p>
+    <figure>
+      <img src="images/player state.png" alt="keypads_wired.png" class="section-img"
+        style="width: 100%; max-width: 640px;">
+      <figcaption>Figure 12: Player States.</figcaption>
+    </figure>
+    <p>
+      The player state is updated every frame. Each frame, we check the inputs of both players and update the player
+      state accordingly. For example, if a player presses the left key, we will update the player x to position to the left. Each 
+      state has a unique animation associated for it. For example, when a player attacks we will set the player state to attack. This 
+      state corresponds to the set of frames for the attack animation. Each frame is then drawn sequentially until the attack has reached 
+      the last frame. For attacks, we also need to check if the attack hits the opponent. This is done with our hitbox system. Each attack 
+      has a hitbox associated with it which we use to check collision. 
+    </p>
+
+    <h4>Playing sounds</h4>
+    <p>
+      There are 3 types of sounds in our game:
+    <ol>
+      <li>background music from note frequency arrays through time interrupts,</li>
+      <li>sound effects from note frequency arrays through time interrupts (The beep in menu screens)</li>
+      <li>sound effects from .wav files through DMA.</li>
+    </ol>
+    </p>
+    <p>
+      To play arrays of note frequencies through time interrupts, similar to lab 1, we compute the current increment
+      amount and update the accumulator according to current frequency:
+    </p>
+    phase_incr_main_0 = current_frequency * two32_fs and phase_accum_main_0 += phase_incr_main_0
+    <p>
+      The BGM and sound effects of notes share the same channel, so only one of them is being played. However, the
+      counter for BGM does not pause while sound effects are being played, so that in theory it sounds as if the BGM is
+      always playing and only happens to be unheard sometimes since the sound effect is too loud.
+    </p>
+    <p>
+      A set of complex sound effects utilize DMA channels to be played. These sound effects include the whooshing sound
+      of attacks, the shielding sound and the hurt sound. In addition, at the start of each match the game will yell
+      ‘Fight’, which is also an effect played through DMA. We accomplished this by first converting the .wav files of
+      the sounds found on free sound effect websites into C arrays. Each sound effect was then assigned 2 DMA channels,
+      a control channel and data channel such as the hit sound effect below.
+
+      <o1>
+        <li>hit_chan = dma_claim_unused_channel(true);</li>
+        <li> hitctrl_chan = dma_claim_unused_channel(true);
+        </li>
+      </o1>
+    </p>
+    <p>
+      When the control channel is triggered, it is pointed to the data channel. The data channel then points to the
+      location of the C array for the sound. The array is then transferred to SPI to the DAC playing the sound effect.
+      The advantage of this is that the complex sound effects do not block the code and both complex sound effects and
+      background music can be played simultaneously
+
+    </p>
+
+    <h4>Collision and Hitboxes</h4>
+    <p>
+      One of the more challenging parts of implementation was checking hits and collisions. We utilize a hitbox system,
+      assigning each move and player a set hitbox. This is done in order to determine if attacks are valid or if the
+      players are colliding with one another. While we could have checked the pixel overlaps of the sprites themselves,
+      we found it much simpler to draw bounding boxes around the players and the moves. This allowed us to simplify the
+      detection of collision and attack hits by checking overlapping rectangles.
+    </p>
+    <img src="images/hitboxes_array.jpg" alt="hitboxes_array.jpg">
+    <figcaption>Figure 13: Hitboxes Array. {x_offset, y_offset, width, height} relative to player bottom center.
+    </figcaption>
+    <p>
+      Each hitbox consists of {x_offset, y_offset, width, height}, where offsets are calculated from the bottom center
+      of a player’s xy position. To check whether two hitboxes are overlapping, we wrote a function bool
+      isOverlapping(short h1, short h2, short attacker), to which we pass the hitbox index of the attacker, hitbox index
+      of the potential victim, and the player index of the attacker.
+
+    </p>
+    <p>
+      Inside this function, based on each player’s current position and whether each player is flipped, we first
+      calculate the absolute positions of the x boundaries and y boundaries of the hitboxes as:
+    </p>
+    <pre>
+      short h1y1, h1y2, h2y1, h2y2, h1x1, h1x2, h2x1, h2x2;
+    </pre>
+    <p>
+      Then, we check:
+    </p>
+    <pre>
+            bool x_overlap = (h1x1 >= h2x1 && h1x1 <= h2x2)
+                          || (h1x2 >= h2x1 && h1x2 <= h2x2)
+                          || (h2x1 >= h1x1 && h2x1 <= h1x2)
+                          || (h2x2 >= h1x1 && h2x2 <= h1x2);
+            bool y_overlap = (h1y1 >= h2y1 && h1y1 <= h2y2)
+                          || (h1y2 >= h2y1 && h1y2 <= h2y2) 
+                          || (h2y1 >= h1y1 && h2y1 <= h1y2) 
+                          || (h2y2 >= h1y1 && h2y2 <= h1y2);
+    </pre>
+    <p>
+      The final result is (x_overlap && y_overlap). For debugging purposes, we enabled
+      a function to draw the hitboxes on the screen as well. Below show a couple figures of the hitboxes for certain
+      moves. The hitbox both
+      allows us to check for attack hits as well as make sure that players cannot walk through each other.
+    </p>
+    <img src="images/hitboxes.jpg" alt="Player Hitboxes">
+    <figcaption>Figure 14: Hitboxes Display</figcaption>
+  </section>
+  <section id="results" class="section">
+    <h2>Results</h2>
+    <p>
+      An initial concern of ours was meeting the timing deadline of 10FPS
+      as we are performing many checks and VGA drawings however we did not have any problems throughout our development.
+      While occasionally we would suffer from noise in the sound effects, we found that after splitting the sound
+      effects and music into different speakers much of it was reduced. Another concern of ours was the collision checking. 
+      We were worried that there would possibly be bugs in the collision checking causing players to get stuck, however this 
+      was resolved with the bounding box system. 
+    </p>
+    <h4>Playtesting</h4>
+    <p>
+      Of course because this is a video game, the goal is to make it fun. While we played it for many rounds and had
+      another group come play as well. The experience is smooth once you get used to the keypad controls.
+      The main feedback we received was with the balancing of the game, where certain strategies such as crouch attack
+      were too strong. With more playtesting, we could further balance the game by adding more moves and mechanics.
+    </p>
+
+
+
+  </section>
+  <section id="conclusion" class="section">
+    <h2>Conclusions</h2>
+    <p>
+      We are very happy with how the game turned out. We essentially created what we set out to do in the proposal which
+      was just a fun fighting game that ran smoothly on the Pico. In the future however we would like to add more moves
+      and features which we had initially thought of. For example we wanted to add ‘combo’ moves or extra movement
+      options such as dashing. While we didn't add any color to the art, we definitely could have changed the art style 
+      to include color as we still had plenty of memory. The game however is still very smooth to run and more importantly 
+      fun to play. We are very happy with the final product and are proud of the work we did.
+      </p>
+      <p>
+      While we did not use any code in the public domain, we did draw over art from the ‘Footsies’ video game. Footsies
+      is an open source game under the GPL-3.0 license allowing for derivative works.
+
+
+    </p>
+
+  </section>
+
+  <section id="Appendix A" class="section">
+    <h2>Appendix A: Notices</h2>
+    <p>
+      The group approves this report for inclusion on the course website.
+      <br>
+      The group approves the video for inclusion on the course youtube channel.
+
+    </p>
+
+  </section>
+
+  <section id="Appendix B" class="section">
+    <h2>Appendix B: Parts List</h2>
+    <ul>
+      <ul>
+        <li>1x VGA Screen</li>
+        <li>2x Keypad</li>
+        <li>1x Raspberry Pi Pico</li>
+        <li>1x DAC</li>
+        <li>1x Stereo Speaker</li>
+        <li>Jumper Cables</li>
+      </ul>
+      <p>These parts were all provided by the lab.</p>
+    </ul>
+  </section>
+
+  <section id="Appendix C" class="section">
+    <h2>Appendix C: Codebase</h2>
+
+    <p>
+      The code for our project can be found on our <a href="https://github.com/asun121/ece4760-final-project
+" target="_blank">GitHub repository</a>.
+  </section>
+
+  <section id="Appendix D" class="section">
+    <h2>Appendix D: Computer Version</h2>
+
+    <p>
+      Using ChatGPT we were able to port a version of the game onto a computer. That code is <a href="https://github.com/CMDHL/ece4760-web-demo 
+" target="_blank">here.</a>
+  </section>
+
+</body>
+<script>
+  const iframe = document.getElementById('gameFrame');
+  iframe.addEventListener('click', () => {
+    if (iframe.requestFullscreen) {
+      iframe.requestFullscreen();
+    } else if (iframe.webkitRequestFullscreen) { // Safari
+      iframe.webkitRequestFullscreen();
+    } else if (iframe.msRequestFullscreen) { // IE11
+      iframe.msRequestFullscreen();
+    }
+  });
+</script>
+</html>
