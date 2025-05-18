@@ -1,0 +1,341 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+	<head>
+		<title> Shooters Shoot </title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+		<meta name="description" content="" >
+		<meta name="keywords" content="" >
+		<!--[if lte IE 8]><script src="js/html5shiv.js"></script><![endif]-->
+		<script src="js/jquery.min.js"></script>
+		<script src="js/skel.min.js"></script>
+		<script src="js/skel-layers.min.js"></script>
+		<script src="js/init.js"></script>
+		<noscript>
+			<link rel="stylesheet" href="css/skel.css" >
+			<link rel="stylesheet" href="css/style.css" >
+			<link rel="stylesheet" href="css/style-xlarge.css" >
+		</noscript>
+		<style>
+			html {
+				scroll-behavior: smooth;
+			}
+			.center-block1 {  
+			  width:640px;
+			  display: block;  
+			  margin-right: auto;  
+			  margin-left: auto;  
+			}  
+			.center-block2 {  
+			  width:400px;
+			  display: block;  
+			  margin-right: auto;  
+			  margin-left: auto;  
+			}  
+			.center-block3 {  
+			  width:200px;
+			  display: block;  
+			  margin-right: auto;  
+			  margin-left: auto;  
+			}
+			.center-block4 {  
+			  width: 100%;
+			  display: block;  
+			  margin-right: auto;  
+			  margin-left: auto;  
+			}  
+			.imgContainer {
+				position: fixed;
+				top: 10%;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				display: none;
+				align-items: center;
+				justify-content: center;
+			}
+			.inner {
+				margin-right: 10%;  
+				margin-left: 10%;  
+			}
+			.caption {
+				text-align: center;
+				margin-top: 0;
+			}
+			.gif-container {
+				display: flex;
+				justify-content: space-between;
+			}
+
+			.gif-container figure {
+				flex: 1;
+				text-align: center;
+				margin: 0 5%;
+			}
+
+			.gif-container img {
+				max-width: 100%;
+				height: auto;
+			}
+			#nav ul {
+				display: flex;
+				justify-content: center;
+				flex-wrap: wrap;
+				list-style-type: none;
+			}
+			@media screen and (max-width: 600px) {
+				#nav ul li {
+					display: block;
+					width: 100%;
+					text-align: center;
+				}
+			}
+		</style>
+	</head>
+	<body id="main">
+
+		<div class="center-block1">
+			<iframe
+			  width="640" height="360"
+			  src="https://www.youtube.com/embed/xsmcP4xbEYs"
+			  frameborder="0"
+			  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+			  allowfullscreen>
+			</iframe>
+			<h4 style="text-align:center;">Demonstration Video</h4>
+		  </div>
+		  
+		</section>
+			
+		<!-- Introduction -->
+		<section id="Introduction" class="wrapper style2"> 
+			<header class="major">
+				<h2><strong style="color: white;">Introduction</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<p>
+				“Shooters Shoot” is a 2D top-view game for two players tasking them to hit each other with bouncing bullets to win points.
+				<br><br>
+				The players are spawned in the opposite corners of a randomly generated map. Players can move around the map and shoot bullets, which bounce off the walls for up to 5 seconds or until they hit one of the players. 
+				<br><br>
+				For this game, we also developed physical 3D-printed controllers to which buttons and joysticks are mounted. The joysticks and the pixel graphics create a special atmosphere and make the game more fun and interactive.
+				</p>
+				<figure>
+						<img src="vga_screen.png" alt="Displayed Game" style="width:70%; height:auto; display: block; margin-left: auto; margin-right: auto;">
+						<h4 style="text-align: center;">Game on VGA Screen</h4>
+				</figure>
+			</div>
+		</section>
+		
+		<!-- >High Level Design -->
+		<section id="HLD" class="wrapper style1"> 
+			<header class="major">
+				<h2><strong style="color: black;">High Level Design</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<p>
+				The idea came from a game called Pixel Tanks, which we wanted to replicate on RP2040. We had a lot of fun playing that game in the past, so the idea appeared to be very fun. Due to the difficulty of writing vector graphics for tilting rectangles, we changed our idea a bit to make it a shooter game: the players look like circles with guns from the top view.
+				<br><br>
+				The game requires some simple mathematics for integrating the controls to adjust the position of each player and a bullet, as well as mathematics to detect and deal with collisions. While the first task is quite simple, the second task requires specially designed structures.
+
+				<br><br>
+				First of all, all walls are defined not by their vertex locations, but by their minimum and maximum x and y bounds - which works very well for vertical and horizontal rectangles. This allows to differentiate between cases of bullet intersection with the rectangle on horizontal and vertical directions (for example, if leftmost point on the perimeter of the bullet at location b_x-r is at coordinate less than wall_xmax, the bullet hit the wall in the x-direction), push the bullet back to a no-collision zone and invert the relevant component of the velocity of the bullet. Similar method is used to deal with possible tank interactions with the walls. To detect collisions of the tanks with the projectiles, a square-root distance method is used. 
+
+				<br><br>
+				For map generation and for spawning bullets, rotation matrices are heavily utilized: sample obstacle configurations are rotated about centers of the 14 cells to put them in one of four orientations, and bullets are spawned a fixed distance away from the center of the tanks at a correct angle by making use of their tank orientation angle theta.
+
+				<br><br>
+				The flow of the program is quite simple: there are structs for bullets, tanks, and walls and methods for evaluating their interactions and modifying their values. All of them can be spawned in the beginning of the round or by a “shoot” input and deleted based on interactions with each other or at the end of each round. Game score is updated after each round. To control the tanks, inputs from buttons and joysticks of the controllers are evaluated and states are updated in the tankMotion function. To evaluate the positions of all bullets and their interactions with tanks, a double loop iterates through each bullet and each wall and tank to determine their interaction and ID`s of the tanks are kept track of to determine which player gets a point if either of the tanks explodes. The bullets also have limited lifetimes, so they are deleted when their time runs out.
+
+				<br><br>
+				One of the main trade offs we encountered is related to the number of analog pins on the RP2040: there are only three of them, which means that we can only take one analog value from each joystick. Because of this, we had to change the design to rotate the tank with input from the joystick and only move straight based on digital input from the motion button instead of another axis of the joystick.
+
+				<br><br>
+				There is also a limitation to the graphics resolution: 480x640 pixels. This actually helps the game quite a bit by making it look a bit older and more relatable to players` childhoods.
+				</p>
+			</div>
+		</section>
+		
+		<!-- Program & Hardware Co-Design -->
+		<section id="Software and Hardware Design" class="wrapper style1"> 
+			<header class="major">
+				<h2><strong style="color: black;">Software and Hardware Design</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<p>
+				Probably, the most important and interesting  part of the code are the collision functions - special logic was developed for them and there are limitations for their performance. A big one is the fact that the bullet step in space with every frame has to be low enough for the bullet to not teleport inside of the walls, as in such a case there is a high probability of the bullet going through the wall completely. To maintain the perceived bullet speed, we advise reducing bullet speed in the program and increasing the frame rate: with more updates per second and lower pixel speed, the bullet`s overall speed can be increased or at least maintained with protection of the functionality of the collision functions. In our case, the frame rate was set to 40 FPS, which also allowed for quite smooth animation.
+				<br><br>
+				Another design consideration is that the bullets should be spawned a bit in front of the tanks to prevent immediate collision and explosion of the tank. This can actually result in the case of a bullet being spawned inside of the wall, if the tank is facing the wall and is standing exactly next to it. To deal with this issue, one can increase the tank collision radius, which would allow one to detect collision between the wall and the tank even if they are not exactly touching. Other modifications for “hitboxes” can be made.
+
+				<br><br>
+				For the hardware details, the changes to the tankMotion() function introduce a tightly integrated joystick‐based control mechanism that enriches the original autonomous tank animation with real‐time human input. At the outset of each frame, the code invokes joystick_read_norm(), which polls the analog X and the digital switch of the DFRobot joystick and converts these raw readings into a convenient normalized structure (joy.x and joy.y in the range –1.0 to +1.0, plus a Boolean joy.pressed). By sampling once per frame, the system ensures low latency control without interfering with the VGA timing or the protothread scheduler.
+
+				<br><br>
+				Within a localized scope at the top of tankMotion(), a static flag prev_fire and a pointer to the first tank (tank_obj_array[0]) are declared. The static flag persists across function calls, enabling reliable detection of a button‐down “edge” (transition from released to pressed) without exposing this helper variable beyond the block in which it is needed. This use of an inner brace‐delimited scope both encapsulates joystick logic and prevents namespace pollution for the broader physics and collision code that follows.
+
+				<br><br>
+				Tank rotation is driven by the horizontal stick deflection: the code computes a per‐frame delta‐time in seconds (dt_sec) from the fixed FRAME_RATE (in microseconds), and then adjusts the tank’s heading (theta) by multiplying joy.x by a configurable rotation constant (TANK_ROT_SPEED) and by dt_sec. This approach yields smooth, framerate‐independent angular motion: pushing the stick fully right (joy.x = +1.0) spins the tank at precisely the defined degrees‐per‐second rate, regardless of minor fluctuations in loop timing.
+
+				<br><br>
+				Firing control leverages the same normalized joystick structure. By comparing the current joy.pressed flag against the previous frame’s prev_fire, the code calls spawnbullet(0) precisely when the player depresses (not merely holds) the joystick button. This ensures a single bullet spawns per press, preventing rapid‐fire bursts due to the high loop rate. After handling shooting, prev_fire is updated to the current state, ready for the next iteration.
+
+				<br><br>
+				Following the joystick integration, the function continues with the original erase‐move‐collide‐draw cycle for all tanks. Each tank’s position is erased, its fixed‐point velocities are applied, and collisions against walls or the arena boundary trigger realistic bouncing via velocity inversion and position correction. Finally, each tank is redrawn, seamlessly blending the new user‐driven behavior with the game’s existing animation loop. This refactoring cleanly compartmentalizes input handling while maintaining the architectural integrity and timing guarantees of the VGA demo.
+
+				<br><br>
+				One part of the program that did not work out is the vector drawing of rectangles at different angles: a special drawTiltedLine helper was implemented, but we did not have enough time to fix the function for drawing the rectangle. This is partially due to the fact that pixel density is quite low and no lines are drawn perfectly as a result - some gaps would appear between tilted lines.
+
+				<br><br>
+				As previously mentioned, the program was built on the base of Hunter Adams`s VGA_Animation_Demo code for ECE 4760 course, which primarily takes care of animation-related  initializations in the program. However, it is quite a minor part of the program as a whole.
+
+				</p>
+			</div>
+			
+		</section>
+		
+		<!-- Results -->
+		<section id="Results" class="wrapper style1"> 
+			<header class="major">
+				<h2><strong style="color: black;">Results</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+					<p>
+					Our game is built of course around the RP2040 microcontroller with video inputs coming from a VGA based display module generating 640x480 resolution at 60 Hz via DMA-driven pixel streaming, synced by precise HSYNC and VSYNC signals timed by PIO state machines. Two analog joysticks wired to 12-bit ADC channels, and simple push buttons drove the tank rotation and movement respectively. 
+					</p>
+					<figure>
+						<img src="wiring_diagram.png" alt="Displayed Game" style="width:70%; align-self: center;height:auto; display: block; margin-left: auto; margin-right: auto;">
+						<h4 style="text-align: center;">Game on VGA Screen</h4>
+				</figure>
+					<p>
+					Our test data really came from iterative feedback when loading up the program on the VGA, analyzing the movements via each launch on reset and reflecting with general feedback as to how we can improve. Additionally for the initial set up for the hardware, we used the oscilloscope to ensure the ADC signals read high when there seemed to be any detected movements in the joysticks within the x-direction. We also did a similar signal read to test the button input response.
+					<br><br>
+					The program successfully runs at a frame rate of 40FPS, but might slow down if there are too many bullets on the map. Therefore, the limit for the number of bullets was set to 20. This also makes the game playable. Sometimes, small bugs can arise with bullets with them passing through the walls, but those cases are very rare and don't affect the gameplay in a significant way. Another corner case is the bullet hitting the corner of the wall or intersection of several walls, which makes its bounce unpredictable and sometimes almost random, but those cases are also extremely rare and we were not able to replicate them artificially. Overall, the physics in the game looks quite natural.
+					<br><br>
+					We had an issue with our initial button for movement being very small, which put a lot of pressure on the fingers of the players, but we replaced those buttons with bigger ones soldered to the breadboard on the front of the joystick where the button was mounted. This made the controllers more enjoyable to use.
+					<br><br>
+					The controllers that Nikita designed for the game are certainly not perfect - they are designed for a bigger hand size even though anybody can play with them decently well. Some improvements could be made to the 3D printed parts to make them a bit more ergonomic and cut some corners - this would be fixed with 2-3 iterations of the design, as long as there are resources available. 
+					</p>
+
+			</div>
+
+
+		</section>
+		
+		<!-- Conclusion -->
+		<section id="Conclusion" class="wrapper style2"> 
+			<header class="major">
+				<h2><strong style="color: black;">Conclusion</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<p>Overall, our “Shooters Shoot” implementation met and in many respects exceeded our initial expectations in terms of responsiveness and visual fluidity. Running at a consistent 40 FPS on the RP2040, the bullet trajectories exhibited smooth, frame-rate–independent motion, thanks to our collision routines which invert and correct velocity upon wall impact. In practice, we rarely observed bullets “tunneling” through walls, and corner-bounce anomalies occurred only under contrived edge‐case conditions—underscoring the robustness of our per-frame step size and collision‐detection trade-off. Players noted that the bouncing dynamics felt natural and engaging, aligning closely with the arcade‐style aesthetic we aimed for.
+				<br><br>
+				One of our ambitious goals was to render arbitrarily rotated rectangular tanks via true vector drawing. We prototyped a drawTiltedLine helper to draw each edge of the rectangle at any angle, but time constraints and the VGA module’s low pixel density introduced visible gaps between line segments. Despite extensive debugging, the helper routine could not be made pixel-perfect within our project timeline, so we reverted to circle‐based tank sprites. Rather than computing and rasterizing each rotated rectangle edge in real time, a more efficient future approach would be to precompute a small pixel-array “sprite” for each required tank orientation and cache these in memory. During initialization, the firmware could generate an array of bitmap frames at discrete angle increments—say every 5–10°—by rendering the vector outline once into an offscreen buffer. At runtime, the game logic then simply looks up the closest pre-rotated sprite and its pixel data directly into the VGA frame buffer. This sprite-caching strategy significantly reduces per-frame arithmetic (no repeated sine, cosine, or line-drawing calls) and eliminates the gaps we saw with on-the-fly vector routines. If memory permits, interpolated or higher-resolution angle arrays could smooth motion further; otherwise, a handful of coarse angles delivers a responsive, “vector-style” appearance with minimal CPU overhead.
+				<br><br>
+				The RP2040’s constraint of only three accessible 12-bit ADC channels forced a key design decision: each joystick’s two potentiometers could not both be read simultaneously. To work around this, we dedicated the analog X-axis to tank rotation and re‐purposed the vertical axis motion control to a simple push-button “forward/back” input. While functional, this diverges from the original fluid dual‐axis control scheme we envisioned. Integrating an 8-to-3 analog‐multiplexing converter would allow all joystick axes to be sampled as true analog inputs in future designs, restoring the intuitive multi-directional control without sacrificing RP2040 I/O simplicity.
+				<br><br>
+				Our custom 3D-printed controllers successfully housed the joysticks and buttons, but because detailed CAD drawings were unavailable, some critical dimensions were estimated. As a result, assembly required iterative fitting and minor manual adjustments by Nikita, which modestly increased development time. Moreover, initial button placements proved too small for comfortable play; we remedied this by soldering larger tactile switches onto the breadboard. Moving forward, acquiring precise joystick datasheets or performing hands-on measurements before printing would streamline construction and ensure first-pass accuracy.
+				<br><br>
+				Finally, while our controllers are broadly usable, they remain optimized for larger hand sizes. To enhance long-term comfort and universal playability, we recommend conducting at least two or three more rapid prototyping cycles: adjusting grip contours, button placement angles, and enclosure size based on user feedback. Incorporating soft-touch materials or modular faceplates could further improve the tactile experience, making the hardware as compelling as the on-screen gameplay.
+				<br><br>
+				This game's aim was to provide retro feel and general usability in an addictive and engaging manner. We strongly believe that we have accomplished this and made it so that it can be enjoyed by a diverse audience!
+				</p>
+			</div>
+		</section>
+		
+		<!-- Team -->
+		<section id="Team" class="wrapper style1"> 
+			<header class="major">
+				<h2><strong style="color: black;">Team</strong></h2>
+			</header>
+			<div style="display: flex; justify-content: center; gap: 10%;">
+				<div style="font-size:16px; width: 240px; text-align: center;">
+					<h3>Nikita Dolgopolov</h3>
+					<p class="lead">nd287@cornell.edu</p>
+				</div>
+				<div style="font-size:16px; width: 240px; text-align: center;">
+					<h3>Ridhwan Ahmed</h3>
+					<p class="lead">ra459@cornell.edu</p>
+				</div>
+			</div>
+		</section>
+		
+		<!-- Appendix A -->
+		<section id="Appendix_A" class="wrapper style1"> 
+			<header class="major">
+				<h2><strong style="color: black;">Appendix A</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<p>
+					The group approves this report for inclusion on the course website.
+					<br><br>
+					The group approves the video for inclusion on the course youtube channel.
+				</p>
+			</div>
+		</section>
+		
+		<!-- Appendix B -->
+		<section id="Appendix_B" class="wrapper style1"> 
+			<header class="major">
+				<h2><strong style="color: black;">Appendix B</strong></h2>
+			</header>
+			<div style="padding: 0% 5% 0% 5%;">
+				<h3>Reference</h3>
+				<ol>
+					<li>https://ece4760.github.io/Projects/Fall2023/zl823_kg434/index.html - original webpage code</li>
+				</ol>
+			</div>
+			<br><br>
+		</section>
+		
+	
+		
+		
+		<script>
+			$(document).ready(function(){
+				$(window).scroll(function() {
+					var sectionTop = $("#image_seq").offset().top;
+					var sectionHeight = $("#image_seq").height();
+					var scrollPosition = $(window).scrollTop();
+
+					if(scrollPosition >= sectionTop && scrollPosition < (sectionTop + sectionHeight)) {
+						var numImages = 4;
+						var imageHeight = sectionHeight / numImages * 0.4;
+						var imageIndex = Math.floor((scrollPosition - sectionTop) / imageHeight) + 1;
+
+						$('.imgContainer').hide();
+						$('#imgContainer' + imageIndex).show();
+					} else {
+						$('.imgContainer').hide();
+					}
+				});
+			});
+			document.addEventListener("DOMContentLoaded", function() {
+			var imgContainers = document.querySelectorAll(".imgContainer");
+
+			var options = {
+			  rootMargin: "0px",
+			  threshold: 0.5
+			};
+
+			var observer = new IntersectionObserver(function(entries, observer) {
+			  entries.forEach(function(entry) {
+				if (entry.isIntersecting) {
+				  var imgContainer = entry.target;
+				  imgContainer.style.display = "block";
+				  observer.unobserve(imgContainer);
+				}
+			  });
+			}, options);
+
+			imgContainers.forEach(function(imgContainer) {
+			  observer.observe(imgContainer);
+			});
+		  });
+		
+		document.getElementById('myLink').addEventListener('click', function(event) {
+		  event.preventDefault();
+		});
+		</script>
+	</body>
+
+</html>
