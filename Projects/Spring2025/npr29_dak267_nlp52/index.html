@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Starter Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <!-- <link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet"> -->
+
+    <!-- Custom styles for this template -->
+    <link href="starter-template.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <!-- <script src="../../assets/js/ie-emulation-modes-warning.js"></script> -->
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Batting Simulator</a>
+            </div>
+            <div id="navbar" class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li class="active"><a href="#">Home</a></li>
+                    <li><a href="#intro">Intro</a></li>
+                    <li><a href="#HLD">High Level Design</a></li>
+                    <li><a href="#hardwareDesign">Hardware Design</a></li>
+                    <li><a href="#programDesign">Program Design</a></li>
+                    <li><a href="#result">Results</a></li>
+                    <li><a href="#conclusion">Conclusion</a></li>
+                    <li><a href="#distribution">Work Distribution</a></li>
+                    <li><a href="#permissions">Permissions</a></li>
+                    <li><a href="#references">References</a></li>
+                    <li><a href="#code">Code</a></li>
+                </ul>
+            </div><!--/.nav-collapse -->
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="starter-template">
+            <h1>Batting Simulator</h1>
+            <p class="lead">ECE4760 Spring 2025<br>Natalia Pope, Nathan Rahklin, Daria Kot</p>
+        </div>
+
+        <hr>
+        <div class="center-block">
+            <iframe width="640" height="360" src="https://www.youtube.com/embed/8WfY9EDrUaY" frameborder="0"
+                allowfullscreen></iframe>
+            <h4 style="text-align:center;">Demonstration Video</h4>
+        </div>
+
+        <hr id="intro">
+
+        <div style="text-align:center;">
+            <h2>Introduction</h2>
+            <p style="text-align: left;padding: 0px 30px;">A fully functional batting simulator featuring 3D vector
+                graphics, realistic pitching trajectories,
+                and challenging batting mechanics. Use a joystick to position your bat and a button to time your swing!
+                Perfect timing is rewarded with increased bat power.</p>
+        </div>
+
+        <hr id='HLD'>
+
+        <div style="text-align:center;">
+            <h2>High Level Design</h2>
+            <p style="text-align: left;padding: 0px 30px;">Our project idea was inspired by our team's love for baseball
+                and for
+                video games. This project requires physics for the bat collision with the ball but uses an algorithm to
+                model the
+                pitch. This design uses hardware for the inputs of the game: the joystick and button. It also uses PWM
+                combined with
+                an analog filter rather than using the DAC output for ease of completion. All of the VGA graphics were
+                completed in the
+                software. We organized our code into 5 parts: Batting, Pitching, VGA Graphics, Game Logic, and Audio.
+            </p>
+        </div>
+
+        <hr id='hardwareDesign'>
+
+        <div style="text-align:center;">
+            <h2>Hardware Design</h2>
+
+            <p style="text-align: left;padding: 0px 30px;">The hardware required to run the Batting Simulator includes a
+                VGA Driver, a DAC,
+                a joystick, and a button. The electrical schematic can be found below.</p>
+
+            <div style="text-align:center;">
+                <img class="img-rounded" src="pics/HWDiagram.png" alt="team pic" style="width:80%;">
+                <h4>Electrical Design</h4>
+            </div>
+
+            <p style="text-align: left;padding: 0px 30px;"><b>Joystick</b></p>
+
+            <p style="text-align: left;padding: 0px 30px;">The joystick is used to control the bats height, it has 2 10K
+                Ohm potentiometers: one for the
+                x axis and 1 for the y axis. Because the timing of the swing is dependent on the release of the button,
+                only the y axis of the joystick needed
+                to be wired to the RP2040 to control the vertical position. To limit noise, we kept the wires as short
+                as possible.
+            </p>
+
+
+            <p style="text-align: left;padding: 0px 30px;"> <b>Button</b></p>
+
+            <p style="text-align: left;padding: 0px 30px;"> The button is used to control the timing and power of the
+                swing. The button was wired from the
+                RP2040 ground directly to a GPIO pin, making our button pull down. When pressed, the input to the PWM is
+                low. Again, to limit noise, we kept the
+                wires as short as possible.
+            </p>
+
+
+            <p style="text-align: left;padding: 0px 30px;"> <b>Audio</b></p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                To control the audio, we elected to use the built in PWM Audio. The PWM signal gets fed
+                through an analog filter, which turns the digital signal into an AC-coupled analog signal in the audio
+                frequency range. Once the signal is in
+                the audio frequency range, it can be connected to the SJI355XNG Audio Jack to be played out of the
+                speaker. Additionally, pwm was chosen over DMA
+                audio due to the complexity our chosen song requires. "Take me out to the ballgame" is significantly
+                more complex than the birdsongs implemented in class.
+
+            </p>
+            <p style="text-align: left;padding: 0px 30px;">
+                The audio jack is comprised of 3 different parts, which the SJI355XNG breaks out on to the breadboard.
+                The 3 parts are comprised of: the sleeve, the tip, and the ring.
+                The tip is the part at the very end of the jack, and is where the device gets the audio for the left
+                microphone. The ring can be found in the middle of the sleeve and
+                the tip, and is where the device gets the audio for the right microphone. The sleeve grounds the audio
+                jack. In our design, we used the ground of the
+                RP2040 to ground the audio jack, and arbitrarily elected to connect the tip to provide audio to the left
+                microphone, but the right would have worked just as well.
+            </p>
+
+
+
+            <p style="text-align: left;padding: 0px 30px;"> <b>Controller</b></p>
+            <div class="col-md-6" style="font-size:16px">
+                <img class="img-rounded" src="pics/sideviewConsole.png" alt="Generic placeholder image"
+                    style="width:100%;">
+            </div>
+            <div class="col-md-6" style="font-size:16px">
+                <img class="img-rounded" src="pics/topviewConsole.png" alt="Generic placeholder image"
+                    style="width:94%;">
+            </div>
+
+
+            <div style="text-align:center;">
+                <h4>Gaming Controller</h4>
+            </div>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                To make the hardware of the game feel more like a commercial grade video game, we used a box to
+                encapsulate all internal wires. This made it easier for the user to
+                utilize the joystick and the button at the same time as they can use just one hand to do both. To place
+                the joystick both the Joystick and button, we first measured the
+                hardware, traced a hole, and used a drill to create a hole in a plastic box to ensure that the devices
+                would fit snug in the holes to make it easier. When designing the
+                controller, we chose to make it right hand dominant. We elected that the joystick would be controlled by
+                the player's right hand and the button by the players left.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                A hole was strategicically cut in the plastic to allow the VGA driver wires to come out as well as the
+                power cord for the RP2040.
+            </p>
+
+
+        </div>
+
+        <hr id='programDesign'>
+
+        <div style="text-align:center;">
+            <h2>Program Design</h2>
+            <p style="text-align: left;padding: 0px 30px;">Our Program design is composed of 5 parts: Pitching, Batting,
+                3D Graphics, Game Play Logic, and Audio.</p>
+
+            <p style="text-align: left;padding: 0px 30px;"><b>Pitching</b></p>
+            <div style="text-align:center;">
+                <img class="img-rounded" src="pics/PitchingAlgorithm.png" alt="team pic" style="width:80%;">
+                <h4>Pitching Algorithm</h4>
+            </div>
+
+            <p style="text-align: left;padding: 0px 30px;"> Pitchers are famous for their ability to throw balls fast
+                with wild curves.
+                In real life, pitchers create these curves by spinning the ball with high RPM. The physics of baseball
+                pitches are extremely
+                complex. In the interest of programmability, it was determined that pitches would be modeled using a
+                function. Thus, a function
+                that takes in a timestamp and returns a position in real world space was created in collaboration with
+                the TA Mahmoud Elsharawy
+                (Pitching Algorithm figure). A desmos animation of this function can be found in the appendix [3] and
+                below. Taking inspiration from mechanics classes,
+                a unique version of this function is used for the ball’s x and y velocities. In the interest of
+                simplicity, the ball’s z velocity
+                is made constant. This picewise function used a number of parameters to tune various aspects of the
+                pitch’s curve: </p>
+
+            <video src="pics/pitchingalg.mp4" autoplay loop muted playsinline
+                style="width:100%;height:auto;object-fit:cover;">
+                <!-- Fallback for very old browsers: -->
+                Sorry, your browser doesn’t support HTML5 video.
+            </video>
+            <h4>Changing Paramater Values: a, h, n, g</h4>
+
+            <p style="text-align: left;padding: 0px 50px;">
+                <b>a </b>= Maximum pitch amplitude<br>
+                <b>d </b>= Pitch end position (z-direction)<br>
+                <b>h </b> = Pitch x or y position at position z = d<br>
+                <b>n </b> = Z position of maximum amplitude<br>
+                <b>g </b> = Initial pitch release height<br>
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;"> A pitch is initialized with the init_pitch() function. This
+                function sets random a, h, n,
+                and g parameters for the balls x and y directions as well as a random z velocity. The d parameter is a
+                constant equal to the mound_to_plate
+                constant (19.395 meters). To randomize these parameters, the stlib.h function rand() is used. The rand()
+                output is divided by the macro RAND_MAX
+                to normalize it and is then scaled by macros for the maximum and minimum values of each paremeter.
+                Finally, these parameters are saved in the x_parameter or
+                y_parameter global variables respectively and the ball’s x, y, and z positions are saved in the
+                ball_position global variables. </p>
+
+            <p style="text-align: left;padding: 0px 30px;">An interesting bug was found during the update_pitch()
+                implementation. Originally, the time since pitch
+                release was used as the model_pitch() time argument. This lead to the ball not following its full
+                trajectory as prescribed by the desmos function.
+                Some reflection lead to the realization that the units used in the demsos function actually corresponded
+                with the ball’s z position. One final
+                debugging session revealed that the desmos function takes in z positions from 0 to d while the game
+                functions from d to 0 (home plate is position z = 0).
+                Thus, inputting ball_vz * time into the model_pitcrh() function and then updating ball_z position with
+                mound_to_plate - ball_vz * time correctly modeled pitches.</p>
+
+            <p style="text-align: left;padding: 0px 30px;">All pitching variables are floats as it was not found that
+                computation optimization was necessary.</p>
+
+
+            <p style="text-align: left;padding: 0px 30px;"><b>Batting</b></p>
+
+
+            <div class="col-md-6" style="font-size:16px">
+                <img class="img-rounded" src="pics/EarlyBatHit.png" alt="Generic placeholder image" style="width:90%;">
+                <h3>Early Swing</h3>
+            </div>
+            <div class="col-md-6" style="font-size:16px">
+                <img class="img-rounded" src="pics/LateBatHit.png" alt="Generic placeholder image" style="width:90%;">
+                <h3>Late Swing</h3>
+            </div>
+
+            <p style="text-align: left;padding: 0px 35px;"><i><b>Bat Position Registering and Animation</b></i></p>
+
+            <p style="text-align: left;padding: 0px 30px;">Both in real life and in our video game, three key metrics
+                drive a successful bat: positioning, timing, and power. On a high level, batting works as follows:</p>
+
+            <div style="text-align:center;">
+                <p style="text-align: left;padding: 0px 30px;">From our original goals, we were able to accomplish the
+                    following:</p>
+                <p style="text-align: left;padding: 0px 30px;">
+                    1. A player uses the joystick to move the bat up and down.<br>
+                    2. Pressing and holding the button results in increasing, then decreasing power. This can be thought
+                    of as winding up the bat.<br>
+                    3. Releasing the button locks in the power value, and the swing is initialized.
+                <p>
+
+
+                <p style="text-align: left;padding: 0px 30px;">The bat position (determined by joystick position) is
+                    animated at all times. To do so, the drawBat()
+                    function is called, which animates both the bat and the batter's box. This function calls the
+                    get_bat_position() function which pulls the joysticks
+                    gpio value using the adc. This value is shifted (to high pass), normalized, and scaled by the height
+                    of the batters box. This ensures that the maximum
+                    joystick position corresponds to the top of the batter's box and that the minimum joystick position
+                    corresponds with the bottom of the box. This bat
+                    position (in world coordinates) is stored in the bat_position global float. The draw_bat() function
+                    is called once per animation frame.</p>
+
+                <p style="text-align: left;padding: 0px 35px;"><i><b>Button Press Registering</b></i></p>
+
+                <p style="text-align: left;padding: 0px 30px;">Once the player presses the batting button to wind up
+                    their swing and generate power, an interrupt associated with the button’s falling edge state is
+                    called. This interrupt sets a holding_power_button boolean true, stores the time the button was
+                    pressed in the start_button_press variable, and sets an already_hit boolean true. The already_hit
+                    boolean prevents the player from being able to swing the bat multiple times for one pitch. The
+                    holding_power_button boolean guards the portion of code responsible for animating the power bar
+                    (seen in the bottom right corner of early and late swing figures).</p>
+
+                <p style="text-align: left;padding: 0px 30px;">Animating the power bar works as follows: The amount of
+                    time the button has been held is determined by subtracting start_button_press from the current time.
+                    This value is transformed into a value between 0 and 1. That transformed value then determines the
+                    width of the red rectangle to be drawn.</p>
+
+                <p style="text-align: left;padding: 0px 30px;">As the player watches the ball animate from the pitcher’s
+                    mound to the strike zone, they release the button to initiate their bat swing. This triggers an
+                    interrupt tied to the button’s rising edge. This interrupt sets the holding_power_button boolean to
+                    False, sets the bat_swung boolean to true, and captures the time the button was released into the
+                    release_button_press variable.</p>
+
+                <p style="text-align: left;padding: 0px 35px;"><i><b>get_collision()</b></i></p>
+
+
+                <p style="text-align: left;padding: 0px 30px;">The main animation loop registers this bat_swung boolean
+                    and checks to see if the player successfully hit the baseball using the get_collision() function.
+                    The get_collision() function satisfies the goal of determining whether the player placed the bat in
+                    the correct location and if the player successfully timed their swing. Once both have been
+                    determined to be successful, the get_collision() function outputs the balls exit velocity in the x,
+                    y, and z directions. </p>
+
+                <p style="text-align: left;padding: 0px 30px;">To determine both the successful timing of the pitch and
+                    the exit angle between the z and x directions, the relative amount of time it takes for the ball and
+                    the bat to reach the plate is used. If it takes longer for the pitch to reach the z = 0 mark than
+                    the bat, then the batter swung early and the ball should go to the left. If the ball reaches the z =
+                    0 mark before the bat, then the batter swung late and the ball should go to the right. If the
+                    difference in time between the ball and bat reaching the plate is sufficiently great, then the
+                    player missed the ball entirely. The miss threshold and amount of time it takes the ball to reach
+                    horizontal were determined to be 0.08 and 0.3 empirically. </p>
+
+                <p style="text-align: left;padding: 0px 30px;">To determine a positioning miss, the balls y position
+                    when it reaches the plate is compared to the bat’s active position. Essentially, it is checked
+                    whither the ball’s bottom edge is below the bat’s top edge and that the ball’s top edge is above the
+                    bat’s bottom edge. It is important to note that despite the bat being animated as 1 pixel thick,
+                    within game logic it is 20cm thick. This was done to make batting mechanics easier. A real life bat
+                    width 6.6cm width was prohibitively difficult. </p>
+
+
+                <div style="text-align:center;">
+                    <img class="img-rounded" src="pics/BatBall.png" alt="team pic" style="width:40%;">
+                    <h4>Ball and Bat Overlap Trigonometry</h4>
+                </div>
+
+                <p style="text-align: left;padding: 0px 30px;">Once it is determined that the player successfully timed
+                    their swing and placed their bat in an acceptable position, the exit angles and velocity are
+                    calculated. The angle between the z and y axis is determined using trigonometry, as seen above. The
+                    angle between the z and x axis is determined using the difference in the amount of time it takes for
+                    the bat and ball to reach the z = 0 mark. This value, delta_t_ball, is normalized on the
+                    bat_miss_threshold as it can be no larger in magnitude than the bat_miss_threshold. This normalized
+                    value is scaled by the maximum_ball_angle, a value empirically set to 20 degrees. Finally, the exit
+                    velocity is determined using classical momentum equations (m1v1 + m2v2 = …) and is scaled by a scale
+                    factor empirically set to 3. Finally, if the angle between the z and y axes is greater than 45
+                    degrees, the velocity value is scaled such that it is more likely for the player to be able to see
+                    the full ball flight. </p>
+
+
+                <p style="text-align: left;padding: 0px 30px;">Once this computation is completed, the number of strikes
+                    and balls are set to zero and the run counter is incremented. If the player missed the ball, the
+                    number of strikes is incremented. </p>
+
+                <p style="text-align: left;padding: 0px 30px;"><b>3D Graphics</b></p>
+                <div style="text-align: left;padding: 0px 30px;">
+                    <p>
+                        The VGA graphics screen uses a 3D coordinate system where the +x axis points to the right, +y
+                        points downward, and +z extends into the screen.
+                        To display objects with perspective, we developed a function that projects real-world
+                        coordinates (in meters) onto 2D screen coordinates.
+                    </p>
+
+                    <p>
+                        The function <code>convert_to_vga(x, y, z)</code> takes in 3D coordinates and performs a
+                        perspective projection, simulating how distant objects appear smaller.
+                        It uses a pinhole camera model centered at a fixed screen point
+                        <code>(center_x, center_y)</code>, and projects the real-world coordinates onto the VGA plane
+                        using a scaling factor based on depth (<code>z</code>).
+                    </p>
+
+                    <p>
+                        The key steps are:
+                    <ul>
+                        <li><strong>Depth adjustment:</strong> The input z-coordinate is shifted by
+                            <code>camera_to_plate</code> to reflect the camera’s position relative to the field.
+                        </li>
+                        <li><strong>X projection:</strong> The x-position is scaled by the focal length <code>f</code>
+                            and divided by <code>(1 + z)</code> to simulate diminishing size with distance. This
+                            projected x value is offset from the screen center.</li>
+                        <li><strong>Y projection:</strong> The y-position is offset by <code>camera_height</code>, then
+                            scaled similarly, with an additional <code>scale_factor</code> to adjust for screen aspect
+                            ratio or vertical compression.</li>
+                        <li><strong>Z scaling:</strong> The returned <code>vga_z</code> is <code>f / z</code>, which
+                            serves as a scale factor for rendering objects—larger when closer, smaller when farther
+                            away.</li>
+                    </ul>
+
+                    <p>
+                        Initially, the function did not include the <code>camera_height</code> or
+                        <code>camera_to_plate</code> offsets. As a result, the field appeared flat and unnatural,
+                        lacking depth and curvature.
+                        By coincidence, an art major was in the lab during testing and suggested modifying the
+                        projection to induce more of a fisheye effect.
+                        Based on her feedback, we introduced a vertical offset (<code>camera_height</code>) and adjusted
+                        the z-depth (<code>camera_to_plate</code>) to create a stronger sense of camera perspective and
+                        curvature in the field.
+                        These changes dramatically improved the visual realism and depth perception of the scene.
+                    </p>
+
+                    </p>
+
+                    <div class="row" style="text-align:left;">
+                        <pre><code>
+#define scale_factor 0.5
+vgaPoint convert_to_vga(float x, float y, float z) {
+    int center_x = 320;
+    int center_y = 225;
+    float f = 500; // Focal length in pixels
+
+    z = z + camera_to_plate;
+
+    vgaPoint point = {0, 0, 0.0};
+
+    // Protect against divide-by-zero
+    point.vga_x = center_x + (int)((x * f) / (1 + z));
+    point.vga_y = center_y + (int)(((y - camera_height) * f) / ((1 + z) * scale_factor));
+    point.vga_z = f / z;
+
+    return point;
+}
+</code></pre>
+                    </div>
+
+                    <p>
+                        This function enables animations like the ball flying toward or away from the player.
+                        The field background is also generated using this projection logic, ensuring a consistent
+                        field of view.
+                        To render static elements like the field, we calculate VGA coordinates for real-world
+                        positions and draw lines between them.
+                    </p>
+
+
+                    <p>
+                        You may also notice green filled quadrilaterals on the screen. To easily fill these shapes,
+                        we created a helper function called <code>fillQuad()</code>.
+                        The <code>fillQuad</code> function fills convex quadrilaterals using scanline rasterization.
+                        For each horizontal line (scanline) between the shape’s top and bottom edges, it calculates
+                        intersection points with the quadrilateral’s edges. If two intersections are found, it draws a
+                        horizontal line between them using the specified color.
+                        This repeats for each scanline, effectively filling the shape.
+                    </p>
+                </div>
+
+                <p style="text-align: left;padding: 0px 30px;"><b>Power Control</b></p>
+                <p style="text-align: left;padding: 0px 35px;"><i><b>Power Button</b></i></p>
+                <p style="text-align: left;padding: 0px 30px;">
+                    The power button is controlled using an Interrupt Handler. When the button falls low, meaning it was
+                    pressed, the interrupt handler saves the current time of day. Once the button is pressed, the
+                    code continuously checks to see if button is low, and if so uses an intermediate value to hold the
+                    amount of time
+                    that has passed since the button was first pressed. This intermediate value is then used to
+                    calculate a power ratio of
+                    time held over 0.5 seconds. To enforce timing restraints on the user, if the player has held down
+                    the button for longer than
+                    0.5 seconds, the power ratio is then calculated by the amount of time longer than .5 seconds that
+                    the user
+                    has held the button, with a minimum power of 0.2. This ratio is then sent to the updatePower()
+                    function to update
+                    the animation.
+                </p>
+                <p style="text-align: left;padding: 0px 30px;">
+                    The <code>updatePower()</code> function animates the power bar by first converting the current power
+                    level (a float between 0 and 1) into a string for display.
+                    It then updates the numerical value on screen and redraws the power bar by clearing the previous bar
+                    and filling a red rectangle proportional to the power level.
+                    This creates a smooth, responsive visual indicator of how much power the user has charged.
+                </p>
+
+                <p style="text-align: left;padding: 0px 30px;"><b>Game Play Logic</b></p>
+
+                <p style="text-align: left;padding: 0px 30px;">To take the physics and the VGA graphics and
+                    turn it into
+                    an actual game,
+                    we needed to add game logic. This included creating global booleans that kept track of
+                    whether or
+                    not the player was playing the game,
+                    a global counter to keep track of the number of strikes, a global counter to keep track
+                    of the
+                    number of outs, and a global counter to keep track of the number
+                    of balls.
+                </p>
+
+                <p style="text-align: left;padding: 0px 35px;"><i><b>Starting the Game</b></i></p>
+                <div style="text-align:center;">
+                    <img class="img-rounded" src="pics/StartScreen.png" alt="team pic" style="width:80%;">
+                    <h4>Start Screen</h4>
+                </div>
+
+                <p style="text-align: left;padding: 0px 30px;">Upon starting the game, the player is greeted
+                    with the
+                    start screen. Pressing the button
+                    triggers the GPIO callback falling function as the button is pulled high until pressed.
+                    In the GPIO
+                    callback function, the program first
+                    checks to see if the player is already playing. If the user is not already playing, the
+                    global
+                    boolean playing is set to True and the game begins.
+                </p>
+                <p style="text-align: left;padding: 0px 35px;"><i><b>Counting Runs</b></i></p>
+                <p style="text-align: left;padding: 0px 30px;">To keep the game simple, we maintained a
+                    global integer
+                    counter for the number of runs that the player
+                    has hit. This number is incrememented whenever the player makes contact with the ball,
+                    no matter how
+                    far it goes.
+                </p>
+
+                <p style="text-align: left;padding: 0px 35px;"><i><b>Counting Strikes</b></i></p>
+                <div style="text-align:center;">
+                    <img class="img-rounded" src="pics/StrikeOut.png" alt="team pic" style="width:80%;">
+                    <h4>Strike Out Screen</h4>
+                    <p style="text-align: left;padding: 0px 30px;">In baseball, a strike out is composed of
+                        3 pitches
+                        that are inside of the batters box but the batter does not hit. To keep track of the
+                        number of strikes, we instantiated a global integer that was added to whenever
+                        batter swung at a
+                        pitch and missed or whenever the batter did not swing at a pitch and it landed in
+                        the
+                        batters box. In baseball, if the batter swings and misses the ball, even if the
+                        pitcher misses
+                        the batters box, it counts as a strike. Once the user gets to 3 strikes, they are
+                        out.
+                        This triggers the increment the global integer out counter and the strike out
+                        screen, which
+                        displays for 1 second upon strike out. The global strike counter is reset back to
+                        zero when the
+                        player
+                        is struck out.
+                    </p>
+
+                    <p style="text-align: left;padding: 0px 35px;"><i><b>Counting Balls</b></i></p>
+                    <p style="text-align: left;padding: 0px 30px;">In correspondance with the rules of
+                        baseball, the
+                        pitcher is punished upon throwing 4 balls by allowing the batter to walk to first
+                        base.
+                        To ensure our game mimiced this same punishment for our randomized pitching
+                        algorithm, we
+                        instantiated a global integer counter to track the number of balls the pitcher has
+                        thrown that
+                        the player has not swung at. Once the pitcher reaches 4 balls, the player is awarded
+                        a run. The
+                        global integer ball counter is then reset back to zero. This value is also reset
+                        upon strike out
+                        to
+                        mimic the changing of players in a real baseball game who do not get to keep the
+                        balls awared to
+                        another player.
+                    </p>
+                </div>
+
+                <p style="text-align: left;padding: 0px 35px;"><i><b>Counting Outs</b></i></p>
+                <p style="text-align: left;padding: 0px 30px;"> A baseball inning is over when the team has
+                    achieved 3
+                    outs. We elected to keep this as the number of outs
+                    that a player can achieve before the game is over. Similar to strikes, balls, and runs,
+                    the number
+                    of outs is maintained using a global integer counter. It
+                    is incremented when a player gets 3 strikes. Upon 3 outs, the Game Over screen is
+                    displayed, as
+                    shown below.
+                </p>
+
+                <div style="text-align:center;">
+                    <img class="img-rounded" src="pics/GameOver.png" alt="team pic" style="width:80%;">
+                    <h4>Game Over Screen</h4>
+                </div>
+
+                <p style="text-align: left;padding: 0px 30px;"> This screen is held for 2 seconds, and then
+                    the start
+                    screen is returned to. The number of runs that the player scored during the game is not
+                    reset until the player presses the button to start again. This was a design decision
+                    chosen to make
+                    it easier for the user to know what their final score was. The number of strikes and
+                    outs
+                    are reset upon the ending of the game.
+                </p>
+
+
+                <p style="text-align: left;padding: 0px 30px;"><b>Audio</b></p>
+                <p style="text-align: left;padding: 0px 30px;"> The audio is controlled by PWM signals. To
+                    create the
+                    PWM signal, we used a Jupiter Notebook file
+                    we found online to convert the <i>Take me out to the Ball Game</i> wav file into a file
+                    that will be
+                    read into PWM signals [1]. Due to the limited memory
+                    on the RP2040, we restrained the number samples to be played to 100,000 samples. The PWM
+                    frequency
+                    values outputted from the Jupyter Notebook were then
+                    copied and pasted into a header file for easy access by the program. </p>
+
+                <p style="text-align: left;padding: 0px 30px;">To set up the PWM, we first set the PWM
+                    inputs to the
+                    defualt. To ensure the audio was nonblocking in our program,
+                    we use Interrupt Request Handling for the audio. We then used clk divide to set the
+                    interrupt rate.
+                    The base clock of the RP2040 is 176,000,000 Hz, which is then
+                    wrapped by 240. By further dividing it by 6.0f, we were able to achieve an upbeat faster
+                    tone that
+                    we wanted to put a good vibe to our game at about 15 KHz.
+                    In the Interrupt Handler, we check to make sure we are not at the end of the PWM values,
+                    and if we
+                    are we restart. This ensures that our game has
+                    audio running on a loop. The actual conversion of the PWM output signals to audible
+                    signal is
+                    handled using the hardware, making the software less
+                    complicated.
+                </p>
+
+            </div>
+
+            <hr id='result'>
+
+            <div style="text-align:center;">
+                <h2>Results</h2>
+                <p style="text-align: left;padding: 0px 30px;"><b>From our original goals, we were able to
+                        accomplish:</b></p>
+                <p style="text-align: left;padding: 0px 30px;">
+                    1. Random Pitches<br>
+                    2. User times bat using a button<br>
+                    3. Joystick functionality<br>
+                    4. Ball's flight modeled using physics<br>
+                    5. Visually aesthetic and realistic graphics
+                    6. Background track
+                <p>
+
+                <p style="text-align: left;padding: 0px 30px;"><b>From our original goals, we were unable to
+                        implement:</b></p>
+                <p style="text-align: left;padding: 0px 30px;">
+                    1. Pitching mode<br>
+                    2. Stick Figure Animation<br>
+                </p>
+                </p>
+            </div>
+            ,<div style="text-align: left;padding: 0px 30px;">
+                <p>
+                    Our final implementation was evaluated for performance, accuracy, safety, and usability.
+                </p>
+
+                <ul>
+                    <li>
+                        <strong>Execution Speed:</strong> The system responded with minimal hesitation or flicker during
+                        real-time interactions. VGA rendering and audio playback ran concurrently without noticeable
+                        lag, ensuring smooth animation and responsive controls.
+                    </li>
+                    <li>
+                        <strong>Accuracy:</strong> Numerical values such as ball velocity and power level were displayed
+                        with reliable precision. VGA timing was stable with no observable visual artifacts.
+                    </li>
+                    <li>
+                        <strong>Test Data:</strong> Internal test values such as joystick input, power calculations, and
+                        object positions were monitored to ensure consistent operation across different states of
+                        gameplay.
+                    </li>
+                    <li>
+                        <strong>Safety Enforcement:</strong> Software bounds checking was used to prevent overflow or
+                        invalid inputs (e.g., joystick values and power limits), and hardware pins were protected with
+                        current-limiting resistors to safeguard the board and peripherals.
+                    </li>
+                    <li>
+                        <strong>Usability:</strong> The system was tested by multiple users and was found to be
+                        intuitive and stable. The joystick offered smooth control of the bat, and the animated power bar
+                        gave clear visual feedback, making the interface easy to learn and operate.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <hr id='conclusion'>
+
+        <div style="text-align:left;">
+            <h2>Conclusion</h2>
+            <p style="text-align: left;padding: 0px 30px;">
+            <h3>Conclusion</h3>
+
+            <p>
+                Overall, our design met and in some areas exceeded expectations. The simulator was highly interactive
+                and responsive, with accurate VGA rendering and audio output that aligned well with our initial goals
+                for user experience and system performance. If we were to redesign the project in the
+                future, it would be exciting to implement a dynamic camera that follows the ball after it is hit.
+                Additionally, adding a menu to select difficulty levels or
+                choose between different game modes would significantly improve replayability and user customization.
+
+                We did not use any proprietary or Altera IP, nor did we sign NDAs or utilize restricted components. Some
+                utility functions were adapted from publicly available
+                resources or course-provided starter code, all of which were properly cited. No reverse engineering was
+                involved, and we avoided any use of patented or trademarked materials. The graphics and layout of the
+                field were
+                loosely based on the visual style and perspective found in <em>MLB The Show 24</em>. Although the
+                project was
+                educational, elements such as the 3D rendering system or interaction model could potentially be
+                developed into patentable innovations with further refinement.
+            </p>
+            </p>
+
+        </div>
+
+        <hr id='distribution'>
+        <div class="row" style="text-align:center;">
+            <h2>Work Distribution</h2>
+            <div style="text-align:center;">
+                <img class="img-rounded" src="pics/teampic.png" alt="team pic" style="width:80%;">
+                <h4>Team Picture</h4>
+            </div>
+            <div class="col-left-6" style="font-size:16px">
+                <h3>Nathan</h3>
+                <p class="lead">npr29@cornell.edu</p>
+                <p> Batting and Pitching
+            </div>
+            <div class="col-md-6" style="font-size:16px">
+                <h3>Natalia</h3>
+                <p class="lead">nlp52@cornell.edu</p>
+                <p>Game play, Hardware and 3D Graphics
+            </div>
+            <div class="col-right-6" style="font-size:16px">
+                <h3>Daria</h3>
+                <p class="lead">dak267@cornell.edu</p>
+                <p>Hardware and 3D Graphics
+            </div>
+        </div>
+
+
+
+        <hr id='permissions'>
+        <div style="text-align:left;">
+            <h2>Appendix A</h2>
+            <ul>
+                <li>The group approves this report for inclusion on the course website.</li>
+                <li>The group approves the video for inclusion on the course youtube channel.</li>
+            </ul>
+        </div>
+        <hr id='references'>
+        <div style="text-align:left;">
+            <h2>References</h2>
+            <a href="https://github.com/rgrosset/pico-pwm-audio/tree/main">PWM Music</a><br>
+            <a href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf ">RP2040 Datasheet</a><br>
+            <a href="https://datasheets.raspberrypi.com/rp2040/hardware-design-with-rp2040.pdf#page=24">RP2040
+                PWM
+                Audio</a><br>
+            <a href="https://www.networldsports.com/buyers-guides/baseball-field-dimensions-guide">Baseball Field
+                Dimensions</a><br>
+            <a href="https://theshow.com/">MLB the Show</a><br>
+
+        </div>
+
+        <hr id='code'>
+
+        <div class="row" style="text-align:left;">
+            <h2>Code Appendix</h2>
+            <p><a href="https://github.com/Daria-Kot/Batting-Simulator" target="_blank">Batting Simulator GitHub
+                    Repository</a></p>
+
+
+        </div>
+
+
+
+
+        <!-- Bootstrap core JavaScript
+    ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
+        <script src="dist/js/bootstrap.min.js"></script>
+        <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+        <!-- <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script> -->
+</body>
+
+</html>
