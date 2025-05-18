@@ -1,0 +1,596 @@
+<html>
+
+<head>
+    <title>MacroData Refinement - Severance-Inspired Number Sorting Game</title>
+    <meta name="description"
+        content="A Severance-inspired MacroData Refinement implementation where numbers are sorted based on emotions (Woe, Frolic, Dread, and Malice) they evoke. Built on Raspberry Pi Pico.">
+    <meta name="keywords"
+        content="Severance, MacroData Refinement, Lumon Industries, Raspberry Pi Pico, number sorting, emotions, Woe, Frolic, Dread, Malice">
+    <meta name="author" content="Akinfolami Akin-Alamu, Wilson Coronel">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+    <style type="text/css">
+        @import url(https://themes.googleusercontent.com/fonts/css?kit=lhDjYqiy3mZ0x6ROQEUoUw);
+        @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;500;600;700&display=swap');
+
+        ul {
+            list-style-type: disc;
+            margin-bottom: 1em;
+            line-height: 2;
+        }
+
+        li {
+            color: #000000;
+        }
+
+        p {
+            line-height: 1.5;
+        }
+
+        h1 {
+            text-align: left;
+        }
+
+        h2 {
+            text-align: left
+        }
+
+        h3 {
+            text-align: left
+        }
+
+        h4 {
+            text-align: left
+        }
+
+        pre {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-left: 3px solid #f36d33;
+            color: #666;
+            page-break-inside: avoid;
+            font-family: monospace;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 1.6em;
+            max-width: 100%;
+            overflow: auto;
+            padding: 1em 1.5em;
+            display: block;
+            word-wrap: break-word;
+        }
+
+        code {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            color: #333;
+            font-family: Consolas, Monaco, 'Andale Mono', monospace;
+            font-size: 0.9em;
+            padding: 0.2em 0.4em;
+            margin: 0 0.2em;
+            white-space: nowrap;
+            overflow-x: auto;
+            vertical-align: middle;
+        }
+
+        body {
+            font-family: "Source Sans Pro", sans-serif;
+            text-align: justify;
+            font-size: 12pt;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: auto;
+            margin-bottom: auto;
+            padding: 50px 20px;
+            max-width: 768px;
+            box-sizing: border-box;
+            background-color: #f8f7f6;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>MacroData Refinement on Pico</h1>
+    <h3>ECE 4760 Final Report</h3>
+    <h3>Akinfolami Akin-Alamu (aoa9) &amp; Wilson Coronel (wrc62)</h3>
+
+    <figure style="text-align: center; margin: 20px 0;">
+        <img src="images/output.gif" alt="Game Demo" width="500">
+        <figcaption style="font-style: italic; font-size: 14px; margin-top: 5px;">
+            Figure 1: Game Demo showing quivering numbers.
+        </figcaption>
+    </figure>
+
+    <i>We recreated the mysterious MacroData Refinement game from Severance on a Raspberry Pi
+        Pico, complete with
+        VGA display and joystick controls</i>
+    <h2>Introduction</h2>
+
+
+
+    This project implements an interactive game simulating the MacroData Refinement (MDR) process from the Apple
+    TV+ show
+    Severance, rendered on a VGA display and controlled via a joystick and button interfaced with a Raspberry Pi
+    Pico
+    (RP2040). We developed this game to explore the themes presented in the show, such as corporate control and the
+    nature
+    of work, by allowing players to experience a version of the mysterious task of "refining" data, while also
+    serving as a
+    platform to implement real-time graphics, animation, and microcontroller-based game logic.
+    </p>
+    <h2>High level design</h2>
+    <p>The primary inspiration for this
+        project was the television series Severance. A central element of the show is Lumon
+        Industries' Macro Data Refinement department, where "severed" employees sort groups of numbers based on the
+        emotions
+        (Woe, Frolic, Dread, and Malice) these numbers evoke. The "terminal-looking" interface provided a compelling
+        basis for
+        an interactive game. We also drew inspiration from the fan-made web version of the game available at
+        lumon-industries.com, aiming to create a hardware-based counterpart. The project's goal was to not only
+        replicate the
+        game mechanics but also to weave in "easter eggs" and the general aesthetic of the show.</p>
+    <p>We utilized fixed-point
+        arithmetic for efficient computation, particularly within the boid animation and game logic
+        updates. We used 16.15 fixed-point numbers for calculations involving boid positions, velocities, and
+        behavioral
+        parameters. This allowed us to cram heavy floating point computations into the game logic and still meet
+        frame rate
+        deadlines without sacrificing smooth animations. Additionally, besides computing positions of pixels on the
+        screen, much
+        of the math in this game came from the movement of the invisible "boids" that cause numbers to quiver. This
+        movement is
+        governed by a flocking algorithm which causes each boid to adjust its velocity based on factors such as:
+        cohesion
+        (moving towards the average position of nearby boids), separation (avoiding really close by boids) and wall
+        avoidance
+        (turn away from screen boundaries). More parameters such as VISUAL_RANGE, PROTECTED_RANGE control the
+        specifics of these
+        behaviors and distance calculations were approximated using the "Alpha max plus beta min" method.
+    </p>
+    <p>The game operates using a state machine and concurrent processing handled by
+        protothreads.
+    </p>
+    <ul>
+        <li><strong>Game States:</strong> The game progresses through three states defined by the
+            <code>PlayState</code> enum:
+            The game begins in the <code>START_SCREEN</code> state, which displays an initial message prompting the user
+            to
+            start. During the <code>PLAYING</code> state, which is the main interactive phase, the refinement process
+            takes
+            place. Finally, when all refining is complete, the game transitions to the <code>GAME_WON</code> state where
+            it
+            displays the completion screen.
+        </li>
+        <li><strong>Main loop:</strong> Within the <code>PLAYING</code> state, the system continuously.
+            It updates boid positions and velocities, checks for collisions between boids and the
+            number grid (which triggers animations), and scans for user input through the joystick for cursor movement
+            and
+            button for refinement. When refinement is triggered on a "bad number", the game state is updated by removing
+            refined numbers and regenerating new ones, bin animations are triggered, and the overall progress bar is
+            updated. Finally, all visual elements are redrawn on the VGA screen.
+        </li>
+        <li><strong>Protothreads:</strong> Concurrency is managed using the
+            <code>pt_cornell_rp2040_v1_3.h</code> library.
+            On Core 0, we have three protothreads: protothread_graphics which handles drawing the main game screen,
+            protothread_joystick which reads ADC values from the joystick and updates cursor position, and
+            protothread_button_press which debounces the refinement button and triggers refinement logic. Core 1 runs
+            two
+            protothreads: protothread_graphics_too which manages the animations of the Woe, Frolic, Dread, and Malice
+            bins,
+            and protothread_progress_bar which updates the state of the main progress bar animation.
+        </li>
+
+    </ul>
+    <p>
+        All the game code is written in C. We utilized the provided <a
+            href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master/VGA_Graphics">vga library</a> which gave
+        us a great head start. An Analog
+        joystick (purchased from Amazon) was chosen for user interaction. The proposal initially considered eight
+        buttons, but a
+        joystick for cursor movement was found to be more intuitive for navigating the grid.
+    </p>
+    <h3>Existing Patents, Copyrights, and Trademarks</h3>
+    <p>This project is directly inspired by the Severance television show and related imagery from Lumon Industries,
+        which are
+        intellectual property of Apple Inc. and/or the show's creators. Our project is intended solely for educational
+        and
+        non-commercial purposes within the context of ECE 4760. We do not claim ownership of any copyrighted or
+        trademarked
+        material from Severance. The game mechanics, while inspired by the show, are our own faithful interpretation and
+        implementation.</p>
+    <h2>Program/Hardware design</h2>
+    <figure style="text-align: center; margin: 20px 0;">
+        <img src="images/physical_hardware.png" alt="Physical Hardware" width="500" height="300">
+        <figcaption style="font-style: italic; font-size: 14px; margin-top: 5px;">
+            Figure 2: Physical Hardware.
+        </figcaption>
+    </figure>
+    <h3>Joystick</h3>
+    <p>For the hardware of the joystick, we connected it to the program using the Analog to Digital Converter (ADC)
+        feature
+        on the Raspberry Pi. This was implemented in a single protothread called <code>Protothread_joystick</code>. We
+        reserved GPIO
+        pins
+        27 and 28 to function as the Voltage-Read-X-coordinate (<code>VRX</code>) and Voltage-Read-Y-coordinate
+        (<code>VRY</code>), respectively.
+        To
+        implement the joystick correctly, we must first understand how this specific joystick works.
+    </p>
+    <figure style="text-align: center; margin: 20px 0;">
+        <img src="images/joystick.png" alt="Picture of Joystick used" width="500">
+        <figcaption style="font-style: italic; font-size: 14px; margin-top: 5px;">
+            Figure 3: Image of Joystick used in project and its respective wiring
+        </figcaption>
+    </figure>
+    <p>
+    <p>
+        Moving the joystick left or right changes the voltage of the <code>VRX</code> whereas up and down changes the
+        voltage of <code>VRY</code>.
+        This movement relays the analog voltage level to the RP2040 to which it then converts to a binary signal. In
+        order
+        to provide voltage in the first place, we connect the joystick to GPIO pin 36, which functions as an output of
+        3.3
+        Volts.
+    </p>
+    <p>
+        When turned left, the voltage level is 0 (shorted to ground), corresponding to a binary value of 0. Similarly,
+        when
+        turned right, the voltage level is 3.3 volts and that corresponds to a binary value of 8023. Generally in
+        joystick
+        architecture that is found in any controller, there is a threshold for which when the ADC value crosses, it
+        counts
+        as a read for turning left or right, For example, our int value <code>X_RIGHT_THRESHOLD</code> is set to 3000,
+        for when the
+        returned ADC value is greater than this number the program knows to count that as a right. This is also done for
+        left, up and down.
+    </p>
+    <p>
+        Our first attempt to implement the joystick came with a small obstacle. We generally use the ADC to poll
+        something
+        such as a potentiometer, which provides a single voltage output into the RP2040. However, we are now trying to
+        read
+        two values, that being <code>VRX</code> and <code>VRY</code>. At first, we implemented an in-built feature of
+        the ADC known as
+        <code>adc_set_round_robin</code>. Which uses a queue in order to have a First-in-First-out data structure. The
+        ADC reads one
+        input, puts it in the queue, and then polls the next input into the queue. However, we noticed that it randomly
+        picked an input to start the queue, which made it difficult to program other functions that rely on knowing if
+        <code>VRX</code>
+        or <code>VRY</code> is going to pop from the queue. Also, with the round robin method it provided a lot of
+        memory overhead,
+        something we were trying to avoid.
+    </p>
+    <p>
+        This then led to us having helper functions that when called, switched the input to be read to either VRX or
+        VRY.
+        While this does increase our running time a bit, it was the best option as we favored memory over speed.
+    </p>
+    <p>
+        The ADC feature polls the voltage level of the joystick far too frequently for any realistic human interaction.
+        In
+        order to circumvent this, we added a timer that polls the protothread every 70 ms. We got to this number by user
+        testing random numbers and saw which timer gave us the most smooth interaction.
+    </p>
+    <p>
+        Included in the joystick is a button that can be pressed. This means we need debouncing and implies that there
+        should be a separate protothread. This is done because debouncing relies on quick execution of a state machine
+        that
+        tells us if it reads a button press because a person is pressing the button or contact between mechanical
+        switches
+        that can happen arbitrarily. We need to read this at a higher frequency than that of the joystick. So we
+        schedule
+        the protothread for the button to run every 30 ms as opposed to the 70 ms the joystick protothread runs on.
+    </p>
+    <figure style="text-align: center; margin: 20px 0;">
+        <img src="images/debouncing.png" alt="Debouncing state machine" width="500">
+        <figcaption style="font-style: italic; font-size: 14px; margin-top: 5px;">
+            Figure 4: Debouncing State Machine
+        </figcaption>
+    </figure>
+    <h3>VGA Display</h3>
+    <p>
+        To support the VGA display, specific GPIO pins on the RP2040 are connected to the VGA port: <code>GPIO 16</code>
+        is used for
+        horizontal sync (Hsync), and <code>GPIO 17</code> for vertical sync (Vsync). Color signals are sent through
+        <code>GPIO 18</code> and <code>GPIO 19</code>
+        for
+        green (via 470 Ω and 330 Ω resistors, respectively), <code>GPIO 20</code> for blue (330 Ω), and
+        <code>GPIO 21</code> for red (330 Ω). The
+        ground of the RP2040 is connected to VGA ground. The DMA channel, paced by the <code>DREQ_PIO0_TX2</code> data
+        request
+        signal,
+        feeds pixel data to the RGB PIO state machine. Each byte sent corresponds to a character in the global
+        <code>vga_data_array</code>, representing two adjacent pixels. We use 4 bits per pixel: 1 bit each for red and
+        blue, and 2
+        bits
+        for green, taking advantage of the eye's greater sensitivity to green. As mentioned before, we used the vga
+        library
+        provided by Hunter Adams.
+    </p>
+    <h3>Overall Game Architecture</h3>
+    <p>
+        The system leverages both cores of the RP2040. Core 0 is responsible for the main graphics rendering
+        (<code>protothread_graphics</code>), joystick input (<code>protothread_joystick</code>), and the refinement
+        button logic
+        (<code>protothread_button_press</code>). Core 1 handles animations: the bottom bins' grow/shrink effect
+        (<code>protothread_graphics_too</code>)
+        and the progress bar fill animation logic (<code>protothread_progress_bar</code>). This division distributes the
+        workload,
+        allowing
+        for smoother animations and responsive input. Communication between threads, such as signaling the start of the
+        game, is
+        managed using semaphores (<code>start_game_sem</code>).
+    </p>
+    <h3>Game State Management</h3>
+    <p>The central data structure is <code>GameState</code>, defined in <code>game_state.h</code>. It
+        covers all dynamic aspects of the game:</p>
+    <p>The game state consists of several key components: <code>state[ROWS][COLS]</code> is a 2D array of Number structs
+        representing the grid of numbers, where each Number stores its value, position, size, animation flags
+        (animated_last_frame_by_boid0/1, refined_last_frame), and whether it's a "bad number" (is_bad_number) along with
+        its associated BadNumber data (target bin_id). <code>boids[NUM_BOIDS]</code> is an array of Boid structs,
+        storing their position (x, y), velocity (vx, vy), bias, and scout group. <code>box_anims[5]</code> is an array
+        of BoxAnim structs that manages the state of the animated bins at the bottom, including their current animation
+        height, state (ANIM_IDLE, ANIM_GROWING, ANIM_SHRINKING), and the percentage of each "emotion" (Woe, Frolic,
+        Dread, Malice) they contain. The <code>cursor</code> is a Cursor struct storing the position and dimensions of
+        the player-controlled cursor. <code>play_state</code> is an enum PlayState indicating the current phase of the
+        game (e.g., START_SCREEN, PLAYING). <code>total_bad_numbers</code> tracks the count of unrefined "bad numbers" -
+        when there are zero left, the game is won! Finally, <code>progress_bar</code> is a ProgressBarAnimation struct
+        for managing the top progress bar's visual state.</p>
+
+    <figure style="text-align: center; margin: 20px 0;">
+        <img src="images/game_logic.png" alt="Game State" width="500" height="500">
+        <figcaption style="font-style: italic; font-size: 14px; margin-top: 5px;">
+            Figure 5: Main animation loop logic
+        </figcaption>
+    </figure>
+
+    <p>Initialization is handled by <code>game_state_init()</code>, which populates the number grid with random values,
+        assigns some
+        as "bad
+        numbers" with random target bins, and spawns the boids. Spawning boids involves initializing all boids'
+        position,
+        velocity, and bias characteristics. Then, for each frame, we calculate new velocities and positions for each
+        boid based
+        on interactions with other boids and screen boundaries. Additionally, we check if a boid is within
+        <code>BOID_COLLISION_RADIUS</code>
+        of any number cell. If so, the <code>animate_numbers()</code> function is called, causing the number to slightly
+        shift its
+        position
+        (quiver) based on a random pixel shift. If the number is a "bad number", its display size is increased. Flags
+        (<code>animated_last_frame_by_boid0</code> or <code>animated_last_frame_by_boid1</code>) are set on the Number
+        struct to indicate it has
+        been
+        "touched" by a boid. This is crucial for the refinement logic.
+    </p>
+
+    <h3>Number Grid and Refinement Logic</h3>
+    <p>The game screen features a grid of numbers (<code>ROWS</code> x <code>COLS</code>). Numbers are initially random
+        digits (0-9). A small
+        percentage
+        are flagged as <code>is_bad_number</code> and assigned a random <code>bin_id</code> (0-3) corresponding to one
+        of the four emotion bins.
+        When the
+        player moves the cursor over a number and presses the refinement button, <code>handle_cursor_refinement()</code>
+        function is
+        invoked.
+        This function identifies the number that is currently selected, using the current
+        (<code>x</code>,<code>y</code>) position of the cursor.
+        Then it
+        checks if it is a bad number AND if it has been animated in the current frame. This is important so that we
+        don't refine
+        bad numbers that are not quivering in this frame. So if these conditions are met, the refined number and ALL the
+        numbers
+        that are animated by that same boid are marked as <code>refined_last_frame</code>. This is why we have a flag
+        for each boid
+        indicating it has animated some numbers. For example, when <code>boid0</code> comes in contact with some
+        numbers, it marks
+        them as
+        <code>animated_last_frame_by_boid0</code>. This means that when we find that a bad_number is animated by the
+        <code>boid0</code>, only
+        numbers
+        <code>animated_last_frame_by_boid0</code> are refined.
+    </p>
+    <p>Following, the identification of the numbers to be refined, <code>total_bad_numbers</code> is decremented, the
+        corresponding
+        bin
+        animation (<code>state->box_anims[bin_id].anim_state = ANIM_GROWING;</code>) and the main progress bar animation
+        are
+        triggered.
+        Finally, in the next main graphics cycle, numbers marked <code>refined_last_frame</code> are regenerated with
+        new random
+        values,
+        potentially becoming new "bad numbers."</p>
+
+    <p>A tricky part was coordinating the boid animation flags with the refinement logic to ensure only "quivering" bad
+        numbers
+        could be refined. It involved maintaining many layers of state between different parts of the game. The
+        interaction
+        where refining one number in a boid-activated cluster also "refines" the others in that cluster was an explicit
+        design
+        choice to simulate sorting a "group" of numbers as described in the show.</p>
+
+    <h3>Graphics</h3>
+    <p>Drawing is performed using the <code>vga16_graphics.h</code> library, which provides primitives for pixels,
+        lines, rectangles,
+        circles, and text. Our initial plan was to use a custom font. But we weren't able to find an open source font
+        bitmap
+        that correctly matched the given vga graphics library. We mostly used the provided functions like
+        <code>drawPixel</code>,
+        <code>drawLine</code>, <code>drawRect</code>, <code>fillRect</code>, <code>drawChar</code>,
+        <code>setCursor</code>,
+        <code>setTextColor</code>, <code>setTextSize</code> and <code>writeString</code>. We also implemented a
+        <code>drawOval(short x0, short y0, short rx, short ry, char color)</code> method. This function uses the
+        midpoint ellipse algorithm to draw
+        ovals, which was essential for rendering the Lumon logo.
+    </p>
+
+    <p>The number quivering/sizing was by modifying <code>x</code>, <code>y</code>, <code>size</code> in the
+        <code>Number</code> struct within <code>animate_numbers()</code> and
+        redrawing in
+        <code>protothread_graphics</code>. We made sure to cap the max pixel shift by the size of the current number
+        grid. On the
+        other hand,
+        the <code>BoxAnim</code> struct's <code>current_anim_height</code> is incremented/decremented during
+        <code>ANIM_GROWING</code>/<code>ANIM_SHRINKING</code> states,
+        and
+        <code>drawRect</code> is used to visualize this. The animation pauses for 3 seconds when fully grown to display
+        percentages.
+        This
+        animation happens over more than one frame. Essentially, when the state is <code>ANIM_GROWING</code>, we
+        progressively erase
+        and draw
+        the box taller than the last frame until it reaches a specific height after which we transition to
+        <code>ANIM_SHRINKING</code>. In
+        the next frame, the reverse of the process for growing the box happens.
+    </p>
+    <h2>Results</h2>
+    <p style="text-align: center;"><iframe width="640" height="360" src="https://www.youtube.com/embed/UJgmGBGWcTI"
+            title="Demo Video" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen></iframe></p>
+    <p>The primary goal of this project was to replicate the sorting process featured in the TV show Severance, with a
+        strong emphasis on usability. Our objective was to make the game fully playable and closely aligned with its
+        on-screen counterpart, ensuring that fans of the show could engage with it and feel as though they were
+        experiencing
+        the original game firsthand.
+        We ended up with a result that satisfies the above. With the in game mechanics and scoring system based off the
+        game, we were able to replicate it to a close degree of accuracy. We emphasized minor details such as the Lumon
+        Logo
+        on the upper right hand corner, and the visuals that happen when a point is won.
+        Due to multiple things happening at the same time, there are occasional flickers in the game. This is mostly due
+        to
+        having to constantly update the boids, redraw the screen, and poll the ADC values at a very high frequency so
+        that
+        it appears everything is happening concurrently. However, this flickering was improved when work was divided
+        between
+        the two cores.
+    </p>
+    <p>The game's functionality was primarily verified through visual inspection and interaction.</p>
+
+    <p>For VGA Display, the game successfully renders on a 640x480 VGA display. The number grid, cursor, Lumon logo,
+        progress bar, and bottom bins are drawn clearly. Animations, such as number quivering, bin pop-ups, and progress
+        bar filling, are visible.</p>
+    <p>Speed of Execution was a key focus in our implementation. The game targets and generally achieves a frame rate
+        close to 60 FPS, as indicated by FRAME_RATE = 60000 microseconds in main.c. Joystick control for the cursor is
+        responsive, and button presses for refinement are registered promptly due to the debouncing logic. Protothreads
+        effectively manage concurrent tasks - animations (boids, bins, progress bar) run alongside user input processing
+        and main graphics updates without noticeable hesitation or lag. Flicker is minimal, achieved through selective
+        clearing and redrawing of screen elements (e.g., only animated numbers or changing parts of UI) which helps
+        maintain a stable image.
+    </p>
+    <h3>Safety and Usability</h3>
+    <p>
+        This project does not involve high voltages (beyond the RP2040's 3.3V logic levels and USB 5V) or dangerous
+        mechanical parts. Safety considerations are minimal. Input debouncing prevents erratic game behavior from noisy
+        button signals, and standard coding practices were followed to avoid crashes or undefined behavior.
+    </p>
+    <p>
+        From a usability perspective, the game was designed to be intuitive. Many students and professor Adams found it
+        easy to navigate with the joystick. Additionally, visual cues like "Press Button to start game", or highlight of
+        the current cursor position helped guide the user.
+        The overall progress bar indicates how close the
+        player is to completing the game. The connection to the Severance theme is apparent through the Lumon logo,
+        the concept of bins, and the task itself. While the lack of explicit emotion selection buttons (as per the
+        original proposal) deviates from the show's direct depiction, it simplifies the control scheme to just joystick
+        and one action button, which might make it more accessible.
+    </p>
+    <h2>Conclusion</h2>
+    <p>
+        The design of this project aligned very well with our expectations. We expected to model the game from the show
+        Severance and the result turned out to be very similar to the game in the show.
+    </p>
+    <p>
+        What could have been done in another approach, in order to improve accuracy, was display things such as the logo
+        using a bitmap. This could be achieved by downloading the Lumon logo online and turning it into a bitmap image,
+        loading it onto the RP2040’s memory, and displaying it on the VGA. This would have better mirrored what is on
+        the
+        show.
+    </p>
+    <p>
+        Another thing we could have implemented was music. Although there were attempts, the background music could not
+        have
+        been found online to download. Additionally, the background music lasted too long such that once this audio was
+        converted to an array of unsigned 16 bit integers, there would have been too much memory overhead that other
+        parts
+        of the program would suffer.
+    </p>
+    <p>
+        As mentioned in our Week 1 progress report, we initially attempted to use the Adafruit GFX library to
+        incorporate
+        different fonts. This resulted in unexpected characters being displayed. We decided to simplify and use the
+        fonts
+        already compatible with or easily integrated into the existing vga16_graphics framework. We believe a custom
+        font could enhance the game play experience significantly
+    </p>
+    <p>
+        While we did not reuse any code or directly copy protected material, our design was inspired by the sorting
+        process
+        depicted in the TV show Severance. As such, all intellectual property rights related to the original concept and
+        design elements remain with the creators and rights holders of Severance. All patented or trademark issues are
+        non-existent as long as we don't present this project as an original creation or try to monetize this game in
+        any
+        manner. Therefore, a patent opportunity is not an option.
+    </p>
+    <p>
+        In conclusion, this project provided a chance to use what we learned throughout the semester such that we were
+        able
+        to replicate a game from a popular TV show using a Raspberry Pi 2040. This project emphasizes the versatility
+        and
+        potential of a microcontroller. It was a valuable learning experience in managing a real-time system with
+        multiple concurrent processes, custom
+        graphics rendering, and hardware interfacing on the RP2040.
+    </p>
+    <h2>Appendix A</h2>
+    <ul>
+        <li>&quot;The group approves this report for inclusion on the
+            course website.&quot;</li>
+        <li>&quot;The group approves the video for inclusion on the course
+            youtube channel.&quot;</li>
+    </ul>
+    <h2>Appendix B</h2>
+    <h3>Task Distribution</h3>
+    <ul>
+        <li><strong>Wilson Coronel</strong></li>
+        <ul>
+            <li>Worked on ADC implementation of Joystick</li>
+            <li>Helped Debug</li>
+        </ul>
+        <li><strong>Akinfolami Akin-Alamu</strong></li>
+        <ul>
+            <li>Led the initial setup of the VGA display and basic game state matrix.</li>
+            <li>Developed core game logic, including the boid animation system (update_boids,
+                check_collisions_and_animate) and number
+                refinement mechanics.</li>
+            <li>Implemented major graphics routines such as the Lumon logo, dynamic bin drawing, and progress bar
+                visuals.</li>
+            <li>Contributed significantly to the integration of different game components and overall system
+                architecture.</li>
+        </ul>
+    </ul>
+    <h2>Appendix C (Full code)</h2>
+    <i>Note: Code only includes code written by us. Rest of included files can be found on the course website.</i>
+    <ul>
+        <li><a href="code/game_state.h">game_state.h</a></li>
+        <li><a href="code/game_state.c">game_state.c</a></li>
+        <li><a href="code/main.c">main.c</a></li>
+        <li><a href="code/draw_oval.c">draw_oval_patch.c</a></li>
+    </ul>
+    <h2>References</h2>
+    <ul>
+        <li>Used Joystick Datasheet as a model for ADC code:
+            <a href="https://newbiely.com/tutorials/raspberry-pico/raspberry-pi-pico-joystick">Joystick Datasheet</a>
+        </li>
+        <li>Raspberry Pi Pico Datasheet
+            <a href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf">RP2040 Datasheet</a>
+        </li>
+        <li>ECE 4760 Course Website - For examples, libraries (vga16_graphics.h, pt_cornell_rp2040_v1_3.h), and lab
+            documentation</li>
+        <li>Severance (TV Show) - Primary source of inspiration. Apple TV+</li>
+        <li>Lumon Industries Website: <a href="https://lumon-industries.com/">https://lumon-industries.com/</a> -
+            Fan-made example of the MDR interface</li>
+    </ul>
+</body>
+
+</html>
