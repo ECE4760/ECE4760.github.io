@@ -1,0 +1,3607 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Mini Golf Simulator - ECE 4760</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="starter-template.css" rel="stylesheet">
+
+    <link rel="icon" href="pics/golf.png" type="image/png">
+
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Mini Golf Game</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#intro">Introduction</a></li>
+            <li><a href="#gameplay">Gameplay</a></li>
+            <li><a href="#design">High-Level Design</a></li>
+            <li><a href="#software">Software</a></li>
+            <li><a href="#hardware">Hardware</a></li>
+            <li><a href="#result">Results</a></li>
+            <li><a href="#conc">Conclusions</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+
+      <div class="starter-template">
+        <h1>Simulating Mini Golf Using the Raspberry Pi Pico</h1>
+        <p class="lead">Cornell University -- ECE 4760 -- Digital Systems Design Using Microcontrollers<br>A Project By Henry Geller, Robert Haig, and Daniel Wahab<br>May 2025</p>
+      </div>
+
+      <hr>
+      <div class="center-block">
+          <iframe width="640" height="360" src="https://www.youtube.com/embed/e4Qnb9sAIuI?si=6MdnrjMV-WnPv5vm" frameborder="0" allowfullscreen></iframe>
+          <hr>
+      </div>
+
+          <p style="text-align:center; font-size: 18px;">This project is a mini golf video game where the controller is an actual golf putter.
+</p>
+      <hr id="intro">
+
+      <div style="text-align:center;">
+              <h2>Introduction</h2>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px;">In the long history of sports video games, golf has carved its own lane. In 2006, the wildly popular Wii Sports game included golf as one of its five sports, which centered around the use of the Wii remote as if it were a golf club. In 2016, Apple launched GamePigeon along with the release of iOS 10, where one of its most popular games was mini golf. The development of golf video games occurred in parallel with the development of golf simulators, which are meant to replicate the experience of playing golf on a real golf course as closely as possible. When using a golf simulator, the player swings real clubs and hits a real ball, the path of the ball is sensed using technology, and then a virtual ball moves through a virtual course on a large projector screen. These simulators are used as an avenue for serious golfers to improve their game when real courses are unavailable or unaffordable. The goal of this project was to combine Wii Golf, GamePigeon mini golf, and a golf simulator into a golf game where a real putter is used to direct the motion of a golf ball in a virtual mini golf course. 
+
+</p>
+      </div>
+
+    <hr id='gameplay'>
+
+      <div style="text-align:center;">
+              <h2>Gameplay</h2>
+               <img class="img-rounded" src="pics/gameplay.png" alt="Gameplay" style="width:50%;">
+               <br><br>
+               <em>Image 1: An action shot of Dan playing the game. He starts with the putter between the magnets and swings in the direction of the VGA screen.</em>
+               <br><br>
+              <p style="text-align: left; padding: 0px 30px; font-size: 16px;">The player can begin playing the game by turning on the Pico. The first screen is a view of the first hole. All holes in the game are shown from a bird's eye view, as if there were a camera stationed above a mini golf hole pointing down. The ball is shown in its starting position. Protruding from the ball is a line which we call the heading vector, which indicates the direction that the ball will go if the putter is swung from its current position. As the player holds the putter above the floor mat containing carefully arranged magnets, the player can change the direction of the heading vector by angling the putter, as if changing the direction they intended to hit a real ball sitting on the mat. So that the player does not need to turn around and face away from the screen, the '9' key can be pressed on the keypad in order to rotate the heading vector by 90 degrees. Once the player has lined up their shot, they can swing the putter as they normally would to hit a golf ball, with a back swing followed by a front swing and a follow through. Based on the speed of the putter and the orientation of the club, the ball will move on the screen in a physically realistic manner, slowing down over time and bouncing off the boundaries of the green. In the upper right corner of the screen, there is a continuous display of the player's score for the hole and the round.</p>
+              <img class="img-rounded" src="pics/score.png" alt="Scoreboard" style="width:30%;">
+              <br><br>
+               <em>Image 2: The scoreboard at the top of the screen indicating that the user has taken four shots on hole 1 which is a par 3.</em>
+               <br><br>
+              <p style="text-align: left; padding: 0px 30px; font-size: 16px;">Each hole is assigned a par, and the score relative to par after each hole is what affects the score for the round. Once the ball goes in the hole, then the next hole begins immediately. The game consists of four holes. At the end of the final hole, there is a screen which says 'Game Over' and reports the player's final score relative to par. At any time, including at the 'Game Over' screen, the player can restart the game by pressing '1' on the keypad.</p>
+            </div>
+
+    <hr id='design'>
+
+      <div style="text-align:center;">
+            <h2>High-Level Design</h2>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">The centerpiece of the system running this game is the Raspberry Pi Pico, which contains an RP2040 microcontroller. The Pico is powered by a laptop via a USB connection, and it controls three different peripheral devices: a VGA screen, an inertial measurement unit (IMU), and a keypad. </p>
+              <img class="img-rounded" src="pics/hw_diagram.png" alt="Scoreboard" style="width:90%;">
+              <br><br>
+              <em>Figure 1: A high-level hardware diagram of the project. The Pico connects to three peripheral devices: the keypad, the VGA screen, and the IMU. The magnets at the top are read by the magnetometer.</em>
+              <br><br>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">The RP2040 supplies the VGA screen with the five signals it needs to operate: horizontal sync, vertical sync, red, green, and blue. These signals are created and timed using a VGA driver written in assembly for the Programmable I/O module of the RP2040 by our professor Hunter Adams [1]. </p>
+              <br>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">The IMU is a 9-axis IMU, which means it can read acceleration, angular velocity, and magnetic field in 3 axes each [2]. It is attached to the club head of the putter, and it reports information about the club's orientation and speed to the RP2040, so that the ball can move accordingly. The putter we use is a Tour Edge Reaction 3 putter.</p>
+              <img class="img-rounded" src="pics/Putter_with_imu.png" alt="Putter with IMU" style="width:30%">
+              <br><br>
+              <em>Image 3: The IMU resting on top of the putter.</em>
+              <br><br>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">The keypad is a simple 12-key keypad that allows the user to enter any number 0-11, although only numbers 1 and 9 are used in this game. The code which probes the keypad for any pressed keys was also written by Hunter Adams [3]. </p>
+              <br>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">On the software side, there are three threads running on the RP2040, with each being responsible for interacting with one of the peripheral devices. </p>
+              </div>
+
+    <hr id='software'>
+
+      <div style="text-align:center;">
+        <h2>Software</h2>
+            <h3 style="text-align: left; padding: 0px 30px;">Keypad</h3>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">The simplest of the three threads is the thread responsible for sensing the pressing of keys on the keypad. The code for this came directly from the demo code provided by Professor Adams with little modification.</p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">When using a mechanical button, there is concern that one press of the button may be detected as multiple distinct presses, due to the spring inside the button that may cause it to oscillate for some time. To help prevent this, we require a button press to be detected multiple times in succession before officially declaring that a press has been detected. Therefore, rather than watching for a rising or falling edge of a signal and recording a button press each time, there is a finite state machine that is used to verify a button press. </p>
+                <br>
+                <img class="img-rounded" src="pics/debouncing.png" alt="Debouncing" style="width:60%;">
+                <br><br>
+                <em>Figure 2: Debouncing state machine for keypad presses.</em>
+                <br><br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">The keypad thread contains a while loop that runs continuously as long as the system is operational. Each time through the while loop, a check of all the buttons is performed to detect if any buttons are currently pressed down. This check must show the same button being pressed on two consecutive iterations of the while loop in order for that button press to officially be declared. Similarly, when a button is let go, the lack of a button press must be detected for two consecutive iterations in order for the press to be considered over. This behavior is enforced by the use of an FSM which contains four states: NOT_PRESSED, MAYBE_PRESSED, PRESSED, and MAYBE_NOT_PRESSED. The point at which a press has been officially detected is during the state transition from MAYBE_PRESSED to PRESSED, and the point at which a press is officially over is during the state transition from MAYBE_NOT_PRESSED to NOT_PRESSED, although the end of a press never has any effect on the game. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">There are only two buttons on the keypad that have any effect on the game. If the '1' button is pressed at any time during the game, the game is reset to its initial state, when there is no score at the beginning of the first hole. If the '9' button is pressed, then the heading vector protruding from the ball is rotated 90 degrees clockwise, to make it easier for the player to hit the ball in any direction they would like. The heading vector is updated regardless of whether it is shown on the screen at the time.</p>
+            
+            <h3 style="text-align: left; padding: 0px 30px;">IMU</h3>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">The ability to interface with the IMU was its own software problem that needed to be solved. We decided that for our purposes the IMU values only needed to be read at a rate of 100 Hz, or every 0.01 seconds. To achieve this, we utilized the hardware system timer on the RP2040, and used it to generate an interrupt every 0.01 seconds. This interrupt triggers an interrupt service routine (ISR) which reads data from all 9 axes of the IMU using the function <em class="variable-name">icm20948_read_raw()</em>. This data includes the acceleration data that is used to detect swings and swing speed, as well as the magnetometer data that is used to calculate heading. The last thing the ISR does is signal the thread that is associated with the IMU. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">In addition to the ISR, there is a thread dedicated to the IMU which contains a while loop that is always running. However, at the top of the loop body, there is a direction for the thread to wait until it has received the signal from the ISR to continue running. The effect of this is that the body of the while loop runs once each time the ISR is called. We expect that the code would have had the same functionality if the body of the loop had been contained within the ISR itself.</p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">The responsibility of the rest of the loop body is to record swings of the putter based on the IMU data. A swing of the putter is detected via a progression through a finite state machine.</p>
+                <br>
+                <img class="img-rounded" src="pics/swing_fsm.png" alt="Swing Finite State Machine" style="width:40%;">
+                <br><br>
+                <em>Figure 3: Swing detection state machine.</em>
+                <br><br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">State transitions are triggered by sequences of acceleration values along the x-axis, which points in the direction that the ball would move if the club hit a real ball. The system begins in the IDLE state, which means that no swing is currently taking place. The program has a need for the heading of the club, both for the displaying of a heading vector and for the movement of the ball after a swing. Since there is an inherent amount of noise in the magnetometer readings, the heading angle that is used is always an average of the previous 20 readings, which are captured over a period of 0.2 seconds. In the IDLE state, the only action that is taken is to remove the oldest value from a FIFO queue of heading readings, and to replace it with the newest value. Then, the average of the 20 headings is re-calculated and used by the animation thread to display the heading vector in the proper place. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">A backswing is sensed when there has been 15 consecutive acceleration readings of at least -1.5, which is a condition that was chosen via experimentation. In the BACKSWING state, the queue stops being updated, and the global variable representing the heading vector does not get updated. This means that the direction of the heading vector at the time that the BACKSWING state is entered is the one that will be used to make the ball move when the front swing is detected. This saving of the heading vector value happens intentionally, since the moving of the club off of the mat causes undesired variations in the magnetometer readings. The system remains in the BACKSWING state until five consecutive acceleration values that are greater than 0.5 have been measured, at which point there is a transition into the FRONTSWING state. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">The length of the FRONTSWING state is always 17 iterations, during which time all the x-axis acceleration values are recorded, encompassing 0.17 seconds. An average of these values is used to determine the initial speed of the ball after it is hit. There is a limit of 10 pixels per frame on how fast the ball can move right after it is hit. At the end of the final iteration, the global variable swing is set to true, which triggers the animation thread to begin moving the ball. There is then an automatic state transition back to the IDLE state, to prepare to detect the next swing.</p>
+            
+            <h3 style="text-align: left; padding: 0px 30px;">Green Generation</h3>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">One of the goals that we wanted to achieve was to have several different holes that would make up the mini golf course. Each hole would be a different shape, with the boundary colored white, the green colored green, and the rest of the screen colored black. Due to the limited amount of RAM on the RP2040, it was not possible to store the VGA images of any extra greens in RAM. Thus, we instead created VGA images of several holes on a separate computer, and then stored them in the RP2040's flash memory when programming the board.</p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">This was the responsibility of boundary.c, which borrows functions from the provided C file vga16_graphics.c in order to populate an array with the colors of different pixels [4].The way that the provided VGA animation code supplies data to the VGA screen is through the use of a DMA channel which reads data from a <em class="variable-name">vga_data_array</em>, which is an array that is long enough to hold four bits for each pixel on a 640x480 screen. In boundary.c, we create a new array of the same size, and then use the provided <em class="variable-name">drawPixel()</em> function to write data into that array. The program then prints out the contents of that array into a properly formatted header file, with the help of a Linux bash script. Aside from the array containing the VGA image, there are also variables created and initialized that represent the vertices of the hole boundary, the number of vertices, the hole location, the initial location of the ball, and the par of the hole. We ran this program several times for different holes, and each time copied the resulting header file into the Pico project directory, so that it would be included in the flash memory of the RP2040. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">Each hole has its own dedicated header file containing a VGA image of the hole and the series of variables specific to the hole. These variables are referenced inside switch-case statements in the <em class="variable-name">initHole()</em> function in animation.c, and the <em class="variable-name">drawSavedImage()</em> function in vga16_graphics.c.</p>
+             
+            <h3 style="text-align: left; padding: 0px 30px;">Animation on the VGA Screen</h3>  
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">The piece of software which was most challenging to develop was the animation thread, which was responsible for all of the game's graphics and physics. The thread contains a while loop which runs once for each frame, and has the responsibility of correctly populating <em class="variable-name">vga_data_array</em> in vga16_graphics.c with the correct color values for each pixel in each frame. The animation thread uses its own FSM to keep track of a player's progression through a hole. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">Before discussing each of these states in detail, we will first list the helper functions which we wrote that serve as the tools for the animation thread to use. Many of the functions have self-evident purposes, such as the following:</p>
+                <br>
+                <ul style="text-align: left; font-size: 16px">
+                  <li>drawGolfBall()</li>
+                  <li>eraseGolfBall()</li>
+                  <li>drawHeadingVector()</li>
+                  <li>eraseHeadingVector()</li>
+                  <li>drawHole()</li>
+                  <li>displayScores()</li>
+                </ul>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px">But, there are also many custom functions which are more complex and deserve more attention: </p>
+                <br>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Function</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>drawBoundary()</td>
+                      <td style="text-align: left;">- Draw the white boundary of the green by drawing lines between each set of adjacent vertices</td>
+                    </tr>
+                    <tr>
+                      <td>drawSavedImage()<br><em>(in vga16_graphics.c)</em></td>
+                      <td style="text-align: left;">- References the header file of a given hole, finds the VGA image saved there, and writes it to <em class="variable-name">vga_data_array</em></td>
+                    </tr>
+                    <tr>
+                      <td>rectBoundsAndNormal()</td>
+                      <td style="text-align: left;">
+                        - Receives the coordinates of the two endpoints of a side of a green<br>
+                        - Calculates the maximum and minimum y values out of those two points<br>
+                        - Calculates the normal vector of that side
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>boundaryInfo()</td>
+                      <td style="text-align: left;"> - Given the set of vertices that make up the shape of a green, call rectBoundsAndNormal() on every side</td>
+                    </tr>
+                    <tr>
+                      <td>initHole()</td>
+                      <td style="text-align: left;">
+                        - Contains a large switch-case statement that references all the variables in a given hole's header file and brings their values into the program<br>
+                        - Calls drawSavedImage(), boundaryInfo(), drawHole(), drawGolfBall(), and displayScores() to correctly display the initial state of the next hole<br>
+                        - If the hole that just finished was the final hole on the course, display the 'Game Over' screen
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>hitBall()</td>
+                      <td style="text-align: left;"> - Uses the speed and heading data from the IMU thread to set the velocity of the ball</td>
+                    </tr>
+                    <tr>
+                      <td>readVGA()<br><em>(in vga16_graphics.c)</em></td>
+                      <td style="text-align: left;"> - Accesses a particular pixel in <em class="variable-name">vga_data_array</em> and returns the color of that pixel</td>
+                    </tr>
+                  </tbody>
+              </table>
+              <br>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">Finally, the function which was most difficult to develop and gave us the most trouble was <em class="variable-name">updatePos()</em>, which is responsible for moving the ball each frame, which includes detecting collisions with the hole boundary and moving the ball accordingly. The function first calls <em class="variable-name">readVGA()</em> on a set of 48 pixels surrounding the ball, looking for a white pixel, which must be part of the boundary. If a white pixel is found, then it must be determined what side of the green that pixel belongs to. This is where the maximum and minimum x and y for each side that was calculated by <em class="variable-name">rectBoundsAndNormal()</em> becomes useful. This information is used by each side to claim a rectangular portion of the screen that belongs to that side. </p>
+              <br>  
+              <img class="img-rounded" src="pics/rectBoundandNormal.png" alt="Display" style="width:35%;">
+              <br><br>
+              <em>Figure 4: Example of a side of a green and the rectangle within which it claims all collisions.</em>
+              <br><br>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">Therefore, the side that a pixel belongs to can be identified by finding which rectangle it belongs to. Once the side has been identified, then the corresponding normal vector needed for the collision equations is also known. If the ball collides with two sides simultaneously, then an average of the two normal vectors is used. It is possible that the ball may overlap with a side for more than one frame, so once a collision is detected and the trajectory of the ball is altered, no more collisions can be detected until the end of the ongoing collision, which occurs when no more white pixels are found surrounding the ball. In the event that the ball finds a white pixel from one side in one frame and then a white pixel from a different side in the next frame, that new side that is found will trigger a second collision.</p>
+              <br>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">After checking all of this collision logic, there are also the basic movements of the ball that occur every frame, whether a collision has occurred or not. The ball is moved by a certain amount of pixels according to its velocity, and each component of the velocity is scaled by 0.98 each frame as a way of applying friction to the ball. Finally, a check is made to see if the ball has landed in the hole or not, and if the ball has landed in the hole then the player's score for that hole is added to the overall score.</p>
+              <br>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">Now that the individual functions have been described, we can provide a high-level description of the state machine at work. </p>
+              <br>
+              <img class="img-rounded" src="pics/Animation_FSM.png" alt="Animation State Machine" style="width:40%;">
+              <br><br>
+              <em>Figure 5: Animation state machine.</em>
+              <br><br>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">The SIZING_UP state refers to the state where the ball is at rest on the green, and the player is able to to view changes in the heading vector by rotating the club as they are deciding how to hit their next shot. The term “sizing up” comes from golf, and refers to the action that a player does as they analyze their situation and decide what strategy to adopt. </p>
+              <br>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">Once the IMU thread sets the swing bool to true, then a state transition is made to BALL_IN_MOTION, and <em class="variable-name">hitBall()</em> is called using data from the IMU thread. The ball then moves throughout the green, gradually losing speed due to friction and colliding with any walls that it finds. Once the ball stops rolling, then there is a state transition back to SIZING_UP, such that the player can take another stroke. If the ball lands in the hole, then there is a state transition to SUNK, where <em class="variable-name">initHole()</em> is called on the next hole and there is immediately a state transition back to SIZING_UP. </p>
+              <br>
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">By examining the global constants, variables, and functions at the top of animation.c, it is clear that this project would have an improved coding style if it were object-oriented. Objects in the game such as the ball, hole, or green could be represented as objects if this project were done in a programming language that could support it, and that would likely result in improved code quality.</p>
+              
+          <h3 style="text-align: left; padding: 0px 30px;">Serial Interface</h3>  
+              <p style="text-align: left;padding: 0px 30px; font-size: 16px">One last piece of software to mention is one that was created only for debugging purposes. Before the IMU was integrated into the system, the physics and collision logic was tested by triggering swings through the Pico's serial interface. By entering a ball speed and a ball direction, then the ball would accordingly as if it had received those values from the putter. Once the IMU was integrated, this thread was no longer added to the scheduler, and the serial terminal was used to monitor the IMU by printing out the values it was reading.</p>
+        </div>
+
+    <hr id='hardware'>
+
+      <div style="text-align:center;">
+            <h2>Hardware</h2>
+              <h3 style="text-align: left; padding: 0px 30px;">ICM 20948</h3>  
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">Our main peripheral device was SparkFun's ICM 20948 breakout board, a 9-axis IMU that we used to collect accelerometer and magnetometer data. </p>
+                <img class="img-rounded" src="pics/ICM_20948.png" alt="IMU" style="width:20%;">
+                <br><br>
+                <em>Image 4: SparkFun's ICM 20948 breakout board [5].</em>
+                <br><br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">Unfortunately, all libraries we could find to communicate with the IMU were specific to the Arduino. While the Raspberry Pi Pico is able to run .ino C++ code, it would have been difficult to incorporate it into our C code base. As such, we decided it would be reasonable to write our own library to communicate with the device. To do this, we referenced an Arduino library with working sample code, picked out the necessary parts, and converted them into C and used proper Pico SDK calls for I2C and other communication [6].</p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">The most difficult part of this was to initialize the sensor to give us the values that we wanted because the device is much more complicated than the MPU 6050 IMU that we previously used in the course. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">First, the ICM 20948 is broken into several banks containing different useful registers as opposed to having just one, and we needed a way to switch between different banks to write to and read from. To do this, we needed to write to the REG_BANK_SEL register with the bank number (0, 1, 2, or 3). The ability to write to specific registers on the intended bank allowed us to move forward with device initialization. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">To initialize the device to our specifications, we needed to set the clocking by twice writing to the PWR_MGMNT_1 register on bank 0, once to reset the device's clock and once to set its frequency. Next we enable the Accel/Gyro interface by writing to the PWR_MGMNT_2 register on bank 0. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">We also had to configure the accelerometer to our specifications. For simplicity, we chose to use the same specifications as we did in lab; our range was ±2 g's, and our sample rate was 1 kHz (more than what we realistically needed). To add these specifications, we needed to write to the ACCEL_CONFIG register on bank 2. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">An even tricker aspect of the sensor setup was to initialize the magnetometer. The ICM 20948 is set up so that the first 6 degrees of freedom (accelerometer and gyroscope) are close together on the chip. In fact, the chip is a multi-chip module with two dies integrated into one package, where the first one contains the accelerometer and gyroscope, and the second contains an AK09916, a 3-axis magnetometer. The consequence of this is that while setting up and reading from the accelerometer and gyroscope are (relatively) easy, doing the same for the magnetometer is not. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">To interface with the magnetometer, we first need to enable I2C master mode, allowing the first chip die to read values from an auxiliary sensor (in our case the AK09916 magnetometer). The Interface Bypass Mux is disabled in this mode, so that the ICM 20948's I2C master takes control of the sensor bus and reads the values coming from the AK09916, disabling pass-through mode and hence turning off the AUX_CL and AUX_DA lines below. </p>
+                <br>
+                <img class="img-rounded" src="pics/ICM_Block_Diagram.png" alt="ICM_20948 Block Diagram" style="width:60%;">
+                <br>
+                <em>Figure 6: ICM 20948 block diagram showing the AK09916's datapath through the auxiliary bus (bottom) [2].</em>
+                <br><br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">Setting the enable bit in the I2C_SLV0_CTRL register then forwards data coming from the auxiliary sensor I2C bus to the first available EXT_SLV_SENS_DATA register, which conveniently is directly after the registers containing data from the first six-degrees of freedom which we already access. This allows us to only perform one 21-byte long data acquisition of the successive registers.</p>
+            <h3 style="text-align: left; padding: 0px 30px;">Electromagnetic Theory & Magnet Setup</h3>  
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">To detect heading with our magnetometer, we placed two strong magnets into a foam board creating a magnetic field perpendicular to the direction that we were swinging that overwhelmed the magnetic field of the earth and other equipment in the lab.</p>
+                <br>
+                <img class="img-rounded" src="pics/mags.png" alt="Magnets" style="width:60%;">
+                <br><br>
+                <em>Image 5: Putter and IMU between the North and South ends of the two magnets embedded into the foam surface.</em>
+                <br><br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">In order to create a uniform magnetic field that our magnetometer could measure, we placed the magnets so that the north pole of one pointed to the south pole of the other resulting in magnetic field lines pointing from one end of the magnet to the other. </p>
+                <br>
+                <img class="img-rounded" src="pics/mag_field.png" alt="Magnetic Field" style="width:60%;">
+                <br><br>
+                <em>Figure 7: Magnetic Field of Two In-Line Magnets [7].</em>
+                <br><br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">Since the magnetometer measures strength of a magnetic field in the x, y, and z directions, we found that we were able to measure in either the x or y direction which were both linearly mapped to degrees of rotation, allowing us to correspond our heading vector with our measurement here. We did, however, realize that the measurements collected were different when we were set up on the floor or on top of the desk, possibly due to steel-reinforced flooring and other equipment on and around the desks in the lab. This forced us to re-calibrate our linear mapping from magnetometer measurements to degrees each time we moved the setup of the project.</p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">We also played with the distance that we placed the magnet from the center of the foam board where the user was expected to hold the putter. We found that when the magnets were too close to the IMU, the magnetometer would become overwhelmed and give measurements that did not reflect the actual heading of the clubface. This was especially apparent when a user wanted to swing the putter at an angle, and would naturally pull the putter back in the direction of one of the two magnets. To reduce this effect we widened the gap between the magnets. We were worried at first that this would reduce the strength of the magnetic field that we were measuring, but it turned out that the field was still strong enough to gain accurate measurements. The wider gap between magnets allowed for angled shots, as the club never got too close to the magnets.</p>
+            
+            <h3 style="text-align: left; padding: 0px 30px;">Hardware Testing</h3>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">As expected, when interfacing with a new I2C device there were some initial challenges. When we first tried to communicate with the IMU via I2C, we would get junk data instead of acceleration, gyroscope, and magnetometer data. We first hooked the device to an oscilloscope to see if we could correctly read the device's ID from the WHO_AM_I register on bank 0, which should return 0xEA. Seeing this value consistently appear on the oscilloscope gave us confidence that we were reading values from registers correctly, so there had to be an issue with our initialization of the sensors. </p>
+                <br>
+                <img class="img-rounded" src="pics/whoami.png" alt="Magnetic Field" style="width:30%;">
+                <br><br>
+                 <em>Image 6: Scope showing the content of the WHO_AM_I register after a series of I2C reads.</em>
+                <br><br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">The initialization of the individual sensors was tricky to debug, as there were several steps that we needed to follow (as described above in the IMU setup section). There was spotty documentation as to what needed to happen to initialize the devices, but after finding a reliable source we were able to successfully get everything to give expected data [6]. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">The next thing that we needed to do was to make sense of the data that was coming through the IMU. The accelerometer was very self-explanatory: measuring acceleration in the z direction when the IMU was flat on a table yielded ~9.8 m/s^2 which is as expected. On the other hand, the data coming from the magnetometer was more difficult to make sense of because at first it seemed random. However, we quickly saw that rotating the IMU through magnets did in fact change the outgoing values from the magnetometer. Using two points and their known angles, we were able to see that the values were close enough to linear, so we were able to map magnetometer values to heading angles.</p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">One last thing that we wanted to experiment with was the I2C baud rate. We had experienced some freezing and slowness at times from our game, and figured that it may have to do with the I2C bus as lost I2C frames can certainly lead to a program freezing. The default rate is 400 kHz which is far higher than what we require, so we dropped the baud rate to 40 kHz. We found that this change made our program significantly snappier, more responsive, and resistant to crashes.</p>
+      </div>  
+
+    <hr id='result'>
+
+      <div style="text-align:center;">
+              <h2>Results</h2>
+                 <h3 style="text-align: left; padding: 0px 30px;">Accomplishments</h3>
+                  <p style="text-align: left;padding: 0px 30px; font-size: 16px;">In the end, our game did exhibit the fruits of some significant accomplishments. The biggest accomplishment was one that we did not expect to be a major accomplishment: reading data from the 9-axis IMU. This task took more of our time than any other task, and forced us to abandon some of our more advanced ideas that we did not have time left to implement. Moreover, the code which interacted with the IMU was developed separately from the rest of the software in the system. One of the final tasks that we undertook was the integration of the IMU code with the rest of the system, and this went smoothly. Swings from the serial thread were easily replaceable by swings from the IMU, so we were able to move on and focus on other issues.</p>
+                  <br>
+                  <p style="text-align: left;padding: 0px 30px; font-size: 16px;">Additionally, we were successful in creating smooth gameplay code that interacted with the club. It is clear to see while using the club that softer swings correspond with slower ball movement, and harder swings correspond with faster ball movement. Heading was also incredibly smooth, and pivoting the club within the magnets directly corresponded with the heading vector that we displayed on the ball. </p>    
+                  <br>
+                  <p style="text-align: left;padding: 0px 30px; font-size: 16px;">Another accomplishment was the green generation code boundary.c, which could generate a new green image by just providing it with a set of ordered vertices. This combined with the fact that the collision logic only depended on finding a white pixel meant that the code is very extensible, which means that it is easy to create new holes and add them to the course.</p>
+                  <br>
+                  <p style="text-align: left;padding: 0px 30px; font-size: 16px;">We were also proud of several smaller features such as using the keypad to add 90 degrees to heading, realistic ball speeds/slowing down due to friction, and testing architectures. </p>
+                <h3 style="text-align: left; padding: 0px 30px;">Known Issues</h3>
+                  <p style="text-align: left;padding: 0px 30px; font-size: 16px;">Despite our successes, there are regrettably known issues in various areas of the program, due to there being a limited amount of time we could spend on the project. The reasons for these issues are unknown unless stated otherwise. Here is a summary:</p>
+                  <br>
+                  <ul style="text-align: left; font-size: 16px">
+                    <li>The biggest issue with gameplay is that on occasion the ball will phase through the boundary of the hole into the black area surrounding the green. This happens about once every 20 strokes.</li>
+                    <br>
+                    <li>While boundary.c was intended to be able to generate a green of any shape, there are certain shapes for which the resulting image is incorrect, either due to black covering part of the green or green covering part of the black.</li>
+                    <br>
+                    <li>The way in which swings are detected based on the accelerometer data is prone to unintended behavior. Often one swing is counted as two. A second swing occurring while the ball is in motion should be prevented.</li>
+                  </ul>
+                <h3 style="text-align: left; padding: 0px 30px;">Future Possibilities</h3>
+                  <p style="text-align: left;padding: 0px 30px; font-size: 16px;">We unfortunately ran out of time to implement some of the ideas that we had including the following:</p>
+                  <br>
+                  <ul style="text-align: left; font-size: 16px">
+                    <li>The magnetometer data is only reliable if the putter is being held within a specific location between the two magnets. Adding more magnets to create a uniform field over a plane instead of a line would make this more robust. </li>
+                    <br>
+                    <li>The speed of a swing could be calculated from the accelerometer values in a better way. One possibility would be to use a complementary filter to calculate the angle of the club with respect to the ground, and record the change in angle. Alternatively, using the original concept, the conditions that govern the state transitions in the swing FSM could be chosen more carefully. </li>
+                    <br>
+                    <li>More holes could be added with unique shapes that provide varying levels of difficulty for the player.</li>
+                    <br>
+                    <li>There could be additional objects and obstacles added to the green, such as sand or water traps, or a slope as opposed to being only flat.</li>
+                    <br>
+                    <li>There could be sound effects that accompany the game, such as the sound of the ball being hit, the ball landing in the hole, or crowd reactions.</li>
+                  </ul>
+                </div>
+
+        <hr id='conc'>
+
+      <div style="text-align:center;">
+              <h2>Conclusions</h2>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">Overall our design met many of our expectations. On the hardware front, we were able to successfully implement real-time detection of the putter’s orientation and speed. For software, we were able to repurpose the provided VGA drawing algorithms to streamline the rendering of different golf holes on the VGA screen. We were also able to implement the physics of the golf ball’s interactions with its environment, and create a framework of state machines that enables the player experience. We also came up with a way to create golf holes and store them in flash memory, and created an interface to reset the golf hole and golf ball using the keypad with debouncing implemented. All of this resulted in our final deliverable which was a working golf game, playable on a computer screen. </p>
+                <br>
+                <p style="text-align: left;padding: 0px 30px; font-size: 16px;">However, there is one thing which, in hindsight, we could have done better or differently. One such thing is that in the beginning stages of development, we spent a significant amount of time thinking about what kinds of features we eventually wanted the game to have. Many of those ideas were never attempted because we spent so much time on the basic features of the game, so that time was essentially wasted. We could have started actual work towards a smaller goal earlier on, and had more of a sense of urgency in the first week of the project, which would have resulted in a better product. </p>
+      </div>
+
+    <hr>
+
+    <div class="row" style="text-align:center;">
+          <h2>Group & Work Distribution</h2>
+          <div style="text-align:center;">
+              <img class="img-rounded" src="pics/group.JPG" alt="Group 3" style="width:70%;">
+          </div>
+          <br>
+          <div class="col-md-4" style="font-size:16px">
+              <img class="img-rounded" src="pics/test.PNG" alt="Henry Geller" width="240" height="240">
+              <h3>Henry Geller</h3>
+              <p class="lead">hng8@cornell.edu</p>
+              <p>Focused on hardware, sensor integration, and hardware testing</p>
+              <p>Group's resident golf nerd</p>
+          </div>
+          <div class="col-md-4" style="font-size:16px">
+              <img class="img-rounded" src="pics/bobby.JPG" alt="Robert (Bobby) Haig" width="240" height="240">
+              <h3>Robert Haig</h3>
+              <p class="lead">rdh247@cornell.edu</p>
+              <p>Focused on graphics, collision logic, and green generation</p>
+          </div>
+          <div class="col-md-4" style="font-size:16px">
+              <img class="img-rounded" src="pics/dan.png" alt="Daniel Wahab" width="240" height="240">
+              <h3>Daniel Wahab</h3>
+              <p class="lead">dow26@cornell.edu</p>
+              <p>Focused on graphics, green generation, and green design</p>
+          </div>
+      </div>
+
+    <hr>
+     
+    <h2>Appendix A: Permissions</h2>
+      <div style="font-size:16px">
+        <p>The group approves this report for inclusion on the course website.</p>
+        <p>The group approves the video for inclusion on the course youtube channel.</p>
+      </div>
+  
+    <h2>Appendix B: References</h2>
+      <div style="font-size:16px">
+        <p>[1] V. Hunter Adams. "PIO Assembly VGA Driver for RP2040 (Raspberry Pi Pico)." Accessed May 2025. [Online]. Available: <a href="https://vanhunteradams.com/Pico/VGA/VGA.html">https://vanhunteradams.com/Pico/VGA/VGA.html</a></p>
+        <p>[2] TDK. ICM-20948. "World's Lowest Power 9-Axis MEMS MotionTracking™ Device." DS-000189. Jun, 2017. [Online]. Available: <a href="https://cdn.sparkfun.com/assets/7/f/e/c/d/DS-000189-ICM-20948-v1.3.pdf">https://cdn.sparkfun.com/assets/7/f/e/c/d/DS-000189-ICM-20948-v1.3.pdf</a></p>
+        <p>[3] V. Hunter Adams. "Interfacing a 3x4 matrix keypad with RP2040." [Online]. Accessed May 2025. Available: <a href="https://vanhunteradams.com/Pico/Keypad/Keypad.html">https://vanhunteradams.com/Pico/Keypad/Keypad.html</a></p>
+        <p>[4] V. Hunter Adams. vga16_graphics.c [Online]. Available: <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master/VGA_Graphics">https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master/VGA_Graphics</a></p>
+        <p>[5] SparkFun Electronics. "SparkFun 9DoF IMU Breakout - ICM-20948 (Qwiic)." Accessed May 2025. [Online] Available:  <a href="https://www.sparkfun.com/sparkfun-9dof-imu-breakout-icm-20948-qwiic.html">https://www.sparkfun.com/sparkfun-9dof-imu-breakout-icm-20948-qwiic.html</a></p>
+        <p>[6] D. Tornqvist. "icm-20948-arduino-library." Github.com. Accessed May 2025. [Online]. Available: <a href="https://github.com/dtornqvist/icm-20948-arduino-library/tree/master/src">https://github.com/dtornqvist/icm-20948-arduino-library/tree/master/src</a></p>
+        <p>[7] Javalab. "Magnets and Electromagnets." javalab.org. Accessed May 2025. [Online]. Available: <a href="https://javalab.org/en/magnet_and_electromagnet_en/">https://javalab.org/en/magnet_and_electromagnet_en/</a></p>
+        <p>[8] Hilite.me. Accessed May 2025. [Online]. Available: <a href="http://hilite.me">http://hilite.me</a></p>
+        <p>[9] J. Skovira. ECE 5725 Final Project Website Sample HTML Code.</p>
+
+      </div>
+
+    <h2>Appendix C: Parts List</h2>
+     <div style="font-size:16px">
+          <ul>
+              <li>Raspberry Pi Pico</li>
+              <li>12-Key Keypad</li>
+              <li>VGA Monitor</li>
+              <a href="https://www.sparkfun.com/sparkfun-9dof-imu-breakout-icm-20948-qwiic.html"><li>SparkFun 9DoF IMU Breakout ICM-20948</li> </a>
+              <li>Henry's old Tour Edge Reaction 3 Putter</li>
+              <li>Elmer's Foam Sheet</li>
+              <li>Magnets, Breadboard, Wires, Resistors, etc - Provided by lab</li>
+          </ul>
+      </div>
+
+  <div class="row">
+      <h2>Appendix D: Code</h2>
+
+      <h4>animation.c</h4>
+        <!-- HTML generated using hilite.me --><div style="background: #eeeedd; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><table><tr><td><pre style="margin: 0; line-height: 125%">  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465
+466
+467
+468
+469
+470
+471
+472
+473
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484
+485
+486
+487
+488
+489
+490
+491
+492
+493
+494
+495
+496
+497
+498
+499
+500
+501
+502
+503
+504
+505
+506
+507
+508
+509
+510
+511
+512
+513
+514
+515
+516
+517
+518
+519
+520
+521
+522
+523
+524
+525
+526
+527
+528
+529
+530
+531
+532
+533
+534
+535
+536
+537
+538
+539
+540
+541
+542
+543
+544
+545
+546
+547
+548
+549
+550
+551
+552
+553
+554
+555
+556
+557
+558
+559
+560
+561
+562
+563
+564
+565
+566
+567
+568
+569
+570
+571
+572
+573
+574
+575
+576
+577
+578
+579
+580
+581
+582
+583
+584
+585
+586
+587
+588
+589
+590
+591
+592
+593
+594
+595
+596
+597
+598
+599
+600
+601
+602
+603
+604
+605
+606
+607
+608
+609
+610
+611
+612
+613
+614
+615
+616
+617
+618
+619
+620
+621
+622
+623
+624
+625
+626
+627
+628
+629
+630
+631
+632
+633
+634
+635
+636
+637
+638
+639
+640
+641
+642
+643
+644
+645
+646
+647
+648
+649
+650
+651
+652
+653
+654
+655
+656
+657
+658
+659
+660
+661
+662
+663
+664
+665
+666
+667
+668
+669
+670
+671
+672
+673
+674
+675
+676
+677
+678
+679
+680
+681
+682
+683
+684
+685
+686
+687
+688
+689
+690
+691
+692
+693
+694
+695
+696
+697
+698
+699
+700
+701
+702
+703
+704
+705
+706
+707
+708
+709
+710
+711
+712
+713
+714
+715
+716
+717
+718
+719
+720
+721
+722
+723
+724
+725
+726
+727
+728
+729
+730
+731
+732
+733
+734
+735
+736
+737
+738
+739
+740
+741
+742
+743
+744
+745
+746
+747
+748
+749
+750
+751
+752
+753
+754
+755
+756
+757
+758
+759
+760
+761
+762
+763
+764
+765
+766
+767
+768
+769
+770
+771
+772
+773
+774
+775
+776
+777
+778
+779
+780
+781
+782
+783
+784
+785
+786
+787
+788
+789
+790
+791
+792
+793
+794
+795
+796
+797
+798
+799
+800
+801
+802
+803
+804
+805
+806
+807
+808
+809
+810
+811
+812
+813
+814
+815
+816
+817
+818
+819
+820
+821
+822
+823
+824
+825
+826
+827
+828
+829
+830
+831
+832
+833
+834
+835
+836
+837
+838
+839
+840
+841
+842
+843
+844
+845
+846
+847
+848
+849
+850
+851
+852
+853
+854
+855
+856
+857
+858
+859
+860
+861
+862
+863
+864
+865
+866
+867
+868
+869
+870
+871
+872
+873
+874
+875
+876
+877
+878
+879
+880
+881
+882
+883
+884
+885
+886
+887
+888
+889
+890
+891
+892
+893
+894
+895
+896
+897
+898
+899
+900
+901
+902
+903
+904
+905
+906
+907
+908
+909
+910
+911
+912
+913
+914
+915
+916
+917
+918
+919
+920
+921
+922
+923
+924
+925
+926
+927
+928
+929
+930
+931
+932
+933
+934
+935
+936
+937
+938
+939
+940
+941
+942
+943
+944
+945
+946
+947
+948
+949
+950
+951
+952
+953
+954
+955
+956
+957
+958
+959
+960
+961
+962
+963
+964</pre></td><td><pre style="margin: 0; line-height: 125%"><span style="color: #228B22">/**</span>
+<span style="color: #228B22">ECE 4760: Digital Systems Design Using Microcontrollers</span>
+<span style="color: #228B22">Mini-Golf Simulator</span>
+<span style="color: #228B22">Robert Haig (rdh247), Henry Geller (hng8), Daniel Wahab (dow26)</span>
+<span style="color: #228B22">Demonstrated to course staff 5/9/25</span>
+<span style="color: #228B22">*/</span>
+
+
+<span style="color: #228B22">// Include standard libraries</span>
+<span style="color: #1e889b">#include &lt;stdio.h&gt;</span>
+<span style="color: #1e889b">#include &lt;stdlib.h&gt;</span>
+<span style="color: #1e889b">#include &lt;math.h&gt;</span>
+<span style="color: #1e889b">#include &lt;string.h&gt;</span>
+<span style="color: #228B22">// Include Pico libraries</span>
+<span style="color: #1e889b">#include &quot;pico/stdlib.h&quot;</span>
+<span style="color: #1e889b">#include &quot;pico/divider.h&quot;</span>
+<span style="color: #1e889b">#include &quot;pico/multicore.h&quot;</span>
+<span style="color: #228B22">// Include hardware libraries</span>
+<span style="color: #1e889b">#include &quot;hardware/pio.h&quot;</span>
+<span style="color: #1e889b">#include &quot;hardware/dma.h&quot;</span>
+<span style="color: #1e889b">#include &quot;hardware/clocks.h&quot;</span>
+<span style="color: #1e889b">#include &quot;hardware/pll.h&quot;</span>
+<span style="color: #1e889b">#include &quot;hardware/i2c.h&quot;</span>
+<span style="color: #1e889b">#include &quot;hardware/pwm.h&quot;</span>
+<span style="color: #1e889b">#include &quot;hardware/sync.h&quot;</span>
+<span style="color: #228B22">// Include the VGA graphics library</span>
+<span style="color: #1e889b">#include &quot;vga16_graphics.h&quot;</span>
+<span style="color: #228B22">// Include protothreads</span>
+<span style="color: #1e889b">#include &quot;pt_cornell_rp2040_v1_3.h&quot;</span>
+<span style="color: #228B22">// flash data</span>
+<span style="color: #1e889b">#include &quot;greens1.h&quot;</span>
+<span style="color: #1e889b">#include &quot;greens2.h&quot;</span>
+<span style="color: #1e889b">#include &quot;greens3.h&quot;</span>
+<span style="color: #1e889b">#include &quot;greens4.h&quot;</span>
+<span style="color: #1e889b">#include &quot;greens5.h&quot;</span>
+
+
+<span style="color: #228B22">// Fixed point data type</span>
+<span style="color: #8B008B; font-weight: bold">typedef</span> <span style="color: #a7a7a7; font-weight: bold">signed</span> <span style="color: #a7a7a7; font-weight: bold">int</span> fix15 ;
+<span style="color: #1e889b">#define multfix15(a,b) ((fix15)(((( signed long long)(a))*(( signed long long)(b)))&gt;&gt;16))</span>
+<span style="color: #1e889b">#define float2fix15(a) ((fix15)((a)*65536.0f)) </span><span style="color: #228B22">// 2^16</span>
+<span style="color: #1e889b">#define fix2float15(a) ((float)(a)/65536.0f)</span>
+<span style="color: #1e889b">#define int2fix15(a) ((a)&lt;&lt;16)</span>
+<span style="color: #1e889b">#define fix2int15(a) ((a)&gt;&gt;16)</span>
+<span style="color: #1e889b">#define divfix(a,b) ((fix15)(((( signed long long)(a) &lt;&lt; 16 / (b)))))</span>
+<span style="color: #1e889b">#define absfix15(a) abs(a)</span>
+<span style="color: #1e889b">#define char2fix15(a) (fix15)(((fix15)(a)) &lt;&lt; 15)</span>
+
+
+<span style="color: #228B22">///////////////////////////////////// OVERALL //////////////////////////////////////</span>
+<span style="color: #1e889b">#define IMU_RATE 10000</span>
+<span style="color: #1e889b">#define FRAME_RATE 33000</span>
+<span style="color: #1e889b">#define FRICTION 0.98</span>
+
+
+<span style="color: #a7a7a7; font-weight: bold">int</span> num_strokes = <span style="color: #B452CD">0</span>;
+<span style="color: #a7a7a7; font-weight: bold">int</span> round_score = <span style="color: #B452CD">0</span>;
+<span style="color: #a7a7a7; font-weight: bold">bool</span> game_over = <span style="color: #658b00">false</span>;
+
+
+<span style="color: #8B008B; font-weight: bold">enum</span> State {
+  SIZING_UP,
+  BALL_IN_MOTION,
+  SUNK
+};      
+<span style="color: #8B008B; font-weight: bold">enum</span> State STATE;
+
+
+<span style="color: #228B22">///////////////////////////////////// BALL //////////////////////////////////////</span>
+<span style="color: #a7a7a7; font-weight: bold">char</span> ball_color = WHITE ;
+<span style="color: #a7a7a7; font-weight: bold">double</span> speed;
+<span style="color: #a7a7a7; font-weight: bold">double</span> ball_direction;
+<span style="color: #a7a7a7; font-weight: bold">bool</span> swing;
+<span style="color: #a7a7a7; font-weight: bold">bool</span> hole_in_progress;
+fix15 ball_x;
+fix15 ball_y;
+fix15 ball_vx;
+fix15 ball_vy;
+
+
+<span style="color: #228B22">///////////////////////////////////// HOLE //////////////////////////////////////</span>
+<span style="color: #1e889b">#define HOLE_RADIUS 8</span>
+<span style="color: #a7a7a7; font-weight: bold">int</span> num_hole;
+<span style="color: #a7a7a7; font-weight: bold">short</span> hole_x;
+<span style="color: #a7a7a7; font-weight: bold">short</span> hole_y;
+<span style="color: #a7a7a7; font-weight: bold">short</span> par;
+<span style="color: #a7a7a7; font-weight: bold">int</span> ball_start_x;
+<span style="color: #a7a7a7; font-weight: bold">int</span> ball_start_y;
+
+
+<span style="color: #228B22">///////////////////////////////////// GREEN //////////////////////////////////////</span>
+<span style="color: #228B22">// for drawLine</span>
+<span style="color: #1e889b">#define swap(a, b) { short t = a; a = b; b = t; }</span>
+
+
+<span style="color: #8B008B; font-weight: bold">typedef</span> <span style="color: #8B008B; font-weight: bold">struct</span>{
+  <span style="color: #a7a7a7; font-weight: bold">short</span> x;
+  <span style="color: #a7a7a7; font-weight: bold">short</span> y;
+} Pixel;  
+Pixel vertices[<span style="color: #B452CD">20</span>];
+<span style="color: #a7a7a7; font-weight: bold">int</span> num_vertices;
+
+
+<span style="color: #8B008B; font-weight: bold">typedef</span> <span style="color: #8B008B; font-weight: bold">struct</span> {
+  <span style="color: #a7a7a7; font-weight: bold">short</span> low_x;
+  <span style="color: #a7a7a7; font-weight: bold">short</span> high_x;
+  <span style="color: #a7a7a7; font-weight: bold">short</span> low_y;
+  <span style="color: #a7a7a7; font-weight: bold">short</span> high_y;
+  fix15 nx;
+  fix15 ny;
+} Side;      
+Side sides[<span style="color: #B452CD">20</span>];
+
+
+<span style="color: #228B22">///////////////////////////////////// SWINGS //////////////////////////////////////</span>
+<span style="color: #a7a7a7; font-weight: bold">double</span> heading_angle;
+<span style="color: #a7a7a7; font-weight: bold">bool</span> heading_locked_in = <span style="color: #658b00">false</span>;
+<span style="color: #a7a7a7; font-weight: bold">int</span> counter = <span style="color: #B452CD">0</span>;
+<span style="color: #a7a7a7; font-weight: bold">float</span> accel_accum = <span style="color: #B452CD">0.0</span>;
+<span style="color: #a7a7a7; font-weight: bold">int</span> heading_vector_bias = <span style="color: #B452CD">0</span>;
+
+
+<span style="color: #8B008B; font-weight: bold">enum</span> Swing_State {
+  IDLE,
+  BACKSWING,
+  FRONTSWING
+};        
+<span style="color: #8B008B; font-weight: bold">enum</span> State SWING_STATE;
+
+
+<span style="color: #8B008B; font-weight: bold">typedef</span> <span style="color: #8B008B; font-weight: bold">struct</span>  {
+  <span style="color: #a7a7a7; font-weight: bold">short</span> ball_x;
+  <span style="color: #a7a7a7; font-weight: bold">short</span> ball_y;
+  <span style="color: #a7a7a7; font-weight: bold">short</span> heading_x;
+  <span style="color: #a7a7a7; font-weight: bold">short</span> heading_y;
+} Heading_Vector;    
+Heading_Vector last_heading_vector;
+
+
+<span style="color: #228B22">//////// FIFO queue of heading readings ///////////</span>
+<span style="color: #1e889b">#define QUEUE_SIZE 20</span>
+
+
+<span style="color: #a7a7a7; font-weight: bold">float</span> q_heading_values[<span style="color: #B452CD">20</span>];
+<span style="color: #a7a7a7; font-weight: bold">int</span> q_head = <span style="color: #B452CD">0</span>;
+<span style="color: #a7a7a7; font-weight: bold">int</span> q_tail = <span style="color: #B452CD">0</span>;
+<span style="color: #a7a7a7; font-weight: bold">int</span> q_count = <span style="color: #B452CD">0</span>;
+
+
+<span style="color: #a7a7a7; font-weight: bold">float</span> <span style="color: #008b45">queue_avg</span>(){
+  <span style="color: #a7a7a7; font-weight: bold">float</span> sum = <span style="color: #B452CD">0</span>;
+  <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>; i &lt; QUEUE_SIZE; i++){
+    sum += q_heading_values[i];
+  }  
+  <span style="color: #8B008B; font-weight: bold">return</span> sum / <span style="color: #B452CD">20.0</span>;
+}  
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">enqueue</span>(<span style="color: #a7a7a7; font-weight: bold">float</span> heading_value){
+  q_heading_values[q_tail] = heading_value;
+  q_tail = (q_tail + <span style="color: #B452CD">1</span>) % QUEUE_SIZE;
+  q_count++;
+}  
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">dequeue</span>(){
+  q_head = (q_head + <span style="color: #B452CD">1</span>) % QUEUE_SIZE;
+  q_count--;
+}  
+
+
+<span style="color: #a7a7a7; font-weight: bold">bool</span> <span style="color: #008b45">queue_full</span>(){
+  <span style="color: #8B008B; font-weight: bold">if</span> (q_count == QUEUE_SIZE){
+    <span style="color: #8B008B; font-weight: bold">return</span> <span style="color: #658b00">true</span>;
+  }  
+  <span style="color: #8B008B; font-weight: bold">else</span> {
+    <span style="color: #8B008B; font-weight: bold">return</span> <span style="color: #658b00">false</span>;
+  }  
+}  
+
+
+<span style="color: #228B22">///////////////////////////////////// COLLISIONS //////////////////////////////////////</span>
+<span style="color: #228B22">// for sensing surrounding pixels</span>
+<span style="color: #a7a7a7; font-weight: bold">short</span> dx[<span style="color: #B452CD">48</span>] = {<span style="color: #B452CD">0</span>,<span style="color: #B452CD">1</span>,<span style="color: #B452CD">2</span>,<span style="color: #B452CD">3</span>,<span style="color: #B452CD">3</span>,<span style="color: #B452CD">4</span>,<span style="color: #B452CD">4</span>,<span style="color: #B452CD">5</span>,<span style="color: #B452CD">5</span>,<span style="color: #B452CD">5</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">5</span>,<span style="color: #B452CD">5</span>,<span style="color: #B452CD">5</span>,<span style="color: #B452CD">4</span>,<span style="color: #B452CD">4</span>,<span style="color: #B452CD">3</span>,<span style="color: #B452CD">3</span>,<span style="color: #B452CD">2</span>,<span style="color: #B452CD">1</span>,<span style="color: #B452CD">0</span>,-<span style="color: #B452CD">1</span>,-<span style="color: #B452CD">2</span>,-<span style="color: #B452CD">3</span>,-<span style="color: #B452CD">3</span>,-<span style="color: #B452CD">4</span>,-<span style="color: #B452CD">4</span>,-<span style="color: #B452CD">5</span>,
+  -<span style="color: #B452CD">5</span>,-<span style="color: #B452CD">5</span>,-<span style="color: #B452CD">6</span>,-<span style="color: #B452CD">6</span>,-<span style="color: #B452CD">6</span>,-<span style="color: #B452CD">6</span>,-<span style="color: #B452CD">6</span>,-<span style="color: #B452CD">5</span>,-<span style="color: #B452CD">5</span>,-<span style="color: #B452CD">5</span>,-<span style="color: #B452CD">4</span>,-<span style="color: #B452CD">4</span>,-<span style="color: #B452CD">3</span>,-<span style="color: #B452CD">3</span>,-<span style="color: #B452CD">2</span>,-<span style="color: #B452CD">1</span>};
+<span style="color: #a7a7a7; font-weight: bold">short</span> dy[<span style="color: #B452CD">48</span>] = {-<span style="color: #B452CD">6</span>,-<span style="color: #B452CD">6</span>,-<span style="color: #B452CD">6</span>,-<span style="color: #B452CD">6</span>,-<span style="color: #B452CD">5</span>,-<span style="color: #B452CD">5</span>,-<span style="color: #B452CD">4</span>,-<span style="color: #B452CD">4</span>,-<span style="color: #B452CD">3</span>,-<span style="color: #B452CD">2</span>,-<span style="color: #B452CD">2</span>,-<span style="color: #B452CD">1</span>,<span style="color: #B452CD">0</span>,<span style="color: #B452CD">1</span>,<span style="color: #B452CD">2</span>,<span style="color: #B452CD">2</span>,<span style="color: #B452CD">3</span>,<span style="color: #B452CD">4</span>,<span style="color: #B452CD">4</span>,<span style="color: #B452CD">5</span>,<span style="color: #B452CD">5</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">6</span>,<span style="color: #B452CD">5</span>,
+  <span style="color: #B452CD">5</span>,<span style="color: #B452CD">4</span>,<span style="color: #B452CD">4</span>,<span style="color: #B452CD">3</span>,<span style="color: #B452CD">2</span>,<span style="color: #B452CD">2</span>,<span style="color: #B452CD">1</span>,<span style="color: #B452CD">0</span>,-<span style="color: #B452CD">1</span>,-<span style="color: #B452CD">2</span>,-<span style="color: #B452CD">2</span>,-<span style="color: #B452CD">3</span>,-<span style="color: #B452CD">4</span>,-<span style="color: #B452CD">4</span>,-<span style="color: #B452CD">5</span>,-<span style="color: #B452CD">5</span>,-<span style="color: #B452CD">6</span>,-<span style="color: #B452CD">6</span>,-<span style="color: #B452CD">6</span>,};
+<span style="color: #a7a7a7; font-weight: bold">bool</span> collision_ongoing = <span style="color: #658b00">false</span>;
+<span style="color: #a7a7a7; font-weight: bold">bool</span> in_collision = <span style="color: #658b00">false</span>;
+<span style="color: #a7a7a7; font-weight: bold">int</span> last_detected_side = -<span style="color: #B452CD">1</span>;
+
+
+<span style="color: #228B22">///////////////////////////////////// KEYPAD //////////////////////////////////////</span>
+<span style="color: #1e889b">#define BASE_KEYPAD_PIN 9</span>
+<span style="color: #1e889b">#define KEYROWS 4</span>
+<span style="color: #1e889b">#define NUMKEYS 12</span>
+
+
+<span style="color: #a7a7a7; font-weight: bold">unsigned</span> <span style="color: #a7a7a7; font-weight: bold">int</span> keycodes[<span style="color: #B452CD">12</span>] = {<span style="color: #B452CD">0x28</span>, <span style="color: #B452CD">0x11</span>, <span style="color: #B452CD">0x21</span>, <span style="color: #B452CD">0x41</span>, <span style="color: #B452CD">0x12</span>, <span style="color: #B452CD">0x22</span>, <span style="color: #B452CD">0x42</span>, <span style="color: #B452CD">0x14</span>, <span style="color: #B452CD">0x24</span>,
+  <span style="color: #B452CD">0x44</span>, <span style="color: #B452CD">0x18</span>, <span style="color: #B452CD">0x48</span>};
+<span style="color: #a7a7a7; font-weight: bold">unsigned</span> <span style="color: #a7a7a7; font-weight: bold">int</span> scancodes[<span style="color: #B452CD">4</span>] = {<span style="color: #B452CD">0x01</span>, <span style="color: #B452CD">0x02</span>, <span style="color: #B452CD">0x04</span>, <span style="color: #B452CD">0x08</span>};                  
+<span style="color: #a7a7a7; font-weight: bold">unsigned</span> <span style="color: #a7a7a7; font-weight: bold">int</span> button = <span style="color: #B452CD">0x70</span>;
+<span style="color: #8B008B; font-weight: bold">volatile</span> <span style="color: #a7a7a7; font-weight: bold">int</span> press_val = -<span style="color: #B452CD">1</span>;
+<span style="color: #a7a7a7; font-weight: bold">int</span> prev_key = <span style="color: #B452CD">0</span>;
+<span style="color: #a7a7a7; font-weight: bold">char</span> keytext[<span style="color: #B452CD">40</span>];
+
+
+<span style="color: #8B008B; font-weight: bold">enum</span> Debouncing_State {
+  NOT_PRESSED,
+  MAYBE_PRESSED,
+  PRESSED,
+  MAYBE_NOT_PRESSED
+};              
+<span style="color: #8B008B; font-weight: bold">enum</span> Debouncing_State DB_STATE;
+
+
+<span style="color: #228B22">///////////////////////////////////// IMU //////////////////////////////////////</span>
+<span style="color: #1e889b">#define I2C_CHAN i2c1</span>
+<span style="color: #1e889b">#define SDA_PIN  26 </span><span style="color: #228B22">//gpio 8, pin 11</span>
+<span style="color: #1e889b">#define SCL_PIN  27 </span><span style="color: #228B22">//gpio 9, pin 12</span>
+<span style="color: #1e889b">#define I2C_BAUD_RATE 40000 </span><span style="color: #228B22">//per the datasheet</span>
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">icm20948_reset</span>(<span style="color: #a7a7a7; font-weight: bold">void</span>) ;
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">icm20948_read_raw</span>(fix15 accel[<span style="color: #B452CD">3</span>], fix15 gyro[<span style="color: #B452CD">3</span>], fix15 magno[<span style="color: #B452CD">3</span>]) ;
+
+
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #8B008B; font-weight: bold">struct</span> pt_sem serial_semaphore ;
+
+
+fix15 acceleration[<span style="color: #B452CD">3</span>], gyro[<span style="color: #B452CD">3</span>], mag[<span style="color: #B452CD">3</span>];
+
+
+<span style="color: #228B22">///////////////////////////////////// ISR //////////////////////////////////////</span>
+<span style="color: #1e889b">#define ALARM_NUM 0</span>
+<span style="color: #1e889b">#define ALARM_IRQ TIMER_IRQ_0</span>
+<span style="color: #1e889b">#define DELAY 10000</span>
+
+
+
+
+<span style="color: #228B22">///////////////////////////////////// FUNCTIONS //////////////////////////////////////</span>
+<span style="color: #228B22">// given the two endpoints of a side, calculate the maxima of x and y,</span>
+<span style="color: #228B22">// and calculate the normal vector</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">rectBoundsAndNormal</span>(Pixel vertex_a, Pixel vertex_b, <span style="color: #a7a7a7; font-weight: bold">int</span> n){
+  <span style="color: #8B008B; font-weight: bold">if</span> (vertex_a.x &gt; vertex_b.x){
+    sides[n].high_x = vertex_a.x;
+    sides[n].low_x = vertex_b.x;
+  }
+  <span style="color: #8B008B; font-weight: bold">else</span>{
+    sides[n].high_x = vertex_b.x;
+    sides[n].low_x = vertex_a.x;
+  }
+  <span style="color: #8B008B; font-weight: bold">if</span> (vertex_a.y &gt; vertex_b.y){
+    sides[n].high_y = vertex_a.y;
+    sides[n].low_y = vertex_b.y;
+  }
+  <span style="color: #8B008B; font-weight: bold">else</span>{
+    sides[n].high_y = vertex_b.y;
+    sides[n].low_y = vertex_a.y;
+  }
+  <span style="color: #a7a7a7; font-weight: bold">int</span> r_x = vertex_b.x - vertex_a.x;
+  <span style="color: #a7a7a7; font-weight: bold">int</span> r_y = vertex_b.y - vertex_a.y;
+  <span style="color: #a7a7a7; font-weight: bold">float</span> norm = (<span style="color: #a7a7a7; font-weight: bold">float</span>)(sqrt(r_x*r_x + r_y*r_y));
+  fix15 r_x_norm = float2fix15(r_x / norm);
+  fix15 r_y_norm = float2fix15(r_y / norm);
+  sides[n].nx = -r_y_norm;
+  sides[n].ny = r_x_norm;
+}
+
+
+<span style="color: #228B22">// call rectBoundsAndNormal() on every side of the shape</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">boundaryInfo</span>(Pixel vertices[]){
+  <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> n = <span style="color: #B452CD">0</span>; n &lt; num_vertices; n++){
+    <span style="color: #8B008B; font-weight: bold">if</span> (n == num_vertices - <span style="color: #B452CD">1</span>){
+      rectBoundsAndNormal(vertices[n], vertices[<span style="color: #B452CD">0</span>], n);
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span>{
+      rectBoundsAndNormal(vertices[n], vertices[n+<span style="color: #B452CD">1</span>], n);
+    }
+  }
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">drawBoundary</span>(Pixel vertices[]) {
+  <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> n = <span style="color: #B452CD">0</span>; n &lt; num_vertices; n++){
+    <span style="color: #8B008B; font-weight: bold">if</span> (n == num_vertices - <span style="color: #B452CD">1</span>){
+      drawLine(vertices[n].x, vertices[n].y, vertices[<span style="color: #B452CD">0</span>].x, vertices[<span style="color: #B452CD">0</span>].y, WHITE);
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span>{
+      drawLine(vertices[n].x, vertices[n].y, vertices[n+<span style="color: #B452CD">1</span>].x, vertices[n+<span style="color: #B452CD">1</span>].y, WHITE);
+    }
+  }
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">drawGolfBall</span>(fix15 x0, fix15 y0, <span style="color: #a7a7a7; font-weight: bold">char</span> color) {
+  x0 = (<span style="color: #a7a7a7; font-weight: bold">short</span>)(fix2int15(x0));
+  y0 = (<span style="color: #a7a7a7; font-weight: bold">short</span>)(fix2int15(y0));
+  drawHLine(x0-<span style="color: #B452CD">1</span>, y0-<span style="color: #B452CD">5</span>, <span style="color: #B452CD">3</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">3</span>, y0-<span style="color: #B452CD">4</span>, <span style="color: #B452CD">7</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">4</span>, y0-<span style="color: #B452CD">3</span>, <span style="color: #B452CD">9</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">4</span>, y0-<span style="color: #B452CD">2</span>, <span style="color: #B452CD">9</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">5</span>, y0-<span style="color: #B452CD">1</span>, <span style="color: #B452CD">11</span>, color);
+  drawHLine(x0-<span style="color: #B452CD">5</span>, y0,   <span style="color: #B452CD">1</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">4</span>, y0,   <span style="color: #B452CD">9</span>,  BLACK);
+  drawHLine(x0+<span style="color: #B452CD">5</span>, y0,   <span style="color: #B452CD">1</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">5</span>, y0+<span style="color: #B452CD">1</span>, <span style="color: #B452CD">11</span>, color);
+  drawHLine(x0-<span style="color: #B452CD">4</span>, y0+<span style="color: #B452CD">2</span>, <span style="color: #B452CD">9</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">4</span>, y0+<span style="color: #B452CD">3</span>, <span style="color: #B452CD">9</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">3</span>, y0+<span style="color: #B452CD">4</span>, <span style="color: #B452CD">7</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">1</span>, y0+<span style="color: #B452CD">5</span>, <span style="color: #B452CD">3</span>,  color);
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">eraseGolfBall</span>(fix15 x0, fix15 y0) {
+  x0 = (<span style="color: #a7a7a7; font-weight: bold">short</span>)(fix2int15(x0));
+  y0 = (<span style="color: #a7a7a7; font-weight: bold">short</span>)(fix2int15(y0));
+  <span style="color: #a7a7a7; font-weight: bold">char</span> color = DARK_GREEN;
+  drawHLine(x0-<span style="color: #B452CD">1</span>, y0-<span style="color: #B452CD">5</span>, <span style="color: #B452CD">3</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">3</span>, y0-<span style="color: #B452CD">4</span>, <span style="color: #B452CD">7</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">4</span>, y0-<span style="color: #B452CD">3</span>, <span style="color: #B452CD">9</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">4</span>, y0-<span style="color: #B452CD">2</span>, <span style="color: #B452CD">9</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">5</span>, y0-<span style="color: #B452CD">1</span>, <span style="color: #B452CD">11</span>, color);
+  drawHLine(x0-<span style="color: #B452CD">5</span>, y0,   <span style="color: #B452CD">1</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">4</span>, y0,   <span style="color: #B452CD">9</span>,  color);
+  drawHLine(x0+<span style="color: #B452CD">5</span>, y0,   <span style="color: #B452CD">1</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">5</span>, y0+<span style="color: #B452CD">1</span>, <span style="color: #B452CD">11</span>, color);
+  drawHLine(x0-<span style="color: #B452CD">4</span>, y0+<span style="color: #B452CD">2</span>, <span style="color: #B452CD">9</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">4</span>, y0+<span style="color: #B452CD">3</span>, <span style="color: #B452CD">9</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">3</span>, y0+<span style="color: #B452CD">4</span>, <span style="color: #B452CD">7</span>,  color);
+  drawHLine(x0-<span style="color: #B452CD">1</span>, y0+<span style="color: #B452CD">5</span>, <span style="color: #B452CD">3</span>,  color);
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">drawHole</span>(<span style="color: #a7a7a7; font-weight: bold">short</span> x, <span style="color: #a7a7a7; font-weight: bold">short</span> y, <span style="color: #a7a7a7; font-weight: bold">short</span> r) {
+  fillCircle(x, y, r, BLACK);
+}  
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">drawHeadingVector</span>(<span style="color: #a7a7a7; font-weight: bold">double</span> direction){
+  <span style="color: #228B22">// first point for drawLine is the pixel just above the center of the ball</span>
+  <span style="color: #228B22">// calculate second point based on first point and direction</span>
+  <span style="color: #a7a7a7; font-weight: bold">int</span> vector_length = <span style="color: #B452CD">40</span>;
+  direction = direction * (M_PI / <span style="color: #B452CD">180.0</span>);
+  <span style="color: #a7a7a7; font-weight: bold">short</span> ball_x_short = (<span style="color: #a7a7a7; font-weight: bold">short</span>) fix2int15(ball_x);
+  <span style="color: #a7a7a7; font-weight: bold">short</span> ball_y_short = (<span style="color: #a7a7a7; font-weight: bold">short</span>) fix2int15(ball_y) - <span style="color: #B452CD">1</span>;
+  <span style="color: #a7a7a7; font-weight: bold">short</span> heading_x = ball_x_short + (<span style="color: #a7a7a7; font-weight: bold">short</span>)(vector_length*sin(direction));
+  <span style="color: #a7a7a7; font-weight: bold">short</span> heading_y = ball_y_short - (<span style="color: #a7a7a7; font-weight: bold">short</span>)(vector_length*cos(direction));
+  drawLine(ball_x_short, ball_y_short, heading_x, heading_y, ball_color);
+  last_heading_vector.ball_x = ball_x_short;
+  last_heading_vector.ball_y = ball_y_short;
+  last_heading_vector.heading_x = heading_x;
+  last_heading_vector.heading_y = heading_y;
+}  
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">eraseHeadingVector</span>(){
+  drawLine(last_heading_vector.ball_x, last_heading_vector.ball_y, last_heading_vector.heading_x, last_heading_vector.heading_y, DARK_GREEN);
+}  
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">displayScores</span>(){
+  setCursor(<span style="color: #B452CD">580</span>, <span style="color: #B452CD">5</span>);
+  <span style="color: #a7a7a7; font-weight: bold">char</span> str[<span style="color: #B452CD">20</span>] = <span style="color: #CD5555">&quot;&quot;</span>;
+  <span style="color: #8B008B; font-weight: bold">if</span> (round_score == <span style="color: #B452CD">0</span>){
+    strcat(str, <span style="color: #CD5555">&quot;E&quot;</span>);
+  }
+  <span style="color: #8B008B; font-weight: bold">else</span> {
+    sprintf(str, <span style="color: #CD5555">&quot;%d&quot;</span>, round_score);
+  }
+  <span style="color: #a7a7a7; font-weight: bold">char</span> score_text[<span style="color: #B452CD">100</span>] = <span style="color: #CD5555">&quot;Score: &quot;</span>;
+  strcat(score_text, str);
+  fillRect(<span style="color: #B452CD">580</span>, <span style="color: #B452CD">5</span>, <span style="color: #B452CD">180</span>, <span style="color: #B452CD">50</span>, BLACK);
+  writeString(score_text);
+ 
+  setCursor(<span style="color: #B452CD">580</span>, <span style="color: #B452CD">15</span>);
+  <span style="color: #a7a7a7; font-weight: bold">char</span> str2[<span style="color: #B452CD">20</span>] = <span style="color: #CD5555">&quot;&quot;</span>;
+  sprintf(str2, <span style="color: #CD5555">&quot;%d&quot;</span>, num_hole);
+  <span style="color: #a7a7a7; font-weight: bold">char</span> par_text[<span style="color: #B452CD">100</span>] = <span style="color: #CD5555">&quot;Hole #&quot;</span>;
+  strcat(par_text, str2);
+  writeString(par_text);
+ 
+  setCursor(<span style="color: #B452CD">580</span>, <span style="color: #B452CD">25</span>);
+  <span style="color: #a7a7a7; font-weight: bold">char</span> str3[<span style="color: #B452CD">20</span>] = <span style="color: #CD5555">&quot;&quot;</span>;
+  sprintf(str3, <span style="color: #CD5555">&quot;%d&quot;</span>, par);
+  <span style="color: #a7a7a7; font-weight: bold">char</span> text3[<span style="color: #B452CD">100</span>] = <span style="color: #CD5555">&quot;Par: &quot;</span>;
+  strcat(text3, str3);
+  writeString(text3);
+ 
+  setCursor(<span style="color: #B452CD">580</span>, <span style="color: #B452CD">35</span>);
+  <span style="color: #a7a7a7; font-weight: bold">char</span> str4[<span style="color: #B452CD">20</span>] = <span style="color: #CD5555">&quot;&quot;</span>;
+  sprintf(str4, <span style="color: #CD5555">&quot;%d&quot;</span>, num_strokes);
+  <span style="color: #a7a7a7; font-weight: bold">char</span> text4[<span style="color: #B452CD">100</span>] = <span style="color: #CD5555">&quot;Strokes: &quot;</span>;
+  strcat(text4, str4);
+  writeString(text4);
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">initHole</span>(<span style="color: #a7a7a7; font-weight: bold">int</span> num_hole){
+  <span style="color: #8B008B; font-weight: bold">switch</span> (num_hole){
+    <span style="color: #8B008B; font-weight: bold">case</span> <span style="color: #B452CD">1</span>:
+    hole_x = hole_x1;
+    hole_y = hole_y1;
+    par = par1;
+    ball_start_x = ball_start_x1;
+    ball_start_y = ball_start_y1;
+    num_vertices = num_vertices1;
+    <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>; i &lt; num_vertices; i++){
+      vertices[i] = (Pixel) {vertices1[i][<span style="color: #B452CD">0</span>], vertices1[i][<span style="color: #B452CD">1</span>]};
+    }
+    <span style="color: #8B008B; font-weight: bold">break</span>;
+    <span style="color: #8B008B; font-weight: bold">case</span> <span style="color: #B452CD">2</span>:
+    hole_x = hole_x2;
+    hole_y = hole_y2;
+    par = par2;
+    ball_start_x = ball_start_x2;
+    ball_start_y = ball_start_y2;
+    num_vertices = num_vertices2;
+    <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>; i &lt; num_vertices; i++){
+      vertices[i] = (Pixel) {vertices2[i][<span style="color: #B452CD">0</span>], vertices2[i][<span style="color: #B452CD">1</span>]};
+    }
+    <span style="color: #8B008B; font-weight: bold">break</span>;
+    <span style="color: #8B008B; font-weight: bold">case</span> <span style="color: #B452CD">3</span>:
+    hole_x = hole_x3;
+    hole_y = hole_y3;
+    par = par3;
+    ball_start_x = ball_start_x3;
+    ball_start_y = ball_start_y3;
+    num_vertices = num_vertices3;
+    <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>; i &lt; num_vertices; i++){
+      vertices[i] = (Pixel) {vertices3[i][<span style="color: #B452CD">0</span>], vertices3[i][<span style="color: #B452CD">1</span>]};
+    }
+    <span style="color: #8B008B; font-weight: bold">break</span>;
+    <span style="color: #8B008B; font-weight: bold">case</span> <span style="color: #B452CD">4</span>:
+    hole_x = hole_x4;
+    hole_y = hole_y4;
+    par = par4;
+    ball_start_x = ball_start_x4;
+    ball_start_y = ball_start_y4;
+    num_vertices = num_vertices4;
+    <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>; i &lt; num_vertices; i++){
+      vertices[i] = (Pixel) {vertices4[i][<span style="color: #B452CD">0</span>], vertices4[i][<span style="color: #B452CD">1</span>]};
+    }
+    <span style="color: #8B008B; font-weight: bold">break</span>;
+    default:
+    <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">short</span> i = <span style="color: #B452CD">0</span>; i &lt; <span style="color: #B452CD">640</span>; i++){
+      <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">short</span> j = <span style="color: #B452CD">0</span>; j &lt; <span style="color: #B452CD">480</span>; j++){
+        drawPixel(i, j, BLACK);
+      }
+    }
+    setTextSize(<span style="color: #B452CD">3</span>);
+    setCursor(<span style="color: #B452CD">5</span>, <span style="color: #B452CD">0</span>);
+    <span style="color: #a7a7a7; font-weight: bold">char</span> text[<span style="color: #B452CD">100</span>] = <span style="color: #CD5555">&quot;Game Over&quot;</span>;
+    writeString(text);
+   
+    setCursor(<span style="color: #B452CD">5</span>, <span style="color: #B452CD">30</span>);
+    <span style="color: #a7a7a7; font-weight: bold">char</span> text2[<span style="color: #B452CD">100</span>] = <span style="color: #CD5555">&quot;Your Score: &quot;</span>;
+    <span style="color: #a7a7a7; font-weight: bold">char</span> str2[<span style="color: #B452CD">20</span>] = <span style="color: #CD5555">&quot;&quot;</span>;
+    sprintf(str2, <span style="color: #CD5555">&quot;%d&quot;</span>, round_score);
+    strcat(text2, str2);
+    writeString(text2);
+   
+    setTextSize(<span style="color: #B452CD">1</span>);
+    game_over = <span style="color: #658b00">true</span>;
+   
+  }    
+  <span style="color: #8B008B; font-weight: bold">if</span> (!game_over){
+    drawSavedImage(num_hole);  
+    boundaryInfo(vertices);
+    drawHole(hole_x, hole_y, HOLE_RADIUS);
+    drawGolfBall(ball_start_x, ball_start_y, ball_color);
+    <span style="color: #228B22">// set ball initial position</span>
+    ball_x = int2fix15(ball_start_x);
+    ball_y = int2fix15(ball_start_y);
+    ball_vx = int2fix15(<span style="color: #B452CD">0</span>);
+    ball_vy = int2fix15(<span style="color: #B452CD">0</span>);
+    num_strokes = <span style="color: #B452CD">0</span>;
+    displayScores();
+  }
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">hitBall</span>(<span style="color: #a7a7a7; font-weight: bold">double</span> my_speed, <span style="color: #a7a7a7; font-weight: bold">double</span> my_direction){
+  swing = <span style="color: #658b00">false</span>;
+  printf(<span style="color: #CD5555">&quot;swing speed:  %f\n&quot;</span>, my_speed);
+  printf(<span style="color: #CD5555">&quot;swing direction %f\n&quot;</span>, my_direction);
+  <span style="color: #8B008B; font-weight: bold">if</span> (!game_over){
+    <span style="color: #228B22">// convert from degrees to radians</span>
+    my_direction = my_direction * (M_PI / <span style="color: #B452CD">180.0</span>);
+    ball_vx = float2fix15((<span style="color: #a7a7a7; font-weight: bold">float</span>)(my_speed*sin(my_direction)));
+    ball_vy = float2fix15((<span style="color: #a7a7a7; font-weight: bold">float</span>)(my_speed*cos(my_direction)));
+  }
+}
+
+
+<span style="color: #228B22">// detect collision, find normal vector, perform collision</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">updatePos</span>(fix15* x, fix15* y, fix15* vx, fix15* vy)
+{
+  <span style="color: #a7a7a7; font-weight: bold">float</span> nx = -<span style="color: #B452CD">1.0</span>;
+  <span style="color: #a7a7a7; font-weight: bold">float</span> ny = -<span style="color: #B452CD">1.0</span>;
+ 
+  <span style="color: #a7a7a7; font-weight: bold">bool</span> found_white_pixel = <span style="color: #658b00">false</span>;
+  <span style="color: #a7a7a7; font-weight: bold">int</span> detected_side = -<span style="color: #B452CD">1</span>;  
+ 
+  <span style="color: #228B22">// check surrounding pixels for a collision</span>
+  <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> n = <span style="color: #B452CD">0</span>; n &lt; <span style="color: #B452CD">48</span>; n++){
+    <span style="color: #a7a7a7; font-weight: bold">short</span> surr_x = (<span style="color: #a7a7a7; font-weight: bold">short</span>)fix2int15(ball_x) + dx[n];
+    <span style="color: #a7a7a7; font-weight: bold">short</span> surr_y = (<span style="color: #a7a7a7; font-weight: bold">short</span>)fix2int15(ball_y) + dy[n];
+    <span style="color: #8B008B; font-weight: bold">if</span> (readVGA(surr_x, surr_y) == <span style="color: #B452CD">15</span>){
+      found_white_pixel = <span style="color: #658b00">true</span>;
+      <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> m = <span style="color: #B452CD">0</span>; m &lt; num_vertices; m++){ <span style="color: #228B22">// a white pixel has been detected, which side does it belong to?</span>
+        <span style="color: #8B008B; font-weight: bold">if</span> ((surr_x &gt;= sides[m].low_x) &amp;&amp; (surr_x &lt;= sides[m].high_x ) &amp;&amp; (surr_y &gt;= sides[m].low_y) &amp;&amp; (surr_y &lt;= sides[m].high_y)){
+          <span style="color: #8B008B; font-weight: bold">if</span> (detected_side &gt;= <span style="color: #B452CD">0</span>){
+            <span style="color: #8B008B; font-weight: bold">if</span> (m != detected_side){
+              <span style="color: #a7a7a7; font-weight: bold">float</span> nx_2 = fix2float15(sides[m].nx);
+              <span style="color: #a7a7a7; font-weight: bold">float</span> ny_2 = fix2float15(sides[m].ny);
+              nx = (nx + nx_2) / <span style="color: #B452CD">2.0</span>;
+              ny = (ny + ny_2) / <span style="color: #B452CD">2.0</span>;
+            }
+          }
+          <span style="color: #8B008B; font-weight: bold">else</span> {
+            detected_side = m;
+            nx = fix2float15(sides[m].nx);
+            ny = fix2float15(sides[m].ny);
+          }
+        }
+      }
+    }
+  }
+ 
+  <span style="color: #8B008B; font-weight: bold">if</span> (!in_collision){
+    <span style="color: #8B008B; font-weight: bold">if</span> (found_white_pixel){
+      in_collision = <span style="color: #658b00">true</span>;     <span style="color: #228B22">// state transition</span>
+      last_detected_side = detected_side;
+      <span style="color: #228B22">// perform collision</span>
+      fix15 nx_fix = float2fix15(nx);
+      fix15 ny_fix = float2fix15(ny);
+      fix15 dot_prod = multfix15(nx_fix, *vx) + multfix15(ny_fix, *vy);
+      fix15 mag = multfix15(int2fix15(-<span style="color: #B452CD">2</span>), dot_prod);
+      *vx = *vx + multfix15(mag, nx_fix);
+      *vy = *vy + multfix15(mag, ny_fix);
+    }
+  }
+  <span style="color: #8B008B; font-weight: bold">else</span> {
+    <span style="color: #8B008B; font-weight: bold">if</span> (found_white_pixel &amp;&amp; detected_side != last_detected_side){
+      last_detected_side = detected_side;
+      <span style="color: #228B22">// perform collision</span>
+      fix15 nx_fix = float2fix15(nx);
+      fix15 ny_fix = float2fix15(ny);
+      fix15 dot_prod = multfix15(nx_fix, *vx) + multfix15(ny_fix, *vy);
+      fix15 mag = multfix15(int2fix15(-<span style="color: #B452CD">2</span>), dot_prod);
+      *vx = *vx + multfix15(mag, nx_fix);
+      *vy = *vy + multfix15(mag, ny_fix);
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span> <span style="color: #8B008B; font-weight: bold">if</span> (!found_white_pixel){
+      in_collision = <span style="color: #658b00">false</span>;
+      drawSavedImage(num_hole);
+    }
+  }
+ 
+  <span style="color: #228B22">// stop ball when speed falls below a certain point</span>
+  <span style="color: #a7a7a7; font-weight: bold">float</span> total_speed = fix2float15(absfix15(multfix15(*vx, *vx) + multfix15(*vy, *vy)));
+  <span style="color: #8B008B; font-weight: bold">if</span> (total_speed &lt; <span style="color: #B452CD">0.1</span>){
+    *vx = int2fix15(<span style="color: #B452CD">0</span>);
+    *vy = int2fix15(<span style="color: #B452CD">0</span>);
+    STATE = SIZING_UP;
+  }
+  <span style="color: #8B008B; font-weight: bold">else</span>{
+    <span style="color: #228B22">// apply friction</span>
+    *vx = FRICTION**vx;
+    *vy = FRICTION**vy;
+  }
+ 
+  <span style="color: #228B22">// update position using velocity</span>
+  <span style="color: #8B008B; font-weight: bold">if</span> (*vx &gt; int2fix15(<span style="color: #B452CD">10</span>)){ *vx = int2fix15(<span style="color: #B452CD">10</span>); }
+  <span style="color: #8B008B; font-weight: bold">if</span> (*vy &gt; int2fix15(<span style="color: #B452CD">10</span>)){ *vy = int2fix15(<span style="color: #B452CD">10</span>); }
+ 
+  *x = *x - *vx ;
+  *y = *y - *vy ;
+ 
+  <span style="color: #8B008B; font-weight: bold">if</span> (*x &lt; int2fix15(<span style="color: #B452CD">0</span>)) {*x = int2fix15(<span style="color: #B452CD">0</span>);}
+  <span style="color: #8B008B; font-weight: bold">if</span> (*x &gt; int2fix15(<span style="color: #B452CD">639</span>)) {*x = int2fix15(<span style="color: #B452CD">639</span>);}
+  <span style="color: #8B008B; font-weight: bold">if</span> (*y &lt; int2fix15(<span style="color: #B452CD">0</span>)) {*y = int2fix15(<span style="color: #B452CD">0</span>);}
+  <span style="color: #8B008B; font-weight: bold">if</span> (*y &gt; int2fix15(<span style="color: #B452CD">479</span>)) {*y = int2fix15(<span style="color: #B452CD">479</span>);}
+ 
+  <span style="color: #228B22">// ball goes in hole</span>
+  <span style="color: #a7a7a7; font-weight: bold">int</span> dx = abs(hole_x - fix2int15(*x));
+  <span style="color: #a7a7a7; font-weight: bold">int</span> dy = abs(hole_y - fix2int15(*y));
+  <span style="color: #a7a7a7; font-weight: bold">int</span> distance = sqrt(dx*dx + dy*dy);
+  <span style="color: #8B008B; font-weight: bold">if</span> (distance &lt; <span style="color: #B452CD">8</span>){
+    STATE = SUNK;
+    round_score = round_score - par + num_strokes;
+  }
+}
+
+
+<span style="color: #228B22">// FOR DEBUGGING ONLY</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">displayStats</span>(<span style="color: #a7a7a7; font-weight: bold">int</span> stat, <span style="color: #a7a7a7; font-weight: bold">int</span> stat2, <span style="color: #a7a7a7; font-weight: bold">int</span> stat3){
+  setCursor(<span style="color: #B452CD">0</span>, <span style="color: #B452CD">100</span>);
+  <span style="color: #a7a7a7; font-weight: bold">char</span> str[<span style="color: #B452CD">15</span>];
+  sprintf(str, <span style="color: #CD5555">&quot;%d&quot;</span>, stat); <span style="color: #228B22">// converts stat to string</span>
+  <span style="color: #a7a7a7; font-weight: bold">char</span> init_string[<span style="color: #B452CD">100</span>] = <span style="color: #CD5555">&quot;lds: &quot;</span>;
+  strcat(init_string, str);
+  fillRect(<span style="color: #B452CD">0</span>, <span style="color: #B452CD">100</span>, <span style="color: #B452CD">100</span>, <span style="color: #B452CD">10</span>, BLACK); <span style="color: #228B22">// erase last text</span>
+  writeString(init_string);
+
+
+  setCursor(<span style="color: #B452CD">0</span>, <span style="color: #B452CD">120</span>);
+  sprintf(str, <span style="color: #CD5555">&quot;%d&quot;</span>, stat2); <span style="color: #228B22">// converts stat to string</span>
+  <span style="color: #a7a7a7; font-weight: bold">char</span> init_string2[<span style="color: #B452CD">100</span>] = <span style="color: #CD5555">&quot;nds: &quot;</span>;
+  strcat(init_string2, str);
+  fillRect(<span style="color: #B452CD">0</span>, <span style="color: #B452CD">12</span>, <span style="color: #B452CD">100</span>, <span style="color: #B452CD">10</span>, BLACK); <span style="color: #228B22">// erase last text</span>
+  writeString(init_string2);
+}
+
+
+<span style="color: #228B22">// FOR DEBUGGING ONLY</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">eraseStats</span>(){
+  fillRect(<span style="color: #B452CD">0</span>, <span style="color: #B452CD">100</span>, <span style="color: #B452CD">100</span>, <span style="color: #B452CD">100</span>, BLACK); <span style="color: #228B22">// erase last text</span>
+}
+
+
+
+
+<span style="color: #228B22">// animation thread</span>
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #008b45">PT_THREAD</span> (protothread_anim(<span style="color: #8B008B; font-weight: bold">struct</span> pt *pt))
+{
+  <span style="color: #228B22">// Mark beginning of thread</span>
+  PT_BEGIN(pt);
+  <span style="color: #228B22">// Variables for maintaining frame rate</span>
+  <span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> begin_time ;
+  <span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> spare_time ;
+  displayScores();
+  <span style="color: #a7a7a7; font-weight: bold">bool</span> testing_saved_image = <span style="color: #658b00">false</span>;
+  <span style="color: #8B008B; font-weight: bold">if</span> (testing_saved_image){
+    drawSavedImage(<span style="color: #B452CD">4</span>);
+  }
+  <span style="color: #8B008B; font-weight: bold">else</span>{
+    <span style="color: #8B008B; font-weight: bold">while</span>(<span style="color: #B452CD">1</span>) {
+      <span style="color: #228B22">// Measure time at start of thread</span>
+      begin_time = time_us_32() ;  
+      <span style="color: #8B008B; font-weight: bold">if</span> (STATE == SIZING_UP){
+        eraseHeadingVector();
+        drawHeadingVector(ball_direction);
+        drawGolfBall(ball_x, ball_y, ball_color);
+        <span style="color: #8B008B; font-weight: bold">if</span> (!game_over){
+          drawBoundary(vertices);
+          drawHole(hole_x, hole_y, HOLE_RADIUS);
+          <span style="color: #8B008B; font-weight: bold">if</span> (swing){
+            STATE = BALL_IN_MOTION;
+            hitBall(speed, -ball_direction);
+            num_strokes++;
+          }
+        }
+      }
+      <span style="color: #8B008B; font-weight: bold">else</span> <span style="color: #8B008B; font-weight: bold">if</span> (STATE == BALL_IN_MOTION){
+        displayScores();
+        eraseHeadingVector();
+        drawHole(hole_x, hole_y, HOLE_RADIUS);
+        eraseGolfBall(ball_x, ball_y);
+        updatePos(&amp;ball_x, &amp;ball_y, &amp;ball_vx, &amp;ball_vy);
+        drawGolfBall(ball_x, ball_y, ball_color);
+      }
+      <span style="color: #8B008B; font-weight: bold">else</span> <span style="color: #8B008B; font-weight: bold">if</span> (STATE == SUNK){
+        eraseGolfBall(ball_x, ball_y);
+        drawHole(hole_x, hole_y, HOLE_RADIUS);
+        num_hole++;
+        initHole(num_hole);
+        STATE = SIZING_UP;
+      }
+      <span style="color: #228B22">// delay in accordance with frame rate</span>
+      spare_time = FRAME_RATE - (time_us_32() - begin_time) ;
+      <span style="color: #228B22">// yield for necessary amount of time</span>
+      PT_YIELD_usec(spare_time) ;
+    }
+  } <span style="color: #228B22">// END WHILE(1)</span>
+  PT_END(pt);
+} <span style="color: #228B22">// animation thread</span>
+
+
+<span style="color: #228B22">// keypad thread</span>
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #008b45">PT_THREAD</span>(protothread_keypad(<span style="color: #8B008B; font-weight: bold">struct</span> pt *pt))
+{
+  <span style="color: #228B22">// Indicate thread beginning</span>
+  PT_BEGIN(pt);
+  <span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> i;
+  <span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">uint32_t</span> keypad;
+ 
+  <span style="color: #8B008B; font-weight: bold">while</span> (<span style="color: #B452CD">1</span>)
+  {
+    <span style="color: #228B22">// Scan the keypad!</span>
+    <span style="color: #8B008B; font-weight: bold">for</span> (i = <span style="color: #B452CD">0</span>; i &lt; KEYROWS; i++)
+    {
+      <span style="color: #228B22">// Set a row high</span>
+      gpio_put_masked((<span style="color: #B452CD">0xF</span> &lt;&lt; BASE_KEYPAD_PIN), (scancodes[i] &lt;&lt; BASE_KEYPAD_PIN));
+      sleep_us(<span style="color: #B452CD">1</span>);
+      <span style="color: #228B22">// Read the keycode</span>
+      keypad = ((gpio_get_all() &gt;&gt; BASE_KEYPAD_PIN) &amp; <span style="color: #B452CD">0x7F</span>);
+      <span style="color: #228B22">// Break if button(s) are pressed</span>
+      <span style="color: #8B008B; font-weight: bold">if</span> (keypad &amp; button)
+      <span style="color: #8B008B; font-weight: bold">break</span>;
+    }
+    <span style="color: #228B22">// If we found a button . . .</span>
+    <span style="color: #8B008B; font-weight: bold">if</span> (keypad &amp; button)
+    {
+      <span style="color: #228B22">// Look for a valid keycode.</span>
+      <span style="color: #8B008B; font-weight: bold">for</span> (i = <span style="color: #B452CD">0</span>; i &lt; NUMKEYS; i++)
+      {
+        <span style="color: #8B008B; font-weight: bold">if</span> (keypad == keycodes[i])
+        <span style="color: #8B008B; font-weight: bold">break</span>;
+      }
+      <span style="color: #228B22">// If we don&#39;t find one, report invalid keycode</span>
+      <span style="color: #8B008B; font-weight: bold">if</span> (i == NUMKEYS)
+      (i = -<span style="color: #B452CD">1</span>);
+    }
+    <span style="color: #228B22">// Otherwise, indicate invalid/non-pressed buttons</span>
+    <span style="color: #8B008B; font-weight: bold">else</span>
+    (i = -<span style="color: #B452CD">1</span>);
+   
+    <span style="color: #228B22">// debouncing FSM</span>
+    <span style="color: #8B008B; font-weight: bold">if</span> (DB_STATE == NOT_PRESSED &amp;&amp; i != -<span style="color: #B452CD">1</span>)
+    {
+      DB_STATE = MAYBE_PRESSED;
+      press_val = i;
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span> <span style="color: #8B008B; font-weight: bold">if</span> (DB_STATE == MAYBE_PRESSED)
+    {
+      <span style="color: #8B008B; font-weight: bold">if</span> (press_val == i)
+      {
+        DB_STATE = PRESSED;
+        <span style="color: #8B008B; font-weight: bold">if</span> (press_val == <span style="color: #B452CD">9</span>){
+          <span style="color: #228B22">// rotate heading vector 90 degrees</span>
+          heading_vector_bias = (heading_vector_bias + <span style="color: #B452CD">90</span>) % <span style="color: #B452CD">360</span>;
+        }
+        <span style="color: #8B008B; font-weight: bold">if</span> (press_val == <span style="color: #B452CD">1</span>){
+          eraseGolfBall(ball_x, ball_y);
+          drawHole(hole_x, hole_y, HOLE_RADIUS);
+          num_hole = <span style="color: #B452CD">1</span>;
+          round_score = <span style="color: #B452CD">0</span>;
+          game_over = <span style="color: #658b00">false</span>;
+          initHole(<span style="color: #B452CD">1</span>);
+          STATE = SIZING_UP;
+        }
+      }
+      <span style="color: #8B008B; font-weight: bold">else</span>
+      {
+        DB_STATE = NOT_PRESSED;
+      }
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span> <span style="color: #8B008B; font-weight: bold">if</span> (DB_STATE == PRESSED)
+    {
+      <span style="color: #8B008B; font-weight: bold">if</span> (press_val != i)
+      {
+        DB_STATE = MAYBE_NOT_PRESSED;
+      }
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span> <span style="color: #8B008B; font-weight: bold">if</span> (DB_STATE == MAYBE_NOT_PRESSED)
+    {
+      <span style="color: #8B008B; font-weight: bold">if</span> (press_val == i)
+      {
+        DB_STATE = PRESSED;
+      }
+      <span style="color: #8B008B; font-weight: bold">else</span>
+      {
+        DB_STATE = NOT_PRESSED;
+        press_val = -<span style="color: #B452CD">1</span>;
+      }
+    }
+    <span style="color: #228B22">// Write key to VGA</span>
+    <span style="color: #8B008B; font-weight: bold">if</span> (i != prev_key)
+    {
+      prev_key = i;
+      <span style="color: #228B22">// fillRect(0, 0, 50, 30, RED); // red box</span>
+      <span style="color: #228B22">// sprintf(keytext, &quot;%d&quot;, i);</span>
+      <span style="color: #228B22">// setCursor(0, 0);</span>
+      <span style="color: #228B22">// setTextSize(2);</span>
+      <span style="color: #228B22">// writeString(keytext);</span>
+    }
+   
+    PT_YIELD_usec(<span style="color: #B452CD">30000</span>);
+  }
+  <span style="color: #228B22">// Indicate thread end</span>
+  PT_END(pt);
+}
+
+
+<span style="color: #228B22">// imu thread</span>
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #008b45">PT_THREAD</span> (protothread_imu(<span style="color: #8B008B; font-weight: bold">struct</span> pt *pt))
+{
+  <span style="color: #228B22">// Indicate start of thread</span>
+  PT_BEGIN(pt) ;
+ 
+  <span style="color: #8B008B; font-weight: bold">while</span> (<span style="color: #658b00">true</span>) {
+    <span style="color: #228B22">// wait on signal from ISR</span>
+    PT_SEM_WAIT(pt, &amp;serial_semaphore);
+    <span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> user_speed;
+    <span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> user_direction;
+   
+    heading_angle = fix2float15(mag[<span style="color: #B452CD">0</span>])*(<span style="color: #B452CD">3</span>) + <span style="color: #B452CD">90</span> + heading_vector_bias;
+    <span style="color: #a7a7a7; font-weight: bold">float</span> accel_x = fix2float15(acceleration[<span style="color: #B452CD">0</span>]);
+    printf(<span style="color: #CD5555">&quot;Acceleration x:  %f\n&quot;</span>, accel_x);
+    <span style="color: #8B008B; font-weight: bold">if</span> (queue_full()){
+      dequeue();
+    }
+    enqueue(heading_angle);
+    <span style="color: #8B008B; font-weight: bold">if</span> (SWING_STATE == IDLE){
+      ball_direction = queue_avg();
+      <span style="color: #8B008B; font-weight: bold">if</span> (accel_x &lt;= -<span style="color: #B452CD">1.5</span>){
+        counter++;
+      }
+      <span style="color: #8B008B; font-weight: bold">else</span> {
+        counter = <span style="color: #B452CD">0</span>;
+      }
+      <span style="color: #8B008B; font-weight: bold">if</span> (counter &gt;= <span style="color: #B452CD">15</span>){
+        SWING_STATE = BACKSWING;
+        printf(<span style="color: #CD5555">&quot;\nchange to BACKSWING\n&quot;</span>);
+        ball_direction = queue_avg();
+        printf(<span style="color: #CD5555">&quot;locked in: %f\n&quot;</span>, ball_direction);
+        heading_locked_in = <span style="color: #658b00">true</span>;
+        counter = <span style="color: #B452CD">0</span>;
+      }
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span> <span style="color: #8B008B; font-weight: bold">if</span> (SWING_STATE == BACKSWING) {
+      <span style="color: #8B008B; font-weight: bold">if</span> (accel_x &gt;= <span style="color: #B452CD">.5</span>){
+        counter++;
+      }
+      <span style="color: #8B008B; font-weight: bold">else</span> {
+        counter = <span style="color: #B452CD">0</span>;
+      }
+      <span style="color: #8B008B; font-weight: bold">if</span> (counter &gt;= <span style="color: #B452CD">5</span>){
+        SWING_STATE = FRONTSWING;
+        printf(<span style="color: #CD5555">&quot;change to FRONTSWING\n&quot;</span>);
+        counter = <span style="color: #B452CD">0</span>;
+      }
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span> <span style="color: #8B008B; font-weight: bold">if</span> (SWING_STATE == FRONTSWING) {
+      accel_accum += accel_x;
+      counter++;
+      <span style="color: #8B008B; font-weight: bold">if</span> (counter &gt; <span style="color: #B452CD">15</span>){
+        printf(<span style="color: #CD5555">&quot;change to IDLE\n&quot;</span>);
+        SWING_STATE = IDLE;
+        swing = <span style="color: #658b00">true</span>;
+        heading_locked_in = <span style="color: #658b00">false</span>;
+        speed = ((<span style="color: #a7a7a7; font-weight: bold">double</span>)(accel_accum)) / <span style="color: #B452CD">15.0</span>;
+        accel_accum = <span style="color: #B452CD">0.0</span>;
+        counter = <span style="color: #B452CD">0</span>;
+      }
+    }
+  }
+  <span style="color: #228B22">// Indicate end of thread</span>
+  PT_END(pt);
+}
+ 
+<span style="color: #228B22">// serial input thread (FOR DEBUGGING ONLY)</span>
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #008b45">PT_THREAD</span> (protothread_serial(<span style="color: #8B008B; font-weight: bold">struct</span> pt *pt))
+{
+  PT_BEGIN(pt);
+  <span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> user_speed;
+  <span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> user_direction;
+  <span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> user_heading;
+  PT_YIELD_usec(<span style="color: #B452CD">1000000</span>) ;
+  <span style="color: #228B22">// non-blocking write</span>
+  serial_write ;
+  <span style="color: #a7a7a7; font-weight: bold">bool</span> heading = <span style="color: #658b00">false</span>;
+    <span style="color: #8B008B; font-weight: bold">while</span>(<span style="color: #B452CD">1</span>) {
+      <span style="color: #8B008B; font-weight: bold">if</span> (heading == <span style="color: #658b00">true</span>){
+        sprintf(pt_serial_out_buffer, <span style="color: #CD5555">&quot;heading angle: &quot;</span>);
+        <span style="color: #228B22">// non-blocking write</span>
+        serial_write ;
+        <span style="color: #228B22">// spawn a thread to do the non-blocking serial read</span>
+        serial_read ;
+        <span style="color: #228B22">// convert input string to number</span>
+        sscanf(pt_serial_in_buffer,<span style="color: #CD5555">&quot;%d&quot;</span>, &amp;user_heading);
+        heading_angle = user_heading;
+      }
+      <span style="color: #8B008B; font-weight: bold">else</span>{
+        sprintf(pt_serial_out_buffer, <span style="color: #CD5555">&quot;input speed: &quot;</span>);
+        serial_write ;
+        serial_read ;
+        sscanf(pt_serial_in_buffer,<span style="color: #CD5555">&quot;%d&quot;</span>, &amp;user_speed) ;
+       
+        sprintf(pt_serial_out_buffer, <span style="color: #CD5555">&quot;input direction: &quot;</span>);
+        serial_write ;
+        serial_read ;
+        sscanf(pt_serial_in_buffer,<span style="color: #CD5555">&quot;%d&quot;</span>, &amp;user_direction) ;        
+       
+        speed = user_speed;
+        ball_direction = -user_direction;
+        swing = <span style="color: #658b00">true</span>;
+      }
+    } <span style="color: #228B22">// END WHILE(1)</span>
+  PT_END(pt);
+} <span style="color: #228B22">// serial thread</span>
+ 
+<span style="color: #228B22">// interrupt service routine</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">imu_irq</span>() {
+  hw_clear_bits(&amp;timer_hw-&gt;intr, <span style="color: #B452CD">1u</span> &lt;&lt; ALARM_NUM);
+  timer_hw-&gt;alarm[ALARM_NUM] = timer_hw-&gt;timerawl + DELAY;
+  <span style="color: #228B22">// Read the IMU</span>
+  icm20948_read_raw(acceleration, gyro, mag);
+  <span style="color: #228B22">// signal serial thread to print value</span>
+  PT_SEM_SIGNAL(pt, &amp;serial_semaphore);
+}
+
+
+<span style="color: #228B22">// ========================================</span>
+<span style="color: #228B22">// === main</span>
+<span style="color: #228B22">// ========================================</span>
+<span style="color: #a7a7a7; font-weight: bold">int</span> <span style="color: #008b45">main</span>(){
+
+
+  stdio_init_all();
+  initVGA();
+
+
+  <span style="color: #228B22">///////////////////////// KEYPAD CONFIGURATION ///////////////////////</span>
+  <span style="color: #228B22">// Initialize the keypad GPIO&#39;s</span>
+  gpio_init_mask((<span style="color: #B452CD">0x7F</span> &lt;&lt; BASE_KEYPAD_PIN));
+  <span style="color: #228B22">// Set row-pins to output</span>
+  gpio_set_dir_out_masked((<span style="color: #B452CD">0xF</span> &lt;&lt; BASE_KEYPAD_PIN));
+  <span style="color: #228B22">// Set all output pins to low</span>
+  gpio_put_masked((<span style="color: #B452CD">0xF</span> &lt;&lt; BASE_KEYPAD_PIN), (<span style="color: #B452CD">0x0</span> &lt;&lt; BASE_KEYPAD_PIN));
+  <span style="color: #228B22">// Turn on pulldown resistors for column pins (on by default)</span>
+  gpio_pull_down((BASE_KEYPAD_PIN + <span style="color: #B452CD">4</span>));
+  gpio_pull_down((BASE_KEYPAD_PIN + <span style="color: #B452CD">5</span>));
+  gpio_pull_down((BASE_KEYPAD_PIN + <span style="color: #B452CD">6</span>));
+
+
+  <span style="color: #228B22">///////////////////////// IMU CONFIGURATION ////////////////////////////</span>
+  i2c_init(I2C_CHAN, I2C_BAUD_RATE) ;
+  gpio_set_function(SDA_PIN, GPIO_FUNC_I2C) ;
+  gpio_set_function(SCL_PIN, GPIO_FUNC_I2C) ;
+  icm20948_reset();
+
+
+  <span style="color: #228B22">///////////////////////// ISR CONFIGURATION ////////////////////////////</span>
+  <span style="color: #228B22">// Enable the interrupt for the alarm (we&#39;re using Alarm 0)</span>
+  hw_set_bits(&amp;timer_hw-&gt;inte, <span style="color: #B452CD">1u</span> &lt;&lt; ALARM_NUM) ;
+  <span style="color: #228B22">// Associate an interrupt handler with the ALARM_IRQ</span>
+  irq_set_exclusive_handler(ALARM_IRQ, imu_irq) ;
+  <span style="color: #228B22">// Enable the alarm interrupt</span>
+  irq_set_enabled(ALARM_IRQ, <span style="color: #658b00">true</span>) ;
+  <span style="color: #228B22">// Write the lower 32 bits of the target time to the alarm register, arming it.</span>
+  timer_hw-&gt;alarm[ALARM_NUM] = timer_hw-&gt;timerawl + DELAY ;
+
+
+  <span style="color: #228B22">////////////////////// GENERAL INITIALIZATION ////////////////////////</span>
+  num_hole = <span style="color: #B452CD">1</span>;
+  initHole(num_hole);
+  setTextColor(WHITE);
+  setTextSize(<span style="color: #B452CD">1</span>);
+
+
+  <span style="color: #228B22">// add threads</span>
+  <span style="color: #228B22">// pt_add_thread(protothread_serial);</span>
+  pt_add_thread(protothread_imu);
+  pt_add_thread(protothread_anim);
+  pt_add_thread(protothread_keypad);
+
+
+  <span style="color: #228B22">// start scheduler</span>
+  pt_schedule_start ;
+}
+</pre></td></tr></table></div>
+
+<h4>Additional functions added to vga16_graphics.c</h4>
+
+<!-- HTML generated using hilite.me --><div style="background: #eeeedd; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><table><tr><td><pre style="margin: 0; line-height: 125%"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52</pre></td><td><pre style="margin: 0; line-height: 125%"><span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">drawSavedImage</span>(<span style="color: #a7a7a7; font-weight: bold">int</span> hole_num){
+  <span style="color: #8B008B; font-weight: bold">switch</span> (hole_num){
+    <span style="color: #8B008B; font-weight: bold">case</span> <span style="color: #B452CD">1</span>:
+      <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>; i &lt; <span style="color: #B452CD">153600</span>; i++){
+        vga_data_array[i] = saved_image1[i];
+      }
+      <span style="color: #8B008B; font-weight: bold">break</span>;
+    <span style="color: #8B008B; font-weight: bold">case</span> <span style="color: #B452CD">2</span>:
+      <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>; i &lt; <span style="color: #B452CD">153600</span>; i++){
+        vga_data_array[i] = saved_image2[i];
+      }
+      <span style="color: #8B008B; font-weight: bold">break</span>;
+    <span style="color: #8B008B; font-weight: bold">case</span> <span style="color: #B452CD">3</span>:
+      <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>; i &lt; <span style="color: #B452CD">153600</span>; i++){
+        vga_data_array[i] = saved_image3[i];
+      }
+      <span style="color: #8B008B; font-weight: bold">break</span>;
+    <span style="color: #8B008B; font-weight: bold">case</span> <span style="color: #B452CD">4</span>:
+      <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>; i &lt; <span style="color: #B452CD">153600</span>; i++){
+        vga_data_array[i] = saved_image4[i];
+      }
+      <span style="color: #8B008B; font-weight: bold">break</span>;
+    <span style="color: #228B22">// case 5:</span>
+    <span style="color: #228B22">//   for (int i = 0; i &lt; 153600; i++){</span>
+    <span style="color: #228B22">//     vga_data_array[i] = saved_image5[i];</span>
+    <span style="color: #228B22">//   }</span>
+    <span style="color: #228B22">//   break;</span>
+    default:
+      printf(<span style="color: #CD5555">&quot;num_hole invalid\n&quot;</span>);
+  }
+
+
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">char</span> <span style="color: #008b45">readVGA</span>(<span style="color: #a7a7a7; font-weight: bold">short</span> x, <span style="color: #a7a7a7; font-weight: bold">short</span> y){
+  <span style="color: #8B008B; font-weight: bold">if</span> ((x &lt; <span style="color: #B452CD">0</span>) | (x &gt; <span style="color: #B452CD">639</span>) | (y &lt; <span style="color: #B452CD">0</span>) | (y &gt; <span style="color: #B452CD">479</span>)){
+    <span style="color: #8B008B; font-weight: bold">return</span> -<span style="color: #B452CD">1</span>;
+  }
+  <span style="color: #228B22">// based on coordinates, find the right index in the VGA array</span>
+  <span style="color: #228B22">// and whether it is the top or bottom half, then return the</span>
+  <span style="color: #228B22">// value as a char with the value in the lower 4 bits</span>
+  <span style="color: #a7a7a7; font-weight: bold">int</span> pixel = ((<span style="color: #B452CD">640</span> * y) + x) ;
+  <span style="color: #a7a7a7; font-weight: bold">char</span> pixel_color;
+  <span style="color: #8B008B; font-weight: bold">if</span> (pixel &amp; <span style="color: #B452CD">1</span>){
+    pixel_color = vga_data_array[pixel&gt;&gt;<span style="color: #B452CD">1</span>] &gt;&gt; <span style="color: #B452CD">4</span>;
+  }
+  <span style="color: #8B008B; font-weight: bold">else</span> {
+    pixel_color = vga_data_array[pixel&gt;&gt;<span style="color: #B452CD">1</span>] &amp; TOPMASK;
+  }
+  <span style="color: #8B008B; font-weight: bold">return</span> pixel_color;
+}
+</pre></td></tr></table></div>
+
+<h4>boundary.c</h4>
+<!-- HTML generated using hilite.me --><div style="background: #eeeedd; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><table><tr><td><pre style="margin: 0; line-height: 125%">  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257</pre></td><td><pre style="margin: 0; line-height: 125%"><span style="color: #1e889b">#include &lt;stdio.h&gt;</span>
+<span style="color: #1e889b">#include &lt;stdlib.h&gt;</span>
+<span style="color: #1e889b">#include &lt;stdbool.h&gt;</span>
+<span style="color: #1e889b">#include &lt;assert.h&gt;</span>
+
+
+<span style="color: #228B22">// We can only produce 16 (4-bit) colors, so let&#39;s give them readable names - usable in main()</span>
+<span style="color: #8B008B; font-weight: bold">enum</span> colors {BLACK, DARK_GREEN, MED_GREEN, GREEN,
+  DARK_BLUE, BLUE, LIGHT_BLUE, CYAN,
+  RED, DARK_ORANGE, ORANGE, YELLOW,
+  MAGENTA, PINK, LIGHT_PINK, WHITE} ;
+
+
+
+
+<span style="color: #8B008B; font-weight: bold">typedef</span> <span style="color: #8B008B; font-weight: bold">struct</span>{
+  <span style="color: #a7a7a7; font-weight: bold">short</span> x;
+  <span style="color: #a7a7a7; font-weight: bold">short</span> y;
+} Pixel;
+
+
+Pixel vertices[<span style="color: #B452CD">20</span>];
+<span style="color: #a7a7a7; font-weight: bold">int</span> num_vertices = <span style="color: #B452CD">0</span>;
+Pixel boundary_points[<span style="color: #B452CD">1410</span>];
+<span style="color: #a7a7a7; font-weight: bold">int</span> num_boundary_points = <span style="color: #B452CD">0</span>;
+
+
+<span style="color: #1e889b">#define TXCOUNT 153600 </span><span style="color: #228B22">// Total pixels/2 (since we have 2 pixels per byte)</span>
+<span style="color: #a7a7a7; font-weight: bold">unsigned</span> <span style="color: #a7a7a7; font-weight: bold">char</span> vga_data_array[TXCOUNT];
+<span style="color: #228B22">// Bit masks for drawPixel routine</span>
+<span style="color: #1e889b">#define TOPMASK 0b00001111</span>
+<span style="color: #1e889b">#define BOTTOMMASK 0b11110000</span>
+
+
+<span style="color: #228B22">// For drawLine</span>
+<span style="color: #1e889b">#define swap(a, b) { short t = a; a = b; b = t; }</span>
+
+
+<span style="color: #a7a7a7; font-weight: bold">int</span> x_min;
+<span style="color: #a7a7a7; font-weight: bold">int</span> x_max;
+<span style="color: #a7a7a7; font-weight: bold">int</span> y_min;
+<span style="color: #a7a7a7; font-weight: bold">int</span> y_max;
+
+
+<span style="color: #a7a7a7; font-weight: bold">int</span> hole_num = <span style="color: #B452CD">5</span>;
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">drawPixel</span>(<span style="color: #a7a7a7; font-weight: bold">short</span> x, <span style="color: #a7a7a7; font-weight: bold">short</span> y, <span style="color: #a7a7a7; font-weight: bold">char</span> color) {
+  <span style="color: #228B22">// Range checks (640x480 display)</span>
+  <span style="color: #8B008B; font-weight: bold">if</span> (x &gt; <span style="color: #B452CD">639</span>) x = <span style="color: #B452CD">639</span> ;
+  <span style="color: #8B008B; font-weight: bold">if</span> (x &lt; <span style="color: #B452CD">0</span>) x = <span style="color: #B452CD">0</span> ;
+  <span style="color: #8B008B; font-weight: bold">if</span> (y &lt; <span style="color: #B452CD">0</span>) y = <span style="color: #B452CD">0</span> ;
+  <span style="color: #8B008B; font-weight: bold">if</span> (y &gt; <span style="color: #B452CD">479</span>) y = <span style="color: #B452CD">479</span> ;
+ 
+  <span style="color: #228B22">// Which pixel is it?</span>
+  <span style="color: #a7a7a7; font-weight: bold">int</span> pixel = ((<span style="color: #B452CD">640</span> * y) + x) ;
+ 
+  <span style="color: #228B22">// vga_data_array is a char array, where a char is 8 bits so each char holds 2 pixels</span>
+  <span style="color: #228B22">// Is this pixel stored in the first 4 bits of the vga data array index, or the second</span>
+  <span style="color: #228B22">// 4 bits? Check, then mask.</span>
+  <span style="color: #228B22">// pixel&gt;&gt;1 is a divide by 2 because each char holds two pixels</span>
+  <span style="color: #8B008B; font-weight: bold">if</span> (pixel &amp; <span style="color: #B452CD">1</span>) {
+    vga_data_array[pixel&gt;&gt;<span style="color: #B452CD">1</span>] = (vga_data_array[pixel&gt;&gt;<span style="color: #B452CD">1</span>] &amp; TOPMASK) | (color &lt;&lt; <span style="color: #B452CD">4</span>) ;
+  }
+  <span style="color: #8B008B; font-weight: bold">else</span> {
+    vga_data_array[pixel&gt;&gt;<span style="color: #B452CD">1</span>] = (vga_data_array[pixel&gt;&gt;<span style="color: #B452CD">1</span>] &amp; BOTTOMMASK) | (color) ;
+  }
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">fillScreen</span>(<span style="color: #a7a7a7; font-weight: bold">char</span> color){
+  <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">short</span> i = <span style="color: #B452CD">0</span>; i &lt; <span style="color: #B452CD">640</span>; i++){
+    <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">short</span> j = <span style="color: #B452CD">0</span>; j &lt; <span style="color: #B452CD">480</span>; j++){
+      drawPixel(i, j, color);
+    }
+  }
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">drawLineAndRecordPoints</span>(<span style="color: #a7a7a7; font-weight: bold">short</span> x0, <span style="color: #a7a7a7; font-weight: bold">short</span> y0, <span style="color: #a7a7a7; font-weight: bold">short</span> x1, <span style="color: #a7a7a7; font-weight: bold">short</span> y1, <span style="color: #a7a7a7; font-weight: bold">char</span> color) {
+  <span style="color: #a7a7a7; font-weight: bold">short</span> steep = abs(y1 - y0) &gt; abs(x1 - x0);
+  <span style="color: #8B008B; font-weight: bold">if</span> (steep) {
+    swap(x0, y0);
+    swap(x1, y1);
+  }
+
+
+  <span style="color: #8B008B; font-weight: bold">if</span> (x0 &gt; x1) {
+    swap(x0, x1);
+    swap(y0, y1);
+  }
+
+
+  <span style="color: #a7a7a7; font-weight: bold">short</span> dx, dy;
+  dx = x1 - x0;
+  dy = abs(y1 - y0);
+
+
+  <span style="color: #a7a7a7; font-weight: bold">short</span> err = dx / <span style="color: #B452CD">2</span>;
+  <span style="color: #a7a7a7; font-weight: bold">short</span> ystep;
+
+
+  <span style="color: #8B008B; font-weight: bold">if</span> (y0 &lt; y1) {
+    ystep = <span style="color: #B452CD">1</span>;
+  } <span style="color: #8B008B; font-weight: bold">else</span> {
+    ystep = -<span style="color: #B452CD">1</span>;
+  }
+
+
+  <span style="color: #8B008B; font-weight: bold">for</span> (; x0&lt;=x1; x0++) {
+    <span style="color: #8B008B; font-weight: bold">if</span> (steep) {
+      drawPixel(y0, x0, color);
+      boundary_points[num_boundary_points++] = (Pixel) {y0, x0};
+    } <span style="color: #8B008B; font-weight: bold">else</span> {
+      drawPixel(x0, y0, color);
+      boundary_points[num_boundary_points++] = (Pixel) {x0, y0};
+    }
+    err -= dy;
+    <span style="color: #8B008B; font-weight: bold">if</span> (err &lt; <span style="color: #B452CD">0</span>) {
+      y0 += ystep;
+      err += dx;
+    }
+  }
+}
+
+
+<span style="color: #228B22">// Draw the boundaries and record boundary points in vga</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">drawBoundary</span>(Pixel vertices[]) {
+  <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> n = <span style="color: #B452CD">0</span>; n &lt; num_vertices; n++){
+    <span style="color: #8B008B; font-weight: bold">if</span> (n == num_vertices - <span style="color: #B452CD">1</span>){
+      drawLineAndRecordPoints(vertices[n].x, vertices[n].y, vertices[<span style="color: #B452CD">0</span>].x, vertices[<span style="color: #B452CD">0</span>].y, WHITE);
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span>{
+      drawLineAndRecordPoints(vertices[n].x, vertices[n].y, vertices[n+<span style="color: #B452CD">1</span>].x, vertices[n+<span style="color: #B452CD">1</span>].y, WHITE);
+    }
+  }
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">bool</span> <span style="color: #008b45">inBoundary</span>(<span style="color: #a7a7a7; font-weight: bold">short</span> x, <span style="color: #a7a7a7; font-weight: bold">short</span> y){
+  <span style="color: #a7a7a7; font-weight: bold">bool</span> in_boundary = <span style="color: #658b00">false</span>;
+  <span style="color: #a7a7a7; font-weight: bold">bool</span> searching = <span style="color: #658b00">true</span>;
+  <span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>;
+  <span style="color: #8B008B; font-weight: bold">while</span> (searching){
+    <span style="color: #8B008B; font-weight: bold">if</span> ((x == boundary_points[i].x) &amp;&amp; (y == boundary_points[i].y)){
+      in_boundary = <span style="color: #658b00">true</span>;
+      searching = <span style="color: #658b00">false</span>;
+    }
+    <span style="color: #8B008B; font-weight: bold">if</span> (i == (num_boundary_points - <span style="color: #B452CD">1</span>)){
+      searching = <span style="color: #658b00">false</span>;
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span>{
+      i++;
+    }
+  }
+  <span style="color: #8B008B; font-weight: bold">return</span> in_boundary;
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">drawGreen</span>(Pixel vertices[]){
+  <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> j = y_min + <span style="color: #B452CD">1</span>; j &lt;= y_max - <span style="color: #B452CD">1</span>; j++){
+    <span style="color: #a7a7a7; font-weight: bold">bool</span> drawing = <span style="color: #658b00">false</span>;
+    <span style="color: #a7a7a7; font-weight: bold">bool</span> was_drawing = <span style="color: #658b00">false</span>;
+    <span style="color: #a7a7a7; font-weight: bold">bool</span> already_detected_boundary = <span style="color: #658b00">false</span>;
+    <span style="color: #a7a7a7; font-weight: bold">int</span> counter = <span style="color: #B452CD">0</span>;
+    <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = x_min; i &lt;= x_max - <span style="color: #B452CD">1</span>; i++){
+      <span style="color: #8B008B; font-weight: bold">if</span> (already_detected_boundary){
+        <span style="color: #8B008B; font-weight: bold">if</span> (!inBoundary(i, j)){
+          <span style="color: #8B008B; font-weight: bold">if</span> (counter &gt; <span style="color: #B452CD">20</span>){
+            drawing = was_drawing;
+          }
+          <span style="color: #8B008B; font-weight: bold">else</span>{
+            drawing = !was_drawing;
+          }
+          already_detected_boundary = <span style="color: #658b00">false</span>;
+          counter = <span style="color: #B452CD">0</span>;
+        }
+        <span style="color: #8B008B; font-weight: bold">else</span>{
+          counter++;
+        }
+      }
+      <span style="color: #8B008B; font-weight: bold">else</span> {
+        <span style="color: #8B008B; font-weight: bold">if</span> (inBoundary(i, j)){
+          already_detected_boundary = <span style="color: #658b00">true</span>;
+          counter++;
+          was_drawing = drawing;
+          drawing = <span style="color: #658b00">false</span>;
+        }
+      }
+      <span style="color: #8B008B; font-weight: bold">if</span> (drawing){
+        drawPixel(i, j, DARK_GREEN);
+      }
+    }
+  }
+}
+
+
+<span style="color: #a7a7a7; font-weight: bold">int</span> <span style="color: #008b45">main</span>(){    
+  <span style="color: #228B22">// printf(&quot;main running&quot;);</span>
+  <span style="color: #228B22">// color entire screen</span>
+  fillScreen(BLACK);
+
+
+  <span style="color: #228B22">// set vertices</span>
+  vertices[num_vertices++] = (Pixel){<span style="color: #B452CD">400</span>, <span style="color: #B452CD">80</span>};
+  vertices[num_vertices++] = (Pixel){<span style="color: #B452CD">500</span>, <span style="color: #B452CD">80</span>};
+  vertices[num_vertices++] = (Pixel){<span style="color: #B452CD">150</span>, <span style="color: #B452CD">400</span>};
+  vertices[num_vertices++] = (Pixel){<span style="color: #B452CD">50</span>, <span style="color: #B452CD">400</span>};
+
+
+  x_min = <span style="color: #B452CD">640</span>;
+  x_max = <span style="color: #B452CD">0</span>;
+  y_min = <span style="color: #B452CD">480</span>;
+  y_max = <span style="color: #B452CD">0</span>;
+
+
+  <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>; i &lt; num_vertices; i++){
+    <span style="color: #8B008B; font-weight: bold">if</span> (vertices[i].x &lt; x_min){ x_min = vertices[i].x; }
+    <span style="color: #8B008B; font-weight: bold">if</span> (vertices[i].x &gt; x_max){ x_max = vertices[i].x; }
+    <span style="color: #8B008B; font-weight: bold">if</span> (vertices[i].y &lt; y_min){ y_min = vertices[i].y; }
+    <span style="color: #8B008B; font-weight: bold">if</span> (vertices[i].y &gt; y_max){ y_max = vertices[i].y; }
+  }
+ 
+  <span style="color: #228B22">// populate saved_image array with boundary pixels and green</span>
+  drawBoundary(vertices);
+  drawGreen(vertices);
+  drawBoundary(vertices);
+
+
+  <span style="color: #228B22">// create header file</span>
+  printf(<span style="color: #CD5555">&quot;static const unsigned char saved_image%d[%d] = {&quot;</span>, hole_num, TXCOUNT);
+  printf(<span style="color: #CD5555">&quot;%d&quot;</span>, vga_data_array[<span style="color: #B452CD">0</span>]);
+  <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">1</span>; i &lt; TXCOUNT; i++){
+    printf(<span style="color: #CD5555">&quot;, %d&quot;</span>, vga_data_array[i]);
+  }
+  printf(<span style="color: #CD5555">&quot;};\n&quot;</span>);
+
+
+  printf(<span style="color: #CD5555">&quot;static short hole_x%d = 410;\n&quot;</span>, hole_num);
+  printf(<span style="color: #CD5555">&quot;static short hole_y%d = 100;\n&quot;</span>, hole_num);
+  printf(<span style="color: #CD5555">&quot;static short par%d = 2;\n&quot;</span>, hole_num);
+  printf(<span style="color: #CD5555">&quot;static int ball_start_x%d = 90;\n&quot;</span>, hole_num);
+  printf(<span style="color: #CD5555">&quot;static int ball_start_y%d = 380;\n&quot;</span>, hole_num);
+
+
+  printf(<span style="color: #CD5555">&quot;static int vertices%d[%d][2] = {\n&quot;</span>, hole_num, num_vertices);
+  <span style="color: #8B008B; font-weight: bold">for</span> (<span style="color: #a7a7a7; font-weight: bold">int</span> i = <span style="color: #B452CD">0</span>; i &lt; num_vertices; i++){
+    <span style="color: #8B008B; font-weight: bold">if</span> (i == num_vertices - <span style="color: #B452CD">1</span>){
+      printf(<span style="color: #CD5555">&quot; {%d, %d }\n&quot;</span>, vertices[i].x, vertices[i].y);
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span> {
+      printf(<span style="color: #CD5555">&quot; {%d, %d },\n&quot;</span>, vertices[i].x, vertices[i].y);
+    }
+  }
+  printf(<span style="color: #CD5555">&quot;};\n&quot;</span>);
+  printf(<span style="color: #CD5555">&quot;static int num_vertices%d = %d;&quot;</span>, hole_num, num_vertices);
+}
+</pre></td></tr></table></div>
+
+<h4>Example header file created by boundary.c</h4>
+
+<!-- HTML generated using hilite.me --><div style="background: #eeeedd; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #8B008B; font-weight: bold">const</span> <span style="color: #a7a7a7; font-weight: bold">unsigned</span> <span style="color: #a7a7a7; font-weight: bold">char</span> saved_image1[<span style="color: #B452CD">153600</span>] = {<span style="color: #B452CD">0</span>, <span style="color: #B452CD">0</span>, <span style="color: #B452CD">0</span>, <span style="color: #B452CD">0</span>, <span style="color: #B452CD">0</span>, <span style="color: #B452CD">0</span>,
+</pre></div>
+
+
+<h4>...</h4>
+<!-- HTML generated using hilite.me --><div style="background: #eeeedd; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"> <span style="color: #B452CD">0</span>, <span style="color: #B452CD">0</span>, <span style="color: #B452CD">0</span>, <span style="color: #B452CD">0</span>, <span style="color: #B452CD">0</span>, <span style="color: #B452CD">0</span>, <span style="color: #B452CD">0</span>};
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">short</span> hole_x1 = <span style="color: #B452CD">320</span>;
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">short</span> hole_y1 = <span style="color: #B452CD">80</span>;
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">short</span> par1 = <span style="color: #B452CD">3</span>;
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> ball_start_x1 = <span style="color: #B452CD">320</span>;
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> ball_start_y1 = <span style="color: #B452CD">400</span>;
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> num_vertices1 = <span style="color: #B452CD">4</span>;
+<span style="color: #8B008B; font-weight: bold">static</span> <span style="color: #a7a7a7; font-weight: bold">int</span> vertices1[<span style="color: #B452CD">4</span>][<span style="color: #B452CD">2</span>] = {
+ {<span style="color: #B452CD">170</span>, <span style="color: #B452CD">40</span> },
+ {<span style="color: #B452CD">470</span>, <span style="color: #B452CD">40</span> },
+ {<span style="color: #B452CD">470</span>, <span style="color: #B452CD">440</span> },
+ {<span style="color: #B452CD">170</span>, <span style="color: #B452CD">440</span> }
+};
+</pre></div>
+
+
+<h4>icm20948.c</h4>
+<!-- HTML generated using hilite.me --><div style="background: #eeeedd; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><table><tr><td><pre style="margin: 0; line-height: 125%">  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302</pre></td><td><pre style="margin: 0; line-height: 125%"><span style="color: #228B22">/**</span>
+<span style="color: #228B22"> * Henry Geller</span>
+<span style="color: #228B22"> * Bobby Haig</span>
+<span style="color: #228B22"> * Daniel Wahab</span>
+<span style="color: #228B22"> */</span>
+
+<span style="color: #228B22">//  #include &quot;hardware/i2c.h&quot;</span>
+<span style="color: #1e889b">#include &quot;icm20948.h&quot;</span>
+<span style="color: #1e889b">#include &lt;unistd.h&gt;</span>
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">icm20948_reset</span>() {
+    <span style="color: #228B22">//Register, data</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf1[] = {UB0_PWR_MGMNT_1, UB0_PWR_MGMNT_1_CLOCK_SEL_AUTO};
+
+    changeUserBank(USER_BANK_0);
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf1, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+    enable_i2c_master();
+
+    <span style="color: #228B22">//Register, data</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf2[] = {UB0_PWR_MGMNT_1, UB0_PWR_MGMNT_1_DEV_RESET};
+    i2c_write_blocking(I2C_CHAN, ADDRESS,buf2 , <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>); <span style="color: #228B22">//reset</span>
+
+    sleep_ms(<span style="color: #B452CD">100</span>); <span style="color: #228B22">//Sleep to allow write before mag reset</span>
+    reset_mag(); 
+
+    changeUserBank(USER_BANK_0);
+    <span style="color: #228B22">//Register, data</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf3[] = {UB0_PWR_MGMNT_1, UB0_PWR_MGMNT_1_CLOCK_SEL_AUTO};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf3, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+
+    <span style="color: #228B22">//enable accelGyro</span>
+    changeUserBank(USER_BANK_0);
+    <span style="color: #228B22">//Register, data</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf4[] = {UB0_PWR_MGMNT_2, UB0_PWR_MGMNT_2_SEN_ENABLE};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf4, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #228B22">//config accel (Using the same as the accel from lab 3, want +- 2g&#39;s and 1KHz sample rate)</span>
+    config_accel();
+
+    <span style="color: #228B22">//config gyro (Using the same as the gyro from lab 3, want +- 250 DPS //datasheet says 250 indicates +-) and 1KHz</span>
+    config_gyro();
+
+    <span style="color: #228B22">//setGyroSRD</span>
+    changeUserBank(USER_BANK_2);
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf5[] = {UB2_GYRO_SMPLRT_DIV, <span style="color: #B452CD">0x00</span>};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf5, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #228B22">//setAccelSRD</span>
+    changeUserBank(USER_BANK_2);
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> srd = <span style="color: #B452CD">0x00</span>;
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> srdHigh = srd &gt;&gt; <span style="color: #B452CD">8</span> &amp; <span style="color: #B452CD">0x0F</span>; <span style="color: #228B22">// Only last 4 bits can be set</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf6[] = {UB2_ACCEL_SMPLRT_DIV_1, srdHigh};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf6, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> srdLow = srd &amp; <span style="color: #B452CD">0x0F</span>; <span style="color: #228B22">// Only last 4 bits can be set</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf7[] = {UB2_ACCEL_SMPLRT_DIV_2, srdLow};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf7, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #228B22">//Master to read aux sensor (Mag)</span>
+    enable_i2c_master();
+    config_mag();
+
+    <span style="color: #228B22">//selectAutoClockSource</span>
+    changeUserBank(USER_BANK_0);
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf8[] = {UB0_PWR_MGMNT_1, UB0_PWR_MGMNT_1_CLOCK_SEL_AUTO};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf8, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    read_mag_setup();
+
+}
+
+<span style="color: #228B22">//Function to change the bank that we interface with (0-3)</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">changeUserBank</span>(<span style="color: #a7a7a7; font-weight: bold">int</span> userBank) {
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> userBankRegValue = <span style="color: #B452CD">0x00</span>;
+    <span style="color: #8B008B; font-weight: bold">switch</span>(userBank) {
+    <span style="color: #8B008B; font-weight: bold">case</span> USER_BANK_0: {
+      userBankRegValue = REG_BANK_SEL_USER_BANK_0;
+      <span style="color: #8B008B; font-weight: bold">break</span>;
+    }
+    <span style="color: #8B008B; font-weight: bold">case</span> USER_BANK_1: {
+      userBankRegValue = REG_BANK_SEL_USER_BANK_1;
+      <span style="color: #8B008B; font-weight: bold">break</span>;
+    }
+    <span style="color: #8B008B; font-weight: bold">case</span> USER_BANK_2: {
+      userBankRegValue = REG_BANK_SEL_USER_BANK_2;
+      <span style="color: #8B008B; font-weight: bold">break</span>;
+    }
+    <span style="color: #8B008B; font-weight: bold">case</span> USER_BANK_3: {
+      userBankRegValue = REG_BANK_SEL_USER_BANK_3;
+      <span style="color: #8B008B; font-weight: bold">break</span>;
+    }
+  }
+  <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf_bank[] = {REG_BANK_SEL, userBankRegValue};
+  i2c_write_blocking(I2C_CHAN, ADDRESS, buf_bank, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+}
+
+<span style="color: #228B22">//Enables I2C master mode so that the mag values can be read</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">enable_i2c_master</span>() {
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf1[] = {UB0_USER_CTRL, UB0_USER_CTRL_I2C_MST_EN};
+    changeUserBank(USER_BANK_0);
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf1, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+    changeUserBank(USER_BANK_3);
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf2[] = {UB3_I2C_MST_CTRL, UB3_I2C_MST_CTRL_CLK_400KHZ};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf2, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+}
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">power_down_mag</span>() {
+    <span style="color: #228B22">//mag write steps</span>
+    changeUserBank(USER_BANK_3);
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf1[] = {UB3_I2C_SLV0_ADDR, MAG_AK09916_I2C_ADDR};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf1, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf2[] = {UB3_I2C_SLV0_REG, MAG_CNTL2};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf2, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf3[] = {UB3_I2C_SLV0_DO, MAG_CNTL2_POWER_DOWN};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf3, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf4[] = {UB3_I2C_SLV0_CTRL, UB3_I2C_SLV0_CTRL_EN | (<span style="color: #a7a7a7; font-weight: bold">uint8_t</span>)<span style="color: #B452CD">1</span>};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf4 , <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+}
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">reset_mag</span>() {
+    <span style="color: #228B22">//mag write steps</span>
+    changeUserBank(USER_BANK_3);
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf1[] = {UB3_I2C_SLV0_ADDR, MAG_AK09916_I2C_ADDR};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf1, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf2[] = {UB3_I2C_SLV0_REG, MAG_CNTL3};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf2, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf3[] = {UB3_I2C_SLV0_DO, MAG_CNTL3_RESET};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf3, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf4[] = {UB3_I2C_SLV0_CTRL, UB3_I2C_SLV0_CTRL_EN | (<span style="color: #a7a7a7; font-weight: bold">uint8_t</span>)<span style="color: #B452CD">1</span>};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf4 , <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+}
+
+<span style="color: #228B22">//Configs the accelerometer with our specifications</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">config_accel</span>() {
+    changeUserBank(USER_BANK_2);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> accelRangeRegValue = <span style="color: #B452CD">0x00</span>;
+    <span style="color: #a7a7a7; font-weight: bold">float</span> accelScale = <span style="color: #B452CD">0.0f</span>;
+
+    <span style="color: #228B22">//2g case from example</span>
+    accelRangeRegValue = UB2_ACCEL_CONFIG_FS_SEL_2G;
+    accelScale = G * <span style="color: #B452CD">2.0f</span>/accRawScaling; <span style="color: #228B22">// setting the accel scale to 2G</span>
+
+    <span style="color: #228B22">//bandwidth 1Khz (approx)</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> dlpfRegValue = <span style="color: #B452CD">0x00</span>;
+    dlpfRegValue = UB2_ACCEL_CONFIG_DLPFCFG_1209HZ;
+
+    <span style="color: #228B22">//writeRegister(UB2_ACCEL_CONFIG, accelRangeRegValue | dlpfRegValue)</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf[] = {UB2_ACCEL_CONFIG, accelRangeRegValue | dlpfRegValue};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+}
+
+<span style="color: #228B22">//Configures the gyro with our specifications </span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">config_gyro</span>() {
+    changeUserBank(USER_BANK_2);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> gyroConfigRegValue = <span style="color: #B452CD">0x00</span>;
+    <span style="color: #a7a7a7; font-weight: bold">float</span> gyroScale = <span style="color: #B452CD">0x00</span>;
+
+    <span style="color: #228B22">//mode for measuring +- 250 Deg/s</span>
+    gyroConfigRegValue = UB2_GYRO_CONFIG_1_FS_SEL_250DPS;
+    gyroScale = <span style="color: #B452CD">250.0f</span>/gyroRawScaling * _d2r; <span style="color: #228B22">// setting the gyro scale to 250DPS</span>
+
+    <span style="color: #228B22">//bandwidth</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> dlpfRegValue = <span style="color: #B452CD">0x00</span>;
+    dlpfRegValue = UB2_GYRO_CONFIG_1_DLPFCFG_12106HZ;
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf[] = {UB2_GYRO_CONFIG_1, gyroConfigRegValue | dlpfRegValue};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+}
+
+<span style="color: #228B22">//Configures the mag with our specifications</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">config_mag</span>() {
+    <span style="color: #228B22">//writeMagRegister(MAG_CNTL2, MAG_CNTL2_MODE_100HZ)</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> subAddress = MAG_CNTL2;
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> data = MAG_CNTL2_MODE_100HZ;
+
+    changeUserBank(USER_BANK_3);
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf1[] = {UB3_I2C_SLV0_ADDR, MAG_AK09916_I2C_ADDR};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf1, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf2[] = {UB3_I2C_SLV0_REG, subAddress};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf2, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf3[] = {UB3_I2C_SLV0_DO, data};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf3, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buf4[] = {UB3_I2C_SLV0_CTRL, UB3_I2C_SLV0_CTRL_EN | (<span style="color: #a7a7a7; font-weight: bold">uint8_t</span>)<span style="color: #B452CD">1</span>};
+    i2c_write_blocking(I2C_CHAN, ADDRESS, buf4 , <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+}
+
+<span style="color: #228B22">//Main read sensor function</span>
+<span style="color: #228B22">//Doesn&#39;t return anything, but modifies the content of the input arrays</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">icm20948_read_raw</span>(fix15 accel[<span style="color: #B452CD">3</span>], fix15 gyro[<span style="color: #B452CD">3</span>], fix15 mag[<span style="color: #B452CD">3</span>]) { 
+    changeUserBank(USER_BANK_0);
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buffer[<span style="color: #B452CD">21</span>];
+
+    <span style="color: #228B22">//Starting register - go 20 further than this to include everything that we want</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> starting_reg = ACCEL_XOUT_H;
+
+    <span style="color: #228B22">//Send the starting address</span>
+    i2c_write_blocking(I2C_CHAN, ADDRESS, &amp;starting_reg, <span style="color: #B452CD">1</span>, <span style="color: #658b00">true</span>); <span style="color: #228B22">// true to keep master control of bus</span>
+    <span style="color: #228B22">//readRegisters(UB0_ACCEL_XOUT_H, 20, _buffer);</span>
+    i2c_read_blocking(I2C_CHAN, ADDRESS, buffer, <span style="color: #B452CD">20</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> temp_accel, temp_gyro, temp_mag;
+
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> axcounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)buffer[<span style="color: #B452CD">0</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | buffer[<span style="color: #B452CD">1</span>];
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> aycounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)buffer[<span style="color: #B452CD">2</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | buffer[<span style="color: #B452CD">3</span>];
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> azcounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)buffer[<span style="color: #B452CD">4</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | buffer[<span style="color: #B452CD">5</span>];
+
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> gxcounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)buffer[<span style="color: #B452CD">6</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | buffer[<span style="color: #B452CD">7</span>];
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> gycounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)buffer[<span style="color: #B452CD">8</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | buffer[<span style="color: #B452CD">9</span>];
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> gzcounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)buffer[<span style="color: #B452CD">10</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | buffer[<span style="color: #B452CD">11</span>];
+
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> hxcounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)buffer[<span style="color: #B452CD">15</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | buffer[<span style="color: #B452CD">14</span>];
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> hycounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)buffer[<span style="color: #B452CD">17</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | buffer[<span style="color: #B452CD">16</span>];
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> hzcounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)buffer[<span style="color: #B452CD">19</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | buffer[<span style="color: #B452CD">18</span>];
+
+    accel[<span style="color: #B452CD">0</span>] = float2fix15((((<span style="color: #a7a7a7; font-weight: bold">float</span>)axcounts * G * <span style="color: #B452CD">2.0f</span>/accRawScaling) ));
+    accel[<span style="color: #B452CD">1</span>] = float2fix15((((<span style="color: #a7a7a7; font-weight: bold">float</span>)aycounts * G * <span style="color: #B452CD">2.0f</span>/accRawScaling) ));
+    accel[<span style="color: #B452CD">2</span>] = float2fix15((((<span style="color: #a7a7a7; font-weight: bold">float</span>)azcounts * G * <span style="color: #B452CD">2.0f</span>/accRawScaling) ));
+
+    gyro[<span style="color: #B452CD">0</span>] = float2fix15(gxcounts * <span style="color: #B452CD">250.0f</span>/gyroRawScaling * _d2r);
+    gyro[<span style="color: #B452CD">1</span>] = float2fix15(gycounts * <span style="color: #B452CD">250.0f</span>/gyroRawScaling * _d2r);
+    gyro[<span style="color: #B452CD">2</span>] = float2fix15(gzcounts * <span style="color: #B452CD">250.0f</span>/gyroRawScaling * _d2r);
+
+    <span style="color: #228B22">//Transform for mag data</span>
+    <span style="color: #8B008B; font-weight: bold">const</span> <span style="color: #a7a7a7; font-weight: bold">int16_t</span> tX[<span style="color: #B452CD">3</span>] = {<span style="color: #B452CD">1</span>,  <span style="color: #B452CD">0</span>,  <span style="color: #B452CD">0</span>}; 
+    <span style="color: #8B008B; font-weight: bold">const</span> <span style="color: #a7a7a7; font-weight: bold">int16_t</span> tY[<span style="color: #B452CD">3</span>] = {<span style="color: #B452CD">0</span>, -<span style="color: #B452CD">1</span>,  <span style="color: #B452CD">0</span>};
+    <span style="color: #8B008B; font-weight: bold">const</span> <span style="color: #a7a7a7; font-weight: bold">int16_t</span> tZ[<span style="color: #B452CD">3</span>] = {<span style="color: #B452CD">0</span>,  <span style="color: #B452CD">0</span>, -<span style="color: #B452CD">1</span>};
+
+    mag[<span style="color: #B452CD">0</span>] = float2fix15((<span style="color: #a7a7a7; font-weight: bold">float</span>)(tX[<span style="color: #B452CD">0</span>]*hxcounts + tX[<span style="color: #B452CD">1</span>]*hycounts + tX[<span style="color: #B452CD">2</span>]*hzcounts) * _magScale);
+    mag[<span style="color: #B452CD">1</span>] = float2fix15((<span style="color: #a7a7a7; font-weight: bold">float</span>)(tY[<span style="color: #B452CD">0</span>]*hxcounts + tY[<span style="color: #B452CD">1</span>]*hycounts + tY[<span style="color: #B452CD">2</span>]*hzcounts) * _magScale);
+    mag[<span style="color: #B452CD">2</span>] = float2fix15((<span style="color: #a7a7a7; font-weight: bold">float</span>)(tZ[<span style="color: #B452CD">0</span>]*hxcounts + tZ[<span style="color: #B452CD">1</span>]*hycounts + tZ[<span style="color: #B452CD">2</span>]*hzcounts) * _magScale);
+}
+
+<span style="color: #228B22">//Expect the function to return 0xEA</span>
+<span style="color: #a7a7a7; font-weight: bold">int</span> <span style="color: #008b45">IMU_whoAmI</span>() {
+
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> starting_reg = UB0_WHO_AM_I;
+
+    <span style="color: #228B22">//Send the starting address</span>
+    i2c_write_blocking(I2C_CHAN, ADDRESS, &amp;starting_reg, <span style="color: #B452CD">1</span>, <span style="color: #658b00">true</span>); <span style="color: #228B22">// true to keep master control of bus</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> buffer[<span style="color: #B452CD">0</span>];
+    i2c_read_blocking(I2C_CHAN, ADDRESS, buffer, <span style="color: #B452CD">1</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #8B008B; font-weight: bold">if</span>(buffer[<span style="color: #B452CD">0</span>] == ICM20948_WHO_AM_I){
+        <span style="color: #8B008B; font-weight: bold">return</span> <span style="color: #B452CD">1</span>;
+    }
+    <span style="color: #8B008B; font-weight: bold">else</span>{
+        <span style="color: #8B008B; font-weight: bold">return</span> <span style="color: #B452CD">0</span>;
+    }
+}
+
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">read_mag_setup</span>() { 
+    changeUserBank(USER_BANK_3);
+    
+    <span style="color: #228B22">//writeRegister(UB3_I2C_SLV0_ADDR, MAG_AK09916_I2C_ADDR | UB3_I2C_SLV0_ADDR_READ_FLAG)</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> mag_write_buf[] = {UB3_I2C_SLV0_ADDR,  MAG_AK09916_I2C_ADDR | UB3_I2C_SLV0_ADDR_READ_FLAG};
+    i2c_write_blocking(I2C_CHAN, ADDRESS , mag_write_buf, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #228B22">//writeRegister(UB3_I2C_SLV0_REG, subAddress)</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> mag_write_buf2[] = {UB3_I2C_SLV0_REG, MAG_HXL};
+    i2c_write_blocking(I2C_CHAN, ADDRESS , mag_write_buf2, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+    <span style="color: #228B22">//writeRegister(UB3_I2C_SLV0_CTRL, UB3_I2C_SLV0_CTRL_EN | count)</span>
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> mag_write_buf3[] = {UB3_I2C_SLV0_CTRL, UB3_I2C_SLV0_CTRL_EN | MAG_DATA_LENGTH};
+    i2c_write_blocking(I2C_CHAN, ADDRESS , mag_write_buf3, <span style="color: #B452CD">2</span>, <span style="color: #658b00">false</span>);
+
+}
+
+<span style="color: #228B22">//Function to read magno</span>
+<span style="color: #a7a7a7; font-weight: bold">void</span> <span style="color: #008b45">test_mag</span>(fix15 mag[<span style="color: #B452CD">3</span>]){
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> mag_starting_reg = MAG_XOUT_L;
+    <span style="color: #a7a7a7; font-weight: bold">uint8_t</span> mag_buffer[<span style="color: #B452CD">7</span>];
+
+    i2c_write_blocking(i2c1, MAG_AK09916_I2C_ADDR, &amp;mag_starting_reg, <span style="color: #B452CD">1</span>, <span style="color: #658b00">true</span>); <span style="color: #228B22">// true to keep master control of bus</span>
+
+    i2c_read_blocking(i2c1, MAG_AK09916_I2C_ADDR, mag_buffer, <span style="color: #B452CD">6</span>, <span style="color: #658b00">false</span>);
+   
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> hxcounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)mag_buffer[<span style="color: #B452CD">1</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | mag_buffer[<span style="color: #B452CD">0</span>];
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> hycounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)mag_buffer[<span style="color: #B452CD">3</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | mag_buffer[<span style="color: #B452CD">2</span>];
+    <span style="color: #a7a7a7; font-weight: bold">int16_t</span> hzcounts = (((<span style="color: #a7a7a7; font-weight: bold">int16_t</span>)mag_buffer[<span style="color: #B452CD">5</span>]) &lt;&lt; <span style="color: #B452CD">8</span>) | mag_buffer[<span style="color: #B452CD">4</span>];
+
+    <span style="color: #8B008B; font-weight: bold">const</span> <span style="color: #a7a7a7; font-weight: bold">int16_t</span> tX[<span style="color: #B452CD">3</span>] = {<span style="color: #B452CD">1</span>,  <span style="color: #B452CD">0</span>,  <span style="color: #B452CD">0</span>}; 
+    <span style="color: #8B008B; font-weight: bold">const</span> <span style="color: #a7a7a7; font-weight: bold">int16_t</span> tY[<span style="color: #B452CD">3</span>] = {<span style="color: #B452CD">0</span>, -<span style="color: #B452CD">1</span>,  <span style="color: #B452CD">0</span>};
+    <span style="color: #8B008B; font-weight: bold">const</span> <span style="color: #a7a7a7; font-weight: bold">int16_t</span> tZ[<span style="color: #B452CD">3</span>] = {<span style="color: #B452CD">0</span>,  <span style="color: #B452CD">0</span>, -<span style="color: #B452CD">1</span>};
+
+    mag[<span style="color: #B452CD">0</span>] = float2fix15((<span style="color: #a7a7a7; font-weight: bold">float</span>)(tX[<span style="color: #B452CD">0</span>]*hxcounts + tX[<span style="color: #B452CD">1</span>]*hycounts + tX[<span style="color: #B452CD">2</span>]*hzcounts) * _magScale);
+    mag[<span style="color: #B452CD">1</span>] = float2fix15((<span style="color: #a7a7a7; font-weight: bold">float</span>)(tY[<span style="color: #B452CD">0</span>]*hxcounts + tY[<span style="color: #B452CD">1</span>]*hycounts + tY[<span style="color: #B452CD">2</span>]*hzcounts) * _magScale);
+    mag[<span style="color: #B452CD">2</span>] = float2fix15((<span style="color: #a7a7a7; font-weight: bold">float</span>)(tZ[<span style="color: #B452CD">0</span>]*hxcounts + tZ[<span style="color: #B452CD">1</span>]*hycounts + tZ[<span style="color: #B452CD">2</span>]*hzcounts) * _magScale);
+
+}
+</pre></td></tr></table></div>
+
+
+
+    </div>
+
+    </div><!-- /.container -->
+
+  </body>
+</html>
