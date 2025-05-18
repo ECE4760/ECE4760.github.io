@@ -1,0 +1,693 @@
+<!DOCTYPE HTML>
+<!--
+	Read Only by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+
+<head>
+	<title>RotorRascals Drone</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="assets/css/main.css" />
+</head>
+
+<body class="is-preload">
+
+	<!-- Header -->
+	<section id="header">
+		<header>
+			<span class="image avatar"><img src="images/rotorrascalavatar.png" alt="" /></span>
+			<h1 id="logo"><a href="#">RotorRascals Drone</a></h1>
+			<p>A final project for ECE 5730 by<br> Bryan P, Nikolai N, Martin K</p>		</header>
+		<nav id="nav">
+			<ul>
+				<li><a href="#one" class="active">Introduction</a></li>
+				<li><a href="#two">High Level Design and Inspiration</a></li>
+				<li><a href="#three">Program Design</a></li>
+				<li><a href="#four">PID Tuning</a></li>
+				<li><a href="#five">Results of the Design</a></li>
+				<li><a href="#six">Conclusion</a></li>
+				<li><a href="#seven">Appendix</a></li>
+			</ul>
+		</nav>
+		<footer>
+			<ul class="icons">
+				<!-- <li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
+						<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
+						<li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+						<li><a href="#" class="icon brands fa-github"><span class="label">Github</span></a></li>
+						<li><a href="#" class="icon solid fa-envelope"><span class="label">Email</span></a></li> -->
+			</ul>
+		</footer>
+	</section>
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<div id="main">
+
+			<!-- One -->
+			<section id="one">
+				<div class="image main" data-position="center">
+					<img src="images/racoondronebanner.jpeg" alt="" />
+				</div>
+				<div class="container">
+					<header class="major">
+						<h2>RotorRascals Drone</h2>
+						<p>We built and implemented PID control on a Pico-powered quadcopter to hover on a gimbal stand
+							with throttle input from a controller.
+						</p>
+					</header>
+					<p><strong>Team Members:</strong>
+						<ul>
+							<li><a href="https://www.linkedin.com/in/bryan-peters-0b68081b9/" target="_blank">Bryan Peters</a></li>
+							<li><a href="https://www.linkedin.com/in/nikolai-nekrutenko/" target="_blank">Nikolai Nekrutenko</a></li>
+							<li><a href="https://www.linkedin.com/in/martin-k-672217233/" target="_blank">Martin Kostal</a></li> <!-- Replace # with actual URL -->
+						</ul>
+					</p>
+
+					<center>
+						<img src="figs/drone.jpeg" alt="RotorRascal team member flying a drone" width="600" />
+						<figcaption style="font-size: 14px; color: #555;">RotorRascals assembled drone</figcaption>
+					</center>
+
+					<p>A functional quadcopter system powered by a Raspberry Pi Pico, implementing a full
+						PID-based flight controller from scratch to enable stable hover on a custom gimbal stand was built. Our
+						goal was to design a hands-on, educational drone platform that could be integrated into ECE and
+						MAE course curricula, allowing students to work directly with embedded systems, control theory,
+						and dynamics. Starting from a partially developed hardware prototype and minimal software, we
+						developed our own PID control logic, tuned it through extensive testing, and integrated
+						radio-based throttle control. This project not only demonstrated our understanding of embedded
+						flight control, but also laid the groundwork for a low-cost, reproducible drone platform for
+						future student use.</p>
+
+					<div style="text-align: center;">
+					<div style="display: inline-flex; gap: 40px;">
+						<img src="images/racoondrone.gif" alt="RotorRascal team member flying a drone" width="300" />
+						<img src="images/racoondrone2.gif" alt="Second drone scene" width="300" />
+					</div>
+					<div style="margin-top: 8px; font-size: 14px; color: #555;">
+						RotorRascal team members flying drones (OpenAI Sora)
+					</div>
+					</div>
+
+					<!-- Team Links -->
+				</div>
+			</section>
+
+			<!-- Two -->
+			<section id="two">
+				<div class="container">
+					<h3>High Level Design and Inspiration</h3>
+					<h4>Rationale and sources of your project idea</h4>
+					<p>
+						Bryan, Martin and Nikolai enjoy drones and quadcopters, we thought it would be a neat idea to develop
+						a somewhat functioning flight controller to control the drone with an onboard IMU for
+						orientation data, an external remote to set the throttle position, and an electronic speed
+						controller (ESC). <br />
+						<br />
+						Nikolai is a part of the Motion Studio "Drone Squad" advised by Dr. Beatriz Asfora which was
+						involved in the creating of this final project idea. Out of the Drone Squad there was already a
+						prototype developed by Deemo Chen with a PCB integrating an IMU and Pi Pico along with a
+						skeleton of code on how to control each PWM ESC channel. <br />
+						<br />
+						The long-term objective of this project is to support the integration of these Pico-based drones
+						made from 3D printed components into ECE and MAE courses. For instance, these drones could be
+						integrated in the ECE microcontrollers curriculum and the students could work on code
+						developing/tuning a PID controller. Or, for a MAE dynamics course, the students could use these
+						drones for dynamics modelling.
+					</p>
+
+					<h4>Background Math</h4>
+
+					<p>The effects of a <i>P</i>, <i>I</i> and <i>D</i> terms are well known. If we think of controlling
+						the mass in a spring-mass-damped system, the <i>P</i> term acts like increasing the stiffness
+						of the spring, whereas the <i>D</i> term effectively adds damping to the system. An <i>I</i>
+						term in general achieves the desirable property of having zero steady state.
+						<br />
+						<br />
+						Even though our system is not a spring-mass-damped system, we can still keep in mind the above
+						intuitive properties of each of the three terms of a PID controller.
+
+						We ended up using the same set of three <i>P</i>, <i>I</i>, <i>D</i> coefficients for
+						controlling the pitch and the roll angle, and a different set of three <i>P</i>, <i>I</i>,
+						<i>D</i> coefficients for the yaw angle. Therefore, <i>6</i> in total.
+						<br />
+						<br />
+						We did not do any modelling of the drone ("plant") dynamics, and did the tuning by trial and
+						error. With more time, we would obtain the equations of motion and linearize about the desired
+						hover position. We would get a linear set of equations, keeping in mind that we should include a
+						model of noise in the measurements obtained from the IMU. There would be two standard approaches
+						we could have taken: either design the controller using the state-space approach, or frequency
+						design. Preceeding each of these two approaches, we would first have to obtain the dynamical
+						equations of motion from Newton's second law and then linearize them about the desired hover
+						position.
+						<br />
+						<br />
+						Getting the dynamical equations of motion would have been non-trivial for several reasons, and
+						was not achievable in the allocated time for this project. First of all, we would have to obtain
+						the center of mass and tensor of inertia with respect to the gimbal, treating the drone as a
+						rigid body. This could have been obtained from a CAD assembly, but only approximately - due to
+						the geometry of <i>3D</i> printed layers, see linked files for the individual parts.
+						(Furthermore, the chip itself, the IMU, the wiring, the battery would all change these
+						quantities, and indicate why it would have been really hard to obtain at least a reasonable
+						model of the dynamics.) Second of all, the friction at the gimbal on the frame of the drone and
+						the pull of the cables would have to be modelled. The thrust of the propellers in terms of the
+						duty cycle of our PWM control signal supplied to the motors would be obtained from the
+						documentation of the propeller's manufacturer. We should keep in mind that the gimbal support
+						was not located under the center of mass.
+					</p>
+
+					<h4>Logical Structure</h4>
+					<ol>
+						<li>Initialize radio and sensors</li>
+						<li>Calibrate ESCs and Gyro</li>
+						<li>Initialize serial PID tuning interface</li>
+						<li>Wait for arm signal from controller
+							<ol type="a">
+								<li>Erase all stored PID values — effectively reset controls</li>
+							</ol>
+						</li>
+						<li>Spin up motors to minimum throttle and begin executing PID loop</li>
+						<li>Continue executing PID loop until disarm</li>
+					</ol>
+					<h4>Hardware Software Tradeoffs</h4>
+					<p>
+					<ul>
+						<li><strong>PID loop speed:</strong> Since the drone is a complicated, unstable system with
+							4&nbsp;motors and 6&nbsp;degrees of freedom, it is vital to have a fast control loop. From
+							our testing (and Lab&nbsp;3) we found a rate of 1&nbsp;kHz works well. Unlike
+							Lab&nbsp;3, we must compute PID terms for three axes—pitch, roll, and yaw. Pitch and roll
+							share the same PID parameters, while yaw uses different parameters discussed later in this
+							section.</li>
+
+						<li><strong>Pico&nbsp;W:</strong> The Pico&nbsp;W provides head-room for future wireless
+							features. A possible enhancement is a web-based PID-tuning interface where students adjust
+							sliders and watch live gyro and controller outputs to evaluate PID performance or drone
+							models.</li>
+
+						<li><strong>Controlling 4&nbsp;Motors:</strong> PWM signals must be calculated for all four
+							motors (versus a single motor in Lab&nbsp;3), which greatly increases compute time.
+							Combining this with multi-axis control means roughly
+							6&nbsp;(PID&nbsp;terms) × 3&nbsp;(axes) × 4&nbsp;(motors) = 64 × more
+							computation than Lab&nbsp;3. Furthermore, changing any motor speed induces torque that
+							affects the yaw axis—covered in the next point.
+						</li>
+
+						<li><strong>Yaw Compensation:</strong> Physical coupling between axes required different PID
+							weights for yaw than for pitch/roll. In practice the yaw <em>D</em> term was reduced
+							significantly so yaw corrections would not fight the other axes and cause unstable
+							oscillations.</li>
+
+						<li><strong>Long-Term Gyro Drift:</strong> Drift can affect behavior over minutes or hours.
+							Battery life is only ~ 5&nbsp;minutes, so this is minor; nevertheless, the gyro recalibrates
+							each time a battery is plugged in, ensuring reliable short-term attitude estimates.</li>
+					</ul>
+					</p>
+					<h4>Existing patents, copyrights, and trademarks which are relevant to our project.</h4>
+					<p>There are no existing patents, copyrights, and trademarks which are relevant to our project.
+					</p>
+
+				</div>
+			</section>
+
+			<!-- Four -->
+			<section id="three">
+				<div class="container">
+					<h3>Program Design</h3>
+
+					<p style="text-align:center;">
+						<img src="figs/DroneFlowChart.png" alt="Drone Flow Chart"
+							style="max-width:800px; width:100%;" />
+					</p>
+
+					<h4>Program Details</h4>
+					<p>The skeleton of code we started from was unnecessarily complicated, so our biggest challenge was
+						discovering how the actual control algorithms and peripheral interfaces were implemented. The
+						code for the radio interface was reverse-engineered based on the serial string received from the
+						controller. Although that was straightforward, it was far less straightforward to implement
+						pitch, roll, and yaw control from the controller to the rest of the code. Hence, we stuck with
+						throttle and arm only. From there, we scrapped his PID control as it was unfinished and did not
+						work and wrote our own. This has its own challenges as we are implementing it on a quadcopter
+						with four motors. One really important thing that we realized early was that the physical model
+						for how yaw is controlled is extremely different from how pitch and roll is controlled. This
+						means we needed separate coefficients for yaw PID and pitch/roll PID. To implement this, we
+						simply compute the PID values, then apply the coefficients separately in the motor mixing
+						calculations. </p>
+
+						<p>
+The code has the following structure:</p>
+
+					<pre><code>├── main.c                     # Entry point, initializes hardware and control loop
+├── lib/
+│   ├── Control/
+│   │   ├── controller.c       # PID controller logic
+│   │   └── controller.h
+│   ├── ESC/
+│   │   ├── esc.c              # Motor PWM control
+│   │   └── esc.h
+│   ├── Filter/
+│   │   ├── leaky_LP.c         # Leaky low-pass filter
+│   │   └── leaky_LP.h
+│   ├── MPU9250/
+│   │   ├── mpu9250.c          # IMU driver
+│   │   └── mpu9250.h
+│   ├── Radio/
+│   │   ├── radio.c            # UART radio input parsing
+│   │   └── radio.h
+├── include/
+│   ├── config.h               # System-wide configuration macros
+│   └── pins.h                 # Pin definitions
+├── utils/
+│   └── math_utils.c/h         # Optional math helpers
+├── Makefile or CMakeLists     # Build system configuration</code></pre>
+				
+					<h3>3D-Printable Files</h3>
+					<ol>
+						<li><strong>DIY Drone Frame with Motor Holes:</strong>
+							<a href="https://cad.onshape.com/documents/d38aab018657bf04d68fdbe6/w/71b7a7a8d496a9da1491bbbb/e/70127a797fc69afda087e221"
+								target="_blank">Onshape link</a>
+						</li>
+						<li><strong>DIY Drone (Jackson&nbsp;&amp;&nbsp;Dylan) Guards:</strong>
+							<a href="https://cad.onshape.com/documents/7de229710a5769dcea70d33f/w/a361731c2e298d2c6e283035/e/6aab78923736995bb8b96cf8"
+								target="_blank">Onshape link</a>
+						</li>
+						<li><strong>DIY Drone Gimbal Interfacer:</strong>
+							<a href="https://cad.onshape.com/documents/8b853f430eb67b22ed155352/w/298f6506e82bca0de68addf6/e/2c12097c2bd1bacce00dfebb?renderMode=0&amp;uiState=680d8b0e72d068090b086e62"
+								target="_blank">Onshape link</a>
+						</li>
+						<li><strong>Drone Gimbal Mount &amp; Spacer:</strong>
+							<a href="https://cad.onshape.com/documents/e9f49230253cb2ceb026b522/w/5f775122fa42329de5afc466/e/d2d7e1e364a8d0e3d6eb7b74"
+								target="_blank">Onshape link</a>
+						</li>
+					</ol>
+
+					<h3>Build Guides</h3>
+					<ol>
+						<li><a href="https://github.com/cornellmotionstudio/DIYDrone/wiki/Frame"
+								target="_blank">Frame&nbsp;3D-printing guide</a></li>
+						<li><a href="https://github.com/cornellmotionstudio/DIYDrone/wiki/Guards"
+								target="_blank">Guards&nbsp;3D-printing guide</a></li>
+						<li><a href="https://github.com/cornellmotionstudio/QuadPopUp/wiki/Part-1:-Build-Your-Quadcopter"
+								target="_blank">Mechanical assembly guide</a></li>
+						<li><a href="https://github.com/cornellmotionstudio/JacksonDronev2/wiki"
+								target="_blank">Electrical assembly / Pico software guide</a></li>
+					</ol>
+
+					<h3>Getting the Code &amp; Build Environment</h3>
+					<pre><code class="language-bash"># Clone the project
+git clone https://github.com/nekrutnikolai/RotorRascal.git
+
+# Go to the software directory
+cd RotorRascal/software
+
+# Build the project
+./builder</code></pre>
+
+					<h3>Bill of Materials</h3>
+
+					<h4>Table&nbsp;1: Drone Components</h4>
+					<table>
+						<thead>
+							<tr>
+								<th>Component</th>
+								<th>Part Description</th>
+								<th>Estimated Price</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Frame</td>
+								<td>3D&nbsp;Printed</td>
+								<td>$3&nbsp;–&nbsp;$5&nbsp;filament</td>
+							</tr>
+							<tr>
+								<td>Motors</td>
+								<td>2306&nbsp;brushless, 1700–2500&nbsp;KV</td>
+								<td>$15&nbsp;–&nbsp;$30&nbsp;each</td>
+							</tr>
+							<tr>
+								<td>ESC&nbsp;(4-in-1)</td>
+								<td>30–60&nbsp;A, DShot600 support</td>
+								<td>$40&nbsp;–&nbsp;$80</td>
+							</tr>
+							<tr>
+								<td>Propellers</td>
+								<td>3″ tri-blade props</td>
+								<td>$3&nbsp;–&nbsp;$6&nbsp;set</td>
+							</tr>
+							<tr>
+								<td>Radio&nbsp;Receiver&nbsp;(Rx)</td>
+								<td>ELRS protocol receiver</td>
+								<td>$15&nbsp;–&nbsp;$30</td>
+							</tr>
+							<tr>
+								<td>Battery</td>
+								<td>4S&nbsp;LiPo, 1300–1800&nbsp;mAh</td>
+								<td>$25&nbsp;–&nbsp;$50</td>
+							</tr>
+						</tbody>
+					</table>
+
+					<h4>Table&nbsp;2: Drone Accessories</h4>
+					<table>
+						<thead>
+							<tr>
+								<th>Component</th>
+								<th>Part Description</th>
+								<th>Estimated Price</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Transmitter&nbsp;(Tx)</td>
+								<td>Radiomaster&nbsp;Boxer&nbsp;ELRS&nbsp;RC&nbsp;controller</td>
+								<td>$100&nbsp;–&nbsp;$150</td>
+							</tr>
+							<tr>
+								<td>Battery&nbsp;Charger</td>
+								<td>LiPo balance charger (AC/DC or DC only)</td>
+								<td>$40&nbsp;–&nbsp;$100</td>
+							</tr>
+						</tbody>
+					</table>
+
+					<h4>Be sure to specifically reference any design or code you used from someone else.</h4>
+
+					<p>
+					We referenced the design and code found at the following repository: 
+						<a href="https://github.com/cornellmotionstudio/JacksonDronev2" target="_blank">
+							https://github.com/cornellmotionstudio/JacksonDronev2
+						</a>
+					</p>
+
+				</div>
+			</section>
+
+			<!-- Four -->
+			<section id="four">
+				<div class="container">
+					<h3>PID Tuning</h3>
+			
+					<p>
+						Tuning the PIDs on a quadcopter you designed and built from scratch is challenging—
+						there is little external guidance, so progress hinges on a solid grasp of both the
+						physics and the firmware. The hardest part was diagnosing whether instabilities
+						originated from gyro noise or from interactions between pitch/roll corrections and
+						yaw compensation. Any motor adjustment changes yaw torque, so one axis can easily
+						induce errors in another. After experimentation we established a non-oscillatory
+						starting point for all three axes.
+					</p>
+			
+					<h4>Table 3: Initial PID Values</h4>
+					<table>
+						<thead>
+							<tr>
+								<th>Axis</th>
+								<th>K<sub>p</sub></th>
+								<th>K<sub>i</sub></th>
+								<th>K<sub>d</sub></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Roll&nbsp;/&nbsp;Pitch</td>
+								<td>4.5</td>
+								<td>0.4</td>
+								<td>0.08</td>
+							</tr>
+							<tr>
+								<td>Yaw</td>
+								<td>3.0</td>
+								<td>0.25</td>
+								<td>0.015</td>
+							</tr>
+						</tbody>
+					</table>
+			
+					<p>
+						Continued tuning produced PID values that reacted briskly to disturbances, held level
+						well, and coped with center-of-gravity shifts. The main difficulty was choosing gains
+						that worked across the full throttle range without amplifying vibration-induced noise.
+						A persistent, slowly varying angle error—initially mistaken for steady-state error—was
+						traced to drift in the complementary filter, not the PID loop. Testing on a custom
+						stand (allowing pitch, roll, yaw, and limited vertical motion) let us evaluate
+						stability safely indoors while supplying power and USB connections.
+					</p>
+			
+					<h4>Table 4: Final PID Values</h4>
+					<table>
+						<thead>
+							<tr>
+								<th>Axis</th>
+								<th>K<sub>p</sub></th>
+								<th>K<sub>i</sub></th>
+								<th>K<sub>d</sub></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Roll&nbsp;/&nbsp;Pitch</td>
+								<td>20.0</td>
+								<td>2.0</td>
+								<td>1.5</td>
+							</tr>
+							<tr>
+								<td>Yaw</td>
+								<td>3.0</td>
+								<td>0.25</td>
+								<td>0.015</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+			
+			<section id="five">
+				<div class="container">
+			
+					<h3>Results of the Design</h3>
+			
+					<!-- Test data -->
+					<h4>Test Data, Scope Traces&nbsp;&amp; Waveforms</h4>
+					<p>
+						We primarily evaluated the drone on a custom-designed gimbal stand that allowed safe
+						experimentation of all rotational axes (roll, pitch, yaw) and limited vertical motion.
+						This test rig let us study hover stability, responsiveness, and overall system behavior
+						under controlled conditions.
+					</p>
+					<p>PID response was examined by:</p>
+					<ul>
+						<li>Tapping the frame to introduce known disturbances and observing the response.</li>
+						<li>Applying sudden throttle changes and analyzing recovery behavior.</li>
+						<li>Streaming gyro data over serial for real-time monitoring.</li>
+					</ul>
+					<p>
+						These experiments led to the finalized PID gains listed in Table&nbsp;4. Plotting the
+						1&nbsp;kHz data stream in real time was impractical because it degraded control-loop
+						performance.
+					</p>
+			
+					<!-- Speed -->
+					<h4>Speed of Execution</h4>
+					<p>
+						The control loop runs at 1&nbsp;kHz, a rate chosen for its
+						balance of stability and computational headroom on the Pico&nbsp;W. At this speed we
+						observed <em>no</em> hesitation, flicker, or perceptible latency; the drone responded
+						immediately to throttle changes and external disturbances.
+					</p>
+			
+					<!-- Accuracy -->
+					<h4>Accuracy</h4>
+					<p>
+						Orientation estimates remained accurate for short flight windows (2&nbsp;–&nbsp;3&nbsp;min),
+						with minor long-term drift attributed to IMU noise and complementary-filter limits.
+						Hover control was solid, although yaw corrections occasionally lagged due to
+						cross-axis torque coupling.
+					</p>
+			
+					<!-- Safety -->
+					<h4>Safety Measures</h4>
+					<ul>
+						<li><strong>Gimbal test stand:</strong> Restricts movement while preserving realistic
+							control dynamics.</li>
+						<li><strong>Arm/disarm switch:</strong> Prevents unintended motor spin-up.</li>
+						<li><strong>Failsafe shutdown:</strong> Motors cut immediately on lost communication.</li>
+						<li><strong>Battery-only flights:</strong> USB used solely for bench testing and tuning.</li>
+						<li><strong>Integral reset on arm:</strong> Clears accumulated <em>I</em> error and protects
+							operators.</li>
+						<li><strong>Optional prop guards:</strong> Printable guards integrate with the frame for
+							added protection.</li>
+					</ul>
+			
+					<!-- Usability -->
+					<h4>Usability</h4>
+					<ul>
+						<li><strong>Builder script:</strong> One-command firmware compile and flash.</li>
+						<li><strong>Serial PID tuner:</strong> Real-time gain adjustments accelerate iteration.</li>
+						<li><strong>Open-source HW/SW:</strong> Fully reproducible for ECE/MAE coursework.</li>
+						<li><strong>Documentation:</strong> GitHub Wiki guides new users through build and setup.</li>
+					</ul>
+			
+				</div>
+			</section>
+			<section id="six">
+				<div class="container">
+			
+					<h3>Conclusion</h3>
+			
+					<!-- Design analysis -->
+					<h4>Design Analysis&nbsp;&amp; Future Work</h4>
+					<p>
+						Given more time, after a thorough analysis outlined in the section “background method,”
+						we would obtain the equations of motion and proceed to linearize them about the desired
+						hover position. These would then guide us in our tuning process by suggesting ranges of
+						values for which the controller gains would result in a stable hovering
+						equilibrium. In particular, the MATLAB Controls Toolbox would likely be vital in this
+						process. We would then iterate over a loop of trial and tuning until we obtain the
+						desired response characteristics.
+					</p>
+			
+					<!-- Standards -->
+					<h4>Conformance to Standards</h4>
+					<ul>
+						<li><strong>IEEE&nbsp;21451:</strong> Digital communication with the IMU and radio
+							receiver follows the smart-transducer interface principles of this standard,
+							supporting modular sensor expansion via the Pico&nbsp;W’s Wi-Fi.</li>
+			
+						<li><strong>IEEE&nbsp;829 (Test Documentation):</strong> Although informal, our testing
+							methodology (PID tuning, safety checks, failure recovery) mirrored the repeatable
+							planning and documentation practices prescribed by this standard.</li>
+			
+						<li><strong>FCC&nbsp;Part&nbsp;15:</strong> The 2.4&nbsp;GHz link between transmitter
+							and ELRS receiver complies with ISM-band emissions limits; the system emits no
+							intentional radiation outside the allowed spectrum.</li>
+			
+						<li><strong>ISO&nbsp;12100 (Risk Assessment):</strong> Startup gyro calibration,
+							arm/disarm logic, and motor cutoff on communication loss embody this standard’s
+							safety principles. Indoor testing on a gimbal stand further reduced risk.</li>
+			
+						<li><strong>ISO&nbsp;9001 (Quality Management):</strong> While uncertified, we followed
+							its quality principles through version-controlled development, structured
+							documentation, and modular integration, supporting maintainability and
+							reproducibility for future coursework.</li>
+					</ul>
+			
+					<!-- Intellectual property -->
+					<h4>Intellectual Property Considerations</h4>
+			
+					<p><strong>Code or design reuse?</strong><br>
+					   Yes. We built on code and hardware from the Motion Studio Drone Squad and Deemo Chen:
+					</p>
+					<ul>
+						<li><a href="https://github.com/cornellmotionstudio/QuadPopUp" target="_blank">QuadPopUp</a></li>
+						<li><a href="https://github.com/cornellmotionstudio/DIYDrone" target="_blank">DIYDrone</a></li>
+						<li><a href="https://github.com/cornellmotionstudio/JacksonDronev2" target="_blank">JacksonDronev2</a></li>
+					</ul>
+			
+					<p><strong>Public-domain code used?</strong><br>
+					   Yes—the repositories above are publicly available.
+					</p>
+			
+					<p><strong>Reverse engineering or patent/trademark issues?</strong><br>
+					   N/A. No reverse engineering was involved.
+					</p>
+			
+					<p><strong>Non-disclosure agreements?</strong><br>
+					   None were required.
+					</p>
+			
+					<p><strong>Patent opportunities?</strong><br>
+					   None. Similar commercial solutions already exist.
+					</p>
+			
+				</div>
+			</section>
+			<section id="seven">
+				<div class="container">
+			
+					<h3>Appendix&nbsp;A &mdash; Permissions</h3>
+					<p>
+						The group <strong>approves</strong> this report for inclusion on the course website.
+						<br>
+						The group <strong>approves</strong> the video for inclusion on the course
+						YouTube&nbsp;channel.
+					</p>
+			
+					<h3>Additional Appendices</h3>
+			
+					<ul>
+						<li><strong>Appendix&nbsp;&mdash; Commented Verilog / Program Listings</strong><br>
+							Our commented source code is available in the repository:<br>
+							<a href="https://github.com/nekrutnikolai/RotorRascal/tree/master/software" target="_blank">
+								github.com/nekrutnikolai/RotorRascal&nbsp;/&nbsp;software
+							</a>
+						</li>
+			
+						<li><strong>Appendix&nbsp;&mdash; Schematics for External Hardware</strong><br>
+							(Drawn with KiCad.)
+							<p style="text-align:center;">
+								<img src="figs/schematic.png"
+									 alt="Drone Schematic"
+									 style="max-width:600px; width:100%;">
+							</p>
+						</li>
+			
+						<li><strong>Appendix&nbsp;&mdash; Task Breakdown per Team Member</strong><br>
+							A detailed task list is not provided because all work was completed
+							collaboratively; contributions were divided roughly evenly among team members.
+						</li>
+			
+						<li><strong>References</strong>
+							<ul>
+								<li>
+									Integrated yaw compensation in BetaFlight (popular hobbyist flight
+									software):<br>
+									<a href="https://betaflight.com/docs/wiki/guides/current/integrated-yaw"
+									   target="_blank">
+									   betaflight.com&nbsp;/&nbsp;integrated-yaw
+									</a>
+								</li>
+								<li>
+									BetaFlight freestyle tuning principles:<br>
+									<a href="https://betaflight.com/docs/wiki/guides/current/Freestyle-Tuning-Principles#suggested-setting-values-for-a-5-5"
+									   target="_blank">
+									   betaflight.com&nbsp;/&nbsp;tuning-principles
+									</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+			
+				</div>
+			</section>
+
+		</div>
+
+		<!-- Footer -->
+		<section id="footer">
+			<div class="container">
+				<ul class="copyright">
+					<li>&copy; RotorRascal. All rights reserved.</li>
+					<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+				</ul>
+			</div>
+		</section>
+
+	</div>
+
+	<!-- Scripts -->
+	<script src="assets/js/jquery.min.js"></script>
+	<script src="assets/js/jquery.scrollex.min.js"></script>
+	<script src="assets/js/jquery.scrolly.min.js"></script>
+	<script src="assets/js/browser.min.js"></script>
+	<script src="assets/js/breakpoints.min.js"></script>
+	<script src="assets/js/util.js"></script>
+	<script src="assets/js/main.js"></script>
+
+</body>
+
+</html>
