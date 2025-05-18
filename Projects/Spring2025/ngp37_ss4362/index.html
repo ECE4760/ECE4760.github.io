@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="description" content="DJ Synth Pad: ECE 5730 Final Project">
+    <meta charset="UTF-8">
+    <title>ECE 5730 Final Project - DJ Mixer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfdfd;
+            color: #1e1e1e;
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav {
+            background: #004080;
+            color: #fff;
+            padding: 1em;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            text-align: center;
+            /* center all content inside nav */
+        }
+
+        nav a {
+            display: inline-block;
+            /* necessary for centering */
+            color: #fff;
+            margin: 0 1em;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        section {
+            max-width: 900px;
+            margin: auto;
+            scroll-margin-top: 80px;
+            /* adjust this to match nav height */
+        }
+
+        h2 {
+            color: #004080;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 0.3em;
+            scroll-margin-top: 80px;
+            /* Offset for sticky nav height */
+        }
+
+        h3,
+        h4 {
+            scroll-margin-top: 80px;
+            color: #1e1e1e;
+            margin-top: 1.8em;
+        }
+
+        img {
+            max-width: 560px;
+            width: 80%;
+            height: auto;
+            margin: 1em auto 0 auto;
+            /* top: 1em, sides: auto, bottom: 0 */
+            display: block;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        video,
+        iframe {
+            max-width: 100%;
+            margin: 1em auto 0 auto;
+            /* top: 1em, sides auto */
+            display: block;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+
+        pre {
+            background: #f4f4f4;
+            padding: 1em;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            border-radius: 6px;
+        }
+
+        ul {
+            padding-left: 1.5em;
+        }
+
+        a {
+            color: #004080;
+        }
+
+        .audioline {
+            display: flex;
+            align-items: center;
+            gap: 1em;
+        }
+
+        .audioline span {
+            min-width: 80px;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .justify-text,
+        p {
+            /* justify text */
+            text-align: justify;
+        }
+
+        .callout {
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+            padding: 1em;
+            margin: 1em 0;
+            font-size: 1em;
+        }
+
+
+        code {
+            font-family: 'Fira Code', monospace;
+            background-color: #f4f4f4;
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <a href="#intro">Project Introduction</a>
+        <a href="#highlevel">High Level Design</a>
+        <a href="#hardware">Hardware Design</a>
+        <a href="#software">Software Design</a>
+        <a href="#results">Results</a>
+        <a href="#conclusion">Conclusions</a>
+        <a href="#appendices">Appendices</a>
+    </nav>
+
+    <header style="text-align:center; padding: 0.5em 0.5em 0.5em; background-color:#fdfdfd;">
+        <h1 style="font-size: 2.5em; color: #004080; margin-bottom: 0.2em;">
+            ECE 5730 Final Project: DJ Synth Pad
+        </h1>
+        <p style="text-align: center !important;">
+            Nicholas Papapanou (ngp37) &nbsp;|&nbsp; Sivaraman Sankar (ss4362)
+        </p>
+        <div style="text-align:center; margin-top: 1em;">
+            <img src="images/cover_photo.png" alt="Cover Photo" style="max-width: 560px; width: 80%; height: auto;">
+        </div>
+    </header>
+
+    <section id="intro">
+        <h2>Project Introduction</h2>
+        <p> DJ Synth Pad is an audio playground on a breadboard, letting users create, mix, and
+            visualize music in real time.</p>
+        <p>This project implements a DJ-style synthesizer using the RP2040 microcontroller, enabling users to
+            layer piano, guitar, and drum sounds over selectable backing tracks in real time. The system features a 3x4
+            keypad for triggering notes and samples, a potentiometer for pitch bending, and a live VGA interface for
+            visual feedback. Audio is generated via direct digital synthesis for piano, Karplus-Strong string synthesis
+            for guitar, and DMA playback of <code>.wav</code> samples for drums and backing tracks. The goal was to
+            create an expressive, low-latency musical interface that leverages the full range of embedded tools
+            explored in ECE 5730, from audio synthesis and real-time multithreading to DMA, SPI, and dual-core
+            execution.</p>
+        <p>Watch our final project demo below! </p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/_FUeBRVrDhI?si=O9tPzMPYrR7bxZss"
+            title="Final Demo" style="border: none;"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen></iframe>
+    </section>
+
+    <section id="highlevel">
+        <h2>High Level Design</h2>
+
+        <h3>Rationale & Motivation</h3>
+        <p>The inspiration behind DJ Synth Pad stemmed from our shared passion for music and a desire
+            to build an expressive, interactive musical interface from scratch. We both greatly enjoy playing
+            instruments and listening to music, and we wanted to bring that creativity into the world of embedded
+            systems. Inspired by commercial tools like MIDI controllers, drum machines, and DJ mixers, our goal was to
+            create a performance platform that feels responsive and engaging while operating entirely on low-cost
+            microcontroller hardware.
+        </p>
+        <p>We also saw this project as a natural extension of the core themes in ECE 5730: real-time synthesis,
+            multithreading, peripheral control, and user interface design. We aimed to build a system that not only
+            sounds great, but feels great to use. The project challenged us to merge artistic goals with
+            embedded engineering to create a musical experience that's both technically and creatively
+            satisfying.</p>
+
+        <h3>Background Math</h3>
+
+        <div class="justify-text">
+            <p>
+                At the core of our audio system is fixed-point arithmetic, which allows us to perform fast,
+                fractional math using integer-only operations on the RP2040. We use 16.15 fixed-point formats for
+                representing real-valued quantities with high precision and low overhead. This lets us compute
+                multiplications, divisions, and filtering operations efficiently within timing constraints, particularly
+                inside interrupt service routines (ISRs).
+            </p>
+
+            <p>
+                For piano synthesis, we use Direct Digital Synthesis (DDS), which generates tones by
+                iteratively incrementing a 32-bit phase accumulator and indexing into a 256-point sine lookup table. The
+                increment for a desired frequency <code>F<sub>s</sub></code> is computed as:
+                <code>phase_incr = (F<sub>out</sub> × 2<sup>32</sup>) / F<sub>s</sub></code>
+                where <code>F<sub>s</sub></code> is the DAC sampling rate. The high bits of the accumulator index into
+                the
+                table, and the output is scaled using a fixed-point amplitude envelope with programmable attack and
+                decay
+                profiles. DDS provides stable, real-time tone generation with smooth pitch bending, which we control via
+                a
+                potentiometer.
+            </p>
+
+            <p>
+                For guitar synthesis, we implemented a Karplus-Strong algorithm with added low-pass and
+                all-pass filtering. Each note is represented by a circular buffer whose length determines the pitch
+                (e.g., a
+                buffer length of 76 at 20kHz approximates a C4 note). The buffer is initialized with a pluck waveform
+                and
+                the output is computed as:
+                <code>y[n] = η × (lowpass(x[n]) - y[n-1]) + x[n-1]</code>,
+                where <code>η</code> is a fractional delay tuning parameter, and the system is implemented using
+                fixed-point
+                multipliers for all arithmetic. The filtered feedback simulates natural decay and harmonics of a
+                vibrating
+                string. Parameters like damping, buffer size, and waveform type can be tuned per note.
+            </p>
+
+            <p class="callout">
+                Implementation details for both methods are discussed further in the <a
+                    href="#software">Software Design</a> section. These
+                techniques are adapted from the ECE 5730 course material, with full references provided in <a
+                    href="#appendices-d">Appendix D</a>.
+            </p>
+
+        </div>
+
+        <h3>Logical Structure</h3>
+
+        <p>
+            DJ Synth Pad operates as a tightly integrated embedded music system driven
+            by the RP2040’s dual-core architecture, implemented primarily in <code>dj.c</code>. The system is split into
+            two major domains:
+        <ul>
+            <li>Core 0: Handles real-time audio synthesis and manages hardware input(s)</li>
+            <li>Core 1: Manages the VGA display and UI state</li>
+        </ul>
+
+        <p class="justify-text">
+            <b>Core 0 </b>runs three main subroutines: one for keypad input handling and system state changes, one for
+            potentiometer-based pitch bending, and one for guitar synthesis. The keypad is decoded to trigger piano
+            notes, drum samples, scale and instrument switching, and backing track control. Piano notes are generated
+            via DDS inside a high-frequency timer ISR, while guitar tones invoke a Karplus-Strong algorithm that uses a
+            circular buffer and custom filtering in <code>karplus_strong.c</code>. Drum and backing tracks are streamed
+            via dual-channel DMA using SPI, with separate channels (A and B) for each of the two speakers.
+        </p>
+
+        <p class="justify-text">
+            <b>Core 1 </b>is dedicated to VGA rendering, utilizing five protothreads for visual updates: title and
+            instructions, piano key visualization, drum pad visualization, playback state (seek bar, labels), and a
+            queue polling thread that receives updates from Core 0. Communication between cores is handled using the
+            <code>multicore_fifo</code> system, where structured messages encode note changes, instrument mode, and
+            drum
+            presses. These messages are parsed on Core 1 and rendered as stateful UI feedback.
+        </p>
+
+        <p class="justify-text">
+            Audio output is handled by an MCP4822 SPI DAC, with Channel A used for backing tracks and Channel B for
+            piano, guitar, or drum output. The DAC is clocked at 20 MHz and synchronized with DMA or ISR writes
+            depending on the audio path. The potentiometer, connected to ADC0, continuously updates a fixed-point
+            pitch
+            multiplier that dynamically affects DDS frequency. The entire system is coordinated at high performance
+            through interrupt timers, multithreaded state machines, DMA chaining, and SPI streaming, allowing for
+            seamless musical interaction across all channels.
+        </p>
+
+        <img src="images/logic_flow_final.png" alt="Logic Block Diagram" style="padding: 1em;">
+
+        <h3>Hardware/Software Tradeoffs</h3>
+        <p>
+            The system design favors software implementations for flexibility and expandability. All audio
+            synthesis,
+            input handling, and UI control are implemented in software using protothreads and
+            ISR routines. We leveraged hardware peripherals—namely the SPI controller, ADC, and DMA engine—for
+            precise,
+            efficient data transfer. While some audio routing could have been offloaded to dedicated audio ICs or
+            hardware mixers, implementing everything in software on the RP2040 allowed us to finely control timing,
+            layering, and resource sharing, especially for synchronized drum and backing track playback.
+        </p>
+
+        <h3>Relevant Patents, Copyrights, and Trademarks</h3>
+        <p>
+            All <code>.wav</code> samples used in this project, both for drum hits and backing tracks, were sourced
+            from
+            copyright-free libraries and are cleared for non-commercial use. We based our synthesis techniques on
+            publicly available course materials and research papers, with citations provided in
+            <a href="#appendices-d">Appendix D</a>. No proprietary trademarks or patented protocols were
+            reverse-engineered or violated in the
+            course of this project.
+        </p>
+
+    </section>
+
+    <section id="hardware">
+        <h2>Hardware Design</h2>
+
+        <h3>Overview</h3>
+        <p>
+            All hardware used in DJ Synth Pad was sourced from prior ECE 5730 labs, so no additional components were
+            purchased for this project. The system integrates a Raspberry Pi Pico (RP2040) microcontroller with the
+            following peripherals: a 3x4 matrix keypad for user input, a potentiometer connected to the ADC for pitch
+            bending, an MCP4822 SPI DAC for stereo audio output, and a VGA display driven via PIO and DMA. Connections
+            were made on a standard breadboard with passive components like resistors for VGA signal conditioning and
+            overcurrent protection on the keypad GPIOs. Pin assignments and electrical connections are documented in
+            the schematic and wiring note below. Relevant datasheets and hardware resources are included in <a
+                href="#appendices-d">Appendix D</a>.
+        </p>
+
+        <h3>Hardware Schematic</h3>
+        <img src="images/schematic.png" alt="Hardware Schematic">
+
+        <h3>Physical Circuit</h3>
+        <img src="images/physical_circuit.png" alt="Physical Circuit">
+
+        <h3>Detailed Wiring Description</h3>
+        <img src="images/wiring_note.png" alt="Wiring Note" style="width: 60%; display: block; margin: 0 auto;">
+
+        <h3>Peripheral Pinouts</h3>
+        <div style="display: flex; justify-content: space-between; gap: 1em; flex-wrap: wrap; align-items: flex-end;">
+            <div style="flex: 1; text-align: center;">
+                <img src="images/keypad_pins.png" alt="Keypad Pinout" style="max-width: 100%; height: auto;">
+                <p style="font-size: 0.9em; text-align: center;">Keypad GPIO Connections</p>
+            </div>
+            <div style="flex: 1; text-align: center;">
+                <img src="images/dac_pins.png" alt="DAC Pinout" style="max-width: 100%; height: auto;">
+                <p style="font-size: 0.9em; text-align: center;">MCP4822 DAC Pinout</p>
+            </div>
+            <div style="flex: 1; text-align: center;">
+                <img src="images/vga_pins.png" alt="VGA Pinout" style="max-width: 100%; height: auto;">
+                <p style="font-size: 0.9em; text-align: center;">VGA Connector Pinout</p>
+            </div>
+        </div>
+
+    </section>
+
+    <section id="software">
+        <h2>Software Design</h2>
+
+        <h3>Overview</h3>
+        <p>
+            DJ Synth Pad’s software architecture is built around the protothreads cooperative multitasking model,
+            distributed across the RP2040’s dual cores. Core 0 handles audio synthesis, DMA playback, keypad input, and
+            potentiometer-based pitch bending, while Core 1 manages the VGA display and state-driven UI. All major
+            components are implemented in C using fixed-point arithmetic for fast real-time performance. Audio routines
+            use interrupt service routines (ISRs) or DMA, and
+            UI state is synchronized between cores via multicore FIFO messaging.
+        </p>
+
+        <p>
+            The following software components draw heavily from ECE 5730 course examples, particularly for audio
+            synthesis, protothreads, VGA rendering, and SPI/DMA configuration. All referenced course resources are
+            listed in <a href="#appendices-d">Appendix D</a>.
+        </p>
+
+        <h3>FSMs and User Input Handling</h3>
+        <p>
+            A key aspect of our system is robust user interaction through a 3x4 matrix keypad, read via GPIO 9–15. The
+            keypad is polled in a dedicated protothread with a four-state debounce finite state machine (FSM) adapted
+            from Lab 1. Button events control all user actions: keys 1–8 trigger notes, 9 cycles the key signature, *
+            changes the backing track, # switches instruments, and 0 toggles playback. When in drum mode, keys 1–6
+            trigger individual drum samples. Debounced inputs update shared state and, when needed, generate VGA updates
+            sent over the multicore FIFO. The FSM is implemented in <code>thread_keypad_input</code> in
+            <code>dj.c</code>, and transitions between <code>RELEASED → MAYBE_PRESSED → PRESSED → MAYBE_RELEASED</code>.
+        </p>
+        <p>
+            Below is a diagram of the debounce FSM used for keypad input.
+        </p>
+        <img src="images/debounce_fsm.png" alt="Debounce FSM Diagram">
+
+        <p>
+            In addition to the debounce FSM, we implemented simple FSMs to manage global instrument, key, and playback
+            state. These are represented by the <code>InstrumentState</code>, <code>KeyState</code>, and
+            <code>PlaybackState</code> enums respectively. Transitions between states occur in response to keypad
+            inputs, and the updated state is used by audio threads and passed to the UI via FIFO.
+        </p>
+
+        <h3>Multithreading</h3>
+        <p>
+            The project uses eight protothreads, three on Core 0 and five on Core 1, scheduled cooperatively using the
+            provided <code> pt_cornell_rp2040_v1_3.h</code> utilities:
+        </p>
+        <ul>
+            <li><strong>Core 0:</strong>
+                <ul>
+                    <li><code>thread_keypad_input</code> – scans and debounces keypad input; updates state, triggers
+                        sound, sends messages to Core 1</li>
+                    <li><code>thread_pitch_bend</code> – continuously reads ADC to scale piano frequencies via
+                        fixed-point multiplier</li>
+                    <li><code>thread_guitar</code> – detects active guitar notes and triggers Karplus-Strong synthesis
+                    </li>
+                </ul>
+            </li>
+            <li><strong>Core 1:</strong>
+                <ul>
+                    <li><code>thread_poll_queue</code> – listens for state changes from Core 0 over multicore FIFO</li>
+                    <li><code>protothread_vga_title</code> – displays title screen and instructions</li>
+                    <li><code>protothread_vga_state</code> – renders playback state, key signature, instrument, and seek
+                        bar</li>
+                    <li><code>protothread_vga_drums</code> – shows drum pad visualization and highlight when pressed
+                    </li>
+                    <li><code>protothread_keys</code> – displays piano key state and visual feedback when pressed</li>
+                </ul>
+            </li>
+        </ul>
+
+        <p>
+            Communication between cores is implemented using the RP2040’s <code>multicore_fifo</code> hardware queue.
+            Messages are structured using a custom <code>StateMessage</code> format defined in <code>shared.h</code>,
+            allowing compact, typed events to be sent from Core 0 to Core 1. Events like note presses, instrument
+            changes, and drum triggers are pushed into the FIFO on Core 0 and parsed on Core 1 to drive UI updates.
+        </p>
+
+
+        <h3>Drums and Backing Tracks: DMA Playback</h3>
+        <p>
+            Both drums and backing tracks are streamed as 16-bit PCM <code>.wav</code> samples using dual-channel DMA
+            (channels A and B) to the MCP4822 DAC over SPI. Each stereo output is mapped to a separate DAC channel,
+            allowing mixed-layer playback. Samples were trimmed and resampled in Audacity and then converted into
+            <code>const unsigned short</code> arrays using our custom <code>convertWav.py</code> script. This script
+            reads a mono <code>.wav</code> file and generates C arrays that can be directly included and streamed from
+            flash memory, by prepending the necessary DAC configuration bits (<code>0b0011</code> for channel A,
+            <code>0b1011</code> for channel B) to each 12-bit sample. The DMA timers are configured to output at 22.05
+            kHz, and the fraction <code>250 MHz × 2 / 22673</code> was used to match this rate, ensuring audio quality.
+        </p>
+        <p>
+            Each drum sound and backing track has its own <code>.c</code> file, which is linked into <code>dj.c</code>
+            as an array and length variable. These are stored in structured arrays (<code>AudioTrack tracks[]</code> and
+            <code>DrumSample drums[]</code>) and indexed during playback. To perform the actual transfer, we used DMA
+            chaining: each DMA output uses a <em>control channel</em> and <em>data channel</em>. When the control
+            channel completes a trigger, it automatically starts the corresponding data channel to send the next audio
+            word. For example, <code>CTRL_CHAN_A</code> chains into <code>DATA_CHAN_A</code> for backing track playback,
+            and <code>CTRL_CHAN_B</code> to <code>DATA_CHAN_B</code> for drums. This enables seamless looped playback
+            with minimal CPU intervention. Playback is triggered in <code>playback()</code> and <code>playDrum()</code>
+            functions and can be stopped or restarted cleanly via <code>stopPlayback()</code>.
+        </p>
+        <p>
+            We initially explored applying real-time tempo or EQ adjustment to backing tracks and generating drum
+            synthesis on-chip, but these proved too computationally demanding within the constraints of DMA-only
+            playback and real-time SPI output. Using sample playback allowed us to preserve audio quality, minimize CPU
+            load, and layer sounds reliably. These design decisions prioritized responsiveness and stability over
+            complexity.
+        </p>
+
+        <h3>Piano: Direct Digital Synthesis</h3>
+        <p>
+            The piano tones are generated using Direct Digital Synthesis (DDS) inside a timer ISR running at 50kHz,
+            implemented in the <code>alarm_irq()</code> function in <code>dj.c</code>. A 32-bit phase accumulator
+            <code>phase_accum_main_0</code> is incremented by a frequency-dependent value calculated using
+            <code>major_freqs[][]</code> and the real-time pitch bend multiplier <code>pitch_multiplier_fix15</code>.
+            The upper 8 bits of the accumulator index into a 256-entry sine lookup table <code>sin_table</code>, which
+            stores fixed-point values scaled for the 12-bit MCP4822 DAC. The DDS equation effectively becomes:
+            <code>phase_accum += (frequency × pitch_multiplier × 2^32) / Fs</code>, where all values are fixed-point.
+        </p>
+        <p>
+            The sine value retrieved from the table is multiplied by an amplitude envelope that modulates the output
+            based on attack and decay slopes, defined by <code>attack_inc</code> and <code>decay_inc</code>. This
+            amplitude ramping is handled within the ISR itself to ensure clean fades when keys are pressed or released.
+            The final 12-bit sample is offset, prepended with the DAC control bits for Channel B, and transmitted via
+            <code>spi_write16_blocking()</code>. This low-latency pipeline allows seamless synthesis of piano notes.
+            Pitch bending is controlled in a separate protothread, <code>thread_pitch_bend</code>, which reads the
+            potentiometer using ADC0 and adjusts the frequency increment multiplier dynamically to allow smooth
+            half-step bends. The ADC is polled every 30ms, and if the change in reading exceeds a threshold
+            (<code>BEND_THRESHOLD</code>), the value is converted to a fixed-point multiplier between 0.94 (frequency of
+            a half step down) and 1.06 (frequency of a half step up) to avoid jitter and ensure smooth response.
+
+        </p>
+
+        <h3>Guitar: Karplus-Strong String Synthesis</h3>
+        <p>
+            Guitar tones use a software implementation of Karplus-Strong synthesis detailed in
+            <code>karplus_strong.c</code>. The <code>play_guitar_note</code> function initializes a circular buffer with
+            one of several pluck styles—random noise, low-passed noise, Gaussian, or sawtooth—stored in the
+            <code>init_string</code> array. Each pluck style simulates a different excitation of the string. The core
+            loop repeatedly calls <code>compute_sample()</code>, which applies a two-stage filter: a low-pass averaging
+            filter for energy decay and a fractional-delay all-pass filter controlled by <code>eta[]</code> to fine-tune
+            pitch. Filtered output is fed back into the string buffer, and read/write pointers <code>ptrin</code> and
+            <code>ptrout</code> update with wrapping at the buffer length. Output samples are streamed to DAC Channel B
+            using <code>spi_write16_blocking()</code>, producing expressive, physically-plausible guitar tones with
+            minimal CPU load. The loop sustains for a fixed number of samples (~20k), and buffers are zeroed at the end
+            to ensure silence.
+        </p>
+
+        <h3>VGA User Interface</h3>
+        <p>
+            The VGA interface was designed for clarity, feedback, and aesthetics. It displays the current instrument,
+            key signature,
+            and backing track, along with live visuals of key presses and drum hits. Core 1 runs five dedicated
+            protothreads that call helper functions from <code>vga16_graphics.c</code> to render text, shapes, and color
+            changes to the screen. The piano UI includes a 14-key layout with black and white keys that highlight
+            pressed notes in orange. Notes vary depending on the selected key signature, and the correct
+            labels are rendered dynamically. The drum pad UI features a 2x3 grid with labeled pads that momentarily turn
+            white when hit, providing a clear flash for visual emphasis before reverting. A seek bar updates every
+            frame, advancing a small circle whose speed is scaled to the total frame length of the current track, stored
+            in <code>track_total_frames[]</code>. This results in smooth scrolling tied to playback duration. While we
+            initially planned a real-time waveform visualizer, we ultimately focused on interactive elements to maximize
+            usability within VGA’s resource and timing constraints.
+        </p>
+        <p>Below is a picture of the VGA UI on startup. The default drum backing track is stopped, and the default
+            instrument is the piano in the key of C.</p>
+        <img src="images/ui_start.png" alt="Starting VGA UI">
+        <p>Below is a picture of the VGA UI while the user is playing guitar in the key of A over the jazzy backing
+            track.</p>
+        <img src="images/ui_playing.png" alt="Playing VGA UI">
+    </section>
+
+    <section id="results">
+        <h2>Results</h2>
+
+        <h3>Overview</h3>
+        <p>
+            DJ Synth Pad successfully demonstrated real-time audio synthesis, layered playback, and interactive control
+            using low-cost embedded hardware. All system components, including dual-core protothread scheduling, DMA
+            playback, and visual feedback, functioned as intended without hangs or crashes. The final product supported
+            smooth mode switching, pitch bending, and musical improvisation using only a keypad and potentiometer, with
+            engaging visual feedback on VGA.
+        </p>
+        <p>Below is a video of the C, A, and G piano scales being played via direct digital synthesis:</p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/bUVitBvyheY" title="Piano Scales Demo"
+            style="border: none;"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen></iframe>
+
+        <p>Below is a video of the C, A, and G guitar scales being played via Karplus-Strong synthesis:</p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/W8CnE34RlaI" title="Guitar Scales Demo"
+            style="border: none;"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen></iframe>
+
+        <div style="padding: 1rem">
+            <p>Here are the drum samples played via DMA playback of <code>.wav</code> files
+                converted to
+                <code>const unsigned short</code> arrays.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 1em;">
+
+                <div class="audioline">
+                    <span>Kick:</span>
+                    <audio controls>
+                        <source src="audio/kick.wav" type="audio/wav">
+                    </audio>
+                </div>
+                <div class="audioline">
+                    <span>Snare:</span>
+                    <audio controls>
+                        <source src="audio/snare.wav" type="audio/wav">
+                    </audio>
+                </div>
+                <div class="audioline">
+                    <span>Hi-hat:</span>
+                    <audio controls>
+                        <source src="audio/hihat.wav" type="audio/wav">
+                    </audio>
+                </div>
+                <div class="audioline">
+                    <span>Tom 2:</span>
+                    <audio controls>
+                        <source src="audio/lowtom.wav" type="audio/wav">
+                    </audio>
+                </div>
+                <div class="audioline">
+                    <span>Tom 1:</span>
+                    <audio controls>
+                        <source src="audio/hightom.wav" type="audio/wav">
+                    </audio>
+                </div>
+                <div class="audioline">
+                    <span>Clap:</span>
+                    <audio controls>
+                        <source src="audio/clap.wav" type="audio/wav">
+                    </audio>
+                </div>
+            </div>
+        </div>
+
+        <div style="padding: 1rem">
+            <p>Here are the backing tracks played via DMA playback of <code>.wav</code> files converted to
+                <code>const unsigned short</code> arrays.
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 1em;">
+
+                <div class="audioline">
+                    <span>Drums:</span>
+                    <audio controls loop>
+                        <source src="audio/backing_drums1.wav" type="audio/wav">
+                    </audio>
+                </div>
+                <div class="audioline">
+                    <span>Jazzy:</span>
+                    <audio controls loop>
+                        <source src="audio/backing_jazzy.wav" type="audio/wav">
+                    </audio>
+                </div>
+                <div class="audioline">
+                    <span>Rock:</span>
+                    <audio controls loop>
+                        <source src="audio/backing_rock.wav" type="audio/wav">
+                    </audio>
+                </div>
+                <div class="audioline">
+                    <span>Mellow:</span>
+                    <audio controls loop>
+                        <source src="audio/backing_mellow.wav" type="audio/wav">
+                    </audio>
+                </div>
+            </div>
+        </div>
+
+        <p class="callout"> Check out the bonus demo clips in <a href="#appendices-e">Appendix E</a> for a couple of
+            cool musical
+            performances! </p>
+
+        <h3>Speed</h3>
+        <p>
+            The system exhibited fast response and seamless concurrency. DMA playback from flash to DAC channels had no
+            perceptible latency, and multiple drum samples could be triggered back-to-back or layered over backing
+            tracks with no hesitation. VGA UI refreshes were distributed across five protothreads and updated without
+            flicker at a stable ~30 FPS. To support this, we overclocked the RP2040's CPU to 250 MHz in
+            <code>main()</code>, which drastically improved VGA rendering smoothness and reduced visual tearing. Audio
+            ISR routines ran at 50 kHz for DDS and 22.05 kHz for DMA, and all protothread execution completed
+            comfortably within timing margins. Notably, when a backing track is playing and multiple drum sounds are
+            overlaid, minor DMA contention can cause a slight flicker or vibrato in the VGA output—an effect we came to
+            view as a visual enhancement or "feature" rather than a flaw.
+        </p>
+
+        <h3>Accuracy</h3>
+        <p>
+            Piano notes generated by DDS were audibly and numerically accurate to within ±0.3 Hz of target frequencies.
+            Guitar notes generated using Karplus-Strong were tuned via buffer length and filtered for pitch stability.
+            DAC output remained within 12-bit precision, and pitch bending scaled correctly with potentiometer input.
+            The VGA interface was stable with no artifacts, and the scroll bar accurately tracked playback duration
+            using a timing divisor matched to track length in frames.
+        </p>
+
+        <h3>Safety</h3>
+        <p>
+            All GPIO lines used for the keypad were protected with current-limiting resistors to prevent overdraw or pin
+            damage. VGA outputs were conditioned with resistive dividers where necessary. No high-voltage or
+            high-current peripherals were used, and the entire system was powered from a USB supply with built-in
+            current limiting. There were no observed electrical issues during operation.
+        </p>
+
+        <h3>Usability</h3>
+        <p>
+            The system was highly usable in both structured tests and free-form musical play. Keypad inputs were
+            responsive and clearly mapped to user actions, with visual confirmation via drum pad highlighting and key
+            color changes. Switching instruments or backing tracks was intuitive, and the pitch bend control allowed
+            expressive variation. In user testing, the system was playable with no instruction after a brief demo and
+            was enjoyed by both team members and observers alike.
+        </p>
+    </section>
+
+    <section id="conclusion">
+        <h2>Conclusions</h2>
+        <p>
+            DJ Synth Pad met and exceeded our expectations as a low-cost, interactive music system built entirely on the
+            RP2040 platform. The final design supported concurrent audio synthesis, sample playback, and responsive VGA
+            visuals—all managed across dual cores with minimal latency. Our project goals were ambitious, and although
+            we didn’t fully implement our stretch goal of a physical kick drum pedal with voltage-triggered DMA
+            playback, the core functionality was robust and musically expressive. If we had more time, we would explore
+            enhanced piano synthesis techniques to generate more natural, layered sound, closer to a real instrument
+            than the current single-layer DDS tone.
+        </p>
+
+        <p>
+            Our design adhered to all safety, interface, and timing constraints expected for embedded musical systems.
+            We adapted publicly available resources provided on the ECE 5730 course webpage, including protothread
+            infrastructure, VGA and SPI drivers, and Karplus-Strong and DDS examples to our specific application. All
+            audio files were sourced from copyright-free libraries, and no IP-protected code, datasheets, or proprietary
+            protocols were reverse-engineered or NDA-restricted. While our project doesn'tdirectly present a patent
+            opportunity, it serves as a platform for future enhancements, especially for hardware-triggered percussion
+            or advanced audio layering. Overall, we’re proud of the technical depth, musical flexibility, and creative
+            satisfaction this project delivered.
+        </p>
+    </section>
+
+    <section id="appendices">
+        <h2>Appendices</h2>
+
+        <h3>Appendix A: Permissions</h3>
+        <p>The group approves this report for inclusion on the course website.</p>
+        <p>The group approves the video for inclusion on the course YouTube channel.</p>
+
+        <h3>Appendix B: Code </h3>
+        <p>Our project code can be found at this <a
+                href="https://github.com/nicholaspapapanou/dj_synth_pad/tree/main">GitHub Repository</a>. </p>
+
+        <h3>Appendix C: Work Distribution</h3>
+
+        <p> Much of the project code was written, debugged, and tested collaboratively, via pair programming.
+            However, during asynchronous development, each member had different areas of focus.</p>
+        <p> Sivaraman was primarily responsible for: </p>
+        <ul>
+            <li> Integrating the DDS algorithm for piano synthesis</li>
+            <li> Integrating the Karplus-Strong algorithm for guitar synthesis</li>
+            <li> Designing and implementing the original VGA user interface</li>
+            <li> Handling multithreading and FIFO messaging </li>
+        </ul>
+
+        <p> Nicholas was primarily responsible for: </p>
+        <ul>
+            <li> Hardware setup and implementation </li>
+            <li> Integrating DMA playback for the drums and backing tracks</li>
+            <li> Processing user keypad and potentiometer inputs</li>
+            <li> Expanding and refining the final VGA user interface </li>
+        </ul>
+
+        <p> Nicholas drafted the report and built the website, and Sivaraman created the schematics/diagrams for the
+            report and refined its content.</p>
+
+        <section id="appendices-d">
+            <h3>Appendix D: References</h3>
+            <h4>Course Resources and Demo Code</h4>
+            <ul>
+                <li><a href="https://vanhunteradams.com/DDS/DDS.html" target="_blank">Direct Digital Synthesis</a></li>
+                <li><a href="https://vanhunteradams.com/Pico/Keypad/Keypad.html" target="_blank">3x4 Matrix Keypad</a>
+                </li>
+                <li><a href="https://vanhunteradams.com/Protocols/SPI/SPI.html" target="_blank">SPI Communication</a>
+                </li>
+                <li><a href="https://vanhunteradams.com/Pico/VGA/VGA.html" target="_blank">VGA Driver</a></li>
+                <li><a href="https://vanhunteradams.com/FixedPoint/FixedPoint.html" target="_blank">Fixed-Point
+                        Arithmetic</a></li>
+                <li><a href="https://people.ece.cornell.edu/land/courses/ece4760/PIC32/index_sound_synth.html"
+                        target="_blank">Digital
+                        Sound
+                        Synthesis</a></li>
+                <li><a href="https://people.ece.cornell.edu/land/courses/ece4760/PIC32/Sound_synth/KS_DAC_brl4.c"
+                        target="_blank">Karplus
+                        Strong Demo Code</a></li>
+                <li><a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master" target="_blank">Course Demo
+                        Code</a></li>
+            </ul>
+            <h4>Hardware Datasheets</h4>
+            <ul>
+                <li><a href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf" target="_blank">RP2040</a>
+                </li>
+                <li><a href="https://vanhunteradams.com/Pico/Birds/DAC.pdf" target="_blank">MCP4822 DAC</a></li>
+                <li><a href="https://www.sameskydevices.com/product/resource/sj1-355xng.pdf" target="_blank">Audio
+                        Jack</a></li>
+            </ul>
+        </section>
+        <section id="appendices-e">
+            <h3>Appendix E: Bonus Videos</h3>
+            <p>Here are a couple of videos of us playing around on the DJ Synth Pad!</p>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/0aDUNd44HOk" title="Bonus Demo 1"
+                style="border: none;"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe>
+
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/_2VrnSMRxgU" title="Bonus Demo 2"
+                style="border: none;"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe>
+
+            <br>
+        </section>
+    </section>
+</body>
+
+</html>
