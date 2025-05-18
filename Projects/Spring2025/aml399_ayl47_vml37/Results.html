@@ -1,0 +1,126 @@
+<!DOCTYPE HTML>
+<!--
+	Phantom by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Lullasky Baby Mobile</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<div class="inner">
+
+							<!-- Logo -->
+								<a href="index.html" class="logo">
+									<span class="symbol"><img src="images/lullasky.png" alt="" /></span><span class="title">Lullasky</span>
+								</a>
+
+							<!-- Nav -->
+								<nav>
+									<ul>
+										<li><a href="#menu">Menu</a></li>
+									</ul>
+								</nav>
+
+						</div>
+					</header>
+				<!-- Menu -->
+				<nav id="menu">
+					<h2>Menu</h2>
+					<ul>
+						<li><a href="index.html">Home</a></li>
+						<li><a href="generic.html">Project Background</a></li>
+						<li><a href="generic.html">Design</a></li>
+						<li><a href="generic.html">Results and Conclusions</a></li>
+						<li><a href="elements.html">Code</a></li>
+					</ul>
+				</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="inner">
+							<h1>Results</h1>
+							<p>
+								Music is a key part of our project so ensuring that the notes being played were accurate to the typical song was critical. The following shows the actual frequencies corresponding to the different notes in each song on the left of the spectrogram and on the right are the actual measured frequencies. Note that the measured shows that the notes are pure frequencies and stable to one value. Although there are deviations in the notes being outputted from the system the base frequency is very close to what is expected and there was no audibly discernable off notes. 
+							</p>
+							<!-- brahms spectrogram-->
+							<div class="image-box">
+								<img src="images/Brahms.png" alt="" style="width: 600px; height: auto; display: block; margin: 0 auto;">
+							</div>
+							<p>
+								The spectrogram for Brahms' lullaby shows how the outputted song has one tone with no variation which does make the audio sound slightly electronic, but since there is still slight ramping to change the intensity of the output the note being played sounds smooth. 
+							</p>
+							<!-- twinkle spectrogram-->
+							<div class="image-box">
+								<img src="images/twinkle.png" alt="" style="width: 600px; height: auto; display: block; margin: 0 auto;">
+							</div>
+							<p>
+								The above spectrogram shows that the difference between the measured frequencies and expected frequencies varied up to 10 Hz. For Twinkle Twinkle Little Star, the spectrogram also shows the repetitive nature of the song and how between plays the note frequencies remain consistent.
+							</p>
+							<!-- baby shark spectrogram-->
+							<div class="image-box">
+								<img src="images/babyshark.png" alt="" style="width: 600px; height: auto; display: block; margin: 0 auto;">
+							</div>
+							<p>
+								When capturing the spectrogram for Baby Shark, since the duration of each of the sixteenth notes is quite small and not being able to sample at a fast enough sampling frequency, the spectrograms shows the notes as a line with no gap though an audible rest could be heard. Despite this the spectrogram shows how the system's output frequencies are close to the expected with a maximum difference between actual and expected frequency of 4 Hz. 
+							</p>
+							<p>
+								In addition to analyzing the outputted frequencies for each note in comparison to expected note frequency we also measured the sensitivity of the ultrasonic sensor. From these measurements it was determined that the closest measurable distance is 12.4 cm. Knowing this minimum a distance of approximately 20 cm was used to trigger our system to play Brahms' lullaby. 
+							</p>
+							<!-- time spent in ISR-->
+							<div class="image-box">
+								<img src="images/alarm_irq.png" alt="" style="width: 500px; height: auto; display: block; margin: 0 auto;">
+							</div>
+							<p>
+								Our music is played through the DAC needs precise timing to portray the correct rhythm and notes of the lullabies. Thus, precise timing is critical to maintain correct pitch and smooth playback. The IRQ handler is used to ensure audio sampling occurs at a consistent 50kHz(every 20us). To trigger the IRQ, we are using the Raspberry Pi Pico's alarm system, which sets up a hardware timer that interrupts every 20us, corresponding to our sampling rate which we defined beforehand. Each sound varies in duration (depending on the current note in the song) and the rate at which audio is sent is 50kHz. To maintain this timing an interrupt is triggered every 20 μs to check whether an audio flag was set. If an audio flag is set, then the DDS algorithm is done to calculate the frequency to be sent over SPI to the DAC. The IRQ sends the computed sample to the DAC via PWM, which updates the audio output in a precise rhythm, forming our waveform. Next, we update the sample which advances the phase accumulator and prepares the next sample for the next interrupt. Our frequencies for each song was precalculated and stored directly into memory, saving time in our IRQ such that the CPU only lasts 9.4us in the IRQ every 20us interrupt. This means that nearly half(~47%) of our CPU time is spent just handling interrupts. Thus, having the precalculated values already stored helps us meet timing and allows further functionality and complexity to our system. Note that this method of calculating the frequency to be sent to the DAC is chosen to prevent the need to use excessive memory since it is possible to precalculate all the needed values to be sent to the DAC and just consistently playback the audio. A drawback to calculating the values needed to be sent to the DAC at a given time is that all calculations and things done in the ISR must be completed before the next interrupt is triggered otherwise portions of the sound will be cut off or values will be incorrect. 
+							</p>
+
+							<header>
+								<!-- Safety Features -->
+								<h2>Safety Features</h2>
+								<p>
+									Since the project's target audience is babies, safety was an important factor when creating the design. Firstly, the baby mobile is designed with a 3D printed clamp to reduce sharp edges that could potentially harm the baby from a metal clamp. Additionally, the neopixel LEDs on the underside of the mechanical arm are wrapped with cloth and cotton balls to diffuse the light and not harm the baby's eyes. Lastly, the wiring for the motor and neopixels was firmly secured to the top of the mechanical arm so that it would be out of reach from the baby to prevent possible electrocutions. For this prototype wire and electronic components are secured to the backside of the arm and ideally are suspended out of a baby's reach, but for future iterations, it is planned to expand the arm to be a case to enclose all electronic components and wires to ensure the safety of the baby. Additionally, the current system is currently powered by a DC power supply which can lead to accidental usage of the incorrect voltage or too much current draw, so future iterations can use a battery pack to reduce the possibility of incorrect power usage. With these considerations, it was decided that the prototype built was relatively safe assuming that the mobile is secured high enough that a baby lying down or sitting up will not be able to reach up and pull the existing system. 
+								</p>
+							</header>
+
+							<header>
+								<!-- Usability -->
+								<h2>Usability</h2>
+								<p>
+									Due to the intended audience being babies whose parents will be using the mobile to entertain or soothe their children the interface to use the baby mobile was kept simple with one button to toggle the motor on or off based and another button to change the active song and light mode. Although this prototype for the system is not very portable or swappable the final project is intended to have a removable audio unit which can be used as a sound machine when not attached to the baby mobile and also to make the baby mobile more portable through removing the power supply and wired speakers that need to be plugged in to using battery pack which can easily be attached to the mobile and also using smaller speakers which can be powered by the pico and attached to the existing circuitry board. Furthermore to increase the portability of the device and the safety the current breadboard circuitry can be replaced with a PCB containing the circuitry for the motor and neopixels and an additional PCB can be designed for the sound system to allow for the possibility of a removable sound machine unit. 
+								</p>
+							</header>							
+						</div>
+					</div>
+
+				<!-- Footer -->
+				<footer id="footer">
+					<div class="inner">
+
+						<ul class="copyright">
+							<li>&copy; Lullasky. All rights reserved</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+						</ul>
+					</div>
+				</footer>
+
+		</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
