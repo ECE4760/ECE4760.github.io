@@ -1,0 +1,331 @@
+{"0": {
+    "doc": "1. Introduction",
+    "title": "1. Project Introduction",
+    "content": " ",
+    "url": "/1-introduction.html#1-project-introduction",
+    
+    "relUrl": "/1-introduction.html#1-project-introduction"
+  },"1": {
+    "doc": "1. Introduction",
+    "title": "1.1 Summary",
+    "content": "In this project, we designed a real-time sound localization system using a Raspberry Pi Pico and three microphones. Audio from each of the MEMS microphones was continuously sampled at ($50\\,\\mathrm{kHz}$) via the Pico’s DMA engine. Each channel’s data is then streamed into a rolling buffer. When the energy in the buffer reaches a certain threshold, the software performs cross-correlations between the microphone pairs to estimate the time differences between the audio arrivals. These estimates are averaged over time to reduce the impact of noise. Using the delay estimates, a heat map is drawn by comparing the expected delays from each location to the estimates calculated by our cross-correlation. The entire processing chain-from sampling to buffering, correlation, and VGA drawing-executes on the Raspberry Pi Pico. ",
+    "url": "/1-introduction.html#11-summary",
+    
+    "relUrl": "/1-introduction.html#11-summary"
+  },"2": {
+    "doc": "1. Introduction",
+    "title": "1.2 Motivation",
+    "content": "Our motivation was a combination of passion for signal processing and demonstrating the capabilities of low-cost hardware in audio processing. The localization system has many applications, from robotics to art installations. In a world in which there is an increasing number of applications requiring many cheap distributed sensors, there is a need for the development of algorithms capable of running on cheap, low power, hardware. Our project implements audio localization on system whose total BOM is under $20, with a localization accuracy comparable to much more expensive systems. The algorithms is run purely on the Pico, eliminating the need for a dedicated DSP chip. Combined with the Pico’s PIO VGA output, this results in an all-in-one package for sound localization. ",
+    "url": "/1-introduction.html#12-motivation",
+    
+    "relUrl": "/1-introduction.html#12-motivation"
+  },"3": {
+    "doc": "1. Introduction",
+    "title": "1. Introduction",
+    "content": " ",
+    "url": "/1-introduction.html",
+    
+    "relUrl": "/1-introduction.html"
+  },"4": {
+    "doc": "2. High Level Design",
+    "title": "2. High-Level Design",
+    "content": " ",
+    "url": "/2-high-level-design.html#2-high-level-design",
+    
+    "relUrl": "/2-high-level-design.html#2-high-level-design"
+  },"5": {
+    "doc": "2. High Level Design",
+    "title": "2.1 Rationale &amp; Inspiration",
+    "content": "Audio localization typically depends on specialized DSP hardware or simplified methods that only work with sharp transients. This often makes such projects out of reach for hobbyists and also results in expensive systems. By leveraging the Raspberry Pi Pico’s ADC along with the RP2040’s fast processors, we determined it was possible to implement a more sophisticated localization technique entirely on-chip. We decided to implement a time-difference-of-arrival (TDOA) method to determine sound location. To compute the time difference between microphones, we use cross-correlations to estimate the likelihood of various sample shifts. ",
+    "url": "/2-high-level-design.html#21-rationale--inspiration",
+    
+    "relUrl": "/2-high-level-design.html#21-rationale--inspiration"
+  },"6": {
+    "doc": "2. High Level Design",
+    "title": "2.2 Background Math",
+    "content": "At standard temperature and pressure, the speed of sound is approximately ($343\\,\\mathrm{m/s}$). This means that for every additional centimeter between microphones, the maximum travel time is: . \\[\\frac{\\text{distance}}{\\text{velocity}} = \\frac{0.01\\,\\mathrm{m}}{343\\,\\mathrm{m/s}} \\approx 29.15\\,\\mu\\mathrm{s}\\] . Due to discrete sampling, time-difference estimates are quantized by the ADC sample period and microphone spacing. The Desmos visualization demonstrates our system’s theoretical resolution as a function of sampling rate. The gif displays resolution for rates from $0$ to $50\\,\\mathrm{kHz}$ at $2\\,\\mathrm{kHz}$ intervals. Each curve intersection represents a uniquely identifiable sound location, creating a discrete positional grid. White regions within the triangular array map to their nearest intersection point, showing the practical resolution limits at different sampling frequencies. For example, sampling at ($100\\,\\mathrm{kHz}$) ($10\\,\\mu\\mathrm{s}$ per sample) with an equilateral microphone triangle of ($10\\,\\mathrm{cm}$) sides yields a maximum shift of about $\\pm 30$ samples. Each pair of microphones then produces an integer shift in $\\left[-30, +30\\right]$ indicating their relative time difference. With three microphones, there are roughly $61^3$ distinct shift combinations. Increasing the ADC rate or spacing the microphones farther apart increases resolution by allowing more distinct shifts. Cross Correlation . The cross correlation calculation makes up the core of our algorithm. Cross‑correlation is a sliding inner‑product that quantifies the similarity between two signals as one is shifted in time. The cross correlation operation is defined as . \\[R_{xy}[k] \\;=\\;\\sum_{n=-\\infty}^{\\infty} x[n]\\,y[n + k]\\] In our case, the cross correlation peaks at a point k which represents the point at which the signals overlap the most. This k effectively gives you the time difference of arrival between 2 microphones. FFT Based-Approaches . To efficiently calculate the Time Difference of Arrival (TDOA) between two microphone signals, $x[n]$ and $y[n]$, using an FFT-based approach, the following steps are typically performed: . | Compute Discrete Fourier Transforms (DFTs): The DFTs of the windowed signal frames are calculated. | Form the (Weighted) Cross-Power Spectrum: The cross-power spectrum \\(P_{xy}(\\omega) = X(\\omega) Y^*(\\omega)\\) is computed, where $Y^*(\\omega)$ is the complex conjugate of $Y(\\omega)$. For improved robustness, especially in noisy or reverberant conditions, a weighting function is applied. | Compute Inverse DFT (IDFT): The cross-correlation sequence $r_{xy}[k]$ in the time lag domain is obtained by taking the IDFT of $P_{xy}(\\omega)$: This sequence represents the correlation between the two signals for various time lags $k$. | Identify Peak Lag: The lag $k_{\\text{max}}$ at which the cross-correlation sequence $r_{xy}[k]$ reaches its maximum value corresponds to the estimated time delay in samples: \\(k_{\\text{max}} = \\underset{k}{\\text{argmax}} \\{r_{xy}[k]\\}\\) | . The FFT approach leverages the convolution theorem, which states that convolution in the time domain equals multiplication in the frequency domain: . \\[x[n] * y[n] \\Leftrightarrow X(f) \\cdot Y(f)\\] This property transforms the computationally expensive $O(N^2)$ cross-correlation operation into an $O(N\\log N)$ process. However, for our buffer size of $N=1024$, this theoretical advantage provided minimal practical speedup. More importantly, the FFT approach introduced additional complications: increased sensitivity to phase shifts from our filters and vulnerability to non-equivalent sampling times between our three microphones. One of the innovations of our project is to remove the need for the calculation of the FFT prior to taking the cross-correlation. So while these approaches operate in the frequency domain, we operate on the sampled microphone power level readings. TDOA Conversion to Position . In our implementation, we actually perform the inverse operation: converting possible positions to expected TDOA values. For each point in the VGA display space, we calculate what the theoretical time delay would be between each microphone pair if a sound originated from that position. \\[c \\cdot \\tau_{\\text{delay}} = d_2 - d_1\\] where $c$ is the speed of sound, and $d_1, d_2$ are the distances from the potential source position to microphones 1 and 2, respectively. We do this calulation for 3 times (once for each microphone). Since our time delays are quantized by the sampling rate, only specific TDOA values are possible. These values create a grid of hyperbolas for each microphone pair, and only at the intersections of these hyperbolas can we uniquely identify a sound source. As shown in the animation, most points in space do not map to valid sample-shift combinations, so we map each position to its nearest hyperbola intersection. The visualization demonstrates how microphone spacing affects resolution. While we’ve scaled down the sampling rate in the animation for clarity, it illustrates a key principle: increasing the distance between microphones creates more hyperbolas within the same area, leading to more distinct intersection points. This effectively increases our system’s spatial resolution without requiring a higher sampling rate. ",
+    "url": "/2-high-level-design.html#22-background-math",
+    
+    "relUrl": "/2-high-level-design.html#22-background-math"
+  },"7": {
+    "doc": "2. High Level Design",
+    "title": "2.3 Logical Structure",
+    "content": ". The software pipeline on a single RP2040 core follows: . | DMA-driven sampling Configure the ADC in round-robin mode for three channels and set up a ping-pong DMA to fill a three-byte dma_sample_array. | Rolling buffers The sample_and_compute_loop() function reads the DMA array at ($50\\,\\mathrm{kHz}$), converts each $8$-bit sample to signed $16$-bit, and pushes them into three rolling buffers via rolling_buffer_push(). | Event detection Once buffers are full, outgoing and incoming windowed power are compared. Crossing the threshold triggers processing. | Cross-correlation Each buffer is flattened into a DC-centered frame and optionally windowed. correlations_init() scores integer sample shifts over the physically possible range. | Best-shift computation The shift with the highest correlation score for each microphone pair is selected; correlations_average() exponentially smooths these over time. | VGA rendering If any shift is nonzero, vga_draw() renders the full heatmap and waveforms. Otherwise, vga_draw_lite() updates only the latest curves and markers. | . ",
+    "url": "/2-high-level-design.html#23-logical-structure",
+    
+    "relUrl": "/2-high-level-design.html#23-logical-structure"
+  },"8": {
+    "doc": "2. High Level Design",
+    "title": "2.4 Hardware/Software Trade-Offs",
+    "content": "Achieving ($50\\,\\mathrm{kHz}$) sampling across three ADC channels on a Pico with ($264\\,\\mathrm{KB}$) SRAM and ($133\\,\\mathrm{MHz}$) cores required careful balancing: . | DMA offload: The DMA ensures jitter-free ($50\\,\\mathrm{kHz}$) sampling without CPU interrupts. | Buffer size vs. compute time: We experimented with buffer lengths up to $2048$ samples but settled on $1024$ to balance noise reduction and CPU load. | Display overhead: Full heatmap draws are only on loud events; vga_draw_lite() handles most frames to stay within sampling deadlines. | . ",
+    "url": "/2-high-level-design.html#24-hardwaresoftware-trade-offs",
+    
+    "relUrl": "/2-high-level-design.html#24-hardwaresoftware-trade-offs"
+  },"9": {
+    "doc": "2. High Level Design",
+    "title": "2.5 Intellectual Property Landscape",
+    "content": "Time-difference-of-arrival localization with cross-correlation is a long-standing, public-domain DSP technique. While specific microphone array patents exist, our breadboard layout and algorithms are original or derived from public-domain sources. ",
+    "url": "/2-high-level-design.html#25-intellectual-property-landscape",
+    
+    "relUrl": "/2-high-level-design.html#25-intellectual-property-landscape"
+  },"10": {
+    "doc": "2. High Level Design",
+    "title": "2. High Level Design",
+    "content": " ",
+    "url": "/2-high-level-design.html",
+    
+    "relUrl": "/2-high-level-design.html"
+  },"11": {
+    "doc": "3. Program & Hardware Design",
+    "title": "3. Program &amp; Hardware Design",
+    "content": " ",
+    "url": "/3-design.html#3-program--hardware-design",
+    
+    "relUrl": "/3-design.html#3-program--hardware-design"
+  },"12": {
+    "doc": "3. Program & Hardware Design",
+    "title": "3.1 Hardware Design",
+    "content": ". We used three MAX4466 microphones at the corners of a breadboard forming a right triangle. Each mic’s output passes through a second-order ($20\\,\\mathrm{kHz}$) low-pass filter to remove ultrasonic noise. The filtered outputs connect to the Pico’s ADC channels 0, 1, and 2. We minimized wiring length to reduce interference. The provided VGA driver uses three PIO state machines and DMA: . | HSYNC PIO: Generates horizontal sync, front/back porches. | VSYNC PIO: Counts lines via HSYNC interrupts and manages vertical timing. | RGB PIO: Streams pixel data from a DMA-fed global pixel array (($3$ bits per pixel)). | . A ($330\\,\\Omega$) resistor in series (with the Pico’s internal ($70\\,\\Omega$)) forms a divider to step the Pico’s ($3.3\\,\\mathrm{V}$) GPIO down to ($0$-$0.7\\,\\mathrm{V}$) safe for VGA inputs. ",
+    "url": "/3-design.html#31-hardware-design",
+    
+    "relUrl": "/3-design.html#31-hardware-design"
+  },"13": {
+    "doc": "3. Program & Hardware Design",
+    "title": "3.2 Core Software Loop",
+    "content": "The heart of the system resides in the sample_and_compute_loop() function within sample_compute.c, which orchestrates audio capture, processing, and visualization. Upon startup, vga_init() prepares the display subsystem. The loop initializes three rolling buffers-one per microphone-and records time for pacing. In the inner sampling loop, the code: . | Reads $8$-bit ADC values from dma_sample_array for channels A, B, and C. | Converts them to signed $16$-bit samples. | Pushes them into the respective circular buffers with rolling_buffer_push(). | . Once each buffer is full, outgoing and incoming power are computed. If the “outgoing” energy (older half of each buffer) exceeds twice the “incoming” energy (newer half), an acoustic event is detected and processing begins. Each rolling buffer is then flattened into a DC-offset-normalized frame via rolling_buffer_write_out(). Pairwise cross-correlations (correlations_init()) determine sample-shift estimates. If any shift is nonzero, correlations_average() updates long-term averages, and vga_draw() runs; otherwise, vga_draw_lite() updates only waveforms and shift markers. ",
+    "url": "/3-design.html#32-core-software-loop",
+    
+    "relUrl": "/3-design.html#32-core-software-loop"
+  },"14": {
+    "doc": "3. Program & Hardware Design",
+    "title": "3.3 Rolling Buffer Algorithm",
+    "content": "Circular buffering of the microphone streams is implemented in rolling_buffer.c using a fixed-size array of BUFFER_SIZE samples. Each call to rolling_buffer_push(): . | Computes indices for the “outgoing” sample (current head) and the midpoint sample (head minus half the buffer, wrapped). | Updates four accumulators: outgoing_total, outgoing_power, incoming_total, and incoming_power. | Uses the SAMPLE_POWER(sample) macro for power tracking. | Overwrites the oldest sample, increments the head (wrapping at BUFFER_SIZE), and sets is_full after the first wrap. | . When processing, rolling_buffer_write_out() copies samples into a contiguous buffer_t, subtracts the average (dst_offset), and computes total power for correlation normalization. ",
+    "url": "/3-design.html#33-rolling-buffer-algorithm",
+    
+    "relUrl": "/3-design.html#33-rolling-buffer-algorithm"
+  },"15": {
+    "doc": "3. Program & Hardware Design",
+    "title": "3.4 Cross-Correlation Module",
+    "content": "The cross-correlation engine in correlations.c provides both instantaneous and smoothed time-delay estimates. | correlations_init(): For each integer shift s in [-MAX_SHIFT_SAMPLES, +MAX_SHIFT_SAMPLES], it computes the dot-product of two sample buffers offset by s and stores the 64-bit sum in corr-&gt;correlations[s + MAX_SHIFT_SAMPLES]. The best_shift is set to the highest-scoring s. | correlations_average(): Applies an exponential decay filter based on elapsed time, blends new correlation values into a long-term array, and recomputes best_shift on the smoothed data. | . ",
+    "url": "/3-design.html#34-cross-correlation-module",
+    
+    "relUrl": "/3-design.html#34-cross-correlation-module"
+  },"16": {
+    "doc": "3. Program & Hardware Design",
+    "title": "3.5 DMA-Driven Sampling",
+    "content": "High-throughput ADC sampling is achieved in dma_sampler.c. During dma_sampler_init(), the ADC is configured in round-robin mode for channels 0, 1, and 2 (GPIO26-28) with FIFO enabled and the clock divider set for maximum rate. Two DMA channels are used: . | Sample channel: Reads $8$-bit samples from the ADC FIFO into the three-byte dma_sample_array. | Control channel: Reloads the sample channel’s transfer pointer to form a continuous ping-pong cycle. | . This yields a steady ($50\\,\\mathrm{kHz}$) sampling rate with minimal jitter and zero CPU overhead beyond reading dma_sample_array. ",
+    "url": "/3-design.html#35-dma-driven-sampling",
+    
+    "relUrl": "/3-design.html#35-dma-driven-sampling"
+  },"17": {
+    "doc": "3. Program & Hardware Design",
+    "title": "3.6 Microphone Geometry &amp; Calibration",
+    "content": "In microphones.c, microphones_init() computes the array geometry: . | Uses MIC_DIST_AB_M, MIC_DIST_BC_M, and MIC_DIST_CA_M with the law of cosines to determine coordinates for an uncentered triangle (A′ at $(0,0)$, B′ at $(d_{AB},0)$, C′ accordingly). | Finds the centroid of A′B′C′ and shifts all points so the center of mass is at the origin. | If ROTATE_MICROPHONES is enabled, rotates all points so microphone A aligns with the +X axis via a standard 2D rotation. | . ",
+    "url": "/3-design.html#36-microphone-geometry--calibration",
+    
+    "relUrl": "/3-design.html#36-microphone-geometry--calibration"
+  },"18": {
+    "doc": "3. Program & Hardware Design",
+    "title": "3.7 VGA Visualization",
+    "content": ". The display routines in vga.c layer multiple graphical elements: . | vga_init(): Calls vga_init_heatmap(), which draws axes and precomputes a heatmap lookup. | vga_draw(): Renders correlation curves, overlays the heatmap of possible locations, and plots raw waveforms. | vga_draw_lite(): Omits the heatmap and updates only markers and waveforms for low-latency frames. | . Helper modules (vga_correlations, vga_heatmap, vga_text, vga_waveforms) use the lib/vga/vga16_graphics primitives to draw primitives based on correlation-derived color thresholds. ",
+    "url": "/3-design.html#37-vga-visualization",
+    
+    "relUrl": "/3-design.html#37-vga-visualization"
+  },"19": {
+    "doc": "3. Program & Hardware Design",
+    "title": "3.8 Third-Party &amp; Reused Code",
+    "content": "We build atop the official Raspberry Pi Pico SDK for multicore support, GPIO, ADC, DMA, and timing. The VGA stack uses the open-source lib/vga/vga16_graphics library. All custom modules-rolling buffers, correlation engine, DMA sampler, display routines-are authored in-house or derived from public-domain sources. ",
+    "url": "/3-design.html#38-third-party--reused-code",
+    
+    "relUrl": "/3-design.html#38-third-party--reused-code"
+  },"20": {
+    "doc": "3. Program & Hardware Design",
+    "title": "3. Program & Hardware Design",
+    "content": " ",
+    "url": "/3-design.html",
+    
+    "relUrl": "/3-design.html"
+  },"21": {
+    "doc": "4. Things Tried That Didn’t Work",
+    "title": "4. Things Tried That Didn’t Work",
+    "content": " ",
+    "url": "/4-things-that-did-not-work.html",
+    
+    "relUrl": "/4-things-that-did-not-work.html"
+  },"22": {
+    "doc": "4. Things Tried That Didn’t Work",
+    "title": "4.1 Aggressive Windowing Function",
+    "content": "Early in development, we incorporated a Discrete Prolate Spheroidal Sequence (DPSS) analysis window via buffer_window() in buffer.c, multiplying each of the $256$ samples by a high-“NW” taper stored in WINDOW_FUNCTION. Below is a plot of the original window function and its frequency response: . Analytically, it was intended to reduce spectral leakage before cross-correlation, but the $8$-bit ADC’s quantization noise dominated. The DPSS windowing added overhead without improving peak detection. We lowered the NW parameter significantly (flattening the window) and left the minimal window in place, relying on DC-offset removal for accuracy. ",
+    "url": "/4-things-that-did-not-work.html#41-aggressive-windowing-function",
+    
+    "relUrl": "/4-things-that-did-not-work.html#41-aggressive-windowing-function"
+  },"23": {
+    "doc": "4. Things Tried That Didn’t Work",
+    "title": "4.2 In-Plane Localization Methods",
+    "content": "We initially attempted full “in-plane” localization-solving for $(x,y)$ on the microphone plane-by combining three pairwise time delays with multilateration routines in microphones.c. While this worked for sources inside the triangle, it failed for sounds outside the array: hyperbolic delay curves intersected behind the microphones or at infinity. We recognized the array’s strength in angular estimation (parallel wavefronts) over absolute distance. By switching to angles of arrival above the array-using $\\pm$MAX_SHIFT_SAMPLES cross-correlation shifts-we achieved robust direction estimates even off-axis. Assuming a height above the array, we accurately locate sources outside the triangle. ",
+    "url": "/4-things-that-did-not-work.html#42-in-plane-localization-methods",
+    
+    "relUrl": "/4-things-that-did-not-work.html#42-in-plane-localization-methods"
+  },"24": {
+    "doc": "5. Testing and Results of the Design",
+    "title": "5. Testing and Results of the Design",
+    "content": " ",
+    "url": "/5-results.html",
+    
+    "relUrl": "/5-results.html"
+  },"25": {
+    "doc": "5. Testing and Results of the Design",
+    "title": "5.1 Test Data &amp; Traces",
+    "content": "Although we used an oscilloscope to measure the available compute time per sample at various sample rates and buffer sizes, we did not capture or save screenshots of these traces during development. Instead, we relied on these real-time measurements to iteratively tune our system parameters. By observing the timing between ADC sampling, DMA transfers, and our processing routines on the oscilloscope, we were able to determine the maximum safe sample rate that would allow all sampling based computations to complete before the next sample set arrived. This process led us to select an optimal sample rate of $50\\,\\mathrm{kHz}$ with a buffer size of $1024$ samples, balancing latency, noise reduction, and CPU load. While we do not have oscilloscope captures to present here, this hands-on timing analysis was critical in achieving reliable, real-time operation. ",
+    "url": "/5-results.html#51-test-data--traces",
+    
+    "relUrl": "/5-results.html#51-test-data--traces"
+  },"26": {
+    "doc": "5. Testing and Results of the Design",
+    "title": "5.2 Performance Metrics",
+    "content": "Our system achieved remarkable real-time performance despite the computational demands. Both the VGA rendering and cross-correlation calculations appeared instantaneous to human perception, with no noticeable lag between making a sound and seeing the corresponding heatmap update. The seamless responsiveness created a natural interaction experience, where users could make repeated sounds from different locations and immediately observe the system tracking these changes. This smooth performance was achieved through careful optimization of our processing pipeline, balancing sample rate, buffer size, and display update frequency. By prioritizing full heatmap updates only for significant acoustic events while using lightweight updates for continuous monitoring, we maintained consistent responsiveness even under full computational load. ",
+    "url": "/5-results.html#52-performance-metrics",
+    
+    "relUrl": "/5-results.html#52-performance-metrics"
+  },"27": {
+    "doc": "5. Testing and Results of the Design",
+    "title": "5.3 Accuracy Metrics",
+    "content": "Our localization system demonstrated remarkable precision, particularly within the triangular area formed by the three microphones where accuracy was consistently within a few millimeters. This precision can be attributed to the higher density of hyperbola intersections in this region, as illustrated in our theoretical analysis. The system’s accuracy exhibited predictable characteristics with distance: . | Direction estimation remained nearly perfect even at larger ranges, allowing reliable angular positioning | Distance estimation accuracy decreased exponentially with distance from the array | Height variations affected perceived distance, sound sources higher or lower than our expected 1-meter plane appeared closer or farther respectively | . Accuracy characteristics are clearly demonstrated in our demo video: . 8:37 - Speaker positioned down and to the right . A speaker playing music positioned approximately 0.75 meters down and to the right of the microphone array center is accurately located on the heatmap, with both direction and distance correctly represented. 8:43 - Speaker moved to the opposite side . The same speaker moved to the opposite side of the microphones is again accurately localized, demonstrating the system's consistent performance regardless of direction. For most practical applications, we found the system performed optimally within a radius of about 2 meters from the array center. Beyond this distance, while direction remained reliable, absolute position became less precise, still suitable for most acoustic tracking applications where angular information is the primary concern. In noisy environments, the system typically responds to the loudest sound source, but performance can be affected when multiple loud sounds compete for detection. The cross-correlation algorithm may occasionally yield suboptimal results when confronted with multiple simultaneous audio signals of comparable amplitude. During testing, we found that a portable speaker providing continuous, high-power audio output created ideal conditions for consistent localization, as it maintained a dominant signal-to-noise ratio. This allowed our system to reliably track the speaker even in moderately noisy environments, demonstrating its practical utility in real-world settings. ",
+    "url": "/5-results.html#53-accuracy-metrics",
+    
+    "relUrl": "/5-results.html#53-accuracy-metrics"
+  },"28": {
+    "doc": "5. Testing and Results of the Design",
+    "title": "5.4 Safety &amp; Robustness",
+    "content": "Our system has effectively no major safety considerations, operating at low voltages and currents. The input voltage range for the ADC pins is $0$-$3.3\\text{V}$. Our microphones do not draw too much power and we comply with all safety standards and utilize good wiring practices. On power-on, the Pico executes its power-on state machine and then starts executing the code. The code is flashed to the Pico, making the system robust to power outs. Additionally, our system is also robust to the power off of one microphone. Our core logic continues to work, however we see an arc like heatmap, resulting from the loss of samples from the third microphone in the cross correlation logic. With only two active microphones, the system can only generate a single hyperbolic curve of possible sound locations, resulting in a hyperbolic-shaped heatmap. At 4:05 in our demo video (shown above), we intentionally disconnect one microphone to demonstrate how the system uses all the information it is given to compute potential source location. ",
+    "url": "/5-results.html#54-safety--robustness",
+    
+    "relUrl": "/5-results.html#54-safety--robustness"
+  },"29": {
+    "doc": "5. Testing and Results of the Design",
+    "title": "5.5 Usability Assessment",
+    "content": "Overall, our implemented system was quite usable and easy to set up. To set up the system, the user simply needs to power the Pico and to connect the wires for the VGA interface. Once powered on, the system is very easy to use. Simply by making a sound (such as a snap, clap, or whistle), the user can almost instantly see the heatmap plotted on the VGA display. The only non-intuitive aspect of using the system is knowing the VGA pin wiring to the connector. Based on the plot, one can orient themselves relative to the microphones on the board, allowing the user to understand the plot without prior knowledge of how the microphones are oriented. One of the most compelling aspects of our system is the ability to make repeated noises from different locations. By moving around, the user intuitively can watch the system plot their new location. An assumption our triangulation makes is that the noise is coming from roughly 1.5 meters above the microphone. This means the best performance is achieved by placing the board on the floor. This is not an obvious thing, but does not significantly affect the triangulation and the effect the user sees. To set up the system with a new Pico, one would simply flash the code and place the Pico on the breadboard. This greatly simplifies setup, as there is nothing that needs to be inputted from a host computer to setup the Pico. There are some parameters hard-coded in the code which can be modified, such as the distance between the microphones, the sample rate and MAX_SHIFT_SAMPLES parameters among a few others than sometimes required calibration for the best performance. Nonetheless, the system is fully usable without calibration. ",
+    "url": "/5-results.html#55-usability-assessment",
+    
+    "relUrl": "/5-results.html#55-usability-assessment"
+  },"30": {
+    "doc": "6. Conclusion",
+    "title": "6. Conclusions",
+    "content": " ",
+    "url": "/6-conclusion.html#6-conclusions",
+    
+    "relUrl": "/6-conclusion.html#6-conclusions"
+  },"31": {
+    "doc": "6. Conclusion",
+    "title": "6.1 Design Evaluation &amp; Lessons Learned",
+    "content": "Our cross-correlation implementation yielded results significantly better than we initially expected. The system demonstrated remarkable accuracy, particularly when working with our known-height assumption. By fixing the expected sound source height at $1$ meter above the microphone plane, we were able to achieve accurate localization within $0.1$ meters for sources positioned outside the microphone triangle, with reliable direction estimation extending to distances of $3$-$5$ meters depending on the relative height of the audio source. Our implementation required significant experimentation to tune the algorithm, including determining optimal sample rates, window sizes, buffering strategies, and more. The final implementation resulted in code that was very modular and well-organized. Notably, our design utilized only a single core of the Pico, meaning we still left considerable performance potential untapped. Potential Improvements . Several promising avenues exist for further enhancing the system: . | Wider microphone spacing and external ADC: Increasing the distance between microphones along with faster ADC sampling via external hardware could dramatically improve resolution and range. | Additional microphones: Expanding beyond three microphones would create redundancy and improve noise rejection while enabling 3D localization. | FFT-based correlation: Implementing frequency-domain correlation calculations could improve computational efficiency for longer sample windows. | Dual-core utilization: Dedicating one core entirely to sampling and correlation while using the other for VGA rendering could improve responsiveness. | Enhanced physical filtering: Adding better analog filtering stages before the ADC to improve signal quality and reduce noise interference. | . In terms of the accuracy of our detection, we approached the theoretical limits of what’s possible with our hardware. Inherent noise in the microphones and testing environment introduced some inevitable uncertainty in our VGA heatmap and localization. One major takeaway was that improving our software-like filtering, buffering, and algorithm design-yielded much better results than immediately jumping to faster sampling or wider microphone spacing, which we originally thought were essential for accuracy. We found that hardware upgrades alone wouldn’t have solved our problems without first addressing these core software issues. Another key lesson was in localization: we initially tried to find the exact sound location from the time shifts, expecting the hyperbolas to always intersect, but mathematically this is not always the case. Creating the VGA heatmap, which we mentioned earlier, turned out to be extremely helpful for debugging and understanding these issues, and was crucial for making our system robust. ",
+    "url": "/6-conclusion.html#61-design-evaluation--lessons-learned",
+    
+    "relUrl": "/6-conclusion.html#61-design-evaluation--lessons-learned"
+  },"32": {
+    "doc": "6. Conclusion",
+    "title": "6.2 Standards Compliance",
+    "content": "Our design adhered to the VGA timing specification, utilizing the driver provided as part of the course. This driver complies with the VGA standard, and we utilized the primitives in the driver to implement our VGA plotting. We powered the Pico with a standard $3.3\\,\\text{V}$ USB cable connected to a laptop. We overclocked our design to $250\\,\\text{MHz}$, falling within the acceptable range of overclocking for the Pico. When sampling, we maintained a rate of $50\\,\\text{kHz}$, well above the Nyquist rate for our microphones, ensuring we didn’t need an extra alias filter and following DSP best practices. ",
+    "url": "/6-conclusion.html#62-standards-compliance",
+    
+    "relUrl": "/6-conclusion.html#62-standards-compliance"
+  },"33": {
+    "doc": "6. Conclusion",
+    "title": "6. Conclusion",
+    "content": " ",
+    "url": "/6-conclusion.html",
+    
+    "relUrl": "/6-conclusion.html"
+  },"34": {
+    "doc": "0. Homepage",
+    "title": "We’ve created a $20 acoustic camera that transforms sound delays into visual heatmaps, revealing where noises originate in real-time.",
+    "content": "Sam Belliveau - srb343 . Ezra Riess - er495 . Ari Kapelyan - alk246 . Video Timeline . 0:00 Project Motivation 1:20 Mathematical Analysis 5:35 Audio Processing &amp; Optimizations 8:24 Final Demo . ",
+    "url": "/index.html#weve-created-a-20-acoustic-camera-that-transforms-sound-delays-into-visual-heatmaps-revealing-where-noises-originate-in-real-time",
+    
+    "relUrl": "/index.html#weve-created-a-20-acoustic-camera-that-transforms-sound-delays-into-visual-heatmaps-revealing-where-noises-originate-in-real-time"
+  },"35": {
+    "doc": "0. Homepage",
+    "title": "Appendix A (Permissions)",
+    "content": " ",
+    "url": "/index.html#appendix-a-permissions",
+    
+    "relUrl": "/index.html#appendix-a-permissions"
+  },"36": {
+    "doc": "0. Homepage",
+    "title": "Course Website Inclusion",
+    "content": "The group approves this report for inclusion on the course website. ",
+    "url": "/index.html#course-website-inclusion",
+    
+    "relUrl": "/index.html#course-website-inclusion"
+  },"37": {
+    "doc": "0. Homepage",
+    "title": "YouTube Channel Inclusion",
+    "content": "The group approves the video for inclusion on the course YouTube channel. ",
+    "url": "/index.html#youtube-channel-inclusion",
+    
+    "relUrl": "/index.html#youtube-channel-inclusion"
+  },"38": {
+    "doc": "0. Homepage",
+    "title": "Appendix B (Code Repository)",
+    "content": "The complete source code for this project is available on GitHub: . GitHub: Audio-Triangulation ",
+    "url": "/index.html#appendix-b-code-repository",
+    
+    "relUrl": "/index.html#appendix-b-code-repository"
+  },"39": {
+    "doc": "0. Homepage",
+    "title": "Appendix C (Individual Contributions)",
+    "content": " ",
+    "url": "/index.html#appendix-c-individual-contributions",
+    
+    "relUrl": "/index.html#appendix-c-individual-contributions"
+  },"40": {
+    "doc": "0. Homepage",
+    "title": "Ezra Riess (er495)",
+    "content": ". | Hardware Design: Assembled the breadboard with right-triangular microphone positioning, implemented the second-order low-pass filters, and minimized wiring length to reduce interference | DMA Configuration: Designed and implemented the DMA-driven sampling system with continuous ping-pong DMA transfers for steady $50\\,\\mathrm{kHz}$ sampling | ADC Setup: Configured the ADC channels in round-robin mode for the three microphones with FIFO enabled | Core Correlation Algorithm: Developed the cross-correlation engine in correlations.c for time-delay estimation between microphone pairs | Geometric Calculations: Worked on the microphone geometry calculation algorithms in microphones.c | . ",
+    "url": "/index.html#ezra-riess-er495",
+    
+    "relUrl": "/index.html#ezra-riess-er495"
+  },"41": {
+    "doc": "0. Homepage",
+    "title": "Sam Belliveau (srb343)",
+    "content": ". | Audio Processing Pipeline: Designed and optimized the audio processing chain from raw samples to actionable signals | Rolling Buffer System: Implemented the circular buffer system in rolling_buffer.c with power calculation for event detection | Power Calculation Algorithms: Developed the energy-based event detection system that compares incoming vs. outgoing buffer energy | Window Functions: Designed and optimized the windowing functions for improved signal quality | Exponential Moving Average: Implemented correlations_average() for temporal smoothing of correlation results | Algorithm Tuning: Performed detailed experimentation to find optimal buffer sizes, sampling rates, and filtering parameters | . ",
+    "url": "/index.html#sam-belliveau-srb343",
+    
+    "relUrl": "/index.html#sam-belliveau-srb343"
+  },"42": {
+    "doc": "0. Homepage",
+    "title": "Ari Kapelyan (alk246)",
+    "content": ". | VGA Visualization: Created the visualization system for the heatmap display | Display Subsystem: Implemented the vga_draw() and vga_draw_lite() functions to balance visual feedback with performance | Heatmap Generation: Developed the algorithm to convert correlation data into a visual heatmap | Waveform Display: Created the waveform visualization for real-time audio monitoring | User Interface Elements: Implemented correlation curves and markers for intuitive feedback | Performance Optimization: Designed the dual-mode rendering system that uses lightweight updates for continuous monitoring | . ",
+    "url": "/index.html#ari-kapelyan-alk246",
+    
+    "relUrl": "/index.html#ari-kapelyan-alk246"
+  },"43": {
+    "doc": "0. Homepage",
+    "title": "Appendix D (References &amp; AI Declaration)",
+    "content": " ",
+    "url": "/index.html#appendix-d-references--ai-declaration",
+    
+    "relUrl": "/index.html#appendix-d-references--ai-declaration"
+  },"44": {
+    "doc": "0. Homepage",
+    "title": "References",
+    "content": "Our project was primarily based on knowledge acquired in the ECE 4760 course, including lectures, labs, and course materials. We also referenced the Raspberry Pi Pico SDK documentation and the VGA library documentation. ",
+    "url": "/index.html#references",
+    
+    "relUrl": "/index.html#references"
+  },"45": {
+    "doc": "0. Homepage",
+    "title": "AI Declaration",
+    "content": "In the development of this project: . | We consulted AI (Claude, ChatGPT) to explore the feasibility of different optimization techniques and algorithmic approaches, particularly regarding signal processing methods and cross-correlation implementations. | We used code assistance tools including Cursor and GitHub Copilot during implementation, which helped with auto-completing code lines and suggesting function signatures. | Besides these tools all implementation ideas came from different group members’ prior knowledge. We did not reference any specific papers or websites when making this project. | . ",
+    "url": "/index.html#ai-declaration",
+    
+    "relUrl": "/index.html#ai-declaration"
+  },"46": {
+    "doc": "0. Homepage",
+    "title": "0. Homepage",
+    "content": " ",
+    "url": "/index.html",
+    
+    "relUrl": "/index.html"
+  }
+}
