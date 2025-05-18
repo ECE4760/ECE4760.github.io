@@ -1,0 +1,182 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Program Design &mdash; ECE 5730: Clocktower LEDs  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=2e4e1787" />
+
+  
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Hardware Design" href="hw_des.html" />
+    <link rel="prev" title="High-Level Design" href="high_level.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ECE 5730: Clocktower LEDs
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation Sections</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="high_level.html">High-Level Design</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Program Design</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#communication-system">Communication System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#controller-board">Controller Board</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sensor-board">Sensor Board</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#face-board">Face Board</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#software-difficulties">Software Difficulties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#dma-channels">DMA channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pio-deadlock">PIO Deadlock</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="hw_des.html">Hardware Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results.html">Results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conclusions.html">Conclusions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendices.html">Appendices</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ECE 5730: Clocktower LEDs</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Program Design</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/program_des.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="program-design">
+<h1>Program Design<a class="headerlink" href="#program-design" title="Link to this heading"></a></h1>
+<p>We designed the system around the core control board, which performed the data processing and control of the face boards. The system is modular and supports any number of face boards, and all communication goes through the core board.</p>
+<section id="communication-system">
+<h2>Communication System<a class="headerlink" href="#communication-system" title="Link to this heading"></a></h2>
+<p>Our boards communicate to one another using CAN bus messages. The sensor board does not communicate with the face boards, and both communicate through the core. The sensor board reports raw sensor data to the core, which then converts this to a light color to send to the face boards (dependent on the mode of the system).</p>
+<p>Every CAN message can be represented as an array of shorts (16 bit values). The first 16 bits represents the arbitration ID, which indicates the board that the message is intended for. Next, the length of the message (in shorts) is encoded in a byte (along with one byte of padding).</p>
+<p>Finally, this is followed by the data payload, and terminated with a CRC checksum. The payload starts with a single short representing the message type, then followed by raw data. There are $4$ different message types, which are:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SENSOR_LIGHT</span></code> represents the transferring of a light sensor <em>request</em> to the sensor board. This toggles the sensor board into light sensor mode, which will cause it to repeatedly send light sensor data from the sensor board to the core. Data messages also use this same message type. The data payload is empty for the request, and contains a <code class="docutils literal notranslate"><span class="pre">32-bit</span> <span class="pre">fix15</span></code> value for the response (packed into two shorts).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SENSOR_SOUND</span></code> does the same as above, but requesting sound data instead.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SET_COLOR</span></code> is used to set the color of the face boards. The data payload contains 3 shorts, each containing a byte value from 0-255 representing the red, green, and blue values of the color.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SET_TOGGLE</span></code> toggles the sensor and face boards on and off. For the face boards, this turns off the lights, and for the sensor board this disables the data messages.</p></li>
+</ol>
+<p>Our CAN bus implementation is a modified version of Professor Adam’s <a class="reference external" href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master/Networking/CAN">CAN bus implementation</a>, made to support sending and receiving in shorts, rather than receiving in bytes and sending in shorts.</p>
+</section>
+<section id="controller-board">
+<h2>Controller Board<a class="headerlink" href="#controller-board" title="Link to this heading"></a></h2>
+<p>The controller board is the core of the system, and controls the rest of the boards. It receives user input via the physical switches on the board, and uses these to control the rest of the system.</p>
+<p>The system has three main modes, selected by a rotary switch:</p>
+<ol class="arabic simple">
+<li><p>Light mode, where the system is turned on or off based on whether ambient light is detected below 1 lux.</p></li>
+<li><p>Sound mode, where the intensity of the light pulsates with the level of sound detected by the microphone.</p></li>
+<li><p>Manual mode, where the light is always on.</p></li>
+</ol>
+<p>The color of the light is set using the three physical sliders, allowing the user to control the color of the light in RGB. This is the base light color shown in all 3 modes.</p>
+<p>The controller board has a main thread managing the system running at a rate of 100Hz. This thread reads sensor data from the sensor board, and sends update messages to the face boards. It also reads values from input switches in order to control the system.</p>
+</section>
+<section id="sensor-board">
+<h2>Sensor Board<a class="headerlink" href="#sensor-board" title="Link to this heading"></a></h2>
+<p>The sensor board is responsible for reading the ambient light and sound levels, and sending this data to the controller board. It has three modes:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">LIGHT</span></code> mode, in which the board sends light sensor data to the core at a rate of 100Hz.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SOUND</span></code> mode, in which the board sends sound sensor data to the core at a rate of 100Hz.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DISABLED</span></code> mode, where the system is turned off and does not send any data.</p></li>
+</ol>
+<p>The modes are controlled by the core board via the special <code class="docutils literal notranslate"><span class="pre">SENSOR_LIGHT</span></code> and <code class="docutils literal notranslate"><span class="pre">SENSOR_SOUND</span></code> messages, as well as the <code class="docutils literal notranslate"><span class="pre">SET_TOGGLE</span></code> message to turn the system off.</p>
+<p>The light sensor values are read through I2C, and raw values are converted to lux using the resolution of the light sensor via <code class="docutils literal notranslate"><span class="pre">lux</span> <span class="pre">=</span> <span class="pre">resolution</span> <span class="pre">*</span> <span class="pre">raw</span> <span class="pre">value</span></code>. This resolution is calcula ted using the formula <code class="docutils literal notranslate"><span class="pre">6.72</span> <span class="pre">/</span> <span class="pre">(gain</span> <span class="pre">*</span> <span class="pre">integration_time)</span></code>, which was devised from the resolution datatable of the <a class="reference external" href="https://www.vishay.com/docs/84367/designingveml6030.pdf">light sensor datasheet</a>. The system also supports changing gain and integration time, but these are fixed for the project.</p>
+<p>For the sound sensor, we decided to read raw ADC values rather than converting to decibels. This is because decibels are in logarithmic scale, which would mean the core would have to convert back to a linear scale anyway, wasting extra compute resources. In order to calculate the amplitude of audio, we sample the audio sensor on its own thread at 10kHz, and calculate the difference between the highest and lowest values in the last 1000 samples. This value represents the height of the dominant audio frequency, and thus is a good estimator of the amplitude of the sound.</p>
+</section>
+<section id="face-board">
+<h2>Face Board<a class="headerlink" href="#face-board" title="Link to this heading"></a></h2>
+<p>The face board is the simplest board, each responsible for controlling the lights of one of the four clock faces. It does not send any data back to the core, and only receives messages from the core. The face board can either be on or off, and the color of the lights is set by the core board.</p>
+<p>Because the LED strips used in the project have RGBW light, the RGB light values are converted to RGBW using the formula <code class="docutils literal notranslate"><span class="pre">(R,</span> <span class="pre">G,</span> <span class="pre">B)</span> <span class="pre">=&gt;</span> <span class="pre">(R-W,</span> <span class="pre">G-W,</span> <span class="pre">B-W,</span> <span class="pre">W=min(R,</span> <span class="pre">G,</span> <span class="pre">B))</span></code>. Additionally, gamma correction is performed via a lookup table, and the system supports white balancing, which can be tuned using a special calibration script.</p>
+</section>
+<section id="software-difficulties">
+<h2>Software Difficulties<a class="headerlink" href="#software-difficulties" title="Link to this heading"></a></h2>
+<p>The majority of difficulties with the software design was with the CAN modules. A number of issues were encountered with the CAN bus implementation, which took up the majority of our debugging effort.</p>
+<section id="dma-channels">
+<h3>DMA channels<a class="headerlink" href="#dma-channels" title="Link to this heading"></a></h3>
+<p>The first issue we encountered was with the DMA channels used by CAN. Because the CAN implementation was written for the Pico, rather than the Pico W, we realized that DMA channels 1 and 2 were already in use (provided <code class="docutils literal notranslate"><span class="pre">cyw43_arch_init</span></code> is called). This lead to the system immediately crashing when trying to claim the hardcoded channels. This was resolved by having the CAN implementation use DMA channels 5 and 6 instead.</p>
+</section>
+<section id="pio-deadlock">
+<h3>PIO Deadlock<a class="headerlink" href="#pio-deadlock" title="Link to this heading"></a></h3>
+<p>Another issue we encountered was with the PIO implementation of CAN. Although we are not exactly sure why (as described in the hardware design documentation), we suspect there to be a deadlock in the PIO states until every board sends and receives at least one message. To solve this via software, we included dummy messages sent to invalid IDs in the clock face boards, and we also short the CAN bus temporarily to force the PIO to enter the correct state.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="high_level.html" class="btn btn-neutral float-left" title="High-Level Design" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="hw_des.html" class="btn btn-neutral float-right" title="Hardware Design" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Aidan McNay, Edmund Lam, Qingmiao Xiao.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
