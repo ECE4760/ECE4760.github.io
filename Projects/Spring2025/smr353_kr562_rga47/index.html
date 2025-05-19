@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>LINUS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+</head>
+
+<body
+    style="min-height: 100vh; font-family: 'Roboto', sans-serif; margin: 0; padding: 0; display: flex; background-color: white; color: black;">
+    <!-- Sidebar Navbar -->
+    <div
+        style="width: 200px; background-color: #f2f2f2; padding: 20px; box-sizing: border-box; border-right: 2px solid #ccc;">
+        <div style="margin-top: 60px;"></div>
+        <a href="index.html" style="display: block; color: blue; margin-bottom: 15px; text-decoration: none;">LINUS</a>
+        <a href="slicer.html"
+            style="display: block; color: blue; margin-bottom: 15px; text-decoration: none;">Slicer</a>
+        <a href="electrical_hardware.html"
+            style="display: block; color: blue; margin-bottom: 15px; text-decoration: none;">Electrical Hardware</a>
+        <a href="mechanical_hardware.html"
+            style="display: block; color: blue; margin-bottom: 15px; text-decoration: none;">Mechanical
+            Hardware</a>
+        <a href="https://github.com/sidharthmrao/LINUS"
+            style="display: block; color: blue; text-decoration: none;">Project Repo</a>
+    </div>
+
+    <!-- Main Content Area -->
+    <div style="flex-grow: 1;">
+        <!-- Top Bar -->
+        <div
+            style="background-color: #f2f2f2; color: black; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; border-bottom: 2px solid #ccc;">
+            LINUS - Microcontrollers (ECE 4760) Final Project
+        </div>
+
+        <div style="padding: 20px; max-width: 1000px; margin: auto;">
+            <h1>Introduction</h1>
+            <p>
+                “Linus” is a 2D-drawing machine which uses a marker to draw inputted images in the one-line-drawing art
+                style!
+
+                <br><br>
+                Created by Sidharth Rao, Kelvin Resch, and Rachel Arena. Our <a
+                    href="https://github.com/sidharthmrao/LINUS">GitHub Repo</a> is here.
+                <br>
+            </p>
+
+            <div style="max-width: 100%; text-align: center;">
+                <img src="images/project.jpg" alt="Project Photo" style="width: 40%; height: auto;">
+                <div style="font-style: italic; color: gray; margin-top: 5px;">LINUS</div>
+            </div>
+            <br>
+            <div style="text-align: center;">
+                <iframe width="560" height="315" src="https://www.youtube.com/embed/U21oHzGhfk4?si=C4H4owya019szfFU"
+                    title="YouTube video player" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                <div style="font-style: italic; color: gray; margin-top: 5px;">Demo Video</div>
+            </div>
+
+
+            <p>
+                In this project, we designed and built the Line Illustration for Natural, Uninterrupted Sketching
+                machine (LINUS),a 2D-drawing machine that replicates input images in a one-line-drawing art style using
+                a marker on paper. The system integrates image processing, optimal path planning, and precise motor
+                control to produce clean and efficient renditions of complex images. Our work centered around three key
+                components: a slicer to process and optimize the image, a Raspberry Pi and Pi Pico pair for
+                communication and control, and a custom-built XY plotter driven by stepper motors.
+                <br><br>
+                The Raspberry Pi serves as the main controller, taking a user-supplied image and running it through our
+                custom slicer algorithm. The slicer reduces the image to essential features and then computes an
+                optimized continuous path that minimizes extraneous marker movement while maintaining visual fidelity.
+                This path is then streamed via UART to the Pi Pico, which manages stepper motor control. The Pico drives
+                the drawing head along the computed trajectory, sending “READY” signals back to the Pi after each
+                segment is completed, ensuring synchronized and controlled motion.
+                <br><br>
+                Building LINUS required a combination of software and hardware design, from implementing optimal routing
+                algorithms and controlling stepper motors to assembling a custom mechanical frame. This project
+                reinforced key concepts in embedded systems, computer vision, graph algorithms, and real-time
+                communication. It also demonstrated how physical constraints shaped our algorithm design, giving us
+                hands-on experience with the challenges of translating digital instructions into real mechanical motion.
+            </p>
+
+            <h2>Inspiration</h2>
+            <p>
+                Our project idea came from seeing Hunter Adams’ example of using DDS to control an etch-and-sketch
+                combined with his demonstration of using the Fourier Series to recreate Picasso’s one-line-drawings. We
+                thought it would be interesting to automate the entire process of creating one-line-drawings physically,
+                from an input image to the output image drawn by a marker.
+            </p>
+
+            <h2>High Level Design</h2>
+            <h3>General Process</h3>
+            <p>
+                Our project had three major parts:
+            <ul>
+                <li><a href="slicer.html" style="color: blue; margin-bottom: 15px; text-decoration: none;">Slicer</a>:
+                    Image processing and optimal marker routing </li>
+                <li><a href="electrical_hardware.html"
+                        style="color: blue; margin-bottom: 15px; text-decoration: none;">Electrical
+                        Hardware</a>: Communication and Stepper driver control </li>
+                <li><a href="mechanical_hardware.html"
+                        style="color: blue; margin-bottom: 15px; text-decoration: none;">Mechanical
+                        Hardware</a>: Mechanical assembly and 3D-printed parts </li>
+            </ul>
+            To see more information about how each part works and their individual designs, please refer to their
+            respective linked sub-pages.
+            <br><br>
+            A Raspberry Pi acts as the main controller. We give an image as input, and our slicer then processes the
+            image to extract a minimal amount of important features and borders. The slicer then finds the best way
+            to route the marker in one line over the processed image. It aims to minimize the amount the marker
+            draws in an image, and especially the amount of space the marker draws on the paper that is not in the
+            processed image.
+            <br><br>
+            The Raspberry Pi takes the path outputted by the slicer and turns it into a UART stream, sent to the Pi
+            Pico coordinate by coordinate. The Pico drives the stepper motors (one for each axis) at constant
+            velocity towards the current target coordinate. When it reaches the coordinate, it sends the Raspberry
+            Pi a “READY” signal, indicating that it is ready for the next coordinate in the sliced path.
+            The stepper motors drive a marker holder, which draws with the marker on a piece of paper attached to
+            the print bed.
+            </p>
+
+            <h3>Overall System/Process Diagram</h3>
+            <img src="images/system_diagram.png" alt="System Diagram" style="width: 100%; height: auto;">
+
+            <h2>Results</h2>
+            <p>
+                The LINUS drawing machine performed very reliably. Once a drawing command was issued, the CoreXY
+                mechanism executed paths with minimal hesitation, and the stepper motors moved smoothly without
+                noticeable flicker or stutter. During testing, the system could complete a typical sketch in 1-2
+                minutes, depending on the complexity of the input and density of control points. Movement speed was
+                capped to avoid mechanical failures, but path execution remained responsive and fluid throughout.
+                <br><br>
+                We verified the performance of our stepper motor signals using an oscilloscope. As shown in the left
+                figure below,
+                the step pulses had a consistent spacing of 600 us, corresponding to a step frequency of 1.667 kHz - a
+                rate we used during normal drawing operation to balance speed and mechanical stability. Additionally,
+                the pulse width, as shown in figure below to the right, was measured to be 5 us, which is well within
+                the required range
+                for reliable triggering on standard stepper drivers. This also matches the intended behavior in the
+                Pico’s firmware. These measurements confirm that our firmware generates clean, consistent pulses that
+                are both frequent enough for smooth motion and long enough to be correctly interpreted by the driver
+                hardware. Together, they validate the system’s ability to produce stable and accurate motion critical to
+                LINUS’s operation.
+
+            </p>
+
+            <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;">
+                <div style="text-align: center;">
+                    <img src="images/pulse_large.png" alt="Pulse Spacing" style="width: 300px; height: auto;">
+                    <div style="font-style: italic; color: gray; margin-top: 5px;">Pulse Spacing</div>
+                </div>
+                <div style="text-align: center;">
+                    <img src="images/pulse_small.png" alt="Pulse Width" style="width: 300px; height: auto;">
+                    <div style="font-style: italic; color: gray; margin-top: 5px;">Pulse Width</div>
+                </div>
+            </div>
+
+
+            <p>
+                The system achieved a drawing accuracy of approximately +/- 3mm, which was more than sufficient for
+                producing clear and recognizable sketches. Minor inaccuracies were primarily caused by belt tension
+                variations and the occasional slipping of the marker, which sometimes introduced slight wobbles in the
+                drawn lines. However, these issues were largely resolved by properly tightening the related bolts. When
+                the system was set up correctly, it operated without noticeable accuracy problems.
+                <br><br>
+                We can quantify this accuracy by examining the final drawings, specifically in regions where the plotter
+                retraced lines. In these cases, the lines became slightly thicker but showed no visible gaps, indicating
+                that the repeatability was within the width of the marker tip (3 mm). This small overlap not only
+                validated the system’s precision but also produced an unintended aesthetic benefit, creating a shading
+                effect that enhanced the visual appeal of the output.
+                <br><br>
+                In terms of image processing accuracy, edge detection consistently identified major contours in test
+                images. While finer details were sometimes lost in thresholding or during resolution downsampling, the
+                general structure of each image was very well preserved. The entire purpose of LINUS was to take images
+                and convert them iconized drawings, so we finely tuned our image processing algorithms to discard a
+                certain level of detail that would make the output consistent with an icon.
+                <br><br>
+                The conversion from pixel space to drawing coordinates introduced only minor distortion, with the final
+                outputs definitely reflecting the input images’ shape and proportions. Since we settled on a system that
+                could only drive the motors at -speed, 0, and +speed, the pen can only move in cardinal and ordinal
+                directions. This is not an issue, however, because our generated waypoints are very close together, so
+                we are still able to draw curves smoothly. If our waypoints were not so close, an issue would arise
+                where curves would become corrugated, but this can be solved by interpolating between points and
+                increasing waypoint density.
+                <br><br>
+                To enforce safety, we implemented several design decisions. Power came from a current-limited power
+                supply, and all wires were routed securely so as to avoid entanglement with moving parts. Motor speed
+                was capped to avoid disastrous and potentially dangerous mechanical failures, and soft stops were
+                implemented in software to prevent the motors from exceeding the physical bounds of the drawing area,
+                reducing the risk of mechanical damage.
+                <br><br>
+                LINUS was designed for ease of use by both team members and untrained users. Users can load an image and
+                start the drawing with a simple command, watching as the system renders the sketch automatically on
+                paper. Overall, we were very happy with the results, and genuinely enjoyed seeing our input images come
+                to life in the one-line drawing style!
+            </p>
+
+            <h2>Conclusions</h2>
+            <p>
+                This project successfully demonstrated the design and implementation of LINUS - an
+                Etch-A-Sketch-inspired automatic drawing machine. Our system used a CoreXY style belt drive mechanism to
+                control the movement of a marker, allowing us to translate digital images into continuous, drawable
+                paths using edge detection and graph algorithms. The mechanical structure achieved
+                consistent movement with excellent stability and accuracy. On the software side, the system achieved
+                accurate feature simplification and optimal path planning with one-line-drawing constraints. While the
+                final
+                drawing fidelity was slightly limited by the resolution
+                and mechanical accuracy of the system, the curves traced on paper generally reflected the structure of
+                the original image.
+                <br><br>
+                In the future we could improve the smoothness of the mechanical design by using V-slot rails instead of
+                T-slot rails. In the slicer, we could also transform our slicing problem into existing solved problems
+                like the Chinese Postman Problem, making our process even more efficient. Electrically, transitioning
+                from a protoboard to a custom PCB would streamline the overall system design by integrating all the
+                components into a compact and permanent layout. This would improve durability, reduce wiring complexity,
+                and be easier to replicate.
+                <br><br>
+                Not only did we successfully meet our goals and expectations laid out in our project proposal, but we
+                followed engineering best practices throughout the design and build process. This involved modularizing
+                our code for readability, reusability, and ease of configuration, implementing thorough hardware testing
+                before system integration, managing power distribution safely, and maintaining clear documentation for
+                both hardware and software components.
+                <br><br>
+                We took inspiration for the mechanical design from existing 3D printers and <a
+                    href="https://www.youtube.com/watch?v=WgsTyhX311E">this youtube video</a>,
+                but we made our own custom components and there were no patent issues. We used the following libraries:
+                NumPy, OpenCV, Pillow, PyGame, Scikit-Image, Scikit-Learn, SciPy.
+                <br><br>
+                This project gave us the opportunity to merge artistic and engineering disciplines in a uniquely
+                rewarding way. We applied concepts from microcontrollers, control systems, image processing, and
+                mechanical design to build a system that could physically render an artistic interpretation of digital
+                images. LINUS not only fulfilled our original vision but also reinforced many of the core topics we
+                explored throughout the semester, providing a hands-on synthesis of theory and creativity.
+            </p>
+
+            <h2>Appendix A - Project Display Inclusion</h2>
+            <p>
+                The group approves this report for inclusion on the course website.
+                <br>
+                The group approves the video for inclusion on the course youtube channel.
+            </p>
+
+            <h2>Appendix B - Repo (Code, CAD)</h2>
+            <a href="https://github.com/sidharthmrao/LINUS">Repo Link</a>
+
+            <h2>Appendix C - Datasheets</h2>
+            <a href="https://bulkman3d.com/wp-content/uploads/2019/06/TB6600-Stepper-Motor-Driver-BM3D-v1.1.pdf">Stepper
+                Motor Driver</a> <br>
+
+            <a
+                href="https://www.amazon.com/Creality-Printer-Stepper-Extruder-Compatible/dp/B091CXPXVP?so[…]ppingads-lpcontext&ref_=fplfs&psc=1&smid=A1VQ5Y29B2IKF1&gQT=1">Stepper
+                Motors</a>
+
+        </div>
+    </div>
+</body>
+
+</html>
