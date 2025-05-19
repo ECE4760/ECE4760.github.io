@@ -1,0 +1,165 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conclusions &mdash; ECE 5730: Clocktower LEDs  documentation</title>
+      <link rel="stylesheet" type="text/css" href="static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="static/css/custom.css?v=2e4e1787" />
+
+  
+    <link rel="shortcut icon" href="static/favicon.ico"/>
+      <script src="static/jquery.js?v=5d32c60e"></script>
+      <script src="static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="static/documentation_options.js?v=5929fcd5"></script>
+      <script src="static/doctools.js?v=9bcbadda"></script>
+      <script src="static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Appendices" href="appendices.html" />
+    <link rel="prev" title="Results" href="results.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ECE 5730: Clocktower LEDs
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation Sections</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="high_level.html">High-Level Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="program_des.html">Program Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hw_des.html">Hardware Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results.html">Results</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Conclusions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendices.html">Appendices</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ECE 5730: Clocktower LEDs</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Conclusions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="sources/conclusions.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="conclusions">
+<h1>Conclusions<a class="headerlink" href="#conclusions" title="Link to this heading"></a></h1>
+<p>This project built a LED controller system for Cornell’s clocktower using
+Raspberry Pi Pico W microcontrollers. Our system successfully implemented
+a modular control architecture based on three types of boards (controller,
+sensor and face boards) and a custom CAN bus communciation, providing a
+user-friendly control panel for Chimesmasters to set and adjust lighting
+behavior of the clocktower.</p>
+<p>Our final system achieved all of the core goals we set in the proposal:</p>
+<ul class="simple">
+<li><p>The CAN bus supported data sending and receiving among boards based on Pico
+W’s PIO and DMA</p></li>
+<li><p>On the core board, one switch determined LEDs to be turned on or off, one
+rotary switch determined the LED modes, and three potentiometer sliders
+controlled the brightness of LED’s R/G/B channels using PWM</p></li>
+<li><p>The face boards responded accurately to R/G/B color updates when sliding
+the potentiometers on the core board</p></li>
+<li><p>The sensor board monitored and returned sound data to the core board in
+the <code class="docutils literal notranslate"><span class="pre">SOUND</span></code> mode, and then achieving the control of lighting brightness
+by the external sound level</p></li>
+</ul>
+<p>While the system performed well during demonstration, there were a few
+aspects of our project that could use improvement:</p>
+<ul class="simple">
+<li><p>We suffered some hardware issues with the shorting of one of the face
+boards, as well as the unorthodox CAN bus behavior requiring
+jump starting, as discussed in <a class="reference internal" href="hw_des.html"><span class="doc">Hardware Design</span></a></p></li>
+<li><p>Our current potentiometer sliders grew strikingly warm during operation,
+specifically when the tapped output was at its highest.
+While this could be temporarily fixed by storing a color value when
+setting, then returning the sliders to the down position, a better solution
+would be diagnosing why the behavior happens. We were unable to determine
+the cause (as all measured resistances were normal), indicating that testing
+with other sliders may be useful</p></li>
+<li><p>While we could communicate with our ambient light sensor, we consistently
+read values of <code class="docutils literal notranslate"><span class="pre">0</span></code> across the I<sup>2</sup>C lines, and were therefore
+unable to implement the light-based mode of the system. This isn’t a
+regression compared to the current system, but would be nice to figure out
+and implement in the future</p></li>
+</ul>
+<p>Looking forward, our system provides a foundation for future expansion like
+WiFi/Bluetooth enables remoting control interfaces, and also the distributed
+hardware design allows more clock faces or connecting other buildings or devices.</p>
+<p>In the end, there were no external standards governing our project. However,
+we reused Prof. Adams’ <a class="reference external" href="https://vanhunteradams.com/Pico/CAN/CAN.html">CAN bus implementation</a>,
+and our team’s PWM implementation used in Lab 3.</p>
+<p>The only safety concern was with the high-power draw of our LEDs, and whether
+our boards would be able to tolerate the large current draw. After careful
+design and testing in lab, our boards were able to withstand this current
+draw without noticeable temperature increase, indicating that they would
+be well-suited for the tower LEDs.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="results.html" class="btn btn-neutral float-left" title="Results" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="appendices.html" class="btn btn-neutral float-right" title="Appendices" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Aidan McNay, Edmund Lam, Qingmiao Xiao.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

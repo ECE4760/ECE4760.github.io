@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hardware Design &mdash; ECE 5730: Clocktower LEDs  documentation</title>
+      <link rel="stylesheet" type="text/css" href="static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="static/css/custom.css?v=2e4e1787" />
+
+  
+    <link rel="shortcut icon" href="static/favicon.ico"/>
+      <script src="static/jquery.js?v=5d32c60e"></script>
+      <script src="static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="static/documentation_options.js?v=5929fcd5"></script>
+      <script src="static/doctools.js?v=9bcbadda"></script>
+      <script src="static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Results" href="results.html" />
+    <link rel="prev" title="Program Design" href="program_des.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ECE 5730: Clocktower LEDs
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation Sections</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="high_level.html">High-Level Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="program_des.html">Program Design</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Hardware Design</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#led-setup">LED Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#can-transceiver">CAN Transceiver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#controller-board">Controller Board</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sensor-board">Sensor Board</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#face-board">Face Board</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hardware-difficulties">Hardware Difficulties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#face-board-shorting">Face Board Shorting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#can-jump-starting">CAN Jump-Starting</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="results.html">Results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conclusions.html">Conclusions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendices.html">Appendices</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ECE 5730: Clocktower LEDs</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Hardware Design</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="sources/hw_des.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="hardware-design">
+<h1>Hardware Design<a class="headerlink" href="#hardware-design" title="Link to this heading"></a></h1>
+<p>Our system was composed of three types of board:</p>
+<ul class="simple">
+<li><p>A controller board (located at the main playing level, acting as the
+primary user interface)</p></li>
+<li><p>A sensor board (located in the belfry for collecting sensor measurements)</p></li>
+<li><p>Four face boards (located in each clock face for driving the LEDs)</p></li>
+</ul>
+<p>All of these boards communicate over a shared CAN bus for reliable
+communication of information. While both the control and sensor board
+have access to an outlet (and can be powered through a 5V DC power
+supply), all of the clock face boards will rely on pre-existing 12V
+DC power converters already installed in the tower. For our project,
+we chose to use a Pico W for each board, as opposed to just a Pico, to
+allow for WiFi communication (as well as Bluetooth, should future
+groups choose to expand the system using the same hardware).</p>
+<div class="note admonition">
+<p class="admonition-title">Different Supplies</p>
+<p>The different power supplies and corresponding absolute voltages could
+theoretically provide communication issues by referencing different
+grounds; however, CAN communication relies on the difference between
+two lines, so absolute differences in supply voltages will not impact
+our network.</p>
+</div>
+<a class="bottompadding reference internal image-reference" href="images/top_level.png"><img alt="images/top_level.png" class="bottompadding align-center" src="images/top_level.png" style="width: 70%;" />
+</a>
+<section id="led-setup">
+<h2>LED Setup<a class="headerlink" href="#led-setup" title="Link to this heading"></a></h2>
+<p>The clocktower currently uses strips of <a class="reference external" href="https://www.superbrightleds.com/led-strips-and-bars/led-strip-lights-by-voltage/12-volt-led-strip-lights/5m-rgbw-led-strip-light-4-in-1-chip-5050-color-changing-led-tape-light-12v-24v-ip20">RGBW LEDs</a>
+to light the clock faces. These LEDs have 5 pins: <code class="docutils literal notranslate"><span class="pre">+12V</span></code>, <code class="docutils literal notranslate"><span class="pre">R</span></code>, <code class="docutils literal notranslate"><span class="pre">G</span></code>,
+<code class="docutils literal notranslate"><span class="pre">B</span></code>, and <code class="docutils literal notranslate"><span class="pre">W</span></code>. We suspected this meant that the non-power lines should
+PWM’d to ground to adjust the amount of that color; after probing these
+lines, as well as getting hints from the “Common Anode” marking on the
+box, we confirmed that this was the case, with the model below showing
+the strips in beige (anticipating connecting them to some form of switch)</p>
+<a class="bottompadding image-corners image-border reference internal image-reference" href="images/pins.png"><img alt="images/pins.png" class="bottompadding image-corners image-border align-center" src="images/pins.png" style="width: 90%;" />
+</a>
+<a class="bottompadding image-corners image-border reference internal image-reference" href="images/specs.png"><img alt="images/specs.png" class="bottompadding image-corners image-border align-center" src="images/specs.png" style="width: 70%;" />
+</a>
+<a class="reference internal image-reference" href="images/leds.png"><img alt="images/leds.png" class="align-center" src="images/leds.png" style="width: 50%;" />
+</a>
+<p>One other consideration we had to make was the PWM frequency; too slow,
+and the blinking would be observable to viewers. However, after probing
+the current LED PWM output, we found the period to be about <span class="math notranslate nohighlight">\(7.5ms\)</span>
+(corresponding to a frequency of <span class="math notranslate nohighlight">\(\sim 133Hz\)</span>), which is easily
+attainable by our PWM channels (set to around <span class="math notranslate nohighlight">\(4kHz\)</span>) and our
+MOSFETs (which have rise and fall times in the tens of nanoseconds).</p>
+<figure class="align-center" id="id1">
+<a class="reference internal image-reference" href="images/scope.png"><img alt="images/scope.png" src="images/scope.png" style="width: 80%;" />
+</a>
+<figcaption>
+<p><span class="caption-text">Probe output of an LED currently installed, with <span class="math notranslate nohighlight">\(7.5ms\)</span>
+between repeating patterns</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="can-transceiver">
+<h2>CAN Transceiver<a class="headerlink" href="#can-transceiver" title="Link to this heading"></a></h2>
+<p>One particularly hardware-intensive component of our system were the
+CAN transceivers; these were present on all boards to communicate over the
+shared CAN bus. We chose to use the <a class="reference external" href="https://www.digikey.com/en/products/detail/texas-instruments/SN65HVD230DR/404366">SN65HVD230DR</a>
+transceiver, as it had already been used in a CAN bus demo from Professor
+Adams, allowing us to re-use the PIO program and accompaning C code
+(albeit modifying as an object-oriented class for reusability across
+programs for all the boards).</p>
+<p>Aside from the transceiver itself, some other components are needed,
+including:</p>
+<ul class="simple">
+<li><p><strong>Terminating Resistors</strong>: Resistors are needed to pull the bus lines
+together by default. While terminating resistors are strictly only
+needed at the two ends of a bus, we wanted our system to be able to
+handle any configuration of connected boards, and accordingly
+terminated at all nodes of the bus. Additionally, CAN buses usually
+have <em>standard termination</em> (a <span class="math notranslate nohighlight">\(120\Omega\)</span> resistor between the
+two lines); however, we opted for <em>split termination</em>, which uses two
+<span class="math notranslate nohighlight">\(60\Omega\)</span> resistors instead to insert a capacitor between the
+two lines, to low-pass noise. Our transceiver additionally supported
+this by providing a <span class="math notranslate nohighlight">\(\frac{V_{CC}}{2}\)</span> output to connect to the
+midpoint and further stabilize the bus</p></li>
+<li><p><strong>TVS Diode</strong>: A Transient Voltage Suppression (TVS) diode was placed
+between both bus lines and ground, preventing large voltage spikes from
+damaging other electronics</p></li>
+<li><p><strong>Slope Control</strong>: Our particular transceiver provided a pin which allowed
+the device to be in low-power mode (pulled to <span class="math notranslate nohighlight">\(V_{CC}\)</span>), in
+“high-speed” mode (pulled to ground), or in “slope-control” mode
+(a resistor between the pin and ground), where the slope of
+transmissions could be controlled by the resistor’s value. Since
+we valued data integrity more than speed, we chose to have the
+transceiver in “slope-control” mode by providing a <span class="math notranslate nohighlight">\(10k\Omega\)</span>
+resistor, with an additional PMOS above to allow the microcontroller
+to turn off transmissions by pulling the node high, such as during
+setup to avoid noise</p></li>
+</ul>
+<a class="bottompadding reference internal image-reference" href="images/termination.png"><img alt="images/termination.png" class="bottompadding align-center" src="images/termination.png" style="width: 60%;" />
+</a>
+<p>This diode (<code class="docutils literal notranslate"><span class="pre">D1</span></code>), as well as the split termination resistors and
+capacitor (<code class="docutils literal notranslate"><span class="pre">R7/R8/C7</span></code>) and smoothing capacitors (<code class="docutils literal notranslate"><span class="pre">C2/C3</span></code>) can be
+seen in the example layout below from the <a class="reference external" href="https://www.ti.com/lit/ds/symlink/sn65hvd230.pdf">CAN transceiver datasheet</a>,
+which was utilized when implementing all boards (with the screenshot
+below shown from the controller board):</p>
+<p><a class="reference internal" href="images/example_layout.png"><img alt="example_layout" src="images/example_layout.png" style="width: 59%;" /></a> <a class="image-border reference internal" href="images/can_layout.png"><img alt="can_layout" class="image-border" src="images/can_layout.png" style="width: 39%;" /></a></p>
+</section>
+<section id="controller-board">
+<h2>Controller Board<a class="headerlink" href="#controller-board" title="Link to this heading"></a></h2>
+<p>The control board is the primary interface to the overall system. It
+should allow users to easily change the colors, as well as the “mode” of
+the LEDs, including being unconditionally on, pulsing with audio, or
+turning on and off with ambient light. Accordingly, the board features:</p>
+<ul class="simple">
+<li><p>3 potentiometer sliders to control the amount of each color. LEDs of the
+corresponding color are situated above each slider to give a visual
+indication of how much of each color is present; this is done by using
+PWM to control the perceived brightness of each LED, with each LED
+connected to a separate PWM channel</p></li>
+<li><p>A CAN transceiver connected to 5 pairs of outputs (in a <code class="docutils literal notranslate"><span class="pre">1x10</span></code>
+screw terminal block) for communicating with all other boards.</p></li>
+<li><p>Switches to turn the board on and connect to WiFi, as well as a rotary
+switch for controlling the LED mode. Additional LEDs show whether the
+board is on and connected to WiFi</p></li>
+</ul>
+<p><a class="reference internal" href="images/control_layout.png"><img alt="control_layout" src="images/control_layout.png" style="width: 49%;" /></a> <a class="reference internal" href="images/control_3d.png"><img alt="control_3d" src="images/control_3d.png" style="width: 49%;" /></a></p>
+</section>
+<section id="sensor-board">
+<h2>Sensor Board<a class="headerlink" href="#sensor-board" title="Link to this heading"></a></h2>
+<p>The sensor board lives in the top of the tower, and is responsible for
+providing data about the amount of light and sound it detects. It includes
+an ambient light sensor and a microphone, as well as a CAN transceiver to
+communicate the data to the controller board.</p>
+<p><a class="reference internal" href="images/sensor_layout.png"><img alt="sensor_layout" src="images/sensor_layout.png" style="width: 49%;" /></a> <a class="reference internal" href="images/sensor_3d.png"><img alt="sensor_3d" src="images/sensor_3d.png" style="width: 49%;" /></a></p>
+</section>
+<section id="face-board">
+<h2>Face Board<a class="headerlink" href="#face-board" title="Link to this heading"></a></h2>
+<p>Finally, a face board lives in each of the clock faces. These boards are
+responsible for receiving the target color from the controller board, and
+adjusting the PWM duty rate for each of the LEDs appropriately.
+Accordingly, they contain 4 high-power MOSFETs (one for each channel to
+PWM), a CAN transceiver, and 2 LEDs to indicate both power and
+communication with the controller board. To connect to the LEDs, we
+noticed two controllers currently being used per face due to the
+single strip output from them; to alleviate this, each face board has
+two terminal blocks that each provide the 5 connections necessary for
+the LED strip.</p>
+<p>Unlike normal LEDs, the LED strips are particularly high-power; while
+we couldn’t find the exact part number for the strips, the
+<a class="reference external" href="https://www.superbrightleds.com/5m-rgb-w-led-strip-light-color-changing-led-tape-light-12v-24v-ip20?queryID=8bbe2fe09e8e713c40f2e17a41900dae#specifications">manufacturer’s website</a>
+indicates that they could draw over an amp per meter, with a similar
+<a class="reference external" href="https://www.adafruit.com/product/2439">product by Adafruit</a> indicating
+up to 1.6 amps per meter. While we couldn’t get an exact length measurement of
+the already-installed LEDs, the controller indicated a maximum load of
+6 amps per channel, with the 12V voltage converters indicating a
+maximum of 24 amps (sufficient for the 4 channels). Accordingly, we
+chose our high-power driving MOSFETs and corresponding trace widths to
+be sufficient for 6 amps; our <a class="reference external" href="https://www.digikey.com/en/products/detail/infineon-technologies/IRLB8721PBF/2127670">MOSFETs</a>
+could handle up to 62 amps, and the traces were calculated for slightly
+over 6 amps via KiCad’s trace calculator (perhaps being able to handle
+a bit more), giving us confidence that they would work well with the
+current setup.</p>
+<p><a class="reference internal" href="images/face_layout.png"><img alt="face_layout" src="images/face_layout.png" style="width: 49%;" /></a> <a class="reference internal" href="images/face_3d.png"><img alt="face_3d" src="images/face_3d.png" style="width: 49%;" /></a></p>
+</section>
+<section id="hardware-difficulties">
+<h2>Hardware Difficulties<a class="headerlink" href="#hardware-difficulties" title="Link to this heading"></a></h2>
+<p>During the implementation of these boards, we ran into several unusual
+difficulties.</p>
+<section id="face-board-shorting">
+<h3>Face Board Shorting<a class="headerlink" href="#face-board-shorting" title="Link to this heading"></a></h3>
+<p>When initially testing our boards, we noticed that one of the face boards
+caused our power supply to produce a “whine”. After investigating, we
+found an unusually low resistance between <code class="docutils literal notranslate"><span class="pre">VSYS</span></code> and <code class="docutils literal notranslate"><span class="pre">GND</span></code> of the
+Pico on board; other boards had this around <span class="math notranslate nohighlight">\(4k\Omega\)</span>, but the
+offending board had around <span class="math notranslate nohighlight">\(12.8\Omega\)</span> between these two pins,
+likely acting as a short and causing excessive current draw. Given that
+it only occurred on one board, it seemed unlikely (although possible) to
+be an issue with the board, but rather the soldering; however,
+thoroughly desoldering and even drilling out the connection between these
+pins proved unable to remove the low-impedance connection. While the
+other boards were sufficient for a system demonstration, remedying this
+board will be necessary for all four faces to be operational beyond this
+class.</p>
+</section>
+<section id="can-jump-starting">
+<h3>CAN Jump-Starting<a class="headerlink" href="#can-jump-starting" title="Link to this heading"></a></h3>
+<p>When initially connecting the CAN transceivers between the boards, we
+expect both:</p>
+<ul class="simple">
+<li><p>A board’s messages to be seen by other boards (when connected)</p></li>
+<li><p>A board’s messages to be seen by itself (all the time)</p></li>
+</ul>
+<p>However, our boards were strangely unable to initially receive either
+type of message when powered on. However, a strange remedy was found
+to this issue; if the two CAN lines were shorted together briefly, both
+types of messages would be received by the boards. Our current hypothesis
+is that there is some initial deadlock in the CAN bus’ PIO implementation
+that a temporary short is able to alleviate. While we can still demonstrate
+communication, our system should ideally be able to start up on its own,
+especially if a restart is required (by a watchdog timer or power
+fluctuations, for example).</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="program_des.html" class="btn btn-neutral float-left" title="Program Design" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="results.html" class="btn btn-neutral float-right" title="Results" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Aidan McNay, Edmund Lam, Qingmiao Xiao.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
