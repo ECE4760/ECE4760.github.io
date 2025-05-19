@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game of 24</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <main>
+        <nav id="navbar">
+            <div style="font-size: 1.5rem; text-align: center;">
+                <ul class="nav-links" style="display: flex; justify-content: center; gap: 20px;">
+                    <li><a href="#introduction" style="font-size: 1.2rem;">Introduction</a></li>
+                    <li><a href="#high-level-design" style="font-size: 1.2rem;">High Level Design</a></li>
+                    <li><a href="#software-design" style="font-size: 1.2rem;">Software Design</a></li>
+                    <li><a href="#hardware-design" style="font-size: 1.2rem;">Hardware Design</a></li>
+                    <li><a href="#results" style="font-size: 1.2rem;">Results</a></li>
+                    <li><a href="#conclusions" style="font-size: 1.2rem;">Conclusions</a></li>
+                    <li><a href="#appendix" style="font-size: 1.2rem;">Appendix</a></li>
+                </ul>
+            </div>
+        </nav>
+        <hr>
+
+        <section id="title" class="section">
+            <div class="container">
+                <h1>Game of 24</h1>
+                <h2>Sean Zhang (swz9), Ray Chang (cc2246), Shizhe Shen
+                    (ss4335)<h2>
+                        <iframe width="560" height="315"
+                            src="https://www.youtube.com/embed/oUg7xzAIQH0?si=7GXE5viiB2rXxfLU"
+                            title="YouTube video player" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                        <figcaption>Demonstration Video</figcaption>
+            </div>
+        </section>
+        <section id=" introduction" class="section">
+            <div class="container">
+                <h2>Project Introduction</h2>
+                <p>Our digital recreation of the Game of 24 brings the classic arcade experience with a custom interface
+                    that
+                    blends nostalgic gameplay with a custom built, user-experience focused design.</p>
+                <p>The Game of 24 is a classic mathematical puzzle where players must use four given numbers and basic
+                    arithmetic operations (+, -, *, /) to form an expression that equals 24. Traditionally the game is
+                    played with a deck of cards, where each turn the players will draw four random cards and compete for
+                    the fastest speed to calculate to 24. Instead of racing to solve a single round, our implementation
+                    tracks the number of collections of cards solved within a configurable time interval.</p>
+                <p>The arcade experience is curated with a custom built joystick-based
+                    controller, retro-style graphics with the VGA screen, and a persistent leaderboard stored in
+                    non-volatile memory. The game is player vs player similar to the
+                    versus style arcade games. Difficulty can be adjusted at run-time and a group of 4 numbers of the
+                    suitable difficulty are calculated at runtime. Card dealing, flipping animations and sound feedback
+                    contribute to the immersive experience.</p>
+            </div>
+        </section>
+
+        <section id="high-level-design" class="section">
+            <div class="container">
+                <h2>High Level Design</h2>
+
+                <h3>Rationale Behind Implementing the Game of 24</h3>
+                <p>We chose the Game of 24 because it’s a fun, classic puzzle that we personally enjoy, and it offered a
+                    great mix of hardware and software challenges. It allowed us to go beyond a basic game, turning it
+                    into a feature-rich product with a custom interface, optimized performance, and room for additional
+                    features. This project gave us the freedom to transform a simple concept into a polished,
+                    well-developed game.</p>
+
+                <h3>Hardware/Software Tradeoffs</h3>
+                <p>
+                    Our implementation of the Game of 24 uses both cores on the microcontroller, with each
+                    core dedicated to managing the gameplay experience for each player.</p>
+                <p>
+                    On the hardware side, each core of the microcontroller is tasked with managing the joystick input,
+                    rendering animations, and updating the VGA display for its assigned player. This parallel processing
+                    ensures that each player’s actions are processed without interference, providing a smooth and
+                    responsive
+                    experience. The use of multiple cores for real-time input and display updates significantly reduces
+                    latency and allows both players to interact simultaneously without any noticeable delay.
+                    However, this multi-core approach introduces some software complexity. For shared memory,
+                    concurrency protection mechanisms such as locks and semaphores are used to prevent any undefined
+                    behavior.
+                </p>
+            </div>
+        </section>
+
+        <section id="software-design" class="section">
+            <div class="container">
+                <h2>Software Design</h2>
+                <h3>Algorithm for Generating Solutions</h3>
+                <p>The core idea behind the 24-point solver is to exhaustively evaluate all valid arithmetic expressions
+                    formed from a given set of four integers. The algorithm applies the basic operations +, -, *, and /,
+                    and explores all permutations of the numbers (4! = 24), operator combinations (4³ = 64), and six
+                    distinct parenthesis patterns that define evaluation order. Each configuration is numerically
+                    evaluated to check whether it equals 24 (within a small epsilon tolerance), ensuring that all
+                    mathematically valid solutions are captured through brute-force enumeration.
+                    To implement this algorithm, we began with an <a
+                        href=https://github.com/peterwzhang/24-Game-Solver>open-source solver</a>, which determines
+                    whether a solution exists for a
+                    given set of four numbers. I then extended the code to output all valid expressions rather than just
+                    confirming existence. Additional improvements included filtering out duplicate solutions, avoiding
+                    intermediate negative values, and counting the number of unique solutions. I also introduced a
+                    difficulty rating system (easy, medium, hard) based on the number and complexity of solutions, and
+                    added functionality to generate random problem sets matching a specified difficulty. These
+                    enhancements made the solver both comprehensive and adaptable for dynamic puzzle generation within
+                    the game.
+                </p>
+                <div style="text-align: center;">
+                    <img src="assets/24_algo.png" alt="mac_address" style="max-width: 50%; height: auto;">
+                    <figcaption>6 different parentheses groupings</figcaption>
+                </div>
+                <br>
+
+                <h3>Efficiently Drawing Images to the VGA Screen</h3>
+                <p>
+                    Images are needed for displaying cards and the 24-logo.
+                </p>
+                <p>
+                    A Python script that converts an image into a 2D C array suitable for VGA
+                    rendering. This script uses the Python Imaging Library (PIL) to open the image, resize it according
+                    to specified width and height ratios, and then iterates over each pixel. For each pixel, it
+                    maps its RGB values to a corresponding 4-bit color value. The resulting 2D array stores
+                    these color values, and the
+                    script outputs the array in a format directly compatible with C, making it ready for use in VGA
+                    rendering.
+                </p>
+                <p>
+                    Initially, we displayed assets on the VGA screen by iterating through each 2D C array, calculating,
+                    and
+                    setting each pixel individually by setting the upper 4 or lower 4 bits of the
+                    <code>vga_data_array</code>.
+                    However, this approach proved too slow when sliding or flipping the image.
+                </p>
+                <p>
+                    To optimize, we leveraged the fact that each row of the 2D array is memory-aligned. By using
+                    <code>memcpy</code>,
+                    we
+                    can copy entire rows at once, achieving 32-bit transfers—effectively drawing 8 pixels at a time.
+                    This
+                    method provides an 8x speed improvement.
+                </p>
+                <p>
+                    Given a desired <code>x</code>, <code>y</code> position and the current row <code>i</code> of the
+                    asset we are trying to copy, the index in the <code>vga_data_array</code> to begin copying to is
+                    calculated as
+                    <code>vga_index = ((y + i) * 640 + x) >> 1</code>. The <code>(y + i) * 640</code> calculates the
+                    starting index of the ith row for a 640-pixel wide screen. The addition of <code>x</code> shifts the
+                    position from the left edge of the screen to the desired x-coordinate. The right shift by 1
+                    operation is required because each byte in the <code>vga_data_array</code> can store two pixels
+                    (4-bit color). The right shift by 1 effectively divides the index by 2, converting the pixel index
+                    to a byte index.
+                </p>
+                <h3>Flip Animation</h3>
+                <p>
+                    The flip animation is based off of the following image. During the first half of the flip, the image
+                    will be stretched to a trapezoid shape with the left edge as the longer base and the right edge as
+                    the shorter base. The height of the trapezoid will decrease as the flip progress approaches the
+                    halfway point. The trapezoid will then be inversed and the right edge will become the longer base
+                    and the left edge will become the shorter base. The height of the trapezoid will increase as the
+                    flip progresses to the end of the animation.
+                </p>
+                <!-- NOTE: @Ray, @Damian don't copy this code for other images, it will cut off the top 1/4th of ur image -->
+                <div style="display: flex; justify-content: center;">
+                    <img src="assets/flip-card.png" alt="Flip Animation" class="flip-animation"
+                        style="object-fit: cover; object-position: top; height: 350px; width: auto; clip-path: inset(15% 0 0 0);">
+                </div>
+                <figcaption>Flip Animation</figcaption>
+                <br>
+                <p>
+                    The trapezoid is split into the upper right triangle, lower right triangle, and the central
+                    rectangle. Parameters such as the height of the left and right bases and the width of the trapezoid,
+                    are mapped to values based on the progress of the flip. The top triangle is drawn with the below
+                    code. The <code>drawHLineCustom(..)</code> function is based
+                    off of the <code>drawHLine(..)</code> function in the VGA library. Instead, it draws a custom asset
+                    instead of a solid color. The triangle is drawn starting from the top left of the triangle. As the
+                    loop iterates,
+                    horizontal lines are drawn from the left edge to the right edge of the triangle. The length of the
+                    line drawn is dependent on the <code>accumulator</code> variable. The <code>accumulator</code> is
+                    accumulated by <code>triangleStep</code>, which is the
+                    the quotient between the trapezoid height and the triangle base. This is effectively the slope of
+                    the triangle's hypotenuse. The <code>x_offset</code> addition is used to shift the triangle to the
+                    right as the trapezoid's height decreases.
+                </p>
+                <script src="https://gist.github.com/seanzhangw/832dc650947679014741883355aeac84.js"></script>
+                <div style="text-align: center;">
+                    <img src="assets/flip_visualized_grid.drawio.png" alt="mac_address"
+                        style="max-width: 50%; height: auto;">
+                    <figcaption>Drawing Top Triangle and Flip Parameters</figcaption>
+                    <br>
+                </div>
+                <p>
+                    The middle rectangle is drawn with the line
+                    <code>pasteImage(top_image, image_height, trapezoid_height / 2, x + x_offset, y, bg)</code>.
+                    <code>top_image</code> is a pointer to the asset. The <code>image_height</code> is the height of
+                    the asset. The <code>x + x_offset</code> and <code>y</code> arguments are the top left x and y
+                    coordinates of the image to paste.
+                </p>
+                <p>
+                    The bottom triangle is drawn with similar logic to the top triangle. Since we still draw from the
+                    top left of the triangle, the accumulator starts at the full <code>trapezoid_height</code> and
+                    decreases.
+                </p>
+                <script src="https://gist.github.com/seanzhangw/a22cfcbb26e40e85151f638b2ffa4106.js"></script>
+                <figcaption>Drawing Bottom Triangle Code</figcaption>
+                <br>
+
+                <p>
+                    During the second half of the flip, the same logic largely applies. The right base of the trapezoid
+                    grows while the left base shrinks. The trapezoid's height increases instead of decreasing.
+                </p>
+
+                <h3>Sound Effects</h3>
+                <p>
+                    We incorporated sound effects into the 24-point card game, improving input feedback and immersion.
+                    Key
+                    moments were mapped to distinct audio cues such as start menu and card selections, card dealing, and
+                    flipping.
+                </p>
+                <p>
+                    While the DDS-based method in that file worked for simple tones, it was unsuitable for realistic
+                    sound
+                    effects. Instead, .wav files—originally sourced as .mp3, trimmed for timing, were converted into C
+                    arrays for inclusion in header files. These assets could then be triggered from the animation logic.
+                </p>
+                <p>
+                    The initial playback method used a timer interrupt with SPI, which worked well when tested in
+                    isolation
+                    through serial-triggered playback. However, once integrated with the main animation code, the high
+                    interrupt frequency (8–44 kHz) conflicted with timing functions like sleep_us(), resulting in frame
+                    delays and visual stuttering. Additionally, SPI transfers suffered from jitter under load, causing
+                    popping artifacts and inconsistent playback.
+                </p>
+                <p>
+                    After consulting with our instructor, Hunter Adams, a DMA-based method using Lab 1’s e_DMA_demo as a
+                    starting point. This resolved the timing issues by offloading audio streaming from the CPU. During
+                    early
+                    testing, I encountered silence due to a mismatch in audio output channels—beep_beep.c used channel
+                    B,
+                    while dma_demo.c defaulted to channel A. Once corrected, the DMA method produced clean,
+                    uninterrupted
+                    audio.
+                </p>
+                <p>
+                    Moreover, DMA enabled a solution to another limitation: memory overflow when embedding long sound
+                    clips.
+                    By splitting .wav files into smaller fragments and using chained DMA descriptors, I could loop short
+                    buffers to simulate longer sounds without exceeding memory constraints—something timer-based methods
+                    couldn’t handle.
+                </p>
+                <p>
+                    Finally, sound was integrated into the core gameplay logic. Some animations, like card dealing, were
+                    implemented within infinite loops and used flag-based control. Naïvely calling sound triggers within
+                    these loops caused repeated DMA reconfigurations. To prevent this, we added logic to play each sound
+                    once at the start of an animation sequence, suppressing repeated triggers until the animation
+                    completed.
+                    Additionally, to preserve sound quality, we adjusted the DMA sampling rate for each clip based on
+                    its
+                    original audio. For example, the flipping sound required ~11.025 kHz instead of the default ~44
+                    kHz..
+                </p>
+                <h3>Game Code Structure</h3>
+                <p>
+                    The game software is split across two cores. Within both cores, two threads handle inputs and VGA
+                    animations. On core 0, an additional thread waits for a semaphore signal to begin a serial listener
+                    for leaderboard inputs. On core 1, a timer callback ISR executes every second to decrease the
+                    seconds remaining during the main gameplay loop.
+                </p>
+                <div style="text-align: center;">
+                    <img src="assets/24-final-sw-logc.png" alt="mac_address" style="max-width: 100%; height: auto;">
+                    <figcaption>Code Organization</figcaption>
+                </div>
+                <br>
+                <p>
+                    The input thread in each core is responsible for reading the joystick inputs and button presses.
+                    Debouncing is implemented to make button presses and joystick inputs more reliable.
+                    Based on the current <code>gameState</code>, it will execute different actions based on the joystick
+                    and button inputs. For instance, if the game is in the <code>START_MENU</code> state, joystick and
+                    button inputs will set the game settings, or start the game based on the
+                    current selection of <code>curCol</code> or <code>curRow</code>. In the <code>GAME_PLAYING</code>
+                    state, inputs signal arithmetic operations, reset requests, or redealing a new set of cards. Inputs
+                    in the <code>GAME_OVER</code> state determine whether the player wants to save a score to the
+                    leaderboard.
+                </p>
+                <p>
+                    The animation thread in each core is responsible for rendering the game graphics on the VGA screen.
+                    Based on shared game flags and the <code>gameState</code>, the animation thread will draw the start
+                    menu, main game screen, or game over screens. Animations such as flipping cards and sliding cards
+                    are also handled within this thread.
+                </p>
+                <div style="text-align: center;">
+                    <img src="assets/start-menu.png" mac_address" style="max-width: 50%; height: auto;">
+                    <figcaption><code>START_MENU</code> screen</figcaption>
+                </div>
+                <div style="text-align: center;">
+                    <img src="assets/game-playing.png" mac_address" style="max-width: 50%; height: auto;">
+                    <figcaption><code>GAME_PLAYING</code> screen</figcaption>
+                </div>
+                <div style="text-align: center;">
+                    <img src="assets/game-over.png" mac_address" style="max-width: 50%; height: auto;">
+                    <figcaption><code>GAME_OVER</code> screen</figcaption>
+                </div>
+                <div style="text-align: center;">
+                    <img src="assets/leaderboard.png" mac_address" style="max-width: 50%; height: auto;">
+                    <figcaption>Leaderboard screen</figcaption>
+                </div>
+                <p>
+                    The leaderboard input thread within core 0 is essentially a serial listener that waits for
+                    input.
+                    Based on the player input, it will write a player name and score to EEPROM via I2C. This thread
+                    waits for a semaphore signal from the input handler thread to begin. The semaphore is signaled
+                    when
+                    the
+                    game is in the <code>GAME_OVER</code> state and the player has selected to save their score.
+                </p>
+                <p>
+                    The timer callback ISR in core 1 is responsible for updating the game timer. It executes every
+                    second
+                    and
+                    decrements the <code>seconds_remaining</code> variable. This variable is used to determine when
+                    the
+                    game
+                    ends and the <code>gameState</code> changes to <code>GAME_OVER</code>.
+                </p>
+            </div>
+        </section>
+
+        <section id="hardware-design" class="section">
+            <div class="container">
+                <h2>Hardware Design</h2>
+                <p>
+                    This section details the hardware design of our Game of 24 system, which brings together multiple
+                    elements
+                    to support real-time gameplay and user interaction. The Raspberry Pi Pico serves as the central
+                    controller,
+                    interfacing with external peripherals including a DAC for audio output, a VGA display for graphics,
+                    an
+                    ADS1115 ADC for reading joystick input, and an EEPROM chip for persistent leaderboard storage.
+                    A custom game controller PCB connects to the system via GPIO, providing buttons and a joystick for
+                    player
+                    input.
+                    A full schematic of the hardware setup is shown below for reference.
+                </p>
+                <div style="text-align: center;">
+                    <img src="assets/circuit_schematics.png" mac_address" style="max-width: 50%; height: auto;">
+                    <figcaption>Hardware Schematics</figcaption>
+                </div>
+                <h3>Custom Game Controller PCB Design</h3>
+                <p>
+                    The custom game controller PCB includes three push buttons and a two-axis analog joystick, providing
+                    interactive input for in-game control and selection. Each push button is implemented as a
+                    Single-Pole
+                    Single-Throw (SPST) switch. One leg of the switch is connected to a Raspberry Pi Pico GPIO pin,
+                    while
+                    the other is connected to ground. A 10 kΩ pull-up resistor is connected between each GPIO pin and
+                    the
+                    3.3 V supply, ensuring that the pin reads a logic high when the button is unpressed. When the button
+                    is
+                    pressed, the pin is pulled to ground through a low resistance path, allowing the software to detect
+                    a
+                    logic low. Transitions from high to low are used to trigger actions such as confirming a selection
+                    or
+                    cycling through menus. For Player 1, the Reset, Enter, and Skip buttons are connected to GPIO 2,
+                    GPIO
+                    10, and GPIO 8, respectively. For Player 2, the same functions are wired to GPIO 3, GPIO 11, and
+                    GPIO 9. The custom game controller PCB schematics and layout are shown below.
+                </p>
+                <div style="text-align: center;">
+                    <img src="assets/PCB_Schematics.png" mac_address" style="max-width: 50%; height: auto;">
+                    <figcaption>Custom Game Controller PCB Schematics</figcaption>
+                </div>
+                <div style="text-align: center;">
+                    <img src="assets/PCB_layout.png" mac_address" style="max-width: 50%; height: auto;">
+                    <figcaption>Custom Game Controller PCB Layout</figcaption>
+                </div>
+                <p>
+                    Each joystick used in the game controller consists of two internal potentiometers that detect
+                    movement
+                    along the X and Y axes. Hardware wise, each potentiometer acts as a variable resistor wired as a
+                    voltage
+                    divider. One end of the potentiometer connects to 3.3 V (VDD), the other to ground (GND), and the
+                    center
+                    pin providing an output voltage that varies based on the joystick’s position. As the user tilts the
+                    joystick, the resistance between the center pin and each rail changes, resulting in a varying output
+                    voltage. This analog voltage is fed into an external ADC, which converts it into a digital value and
+                    sends it to the Raspberry Pi Pico via I2C.
+                </p>
+                <p>
+                    In software, the joystick input is processed by a function such as <code>joystickSelect()</code>,
+                    which takes in
+                    the
+                    digitized X and Y values and compares them to a defined center position. The function calculates the
+                    difference (delta) between the current reading and the neutral center value. To reduce noise and
+                    prevent
+                    small unintentional movements from being registered, a deadzone threshold is applied. If the
+                    joystick is
+                    tilted far enough beyond this deadzone, the direction is determined by comparing the magnitude of
+                    the X
+                    and Y deviations. If the horizontal movement (delta_x) is greater than the vertical (delta_y), the
+                    function returns UP or DOWN depending on the sign of delta_x. Otherwise, it returns LEFT or RIGHT
+                    based
+                    on delta_y. If the joystick remains near the center, it returns NEUTRAL, indicating no movement.
+                    This
+                    directional output is used in-game for actions such as selecting cards, navigating menus, or moving
+                    between elements.
+                </p>
+                <h3>EEPROM for Persistent Leaderboards</h3>
+                <p>
+                    An external EEPROM chip is used to store leaderboard data, allowing high scores and player names to
+                    remain in memory across power cycles. The EEPROM communicates with the Raspberry Pi Pico over the
+                    I2C protocol, with the SDA and SCL lines connected to GPIO pins 4 and 5, respectively. The EEPROM
+                    operates at the standard 7-bit I2C address 0x50, and write operations are followed by a short delay
+                    to allow internal memory updates to complete.
+                </p>
+                <p>
+                    The software interface for the EEPROM includes functions for reading and writing single bytes,
+                    16-bit integers, and fixed-length names. To manage leaderboard entries, player names and scores are
+                    written sequentially to predefined memory addresses. Each entry consists of a name padded to a fixed
+                    length and a 16-bit score. When a new score is inserted, the <code>insert_score()</code> function
+                    checks existing
+                    entries and shifts lower ranked scores down to make room for higher ones. This maintains a sorted
+                    list of top scores. The EEPROM memory is divided by game mode, allowing separate leaderboards for
+                    different difficulty levels or game types. A helper function also allows full memory erasure for
+                    resetting all stored data.
+                </p>
+                <h3>ADS 1115 for Additional ADCs</h3>
+                <p>
+                    The ADS1115 is a 16-bit external ADC used in this project to monitor joystick positions since two
+                    joysticks require four ADCs. The ADS1115 communicates with the Pico via the I2C protocol, with the
+                    SDA line connected to GPIO 6 and the SCL line connected to GPIO 7. The device operates at a default
+                    I2C address (0x48) and uses an external power supply of 3.3 V, consistent with the Pico’s power
+                    supply.
+                </p>
+                <p>
+                    In software, the joystick input is read using the <code>ads1115_read_single_channel()</code>
+                    function. This
+                    function configures the ADS1115 to operate in single shot mode, where each read triggers a new
+                    conversion. The CONFIG register is set with parameters including the selected input channel
+                    (mux_bits), a ±2.048 V programmable gain amplifier setting for improved resolution, a data rate of
+                    860 samples per second, and the comparator function disabled. After initiating the conversion and
+                    waiting for 2 ms, the function reads the 16-bit result from the ADC’s conversion register. The raw
+                    digital value is then scaled to a range of -4096 to +4096, which is used to interpret joystick
+                    position in the game.
+                </p>
+
+                <h3>MCP4822 DAC</h3>
+                <p>
+                    The MCP4822 DAC converts digital audio signals from the Raspberry Pi Pico into analog output via the
+                    SPI
+                    channel. This analog signal is then played back through a speaker connected to a 3.5 mm audio jack.
+                    The
+                    DAC is powered by the Pico’s 3.3V supply (VDD connected to 3.3VOUT, VSS to GND). SPI connections are
+                    configured as follows: MISO on GPIO 12 (not used by the DAC), Chip Select (CS) on GPIO 13, Serial
+                    Clock
+                    (SCK) on GPIO 14, and MOSI (SDI) on GPIO 15. The analog output from the DAC is connected to the
+                    speaker
+                    for audio playback.
+                </p>
+
+                <h3>VGA Screen</h3>
+                <p>
+                    The VGA display operates at a resolution of 640 x 480 and relies on two digital synchronization
+                    signals, HSYNC and VSYNC, and three analog color channels, RED, GREEN, and BLUE. Pixel updates occur
+                    at a clock rate of 25.172 MHz. Initially, both HSYNC and VSYNC are held high while pixel data is
+                    output through the analog color signals, which range from 0 V to 0.7 V to represent varying
+                    intensities.
+                </p>
+                <p>
+                    Each row of the display is active for 640 pixel clock cycles, followed by a horizontal blanking
+                    interval consisting of 16 cycles for the front porch, 96 for the sync pulse (when HSYNC goes low),
+                    and 48 for the back porch, all during which the analog color outputs are set to 0 V. Once complete,
+                    HSYNC returns high, and the process begins again for the next row. This repeats for 480 rows per
+                    frame. After all rows are drawn, VSYNC initiates a vertical blanking period, 10 lines of front
+                    porch, 2 lines of sync pulse (VSYNC goes low), and 33 lines of back porch, before starting a new
+                    frame.
+                </p>
+                <p>
+                    The Raspberry Pi Pico drives these signals through the following GPIO connections: HSYNC on GPIO 16,
+                    VSYNC on GPIO 17, GREEN on GPIOs 18 (through a 470 Ω resistor) and 19 (through a 330 Ω resistor),
+                    BLUE on GPIO 20 (330 Ω), and RED on GPIO 21 (330 Ω). The VGA input has an internal 70 Ω resistor per
+                    color channel, and the series resistors form voltage dividers to ensure output voltages remain
+                    within the 0 to 0.7 V VGA standard.
+                </p>
+
+            </div>
+        </section>
+
+        <section id="results" class="section">
+            <div class="container">
+                <h2>Results</h2>
+                <!-- <p>Any and all test data, scope traces, waveforms, etc
+                    speed of execution (hesitation, filcker, interactiveness, concurrency)
+                    accuracy (numeric, music frequencies, video signal timing, etc)
+                    how you enforced safety in the design.
+                    usability by you and other people</p> -->
+                <p>
+                    The final implementation of the Game of 24 was functionally complete and responsive,
+                    with smooth user interaction and correct hardware behavior. The VGA display
+                    maintained proper timing and resolution, with no visible flickering or
+                    tearing during rapid updates. Real-time drawing of numbers, selection movement, and
+                    leaderboard display were stable and free of graphical artifacts. Button presses and joystick
+                    movements were detected with minimal latency, contributing to a smooth and interactive gameplay
+                    experience.
+                </p>
+                <p>
+                    The success of our implementation of the Game of 24 project is primarily evaluated through direct
+                    gameplay. We assessed the game based on the responsiveness of player input, the
+                    smoothness of animations, and how intuitive the game controls were. For the latter, we had
+                    independent play testers give feedback on the gameplay experience.
+                </p>
+                <p>
+                    Due to our multi-core architecture, we ran into some issues with concurrency. In the start menu,
+                    multiple setting parameters could be highlighted and selected at once due to the start menu being
+                    modifiable by both players. We resolved this by using a mutex spinlock to ensure that only one
+                    player
+                    could modify the start menu at a time.
+                </p>
+                <p>
+                    Our core gameplay mechanics, including player input handling, card
+                    flipping animations, and real-time score tracking, functioned as expected. Sound effects were also
+                    carefully evaluated, with all audio cues accurately synchronizing to in-game actions, contributing
+                    to the
+                    arcade-like atmosphere of the game.
+                </p>
+                <p>
+                    We validated that we generated valid solutions of a set difficulty using an online 24 solver (see
+                    Appendix E). Each of our generated solutions was verified to be solvable with a set number of
+                    solutions that matched the difficulty level.
+                </p>
+                <p>
+                    Safety and robustness were considered in both software and hardware. Pull-up resistors on
+                    all input lines prevented floating GPIOs, and debouncing logic helped avoid accidental multiple
+                    triggers. All analog signals (VGA and joystick) were constrained within voltage ranges safe
+                    for the Pico and external devices. Usability testing mainly by the team and friends showed
+                    that users could intuitively understand the input system and play with the game without needing
+                    technical background, proving the design's usability.
+                </p>
+            </div>
+        </section>
+
+        <section id="conclusions" class="section">
+            <div class="container">
+                <h2>Conclusions</h2>
+                <p>
+                    Our final implementation of the Game of 24 met our expectations, delivering a polished, responsive,
+                    and feature-rich experience. Beyond the core game mechanics, we successfully implemented several
+                    expansion features, including a persistent leaderboard stored in non-volatile memory, smooth
+                    animations for card sliding and flipping, and a relative scoring system that adjusts based on game
+                    difficulty. The system handled two-player input concurrently with no noticeable latency or flicker,
+                    contributing to an overall polished and arcade-like experience.
+                </p>
+                <p> If we were to revisit this project, we would focus on further expanding the gameplay features. Some
+                    potential enhancements include a "hint" system that shakes a couple of cards or highlights a
+                    possible first move when players are stuck. We could also introduce additional sound effects, such
+                    as audio cues for successfully finding a solution or performing an operation, taking advantage of
+                    the available flash memory. Additionally, we could explore new game modes, such as a challenge mode
+                    where players compete to solve a set number of puzzles in the fastest time, offering a more diverse
+                    gameplay experience beyond the current time-based format. </p>
+                <p>
+                    As for intellectual property, we based our 24 solver algorithm on an existing open-source solution,
+                    which we modified to suit our project’s needs. </p>
+            </div>
+        </section>
+
+        <section id="appendix" class="section">
+            <div class="container">
+                <h2>Appendicies</h2>
+                <h3>Appendix A</h3>
+                <p>
+                    The group approves this report for inclusion on the course website.
+                </p>
+                <p>
+                    The group approves the video for inclusion on the course youtube channel.
+                </p>
+                <h3>Appendix B: Software</h3>
+                <p>
+                    The code for this project is available on GitHub <a href="https://github.com/seanzhangw/24"
+                        target="_blank" rel="noopener">here</a>.
+                </p>
+                <h3>Appendix C: Hardware</h3>
+                <p>
+                    See hardware design section for schematics.
+                </p>
+                <h3>Appendix D: Work Distribution</h3>
+                <p>
+                    Ray worked on:
+                <ul>
+                    <li>Controller PCB design, layout, and assembly</li>
+                    <li>Interfacing with ADS 1115, EEPROM w/ I2C. </li>
+                    <li>Game Over, Leaderboard page design</li>
+                    <li>Python script for converting PNGs to 2D C arrays</li>
+                </ul>
+                </p>
+                <p>
+                    Sean worked on:
+                <ul>
+                    <li>Designing software architecture</li>
+                    <li>VGA Driver modifications for sliding, flipping cards and pasting images</li>
+                    <li>Start Menu, Game Playing page design</li>
+                    <li>Core game logic for main gameplay loop, handling player input, handling concurrency</li>
+                    <li>Integration</li>
+                </ul>
+                </p>
+                <p>
+                    Shizhe worked on:
+                <ul>
+                    <li>Converting MP3 audio files to C arrays</li>
+                    <li>Integrating sound effects into core game logic</li>
+                    <li>Controller PCB assembly</li>
+                    <li>Developed algorithm for generating card collections at a set difficulty level.</li>
+                </ul>
+                </p>
+                <h3>Appendix E: References</h3>
+                <p>Course References
+                <ul>
+                    <li>Course Website: <a href="https://ece4760.github.io/">ece4760.github.io</a></li>
+                    <li>RP2040 Demos: <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos">Example Code</a></li>
+                </ul>
+                </p>
+                <p>Datasheets & Documentation
+                <ul>
+                    <li>RP2040 C SDK: <a
+                            href="https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf">SDK</a>
+                    </li>
+                    <li>RP2040 Datasheet: <a
+                            href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf">Datasheet</a>
+                    </li>
+                </ul>
+                </p>
+                <p>Other References</p>
+                <ul>
+                    <li>Online 24 Solver: <a href="http://24solver.us-west-2.elasticbeanstalk.com/">Link1</a></li>
+                    <li>Open-Source 24 Solver Algorithm: <a href=https://github.com/peterwzhang/24-Game-Solver>Link2</a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; Game of 24</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navbar links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+
+                window.scrollTo({
+                    top: targetElement.offsetTop - 70, // Offset for navbar height
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Highlight active section in navbar
+        window.addEventListener('scroll', function () {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav-links a');
+
+            let currentSection = '';
+
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+
+                if (pageYOffset >= sectionTop - 100) {
+                    currentSection = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').substring(1) === currentSection) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
