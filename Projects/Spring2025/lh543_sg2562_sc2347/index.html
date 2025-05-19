@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Starter Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <!-- <link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet"> -->
+
+    <!-- Custom styles for this template -->
+    <link href="starterTemplate.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <!-- <script src="../../assets/js/ie-emulation-modes-warning.js"></script> -->
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#"></a>
+            </div>
+            <div id="navbar" class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="#intro">Introduction</a></li>
+                    <li><a href="#design">High Level Design</a></li>
+                    <li><a href="#result">Result</a></li>
+                </ul>
+            </div><!--/.nav-collapse -->
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="starter-template">
+            <h1>ASL Interpreter</h1>
+            <p class="lead">ECE 5730 Final Project<br>By Shi Gu (sg2562), Lulu Htutt (lh543), and Sana Chawla (sc2347).
+            </p>
+        </div>
+
+        <hr>
+        <div class="center-block">
+            <iframe width="560" height="350" src="https://www.youtube.com/embed/CpRSksp5dxI?si=VrjXP3aGdXnjo6lq"
+                title="YouTube video player" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="align-self: center;"></iframe>
+            <h4 style="text-align:center;">Demonstration Video</h4>
+        </div>
+
+        <hr id="intro">
+
+        <div style="text-align:center;">
+            <h2>Introduction</h2>
+            <p style="text-align: left;padding: 0px 30px;">
+                For our final project we designed and developed a glove based system that can detect the alphabets of
+                the
+                American Sign Language (ASL) using flex sensors and an IMU.
+                We created
+                this system to provide an affordable alternative to expensive commercial sign language translation
+                systems,
+                making communication more accessible for individuals who are non-verbal, hard of hearing, or deaf. The
+                project
+                uses a Raspberry Pi Pico to process sensor data from five flex sensors (one for each finger), contact
+                sensors
+                and an MPU6050 IMU
+                to detect hand orientation, implementing threshold-based signal processing to detect the ASL alphabet.
+            </p>
+        </div>
+        <hr id='design'>
+        <div>
+            <h2 style="text-align:center;">High Level Design</h2>
+            <h3>Rationale and Sources</h3>
+            <p style="text-align: left;padding: 0px 30px;">
+                We chose a glove‐based ASL interpreter because wearable sensors offer a low‐cost
+                alternative to camera-based vision systems - no special lighting, no privacy concerns, and no heavy
+                image
+                processing. Flex sensors directly measure finger bends and an IMU captures hand orientation, allowing
+                real-time alphabet detection on a lightweight microcontroller. This approach makes translation
+                accessible to users in any environment, including those with limited internet or compute resources.
+            </p>
+            <p style="text-align: left;padding: 0px 30px;"> We found a couple of projects in the past years of this
+                class that were similar to our idea, and we referenced them when we ran into blocks.
+            </p>
+            <ul>
+                <li>
+                    <a href="https://people.ece.cornell.edu/land/courses/ece4760/FinalProjects/f2018/aac94_kd333_rp426/aac94_kd333_rp426/aac94_kd333_rp426/main.html"
+                        target="_blank">
+                        Fall 2018: aac94_kd333_rp426
+                    </a>
+                </li>
+                <li>
+                    <a href="https://people.ece.cornell.edu/land/courses/ece4760/FinalProjects/f2014/rdv28_mjl256/webpage/"
+                        target="_blank">
+                        Fall 2014: rdv28_mjl256
+                    </a>
+                </li>
+            </ul>
+            <h2 style="text-align:center;">Hardware Design</h2>
+            <p style="text-align: left;padding: 0px 30px;">
+                Our hardware includes a glove with 3 different kinds of sensors for detecting gestures of each letter in
+                ASL alphabet.
+                The following is the picture of our final project:
+            </p>
+            <div style="text-align:center;">
+                <img class="img-rounded" src="pics/glovePic.jpeg" alt="Generic placeholder image" style="width:30%;">
+                <h4>Picture of the final project</h4>
+
+                <img class="img-rounded" src="pics/circuitDiagram.png" alt="Generic placeholder image"
+                    style="width:90%;">
+                <h4>Circuit Diagram of ASL Interpreter</h4>
+            </div>
+            <p style="text-align: left;padding: 0px 30px;">
+                We placed five flex sensors on the top of each finger to detect individual finger bending.
+                The resistance of a flex sensor increases when it is bent, allowing it to act as a variable resistor.
+                By connecting each sensor in a voltage divider configuration with a pull-down resistor,
+                we can convert the resistance change into a measurable voltage.
+                The output voltage is then read by the microcontroller to determine the degree of bending.
+                To maximize sensitivity, we selected the pull-down resistor values based on the unbent resistance of
+                each flex sensor.
+                One sensor had a much higher baseline resistance (~90 kΩ), while the others measured closer to ~60 kΩ.
+                We chose resistor values that are comparable to these resistances to ensure a larger voltage swing in
+                response
+                to bending, which is helpful for our detection accuracy.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                For reading all 5 values of each flex sensor, we used an external 10-bit 8-channel Analogue-to-Digital
+                Converter (ADC) with SPI protocol.
+                Raspberry Pi Pico with RP2040 has 3 ADC reading pins which is not enough for 5 readings. Since gesture
+                detection
+                does not need high-speed or real-time sampling, we used an 8-channel ADC which has an internal
+                multiplexer to
+                sequentially return readings of each ADC channel.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                We used a Inertial Measurement Unit (IMU), specifically MPU6050, to detect the rotation and motion of
+                the hand.
+                It was placed at the center of the back of the glove and communicates with Raspberry Pi via I2C
+                protocol.
+                The IMU contains both an accelerometer and a gyroscope.
+                The accelerometer provides acceleration readings along three axes, which can be used to estimate
+                orientation,
+                while the gyroscope measures angular velocity along the same axes to detect motion.
+                Both types of data are essential for accurate gesture recognition because some letters have the same
+                fingers bent but differ
+                in hand orientations, such as P and K, and some letters are dynamic such as J and Z.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                Contact sensors are employed to detect contacts. Below is the configuration of our contact sensors:
+            </p>
+
+            <div style="text-align:center;">
+                <img class="img-rounded" src="pics/contactSensor.png" alt="Generic placeholder image"
+                    style="width:30%;">
+                <h4>Contact Sensor Configuration - Each circle represents a copper foil (Red indicates 3.3 V, and Green
+                    are GPIO inputs)</h4>
+            </div>
+            <p style="text-align: left;padding: 0px 30px;">
+                The sensors are configured in a pull-up way. The red circles are copper foils wired to 3.3 V power pin,
+                while the green circles are
+                copper foils connected to GPIO inputs. As red and green contacts, the GPIO input should return a HIGH
+                reading, indicating two fingers contact.
+                This is useful to identify letters that differ only in fingers contact such as U and V.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                Beside sensors for detecting gesture, VGA and a button is used to display the corresponding letters
+                detected. We connected a Raspberry Pi debugger to
+                print detected letters on the serial monitor. And the user can press the button to print the letter
+                detected to the VGA screen. Below is an example of
+                printed "HELLO WORLD".
+            </p>
+
+            <div style="text-align:center;">
+                <img class="img-rounded" src="pics/vgaHelloWorld.jpeg" alt="Generic placeholder image"
+                    style="width:30%;">
+                <h4>HELLO WORLD printed on VGA screen</h4>
+            </div>
+
+            <h2 style="text-align:center;">Software Design</h2>
+            <h4 style="padding-left: 30px;">Gesture Recognition Framework</h4>
+            <p style="text-align: left;padding: 0px 30px;">
+                We implemented a structured approach to match hand positions to predefined signs using a comprehensive
+                data
+                structure. Each gesture is defined by a combination of finger positions (categorized as straight,
+                half-bent, or
+                fully bent for each finger), hand orientation data from the IMU (when applicable), and contact points
+                between
+                fingers (detected through contact sensors). This structured representation allows us to efficiently
+                compare
+                incoming sensor data against our library of recognized signs.
+            </p>
+
+            <h4 style="padding-left: 30px;">Mathematical Foundation</h4>
+            <p style="text-align: left;padding: 0px 30px;">
+                The system relies on several mathematical techniques to process sensor data accurately. We utilize 15.16
+                fixed-point representation for all our calculations, which allocates 15 bits for the integer part and 16
+                bits
+                for the fractional part. This approach achieves high precision while avoiding the computational overhead
+                of
+                floating-point operations on the microcontroller.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                To reduce noise in accelerometer readings, we implement a first-order IIR (Infinite Impulse Response)
+                low-pass
+                filter. This filter is described by the equation: y[n] = α·y[n-1] + (1-α)·x[n], where y[n] is the
+                filtered
+                output, y[n-1] is the previous filtered value, x[n] is the current input, and α is a smoothing factor
+                (0.35 in
+                our implementation). We optimize this calculation using bit-shifting operations to improve performance
+                on the
+                microcontroller.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                For determining hand orientation, we use arctangent functions on the accelerometer data. Specifically,
+                we
+                calculate pitch (rotation around the y-axis) using atan2(-ax, az), roll (rotation around the x-axis)
+                using
+                atan2(az, -ay), and yaw (rotation around the z-axis) using atan2(ax, ay). These calculations convert the
+                raw
+                accelerometer readings into meaningful angular measurements in degrees, which are essential for
+                distinguishing
+                between gestures with similar finger positions but different hand orientations.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                Additionally, we implemented a complementary filter that combines accelerometer and gyroscope data to
+                achieve
+                more stable orientation tracking. This filter is described by the equation: angle = 0.999 × (angle +
+                gyro_data ×
+                dt) + 0.001 × accel_angle. The gyroscope provides accurate short-term measurements but suffers from
+                drift over
+                time, while the accelerometer provides absolute but noisy orientation references. The complementary
+                filter
+                leverages the strengths of both sensors to provide a more reliable orientation estimate.
+            </p>
+
+            <h4 style="padding-left: 30px;">Gesture Detection Pipeline</h4>
+
+            <div style="text-align: center; margin: 20px 0;">
+                <img src="pics/signLanguageFlowchart.jpg" alt="Gesture Detection Flow"
+                    style="width:80%; max-width:600px; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                <p><em>High-level diagram of the gesture detection process</em></p>
+            </div>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                Our gesture detection follows a sophisticated pipeline that begins with sensor data acquisition, where
+                we read
+                raw values from the flex sensors and IMU at a consistent sampling rate. The system then applies signal
+                processing techniques, including the aforementioned filtering and averaging methods, to reduce noise and
+                extract
+                meaningful features from the raw data.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                In the feature extraction stage, we convert these processed readings into meaningful descriptors. For
+                flex
+                sensors, we categorize finger positions into three states (straight, half-bent, or fully bent) based on
+                carefully calibrated threshold values that were determined through experimental testing. For IMU data,
+                we
+                convert raw accelerometer and gyroscope readings into angular measurements that describe the hand's
+                orientation
+                in three-dimensional space.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                The gesture classification stage is where the system matches these extracted features against our
+                predefined
+                gesture patterns. This matching process follows a hierarchical approach: first, it checks if the flex
+                sensor
+                patterns match; then, if contact sensors are used for a gesture, it verifies the contact points;
+                finally, for
+                gestures requiring specific hand orientations, it validates IMU readings within acceptable thresholds.
+                This
+                hierarchical approach improves efficiency by quickly eliminating non-matching gestures early in the
+                process.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                For distinguishing between similar gestures, such as 'I' and 'J' which have identical finger positions,
+                we
+                incorporated dynamic gesture recognition by analyzing gyroscope data to detect specific motion patterns.
+                Once a
+                complete match is found, the corresponding letter is identified and sent to the output generation stage,
+                where
+                it is displayed on the VGA screen.
+            </p>
+
+            <h4 style="padding-left: 30px;">Multi-threaded Architecture</h4>
+            <p style="text-align: left;padding: 0px 30px;">
+                We implemented our software using a multi-threaded design based on protothreads, a lightweight threading
+                library
+                that enables cooperative multitasking with minimal overhead. This approach allows for efficient
+                concurrent
+                execution of multiple tasks without the complexity of a full-fledged operating system.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                Our system architecture consists of three main components: the main thread, which handles system
+                initialization,
+                sensor setup, and scheduling; the VGA thread, which manages the display, updates the screen with
+                recognized
+                gestures, and processes button inputs; and sensor processing, which is implemented within an interrupt
+                service
+                routine (ISR) to ensure consistent sampling rates and timely data processing.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                We use semaphores for thread synchronization to ensure data consistency between the sensor processing
+                and
+                display components. When new sensor data is processed and a gesture is recognized, the sensor processing
+                routine
+                signals the VGA thread using a semaphore, which then updates the display with the recognized letter.
+                This
+                decoupled architecture improves responsiveness and allows the system to continue processing sensor data
+                even
+                while the display is being updated.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                The system also incorporates a button debouncing mechanism implemented as a state machine with four
+                states: not
+                pressed, maybe pressed, pressed, and maybe not pressed. This approach ensures reliable button detection
+                even
+                with physical button bounces, enhancing the user experience when capturing gestures.
+            </p>
+
+            <h4 style="padding-left: 30px;">Hardware Communication</h4>
+            <p style="text-align: left;padding: 0px 30px;">
+                Our software interfaces with various hardware components through specialized communication protocols. We
+                use I2C
+                communication with the MPU6050 IMU sensor, configuring the sensor for optimal performance and regularly
+                polling
+                it for accelerometer and gyroscope data. For the flex sensors, we use SPI protocol to communicate with
+                the
+                MCP3008 analog-to-digital converter, which translates the analog resistance changes from the flex
+                sensors into
+                digital values that our software can process.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                We also employ GPIO pins for button input and contact sensing, configuring them with appropriate pull-up
+                or
+                pull-down resistors to ensure reliable detection. For the VGA display, we implemented a custom driver
+                that
+                generates the necessary timing signals (Hsync and Vsync) and RGB color values to render text on a
+                standard VGA
+                monitor, providing immediate visual feedback to the user.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                The software is written in C and runs on a Raspberry Pi Pico microcontroller, utilizing the RP2040 SDK.
+                We
+                designed the code to be modular, with distinct components handling sensor input, signal processing,
+                gesture
+                recognition, and display output, allowing for easy expansion to recognize more signs in the future.
+            </p>
+
+        </div>
+
+        <hr id='result'>
+
+        <div style="text-align:center;">
+            <h2>Results</h2>
+            <p style="text-align: left;padding: 0px 30px;">
+                Our biggest struggle in this
+                project was figuring out a consistent way to attach all of the sensors onto the glove. At first, we
+                stitched in a circular spiral pattern, but quickly realized that the sensors would slip out of the dense
+                stiches as we bent our fingers, and would not reinsert themselves back into the spiral. We also realized
+                that the glove we had was meant for the left hand, which meant there were awkward air bubbles in the
+                fingers and the top of the hand where the IMU was placed. This made it difficult to determine and
+                maintain the "straight" thresholds.
+            </p>
+
+            <p style="text-align: left;padding: 0px 30px;">
+                For our demo, we had a little trouble getting detecting the letter R. Furthermore, we were not able to
+                implement the half bent mode for the thumb because of inconsistent sensors, so we weren't able to detect
+                'S' vs 'O'.
+            </p>
+        </div>
+
+        <hr>
+
+        <hr>
+        <div style="font-size:18px">
+            <h2>Parts List</h2>
+            <ul>
+                <li>Raspberry Pi Pico</li>
+                <li>IMU</li>
+                <li>Flex Sensors (5)</li>
+                <li>Glove</li>
+                <li>Copper contact sensors (6)</li>
+                <li>8 channel ADC</li>
+            </ul>
+            <h3>Total: $66.74</h3>
+        </div>
+        <hr>
+        <div style="font-size:18px">
+            <h2>References</h2>
+            <a href="https://www.sparkfun.com/flex-sensor-2-2.html">Flex Sensors</a><br>
+            <a href="https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf">IMU
+                Datasheet</a><br>
+            <a href="https://cdn-shop.adafruit.com/datasheets/MCP3008.pdf">8 Channel ADC</a><br>
+            <a href="https://people.ece.cornell.edu/land/courses/ece4760/FinalProjects/f2014/rdv28_mjl256/webpage/"
+                target="_blank">
+                Fall 2014: rdv28_mjl256
+            </a><br>
+            <a href="https://people.ece.cornell.edu/land/courses/ece4760/FinalProjects/f2018/aac94_kd333_rp426/aac94_kd333_rp426/aac94_kd333_rp426/main.html"
+                target="_blank">
+                Fall 2018: aac94_kd333_rp426
+            </a>
+        </div>
+
+        <hr>
+
+        <div class="row">
+            <h2>Code Appendix</h2>
+            <p style="text-align: left;padding: 0px 30px;">
+                Code can be found on <a href="https://github.com/luluhtutt/asl-interpreter">Github</a>
+            </p>
+        </div>
+
+        <div class="row">
+            <h3>Appendix A</h3>
+            <p style="text-align: left;padding: 0px 30px;">
+                The group approves this report for inclusion on the course website.
+                The group approves the video for inclusion on the course youtube channel.
+            </p>
+            <h3>Appendix B: Work Distribution</h3>
+            <p style="text-align: left;padding: 0px 30px;">A majority of the lab was done together in lab or somewhere
+                on campus. Shi Gu set up and integrated the hardware, including calculations for the flex sensor
+                circuits and setting up the ADC. Sana Chawla stitched the glove and wrote the software, including the
+                character matching functionality and threading logic. Lulu Htutt soldered and wrote the software,
+                including the gesture data structure and the sensor reading functionality. Overall, we worked very well
+                as a team.
+            </p>
+        </div>
+    </div>
+
+
+    </div><!-- /.container -->
+
+
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
+    <script src="dist/js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <!-- <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script> -->
+</body>
+
+</html>
