@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handwriting Digit Detector Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 2rem;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .image-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 20px;  /* Space between images */
+            flex-wrap: wrap;  /* Allows wrapping on smaller screens */
+        }
+        .image-container img {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+        }
+        .image-container figcaption {
+            display: block;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            color: #555;
+            margin-top: 8px;
+        }
+        ol {
+            padding-left: 1.5rem;
+        }
+        .code-block-container {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+        .code-block {
+            display: inline-block;
+            background-color: #6a6a6a;
+            color: #e6e6e6;
+            padding: 0px 2px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .list-item {
+            margin-bottom: 1rem;
+        }
+        .nested-list {
+            padding-left: 1.5rem;
+        }
+        .steps-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .steps-list li {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            text-indent: -1.5rem;
+        }
+        .steps-list li::before {
+            content: "•";
+            color: #00bfff;
+            font-weight: bold;
+            display: inline-block;
+            width: 1.5rem;
+        }
+        .clean-table {
+            width: 80%;
+            border-collapse: collapse;
+            margin: 0 auto;
+            margin-bottom: 1rem;
+        }
+        .clean-table th, .clean-table td {
+            padding: 12px;
+            border: 1px solid #000;
+            text-align: left;
+        }
+        .clean-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .clean-table td {
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Handwriting Digit Detector</h1>
+    <h4>Vaishnavi Vednere (vv228) & Vayun Tiwari (vt252)</h1>
+    <p>A memory-optimized CNN running on the RP2040 microcontroller classifies handwritten digits drawn on a resistive touchscreen, showcasing real-time inference despite stringent memory constraints. </p>
+
+    <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+        <iframe width="560" height="315" 
+                src="https://www.youtube.com/embed/RVBwWd3anJ0" 
+                title="YouTube video player" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+        </iframe>
+    </div>
+
+    <h2>Introduction</h2>
+    <p>The core of this project revolves around deploying a Convolutional Neural Network (CNN) on the RP2040 
+    microcontroller to classify handwritten digits. The CNN is structured with quantized 8-bit integer weights 
+    and activations to fit within the limited RAM of the RP2040 while maintaining a reasonable inference speed. 
+    Input data is collected via a resistive touchscreen, which functions as a crude drawing interface. The touchscreen 
+    readings are processed and mapped into a 28x28 pixel grid, which serves as input to the CNN. After classification, 
+    the predicted digit is displayed on an OLED screen, providing immediate feedback to the user.</p>
+    <p>upload video to youtube & embed</p>
+
+    <h2>High Level Design</h2>
+    <h3>Rationale</h3>
+    <p>Over the course of the semester, we found Lab 2: Digital Galton Board to be the most compelling project. 
+    This lab pushed the memory limits of the RP2040 by requiring extensive optimization to fit a complex physics 
+    simulation within the microcontroller’s limited RAM memory. We managed to incorporate 
+    as many simulated balls as possible, optimizing both data structures and code implementation. This experience 
+    inspired us to further explore the RP2040’s capabilities under stringent memory constraints, leading to the idea 
+    of implementing TinyML on the same hardware platform. Given that machine learning models are traditionally 
+    memory-intensive, we aimed to investigate how effectively we could fit a functional CNN onto the RP2040 while 
+    maintaining real-time inference performance. This challenge of pushing the RP2040’s limits formed the core 
+    motivation for our final project.</p>
+
+    <h3>Background</h3>
+
+    <h3>Resistive touchscreen</h3>
+    <p>The input to the CNN is taken in from a resistive touchscreen.
+    A resistive touchscreen operates based on the principles of a voltage divider network formed by two conductive layers 
+    separated by a small gap. When a user applies pressure to the touchscreen surface, the two conductive layers make contact, 
+    creating a variable resistor network. By selectively configuring certain pins as inputs and outputs, we can effectively 
+    measure the X and Y coordinates of the touch event.</p>
+
+    <div class="image-container">
+        <img src="images/IMG_8380.jpg" alt="Handwriting Detector Output" width="600">
+        <figcaption>Basics of Resistive Touchscreen Construction, from Professor Hunter Adam's Resistive Touchscreen Demo</figcaption>
+    </div>
+
+    <p>In this project, we began by using a baseline demo code provided by Professor Hunter Adams, which was designed to map 
+    the touchscreen readings to VGA output. This code serves as a foundational structure for our data acquisition process.</p>
+
+    <p>The resistive touchscreen consists of four terminals: <strong>X+, X-, Y+, Y-</strong>. To accurately read both X and Y coordinates, we 
+    alternate between two pin configurations:</p>
+
+    <ol>
+        <li class="list-item"><strong>Reading the Y Coordinate:</strong>
+            <ul class="nested-list">
+                <li>The X+ and X- pins are configured as outputs, set to <code>HIGH</code> and <code>LOW</code> respectively, forming a voltage divider network along the X-axis.</li>
+                <li>The Y+ and Y- pins are configured as inputs, allowing the ADC to sample the Y-axis voltage based on the current X-axis configuration.</li>
+            </ul>
+        </li>
+
+        <li class="list-item"><strong>Reading the X Coordinate:</strong>
+            <ul class="nested-list">
+                <li>The Y+ and Y- pins are configured as outputs, set to <code>HIGH</code> and <code>LOW</code> respectively, forming a voltage divider network along the Y-axis.</li>
+                <li>The X+ and X- pins are configured as inputs, allowing the ADC to sample the X-axis voltage based on the current Y-axis configuration.</li>
+            </ul>
+        </li>
+    </ol>
+
+    <div class="image-container">
+        <img src="images/IMG_2006.jpg" alt="Handwriting Detector Output" width="500">
+    </div>
+
+    <p><strong>Analog-Digital Converter:</strong> The RP2040’s ADC module is a 12-bit successive approximation ADC that reads voltages 
+    ranging from 0V to 3.3V and converts them to a 12-bit integer value. In our implementation, 
+    we read the X and Y voltages by configuring the ADC to sample from GPIO pins <code>GP26: ADC0</code> and <code>GP27: ADC1</code>.
+    To mitigate noise and provide a more stable reading, a simple low-pass filter is implemented 
+    using a 16-sample buffer. The raw ADC readings for each axis are accumulated and averaged to provide a smoothed output. This averaging is extremely important for stabilizing 
+    the output values, given that the resistive touchscreen readings fluctuate due to contact resistance variability. The details and challenges of our resistive touchscreen implementation are expanded upon in Hardware Design.</p>
+
+    <p><strong>Timer Interrupt Service Routine:</strong> To constantly sample the current position on the resistive touchscreen, a timer interrupt service routine (ISR) runs at a fixed 250Hz frequency, toggling between the X and Y measurement modes. 
+    This sampling rate was specifically chosen to ensure that X and Y readings were not coupled, while also allowing
+    rapid touch events to be accurately captured and processed.
+    The ISR performs the following steps:</p>
+ 
+        <ul class="nested-list">
+            <li>Switch to the next measurement mode (X or Y).</li>
+        <li>Read the ADC value for the current axis.</li>
+        <li>Update the 16-sample buffer.</li>
+        <li>Compute the average value and store it as the current coordinate reading.</li>
+    </ul>
+
+    <p>This methodology effectively decouples the sampling process from the main application logic, allowing the touchscreen data acquisition to run independently without 
+    blocking the primary control loop. This ensures that even during classification or display operations, the touchscreen data acquisition continues uninterrupted, maintaining 
+    consistent data availability. The final scaled X, Y values are mapped to a 28x28 grid, serving as input data to the CNN model.</p>
+
+    <h3>Convolutional Neural Network</h3>
+    <p>The CNN model was developed and trained in Python using the TensorFlow library. The training dataset used was the MNIST dataset, a widely recognized dataset of 28x28 grayscale 
+    images representing handwritten digits ranging from 0 to 9. The goal was to train a lightweight, memory-efficient CNN model that could be quantized and deployed to the RP2040 microcontroller 
+    without exceeding its limited RAM capacity.</p>
+
+    <p><strong>Dataset Preperation:</strong> The dataset utilized for training the CNN model was the MNIST dataset, which consists of 60,000 training images and 10,000 testing images of 
+    handwritten digits ranging from 0 to 9. Each image is a grayscale 28x28 pixel matrix.</p>
+    <p>The dataset was imported using TensorFlow’s built-in <code>mnist.load_data()</code> function, which returns both the training and testing datasets as <code>(x_train, y_train)</code> and <code>(x_test, y_test)</code>
+    tuples. These datasets contain the raw pixel values in the range [0, 255].</p>
+    <p>Since the CNN expects a 4D tensor input <code>(batch_size, height, width, channels)</code>, the images were reshaped to include a single channel dimension to indicate that the images are grayscale.</p>
+
+    <p><strong>Model Architecture:</strong> The model consists of a series of convolutional and max-pooling layers to extract spatial features from the 28x28 input images. The initial convolutional layers utilize small 3x3 kernels to capture fine-grained edge 
+    and texture information, followed by max-pooling to reduce spatial dimensions and retain key features. A fully connected dense layer aggregates the extracted features, and a final dense layer with softmax activation outputs the classification probabilities 
+    for each of the ten digit classes.
+
+    <table class="clean-table">
+        <tr>
+            <colgroup>
+                <col style="width: 20%;">
+                <col style="width: 50%;">
+                <col style="width: 15%;">
+                <col style="width: 15%;">
+            </colgroup>
+        </tr>
+        <tr>
+            <td style="text-align: center;"><strong>Layer</strong></td>
+            <td style="text-align: center;"><strong>Function</strong></td>
+            <td style="text-align: center;"><strong>Input Shape</strong></td>
+            <td style="text-align: center;"><strong>Output Shape</strong></td>
+        </tr>
+        <tr>
+            <td><code>Conv2D</code></td>
+            <td>Extracts low-level features (edges, corners). Helps identify basic shapes in the digit input.</td>
+            <td>(1, 28, 28, 1)</td>
+            <td>(1, 26, 26, 8)</td>
+        </tr>
+        <tr>
+            <td><code>MaxPooling2D</code></td>
+            <td>Reduces spatial dimensions, downsampling to keep the RP2040’s RAM use low. Provides translation invariance, important for touchscreen inputs.</td>
+            <td>(1, 26, 26, 8)</td>
+            <td>(1, 13, 13, 8)</td>
+        </tr>
+        <tr>
+            <td><code>Conv2D</code></td>
+            <td>Extracts higher-level features. Adds additional filters to detect more complex patterns in the digit strokes.</td>
+            <td>(1, 13, 13, 8)</td>
+            <td>(1, 11, 11, 16)</td>
+        </tr>
+        <tr>
+            <td><code>MaxPooling2D</code></td>
+            <td>Further reduces spatial dimensions and enhances robustness to spatial variations.</td>
+            <td>(1, 11, 11, 16)</td>
+            <td>(1, 5, 5, 16)</td>
+        </tr>
+        <tr>
+            <td><code>Flatten</code></td>
+            <td>Converts 3D feature maps to a 1D vector for the dense layers. Prepares data for classification.</td>
+            <td>(1, 5, 5, 16)</td>
+            <td>(1, 400)</td>
+        </tr>
+        <tr>
+            <td><code>Dense</code></td>
+            <td>Fully connected layer that aggregates spatial features into meaningful patterns for classification. ReLU keeps activations sparse, lowering MAC count during inference.</td>
+            <td>(1, 400)</td>
+            <td>(1, 64)</td>
+        </tr>
+        <tr>
+            <td><code>Dense</code></td>
+            <td>Output layer with softmax activation, providing classification probabilities for each digit (0-9).</td>
+            <td>(1, 64)</td>
+            <td>(1, 10)</td>
+        </tr>
+    </table>
+    <p><strong>Before quantization, the total model occupies 107.6 KB of memory.</strong></p>
+
+    <p><strong>Training and Evaluation:</strong> The model was compiled using the Adam optimizer and trained for 5 epochs using a sparse categorical cross-entropy loss function.
+        The training accuracy improved steadily across epochs, achieving a final accuracy of approximately 98.9% on the test dataset.</p>
+
+    <p><strong>Quantization and TFLite:</strong> After training, the model was converted to TensorFlow Lite format for deployment on the RP2040. The conversion included full integer quantization to reduce <strong>model size and memory footprint to 56 KB.</strong></p>
+
+    <p> The choice of model architecture, along with how it interfaces with the RP2040 is further explained in Software Design.</p>
+
+    <h3>Logical Structure</h3>
+    <p>The system is structured as a three-stage pipeline consisting of data acquisition, processing, and inference.</p>
+    
+        <ol>
+            <li class="list-item"><strong>Data Acquisition:</strong> The resistive touchscreen is sampled at a fixed frequency using a timer ISR. The ISR captures X and Y coordinates alternately, filters the data using a 16-sample averaging buffer, and maps the coordinates to a 28x28 pixel grid.</li>
+            <li class="list-item"><strong>Data Processing:</strong> The pixel grid is preprocessed to ensure consistency in scaling and orientation. Preprocessing also involves padding the drawn image with grey pixels to create a thicker stroke for better edge detection. The 28x28 grid is then fed to the CNN.</li>
+            <li class="list-item"><strong>Inference:</strong> The CNN processes the input data and outputs a probability vector of ten values, each representing a predicted digit (0-9). The highest probability class is selected and displayed on the OLED screen. Additionally, feedback is provided to the user through LED 
+            indicators and button-based controls.</li>
+        </ol>
+    
+    <h3>Software / Hardware Tradeoffs</h3>
+    <p>The primary hardware trade-off centered around the choice between a resistive touchscreen and a more robust SPI-based touchscreen. The resistive touchscreen was chosen due to its minimal software complexity and straightforward analog interfacing, leveraging the RP2040’s ADC for data acquisition. However, the resistive 
+        touchscreen introduced noisy, inconsistent data that required substantial preprocessing and a deeper neural network to handle variability in input. In contrast, an SPI touchscreen would have provided cleaner data and potentially allowed for a simpler neural network, but at the cost of integrating large SPI drivers that 
+        could overwhelm the RP2040’s memory capacity. We had first planned to use a SPI touchscreen, specifically, the XPT2046, yet due to incompatabilities and difficulty setting up the SPI driver, we opted for the resistive touchscreen, keeping the focus of the software on the CNN instead of sensors.</p>
+    <p>On the software side, we balanced model complexity against memory usage, opting for a compact CNN architecture with quantized 8-bit weights and activations. A deeper, more complex model could have potentially increased classification accuracy but would have exceeded the RP2040’s limited memory constraints. The model structures we experimented with, 
+    mainly consisted of two convolutional layers and two fully connected layers, and was optimized to fit within the available memory while still maintaining acceptable accuracy for handwritten digit classification. We experimented with convolution kernel sizes, number of filters, and different layers in between, such as max pooling. TensorFlow 
+    Lite Micro was employed for inference, allowing for memory-efficient tensor operations and integer quantization, further minimizing RAM usage.</p>
+
+    <h3>Existing IP considerations</h3>
+    <p>This project relies on several open-source libraries and codebases to implement the CNN model and touchscreen interface. The primary components include TensorFlow Lite Micro (TFLite Micro), which is released under the Apache 2.0 license, allowing for modification and redistribution. Additionally, the OLED display driver library (OLED_SSH1106_I2C) is public domain, and the touchscreen framework is based on Hunter Adams' Resistive Touchscreen demo, which is publicly accessible for educational purposes.</p>
+
+    <p>There are no specific patents associated with the CNN model architecture, as it is based on common deep learning principles. However, integrating machine learning models onto microcontrollers is an area of ongoing research and commercial interest, with various proprietary frameworks existing for similar implementations. To avoid potential conflicts, only open-source, publicly documented resources were utilized throughout the project.</p>
+        
+    <p>The machine learning framework (TensorFlow Lite Micro) and OLED library are public domain resources. Professor Hunter Adams' Resistive Touchscreen demo provided a foundational structure for touchscreen data acquisition.</p>
+
+
+    <h2>Program Design</h2>
+    <h3>Hardware Design</h3>
+    <h4>Components</h4>
+    <p>There are a few hardware components required for this project, including a touch screen, a display screen, and external buttons. The components and their datasheets are listed in the table below.</p>
+    <table class="clean-table">
+        <tr>
+            <colgroup>
+                <col style="width: 30%;">
+                <col style="width: 70%;">
+            </colgroup>
+        </tr>
+        <tr>
+            <td style="text-align: center;"><strong>Component</strong></td>
+            <td style="text-align: center;"><strong>Functionality</strong></td>
+        </tr>
+        <tr>
+            <td><a href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf">Raspberry Pi Pico</a></td>
+            <td>Main microcontroller for project</td>
+        </tr>
+        <tr>
+            <td><a href="https://www.adafruit.com/product/333">Resistive Touchscreen</a></td>
+            <td>Used for touch input</td>
+        </tr>
+        <tr>
+            <td><a href="https://universal-solder.ca/downloads/canaduino_oled_1.3_i2c.pdf">SSD1306 OLED Screen</a></td>
+            <td>Used to display classified numbers</td>
+        </tr>
+        <tr>
+            <td><a href="https://www.seielect.com/catalog/sei-cf_cfm.pdf">1k Ω Resistors (2pcs)</a></td>
+            <td>Used to equalize touchscreen resistance along X and Y</td>
+        </tr>
+        <tr>
+            <td><a href="https://www.we-online.com/components/products/datasheet/150080SS75000.pdf">LEDs (2pcs)</a></td>
+            <td>To indicate when classifying mode (green LED), or if error (red LED)</td>
+        </tr>
+        <tr>
+            <td><a href="https://api.pim.na.industrial.panasonic.com/file_stream/main/fileversion/245487">Buttons (3pcs)</a></td>
+            <td>Used to initiate classification from resistive touchscreen input, clearing the OLED screen, and backspace one digit from the OLED screen</td>
+        </tr>
+        <tr>
+            <td>PCB (optional)</td>
+            <td>Provides easily portable project (schematic below)</td>
+        </tr>
+        <tr>
+            <td>Lithium Ion Battery (optional)</td>
+            <td>Allows project to be powered without the user's computer, increases portability</td>
+        </tr>
+    </table>
+    <div class="image-container">
+        <img src="images/Digit_Detector_Schematic.drawio.png" alt="High Level Block Diagram" width="800">
+        <figcaption>Schematic Diagram of the Digit Detector System</figcaption>
+    </div>
+    <h4>Details</h4>
+    <p><strong>Resistive Touchscreen:</strong> As stated above, we began by using a baseline demo code provided by Professor Hunter Adams, which was designed to map the touchscreen readings to VGA output.
+    This demo served as a good basis to begin reading the touchscreen's voltage divider input, but we had a few challenges before we could read in a sensible input.</p>
+
+    <ol>
+        <li class="list-item"><strong>Different Resistance across X and Y axis of touchscreen:</strong> On the touchscreen's datasheet, it is noted that the Y axis has a resistance of 200 - 1000Ω, while the X axis has a resistance of 100-600Ω.
+        This makes sense, as the X dimension of the screen is shorter than the Y, but this low resistance would saturate the ADC value at 3.3V, no matter where on the screen we pressed.
+        Essentially, the issue is that to read the X position, we are driving Y with only the small, built-in X axis resistance, which is overloading the thin ITO film. In the worst case:
+        <div class="math-container">
+            <p>
+                $$ I = \frac{3.3V}{100\Omega} \approx 33mA $$
+            </p>
+        </div>
+        which is a huge current for a thin ITO film. It causes the touchscreen to behave like a short circuit across X+ and X- when pressed, so the ADC sees an immediate collapse to VDD instead of normal resistive divider behavior.</p>
+        <p>We decided the solution to this would be to add resistors in series between the Y+ and Y- pins of the touchscreen and their respective GPIOs. After iterative tuning, we settled on 1k Ω resistors in series for both paths. 
+        Now, when driving Y+ and Y- to read the X position, the current into the film is limited, a proper voltage divider is formed, and the ADC reads behave correctly.
+        However, because of the lowered drive while reading X, the range of raw ADC values was significantly tighter than the range for Y values. We added a small (100 nF) decoupling capacitor between the ADC GPIO and ground to decrease signal noise
+        so that our X readings would have less random variation.</p>
+        <div class="image-container">
+            <img src="images/IMG_9377.jpg" alt="scope ADC" width="350">
+            <figcaption>Oscilloscope reading ADC with no touch applied</figcaption>
+        </div>
+        <br>
+        <br>
+        <div class="image-container">
+            <img src="images/IMG_9380.jpg" alt="scope ADC" width="350">
+            <figcaption>Incorrect operation: oscilloscope reading ADC with touch applied before adding 1k Ω series resistors</figcaption>
+            <figcaption>ADC value saturates immediately</figcaption>
+        </div>
+        <br>
+        <br>
+        <div class="image-container">
+            <img src="images/IMG_9384.jpg" alt="scope ADC" width="350">
+            <figcaption>Correct operation: oscilloscope reading ADC with touch applied after adding 1k Ω series resistors</figcaption>
+            <figcaption>ADC value remains high, but does not full saturate</figcaption>
+        </div>
+        </li>
+        <li class="list-item"><strong>Capacitive Coupling:</strong> Physically, the X and Y sheets are separated by a thin insulator (~micron distance). 
+        When you drive Y (Y+ = 3.3V, Y- = 0V), and leave X floating, the floating X layer 
+        picks up voltage through capacitive coupling and resistive leakage. If X floats to some voltage, 
+        it modulates the local potential on the Y sheet where you are pressing, which is picked up by the ADC. When pressing, the ADC readings would 'drift.'
+        
+            <p>To combat this issue, we had two fixes that both revolved around the speed of reading the ADC. 
+            First, we added two 'fake' ADC reads. For example, to read the X position:</p>
+        
+            <div class="code-block-container">
+                <code>
+                    setupX();<br>
+                    adc_select_input(0);<br>
+                    adc_read();<br>
+                    adc_read();<br>
+                    adc_x_raw = adc_read();
+                </code>
+            </div>
+            <p>we setup the X+, X-, Y+, Y- GPIOs as explained above, then select the ADC corresponding to X. We next call <code>adc_read();</code> twice without actually saving the read
+            to allow the ADC reading to settle, before saving the read.</p>
+            <p>The next fix was simply to slow down the frequency of the timer ISR. Professor Hunter Adam's code had the ISR runnning at 2000Hz, but even with the fake ADC reads, we were still getting drift.
+            We decided to slow this down to 250Hz, which is a significant change, but this still allowed for relatively rapid touch events to be accurately captured and processed. How this choice impacts user usage are further explained below.
+            </p>
+        </li>
+    </ol>
+    <h3>Hardware Challenges</h3>
+    <p>One key hardware component that we faced a number of issues with was the resistive touchscreen. The initial touchscreen that we purchased was the ILI9341 which was paired with the XPT 2046, which is an SPI device. There were SPI drivers online for various different controllers such as the ESP-32 and Arduino. We spent a day trying to port over these libraries, but decided it would not be worth the time, as we ran into a number of compilation issues. We also attempted to use the e_SPI driver library online, however, this seemed to be more oriented towards using the LCD screen, whereas we were interested in the touchscreen functionality mainly. It was considerably easier to work directly with the raw analog values from the resistive touchscreen, which was an X voltage and a Y voltage, but required four terminals (X+, X-, Y+,Y-) to be set up carefully, such that the X and Y voltages would output the correct values. The setup used can be found in the function table above. To obtain the X and Y outputs, we exposed the traces on the ILI module, as shown below. This successfully enabled us to read X and Y presses, however the scale of output values was not as expected. At this point, we had purchased a backup touch interface, namely the 3.7’’ touchscreen from Adafruit. The scale of these output values was also off, almost indicating a diagonal calibration. This hinted that something was uneven with the X and Y axes, but we were not sure what. The fix for this required additional hardware components, explained in the Resistive touchscreen section above. To verify functionality of the touch screen, we hooked up the output X and Y to an oscilloscope. (Either X+ or X- can be the output terminal, it solely depends on the setup function.) Connecting the touchscreen to the scope revealed a important insights, which likely explained why we were seeing incorrect numerical output from the touchscreen. </p>
+    <p>The final issue was a broken pin on the Pico. Initially, we were almost certain this could not be the issue. This pin was being used as an input from the CLEAR button and we tried various methods for clearing the screen, none of which worked. We initially thought it was a code issue, but as learned in lab 3, we shortly decided to check the hardware. We checked the functionality of the button with a multimeter by checking if the terminals of the button shorted together when the button was pressed. This proved button functionality. We then probed the voltage output of the pin, which was 0V, despite setting a pull-up resistor to that pin. This was the indicator that something was wrong with the pin, as both of the other button pins were correctly outputting 3.3V. We ultimately had to hardwire the button to a different GPIO pin and cut the trace from the CLEAR button to the PICO, such that the button would not be grounded. </p>
+    
+    <p><strong>Hardware Tips & Recomendations</strong> 
+
+    <p><strong>Purchase backups</strong>: We ripped the FPC Connector the day before the final demo, and luckily we had ordered two to begin with. 
+    <br><br>
+    <strong>Verify online libraries before purchasing components</strong>: Even if it may seem as though there are libraries that work online, it is worth the time to import it onto your local system and check that you are able to write a sample program, compile it, and upload it to Pico. 
+    <br><br>
+    <strong>Use the oscilloscope rather than debug output</strong>: Although debug output can be helpful when programming, using a scope proves much more fruitful in deciphering what is physically happening with a circuit compared to what is supposed to be happening. It greatly helps with diagnosing issues as well as solving them. </p>
+
+    
+    <h3>Software Design</h3>
+    <p>The core software design can be split into three sections: trackpad+image processing, classification, and digit display.</p>
+
+
+    <h3>Trackpad</h3>
+    <p>When starting the project we first started with the CNN model input: the resistive touchscreen image. We cloned Professor Hunter Adam's <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master/Human_Input/Resistive_Touchscreen_Demo">Resistive_Touchscreen_Demo github repository,</a>
+    which was a great starting point, as it had the touchscreen sensing framework set up, along with displaying to a VGA. Combined with the oscilloscope (as explained above), the VGA screen was cruical for debugging the touchscreen and figuring out the ADC range,
+    however is not a component of our final design.</p>
+    <table class="clean-table">
+        <tr>
+            <colgroup>
+                <col style="width: 20%;">
+                <col style="width: 80%;">
+            </colgroup>
+        </tr>
+        <tr>
+            <td style="text-align: center;"><strong>Function</strong></td>
+            <td style="text-align: center;"><strong>Implementation and Functionality</strong></td>
+        </tr>
+        <tr>
+            <td><code>setupX(void)</code></td>
+            <td>Set X+ and X- to input to make these high-impedance, Set Y+ and Y- to output GND and VDD respectively</td>
+        </tr>
+        <tr>
+            <td><code>setupY(void)</code></td>
+            <td>Set Y+ and Y- to input to make these high-impedance, Set X+ and X- to output GND and VDD respectively </td>
+        </tr>
+        <tr>
+            <td><code>repeating_timer_callback(struct repeating_timer *t)</code></td>
+            <td>Calls setupX(), averages 16 reads from ADC that X input is connected to, Calls setupY(), 
+            averages 16 reads from ADC that Y input is connected to. Original demo code also scales the raw ADC readings to display them on a VGA.
+            We troubleshooted our X and Y scaling using the VGA</td>
+        </tr>
+        <tr>
+            <td><code>adc_x_min/max</code> and <code>adc_y_min/max</code></td>
+            <td>1600 - 2200 and 450 - 3400 </td>
+        </tr>
+    </table>
+    <div class="image-container">
+        <img src="images/IMG_9267.jpeg" alt="VGA output" width="350">
+        <figcaption>After finally figuring out the touchscreen, having fun drawing to VGA. The touchscreen noise is very visible.</figcaption>
+        <figcaption>MOSFET small signal model, our favorite thing to draw.</figcaption>
+    </div>
+
+    <h3>Image Processing</h3>
+    <p>The next task to complete was being able to create the MNIST CNN 28x28 pixel image. The mapping process converts the raw ADC values to a bin index ranging from 0 to 27. The scaling is performed using linear interpolation.</p>
+        The averaged X ADC value is mapped to the 28-pixel width using the formula:
+        <p>
+            $$ i_{x} = 28 - \left( \frac{(x_{avg} - adc_{x min}) \times 28}{adc_{x max} - adc_{x min}} \right) $$
+        </p>
+    <p>and similarly for Y.</p>
+    <p>We kept the image in greyscale (only one channel), to match the expected CNN input.</p>
+    <p>To improve the input image quality, we experiemented with a few different methods, either varying the width of the image or adding grey scale.
+        Because of the slow timer ISR, and noise from the touchscreen, our first attempt at preprocessing was to draw a 3x3 square around every bin that was detected.
+        <div class="image-container">
+            <img src="images/IMG_2518 copy.jpg" alt="6 3x3 binning" width="200">
+            <figcaption>6 drawn on the resistive touchscreen.</figcaption>
+            <figcaption>If a pixel touch was detected, its value in the array is set to 1 for visual clarity.</figcaption>
+        </div>
+    <p>We also attempted with greyscale. The pixels that were directly touched were set to 255 (black), and the edges of the derived square were set to 127 (midpoint grey).
+        <div class="image-container">
+            <img src="images/PNG image copy.jpg" alt="1 greyscale binning" width="200">
+            <figcaption>1 drawn on the resistive touchscreen with grey and black pixels.</figcaption>
+        </div>
+    <p>Even with the 3x3 drawn square, we would sometimes get pixel gaps in the image using Bresenham's line algorithm. This improved the image quality, however if a user drew one
+        digit in multiple strokes, a line would appear between when the user picked up the stylus to where they put it down. This felt unintuitive from a user experience perspective, 
+        as they should not be constrained to drawing in one stroke. 
+    <p>In our performance analysis of the CNN model, we noticed that pure binary (either 0, white or 255, black) pixels had significantly superior classification accuracy. This was the
+        image preprocessing we finally decided upon.
+        <div class="image-container">
+            <img src="images/output.jpg" alt="3 3x3 binning 255" width="200">
+            <figcaption>3 drawn on the resistive touchscreen, mapped to a 28x28 pixel image in Python.</figcaption>
+        </div>
+    </p>
+    </p>
+    <table class="clean-table">
+        <tr>
+            <colgroup>
+                <col style="width: 20%;">
+                <col style="width: 80%;">
+            </colgroup>
+        </tr>
+        <tr>
+            <td style="text-align: center;"><strong>Function</strong></td>
+            <td style="text-align: center;"><strong>Implementation and Functionality</strong></td>
+        </tr>
+        <tr>
+            <td><code>read_touchpad(void)</code></td>
+            <td>Accepts inputs within designated rectangle, converts X and Y input values (positions) into a position from 0-27, adds 3x3 square around touch point of black pixels into the array. Also rotates the array by 90 degrees to account for the orientation with which we attached the screen onto our PCB</td>
+        </tr>
+        <tr>
+            <td><code>clear_touchpad(void)</code></td>
+            <td>Zeros out all entries in the 28x28 image</td>
+        </tr>
+    </table>    
+
+    <h3>Classification</h3>
+    <p>After training the model with tensorflow in Python, we have a <code>.tflite</code> binary FlatBuffer file. It stores all model information in a
+    contiguous byte array: an
+    <em>operator-code table</em> that lists every primitive the graph needs
+    (<code>CONV_2D</code>, <code>MAX_POOL_2D</code>, …), a single <em>sub-graph</em> describing the tensors, their shapes,
+    and the order in which operators will execute, and a pool
+    of immutable <em>buffer blobs</em> that hold the quantized weights and
+    biases.</p>
+
+    <p>Using <code>xxd</code>, we hex dump the <code>.tflite</code> file to a C <code>.h</code> header file, which stores all
+    of the model information into an unsigned char array. Since these are constants, they live in the Pico's 2 MB QSPI flash</strong>.
+    Because the FlatBuffer uses <em>relative offsets</em> instead of pointers,
+    the Micro Interpreter can read the structure <em>in place</em>—no heap
+    allocation, no memcpy, zero RAM overhead.  When a kernel
+    needs its weights, it simply evaluates
+    <code>baseAddress&nbsp;+&nbsp;offset</code> and the cache streams the bytes over
+    QSPI just as if they were ordinary instructions, so the weights never actually
+    consume on-chip SRAM.</p>
+
+    <p>The <code>MicroInterpreter</code> is the small runtime that turns the static <code>.tflite</code> file into something the RP2040 can execute. When it is created we give it three pieces: (1) the model data, which stays in external QSPI flash; (2) 
+    a table that maps the model’s op-codes to the compiled C kernels we linked in; and (3) a fixed block of SRAM called the tensor-arena.</p>
+    
+    <p></p>The <code>MicroMutableOpResolver<N></code> is a compile-time list that tells TensorFlow Lite Micro exactly which kernels our program needs. We create the resolver with a fixed capacity N (six in our case) and then call <code>AddQuantize()</code>, <code>AddConv2D()</code>, <code>AddMaxPool2D()</code>, <code>AddReshape()</code>, <code>AddFullyConnected()</code>, <code>AddSoftmax()</code>, for each of the different layer operations.
+    Each <code>Add…()</code> copies a small record of two function pointers (<code>init</code> and <code>invoke</code>) into the list. At link time, only those six kernels are pulled into the flash image, so unneeded operators (e.g. LSTM, SVDF, more complex tensorflow operators) are completely left out, saving tens of kilobytes of code. Because the table itself is just a few dozen bytes and lives in flash, it adds almost no RAM overhead. 
+    When the interpreter reads the model, it looks up each operator code in this resolver, grabs the matching registration, and stores the pointers in the node structure so that <code>init()</code> and <code>invoke()</code> can be called later.
+
+    <p><code>AllocateTensors()</code> is the one-time set-up pass that turns the static model into runnable data structures. As the interpreter walks the FlatBuffer once, it looks up each operator 
+    code in the <code>MicroMutableOpResolver</code>. The matching entry gives it the kernel’s <code>init</code> function, which is called immediately to create a small, permanent user-data struct (padding, quant-multipliers, etc.) inside the tensor-arena. Next, the kernel’s <code>prepare</code> routine tells the allocator how much scratch RAM it will need during inference. 
+    A greedy lifetime planner then lays out all activation and scratch buffers so layers that are never live at the same time share the same slice of SRAM, keeping the tensor-arena compact. Finally, the interpreter writes pointers for every tensor header, including <code>input(0)</code> and <code>output(0)</code>. Because every byte comes either from this pre-planned arena or straight from flash, 
+    the entire graph can later be executed with no heap calls and no extra copies.</p>
+
+    <p><code>interpreter-&gt;Invoke()</code> is the actual run-time loop that actually performs an inference. The interpreter steps through the list of nodes it created during <code>AllocateTensors()</code>. For each node it already knows the <code>invoke</code> function because that pointer was supplied by the <code>MicroMutableOpResolver</code>. When <code>invoke</code> is called the kernel:</p> <ol> <li>reads 
+    its user-data struct allocated earlier by <code>init()</code> to pick up pre-computed constants such as padding or per-channel scale factors,</li> <li>grabs its input tensors and any scratch buffer directly from the tensor-arena,</li> <li>streams its constant weights and biases straight from flash via the cache,</li> <li>performs the math and writes the outputs back into another slice of the arena.
+
+    </li> </ol> <p>The interpreter then advances to the next node and repeats the process until the last layer (<code>Softmax</code>) finishes. No dynamic memory is allocated, no data are copied except for the arithmetic itself, and every kernel runs with a tight, predictable stack. This keeps latency low (&lt;1&nbsp;ms for our digit CNN) and guarantees the entire inference fits within the RP2040’s compute and memory resources.</p>
+    <table class="clean-table">
+        <tr>
+            <colgroup>
+                <col style="width: 20%;">
+                <col style="width: 80%;">
+            </colgroup>
+        </tr>
+        <tr>
+            <td style="text-align: center;"><strong>Function</strong></td>
+            <td style="text-align: center;"><strong>Implementation&nbsp;and&nbsp;Functionality</strong></td>
+        </tr>
+    
+        <tr>
+            <td><code>cnn_setup(void)</code></td>
+            <td>
+                Calls&nbsp;<code>tflite::InitializeTarget()</code> to enable RP2040 timers / printf.&nbsp;
+                Maps the <code>.tflite</code> FlatBuffer sitting in flash with <code>GetModel()</code> and checks the schema version.<br>
+                Builds a six-entry <code>MicroMutableOpResolver</code> (<code>AddConv2D()</code>, <code>AddMaxPool2D()</code>, …) so only those kernels are linked.&nbsp;
+                Instantiates a static <code>MicroInterpreter</code> with the model, resolver, and a 30&nbsp;KB tensor-arena in SRAM, then runs <code>AllocateTensors()</code>: this sets up tensor headers, runs each kernel’s <code>init()</code>, and plans scratch/activation buffers inside the arena.&nbsp;
+                Caches pointers to <code>input(0)</code> and <code>output(0)</code> tensors for fast access during each frame.
+            </td>
+        </tr>
+    
+        <tr>
+            <td><code>cnn_run_if_frame_ready(void)</code></td>
+            <td>
+                Executes only when the global flag <code>frame_ready</code> is set by the main loop FSM.<br>
+                Quantizes the 28&nbsp;×&nbsp;28 grayscale image: each pixel value <em>px</em> is scaled by <code>1 / (255·scale)</code>, offset by <code>zero_point</code>, and cast to <code>int8</code>; fixed-point math (<code>fix15</code>) avoids floating-point on the Cortex-M0+.<br>
+                Calls <code>interpreter-&gt;Invoke()</code>; the MicroInterpreter walks the eight graph nodes, pulling weights straight from flash and using the arena for all activations.<br>
+                Converts the 10&nbsp;×&nbsp;<code>int8</code> logits in <code>output-&gt;data</code> back to probability with <code>(q – zp) × scale</code>; logs each <code>p[i]</code>.<br>
+                Finds the best, counts how many logits are non-zero, and asserts <code>error_threshold_reached</code> when&nbsp;<code>nonzero_classifiers&nbsp;&gt;=&nbsp;5</code> — a simple confidence check to reject ambiguous strokes.
+            </td>
+        </tr>
+    </table>
+
+    <h3>OLED Display</h3>
+    <p>The project’s user interface is a small 128 × 64-pixel monochrome OLED panel driven by the SSD1306 controller. The display connects to the RP2040 over the standard I²C bus, requiring only two signal wires plus power and ground, which makes it ideal for a compact, portable designs. Because the SSD1306 has its own 1 KB display RAM, the Pico merely sends the updated framebuffer when the image changes and the controller then refreshes the pixels autonomously. 
+    In our application the OLED serves as a real-time heads-up display: it shows the sequence of digits recognised by the CNN, flashes “DONE” when seven characters are entered. </p>
+
+    <p>To keep the on-screen readout tidy we maintain a tiny ring buffer, <code>history[HISTORY_LEN]</code>, that stores up to seven recently classified digits. Each time the CNN returns a new prediction it is pushed into this buffer; the code then rebuilds a null-terminated C-string and calls <code>oled_show_string_center()</code>. That helper measures the string’s pixel width (<code>len × 7 px</code> for the built-in 7 × 10 font), subtracts it from the 128-pixel screen width, 
+    and starts writing at <code>x = (128 – text_w) ⁄ 2</code>, so the entire digit sequence always remains perfectly centred no matter how many characters have been entered. A hardware “BACK” button simply decrements <code>history_count</code>, rebuilds the string without the last character, and re-renders it. Because the buffer already holds every previous digit, no reclassification or extra state tracking is required, making back-spacing instant and flicker-free.</p>
+
+    <table class="clean-table">
+        <tr>
+            <colgroup>
+                <col style="width: 20%;">
+                <col style="width: 80%;">
+            </colgroup>
+        </tr>
+        <tr>
+            <td style="text-align: center;"><strong>Function</strong></td>
+            <td style="text-align: center;"><strong>Implementation and Functionality</strong></td>
+        </tr>
+    
+        <tr>
+            <td><code>oled_init(void)</code></td>
+            <td>Configures the RP2040’s default I²C bus at&nbsp;400&nbsp;kHz, assigns SDA/SCL pins, enables pull-ups, then calls <code>SSD1306_Init()</code>. Clears the SSD1306’s on-chip 1&nbsp;KB display RAM and pushes a blank screen, establishing a known starting state.</td>
+        </tr>
+    
+        <tr>
+            <td><code>oled_show_string_center(const&nbsp;char&nbsp;*str)</code></td>
+            <td>Measures the string’s pixel width (<code>len&nbsp;×&nbsp;7</code>), computes an X-offset so the text is horizontally centred and a Y-offset so it sits mid-screen, writes the glyphs into the framebuffer, then updates the display.</td>
+        </tr>
+    
+        <tr>
+            <td><code>oled_show_done(const&nbsp;char&nbsp;*digits)</code></td>
+            <td>First calls <code>oled_show_string_center()</code> to keep the entered digits visible, then prints the label “DONE” just below by calculating a second set of X,Y offsets. Gives the user visual confirmation that seven digits have been captured.</td>
+        </tr>
+    
+        <tr>
+            <td><code>oled_clear(void)</code></td>
+            <td>Clears the framebuffer and pushes the blank screen. Used when the CLEAR button is pressed to wipe both the digit history and the OLED.</td>
+        </tr>
+    
+        <tr>
+            <td><code>oled_begin_project(void)</code></td>
+            <td>Shows a two-line image (“ECE 4760 Final” and netIDs) on power-up. It centres each line with the same width-calculation routine used elsewhere, .</td>
+        </tr>
+    </table>
+
+    <h3>System Level Software Organization</h3>
+    <p><strong>Main control loop.</strong> Execution starts in <code>main()</code> after the RP2040 peripherals (I²C, ADC, GPIO) are initialised. The application then sets up the CNN model (<code>cnn_setup(void)</code>), then enters a single <code>while(1)</code> loop that is steered by a two-state finite-state machine (FSM): DRAWING and CLASSIFY.</p>
+
+    <ul>
+    <li><p><strong>DRAWING state:</strong> A 250Hz repeating timer ISR alternates between X and Y drive configurations, samples the resistive touchscreen using the ADC, low-pass filters each axis with a 16-sample average. The foreground loop calls <code>read_touchpad()</code> to map these raw values into 0-27 image indices, write 3 × 3 pixels into the global <code>img[28][28]</code> buffer (already rotated for board orientation). If the CLEAR button is pressed, <code>clear_touchpad()</code> zeros the image and clears the digit ring buffer.</p></li>
+
+    <li><p><strong>CLASSIFY state.</strong> Triggered the ENTER button. The loop sets <code>frame_ready = true</code>, lights the status LED, and calls <code>cnn_run_if_frame_ready()</code>, which quantises the image, invokes the TFLite-Micro interpreter, and returns the top-1 digit and a confidence flag. If an error is detected (in <code>cnn_run_if_frame_ready(void)</code>), the red LED on the PBC is momentarily lit, the touchscreen image is cleared and returns to DRAWING for the next input. If there no error is detected, the digit is pushed into the <code>history[]</code> ring buffer and redrawn on the OLED. If seven digits are present the OLED shows “DONE,” pauses 3 s, clears the history, and the FSM reverts to DRAWING; otherwise it simply clears the touchscreen image and returns to DRAWING for the next input.</p></li>
+    </ul>
+
+    <p><strong>Input events and debouncing.</strong> Three push-buttons, ENTER, CLEAR, and BACK, generate GPIO falling-edge interrupts. A single ISR (<code>button_irq_handler()</code>) services them by comparing <code>time_us_32()</code> to a per-button <code>last_*_press</code> timestamp; a (<code>BUTTON_COOLDOWN</code>) filters out contact bounce, debouncing, without additional hardware. The handler toggles <code>app_state</code>, clears the digit history, or decrements <code>history_count</code> to implement “backspace,” then returns immediately.</p>
+
+    <p><strong>Concurrency model.</strong> The design follows a simple foreground task + ISRs pattern: time-critical sampling and button detection run in interrupts, while higher-latency work, CNN inference, OLED updates, run in the main loop.</p>
+
+    <h3>Software Challenges</h3>
+    <p>The majority of software challenges revolved around the CNN model. 
+    Initially, training a multi-layer CNN in TensorFlow required multiple iterations to balance model complexity against memory constraints. The objective was to maintain a sufficient number of convolutional and dense layers to capture meaningful spatial features while keeping the model size small enough. Quantizing the model to 8-bit integer weights and activations was essential, but this process introduced accuracy loss that necessitated further fine-tuning. Additionally, multiple versions of the model were trained and evaluated to identify a structure that provided acceptable classification accuracy without exceeding memory constraints.</p>
+    <p>The second major challenge was porting the trained model to the RP2040 and configuring the TFLite Micro interpreter to handle inference. Implementing the CNN required configuring the interpreter to allocate tensor buffers in a single contiguous memory block. Ensuring that the tensor arena was appropriately sized to accommodate all tensors without overflow was critical, as improper sizing led to runtime crashes and unexpected behavior. Additionally, quantized inputs had to be carefully scaled and converted from fixed-point values to 8-bit integers, adding another layer of complexity to the inference pipeline.</p>
+
+    <h2>Results of the Design</h2>
+    <p>We were able to successfully get the system to classify numbers 0-9, and display 7 digits (Cornell student ID) on the screen. </p>
+    
+    <h3>Testing</h3>
+    
+    <p>To test our model and touchscreen concurrently, we used an interative testing methodology</p>
+    <ol>
+        <li class="list-item"><strong>Model:</strong> Create CNN model, train, and test in Python with sample images we created with MSPaint. These tests would achieve very high classification accuracy.</li>
+        <li class="list-item"><strong>Touchscreen Image:</strong> To then see the performance of the image preprocessing, we loaded the model onto the RP2040, and ran the entire data processing pipeline. With our first model, we were only classifying a few digits, inconsistently.
+        We then experimented with different preprocessing techniques explained above.</li>
+        <li class="list-item"><strong>Repeat Steps 1 and 2:</strong> If the classification accuracy was not to our standard after various preprocessing attempts, we would create and train a new model, and then test with our set of MSPaint samples. After balancing model complexity and size, we would put load it back onto the RP2040, and repeat our preprocessing methodologies.</li>
+    </ol>
+    <p>It is important to note that we also tried creating a digit+letter CNN model, using the EMNIST (Extended MNIST) dataset. While trying to keep the model size small, we could not even achieve high accuracy using our MSPaint samples. After further iterations, accuracy improved, yet necessitated a much deeper model (~500 KB nonquantized, ~100 KB quantized). This model, along with its numerous operators, would not fit and compile onto the RP2040.</p>
+
+    <div class="image-container">
+        <img src="images/0_test.png" alt="0 test" width="50">
+        <img src="images/2_test.png" alt="0 test" width="50">
+        <img src="images/4_test.png" alt="0 test" width="50">
+        <img src="images/8_test.png" alt="0 test" width="50">
+        <figcaption>A few of our MSPaint test samples</figcaption>
+    </div>
+
+    <h3>Accuracy</h3>
+
+    <p>The accuracy of our model is highest when there are both spatial and temporal limits. We drew a box, ensuring more evenly spaced input, as well as testing the speed of writing with which the model could still make correct classifications. We conducted testing of the system with the 4 possible combinations of limitations. Slow indicates that each digit was written using 5 seconds, fast indicates that each digit was written in about 1-2 seconds. </p>
+    
+    <div class="image-container">
+        <img src="images/box.jpg" alt="Picture of Board with box drawn" width="600">
+    </div>
+
+    <p>A few interesting results were found, which was that a few numbers are fairly robust to speed variations. However, overall performance degrades as a person attempts to write faster, and the explanation for this behaviour is that when a person is writing fast, every x-y coordinate is not registered, producing a poor classification. This was confirmed upon viewing the 28x28 arrays. Overall, when digits are written using 5 seconds and evenly spaced the performance of the system is accurate. </p>
+
+    <div class="image-container">
+        <img src="images/performancegraph.png" alt="Performange Graph" width="600">
+    </div>
+
+    <h3>Safety</h3>
+    <p>Safety considerations in the design mainly occurred during the PCB design phase, by ensuring all the delicate components and the Pico were placed on the backside of the board. Only the user interface is visible and accessible on the front of the board. The maximum voltage present in the system is ~4V from the battery to power the Pico and the OLED screen. The current draw of the system is not high, so safety from this aspect is not a significant concern. Additionally, a physical hardware reset button was added using the RUN pin on the Pico, such that the user never has to physically unplug and replug in the battery, as this poses the largest damage risk to the system. Accidentally attempting to plug in the battery with reverse polarity could damage the components on the board. </p>
+        
+
+    <h3>Usability</h3>
+    <p>The system is usable by anyone who is able to write Arabic numerals. Upon trial and error, a number that fills a smaller rectangle on the resistive touchscreen slowly has the highest chance of classification. So, each number to be classified should be written and contained in the rectangle drawn on the resistive touchscreen, which is something to be noted during use. It does also require the user to draw neatly, making sure that only the pen in contact with the touchscreen and taking care to not touch any other part of the touchscreen. There is no limit on the time after a user has drawn a number to classify it, so this allows the user to take as much time as they would like to draw. Additionally, the backspace button allows the user to reattempt drawing numbers if they accidentally make a mistake. </p>
+
+
+    <h2>Conclusions</h2>
+    <p>Overall, we were surprised at the capabilities of the RP2040 to run various versions of TinyML models. We ran into issues with the touchscreen, such as noise and calibration. We were still able to reach a high classification rate, which seems to be error-prone mainly as a result of user input error. However, upon testing the model with numbers drawn on MS Paint, we found a 100% accuracy, despite the small size of the model. Next time, we would have started off with reading direct analog input, and then attempted to port over the SPI driver, such that we could use the original screen and display the user's input on the LCD as they write it.</p>
+    <h3>Extensions</h3>
+    <p>It would be an interesting experiment to try different kinds of neural networks as opposed to the classical CNN. We might have tried a visual transformer, for example. If we had more time, we would have tried to implement letter character classification. Additionally, adding more external memory and interfacing the SD card with the system could be useful in the application sense to store the classified input as an array of student IDs. </p>
+    <h3>Intellectual Property Considerations</h3>
+    <p>As stated above, this project extensively utilized open-source libraries and publicly accessible resources to implement the CNN model and touchscreen interface. TensorFlow Lite Micro, released under the Apache 2.0 license, was employed for the inference pipeline, allowing for free modification and redistribution. Similarly, the OLED display driver library (OLED_SSH1106_I2C) is a public domain resource, and the resistive touchscreen framework is based on Hunter Adams' demo code, which is openly accessible for educational purposes.</p>
+
+    <p>No proprietary IP was incorporated in this project, and no reverse engineering of existing products was conducted. Additionally, we did not sign any non-disclosure agreements to obtain components or libraries. The CNN model architecture itself is a standard implementation based on well-established neural network designs, with no proprietary or patented layers.</p>
+        
+    <p>While there are no patent opportunities identified for this project, the concept of implementing quantized machine learning models on low-cost microcontrollers for real-time classification tasks is a growing area of interest, with potential for future research and commercialization.</p>
+
+    <h2>Appendices</h2>
+
+    <h3>Appendix A: Acknowledgements</h3>
+    <p>The group approves this report for inclusion on the course website. The group approves the video for inclusion on the course youtube channel.</p>
+
+    <h3>Appendix B: Schematics</h3>
+    <p>Below is the schematic, layout, and 3D view of the PCB. A PCB was created with the intent to create a portable project and is not stricly necessary to complete this project.</p>
+
+    <div class="image-container">
+        <img src="images/schematic.jpg" alt="PCB schematic" width="600">
+    </div>
+    <div class="image-container">
+        <img src="images/layout.png" alt="Layout" width="600">
+    </div>
+    <div class="image-container">
+        <img src="images/3dview.png" alt="3D View" width="600">
+    </div>
+    <div class="image-container">
+        <img src="images/frontofboard.jpg" alt="Front of Board" width="600">
+    </div>
+    <div class="image-container">
+        <img src="images/backofboard.jpg" alt="Back of Board" width="600">
+    </div>
+
+    <h3>Appendix C: Work Division </h3>
+    <p>The work division was split equally amongst both partners, both working on the hardware and software components</p>
+    <p>Vayun setup and configured the resistive touchpad and preprocessing, created the CNN model training framework in Python, and set up the CNN inference on the RP2040.</p>
+    <p>Vaishnavi designed the PCB, and integrated all components on it. Additionally, Vaishnavi designed and experimented with different model architectures and preprocessing methodologies.</p>
+
+    <h3>Appendix D: References</h3>
+    <p>Datasheets are linked in table above.</p>
+    <a href="https://github.com/AminSahebi/OLED_SSH1106_I2C">OLED Library</a>
+    <br><br>
+    <a href="https://vanhunteradams.com/Pico/VGA/Trackpad.html">Resistive touchscreen Example</a>
+    <br><br>
+    <a href="https://github.com/raspberrypi/pico-tflmicro">Pico tflmicro Library</a>
+
+    
+
+
+</div>
+
+</body>
+</html>
