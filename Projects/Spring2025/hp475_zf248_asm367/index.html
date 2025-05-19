@@ -258,25 +258,25 @@ Here, <code>spinDecay</code> is a constant slightly less than 1, ensuring the sp
 <p>Fig [1]: Start screen with introductory text - Waits for a button press to start.</p>
 
 <p>The display is cleared using fillRect, and a welcoming introduction screen is rendered via the writeString, setCursor, and setTextSize functions from the VGA graphics library. As shown in the first image, the screen prominently displays "Welcome to Table Tennis" in large blue letters centered on the screen. Below it, in small white text, are detailed game rules and features clearly instructing the players on control mechanisms, spin, audio feedback, and scoring.</p>
-<img src="images/button.jpg" alt="Button" style="max-width:100%; height:auto;">
+<img src="images/button.JPG" alt="Button" style="max-width:100%; height:auto;">
 <p>Fig [2]: Button to be pressed at the start of the game<br></p>
 <p>At the bottom right, in red, the phrase "Press button to start" is displayed, indicating to the user how to initiate the game. The system enters a polling loop using gpio_get to wait for this button press. On detection of a press, the screen is cleared again, the IMUs are re-initialized with init_two_mpus(), and the game logic begins.
 </p>
 <h4>2. Game Loop</h4>
-<img src="images/game.jpg" alt="Working Game" style="max-width:100%; height:auto;">
+<img src="images/game.JPG" alt="Working Game" style="max-width:100%; height:auto;">
 <p>Fig [3]: Reads IMU data, updates paddle positions, checks ball collisions, 
 updates display, triggers sound.</p>
 <p>The game loop operates continuously after initialization and is managed within a Protothread running on core 0, which handles animation and gameplay. The main responsibilities of the game loop are to update ball and paddle positions, check for collisions, render graphics, manage scoring, and trigger sound feedback. Paddle positions are updated based on real-time IMU readings from core 1, which runs protothread_imus in parallel. This core separation ensures that heavy sensor polling does not interfere with time-sensitive VGA rendering. In each iteration of the loop, the ball is first erased using fillCircle in black, and its motion is calculated using wallsAndEdges(), which includes not only boundary collision detection but also Magnus force calculations from spin. After updating the ball’s position, it is redrawn, and the drawArena() function refreshes the game field, including the center line, circular field marking, and real-time scores. Paddle graphics are rendered using draw_paddles_core0(), which uses vector math to depict slanted paddles and draw_thick_line() for visual clarity.
             </p>
 <h4>3. Win Detection</h4>
-<img src="images/gamewin.jpg" alt="Winning Game" style="max-width:100%; height:auto;">
+<img src="images/gamewin.JPG" alt="Winning Game" style="max-width:100%; height:auto;">
 <p>Fig [4]: Tracks score per round, checks if a player has won three rounds.</p>
 <p>Scoring and win detection are managed in the calculateScore() function, which tracks each player’s point score (Score_A and Score_B) and round wins (WinningScore_A and WinningScore_B). A player must reach 11 points and lead by at least 2 points to win a set. This is validated through conditional checks on the score difference (diff1, diff2) and values. Upon winning a set, scores are reset, and the round counter for the winning player is incremented. If a player wins 3 sets, the game declares that player as the final winner by displaying either "Player A Wins" or "Player B Wins" using writeString at the center of the screen. The game is then paused briefly and reset using reset_board() and by spawning a new ball with spawnBoid().</p>
 <h4>4. Audio</h4>
 <p>Sound in the game is generated using DMA to offload audio playback from the main CPU. When the ball hits a paddle or a wall, the game logic in reflectBallFromPaddle() and wallsAndEdges() aborts and restarts DMA channels (dma_channel_abort, dma_start_channel_mask) to initiate sound playback from a pre-calculated sine wave table stored in DAC_data. The use of DMA ensures that sound is produced with minimal CPU intervention, allowing smooth and uninterrupted graphics and game logic processing. The audio adds immersive feedback, enhancing the physicality of the game.<sup>[4]</sup>
 </p>
 <p><h4>5. Game Reset</h4></p>
-<img src="images/gamereset.jpg" alt="Reset of Game" style="max-width:100%; height:auto;">
+<img src="images/gamereset.JPG" alt="Reset of Game" style="max-width:100%; height:auto;">
 <p>Fig [5]: Game resets on pressing the button during an ongoing game</p> 
 <p>After the first press of the start button, subsequent presses serve as a global reset trigger. This reset logic is handled with highest priority within the game loop in protothread_anim. If the button is detected as pressed (!gpio_get(15)), the entire game state is cleared: scores and round wins are reset to zero, the paddles are redrawn at initial positions, and a new ball is spawned. If this isn’t the very first start, a message "Game Reset!" is shown using writeString. This feature is critical for recovering from abnormal paddle behavior.
 </p><br>
@@ -307,9 +307,9 @@ An adaptive difficulty system is introduced where the ball speed, paddle size, o
     This high-level system flowchart outlines the user interaction and game progression logic on the VGA display. The flow begins with a welcome screen, prompting players to get ready (with gloves), followed by initiating the game table with paddles and ball setup. The game proceeds with successive rounds, updating scores when a player misses. A round concludes when a player scores 11 points with a 2-point lead, and the game ends when a side wins 3 rounds. The system also includes an interrupt mechanism to refresh the game at any point and culminates in a celebratory display upon determining the final winner.
   </p>
 	<h3>Hardware Design</h3>
-<img src="images/protoboard.jpg" alt="Wiring Connections" style="max-width:100%; height:auto;">
+<img src="images/protoboard.JPG" alt="Wiring Connections" style="max-width:100%; height:auto;">
 <p>Fig [8]: Protoboard Connectivity</p>
-<img src="images/blockdiagram.jpg" alt="Hardware Block Diagram" style="max-width:100%; height:auto;">
+<img src="images/blockdiagram.JPG" alt="Hardware Block Diagram" style="max-width:100%; height:auto;">
 <p>Fig [9]: Hardware Block Diagram</p>
 		<p>This hardware architecture balances performance, simplicity, and modularity, allowing the game to read both IMUs, render VGA graphics, and produce sound all from a single RP2040 chip. The hardware setup for the project involved careful synchronization of VGA signal timing with real-time game logic, along with stable interpretation of IMU data for smooth paddle control. Achieving jitter-free ball-paddle collisions required fine-tuning of low-pass filtering and precise bounding box calculations. The system is powered by a Raspberry Pi Pico (RP2040) microcontroller, with two 6-DOF IMU sensors mounted on gloves for motion-based input. A piezo speaker driven via DMA provides audio feedback, while a VGA screen at 640x480 resolution displays the game. A single push button serves as the game’s start and reset input.<br>
             </p>
@@ -406,7 +406,7 @@ Audio output is generated using a DAC (Digital-to-Analog Converter) connected vi
 </div>
 
 <p>This DAC is used to generate the sound effect played when the ball hits a paddle or the wall, using a precomputed sine wave table and streamed through SPI using DMA (dma_channel_configure, dma_start_channel_mask).</p>
-<img src="images/vga.jpg" alt="VGA - Wiring" style="max-width:100%; height:auto;">
+<img src="images/vga.JPG" alt="VGA - Wiring" style="max-width:100%; height:auto;">
 <p>Fig [10]: VGA Connection to RP2040 <sup>[3]</sup></p>
 <p>Video output is driven directly from the Raspberry Pi Pico using bit-banged VGA signals on dedicated GPIO pins, only 6 connections are required to create a working VGA signal:</p>
 <p>These connections are used to generate a 640x480 60Hz analog VGA signal, which is rendered with game graphics using custom drawing routines (fillCircle, draw_thick_line, writeString, etc.). The dual green resistors help with brightness modulation for that channel.</p>
@@ -453,7 +453,7 @@ Audio output is generated using a DAC (Digital-to-Analog Converter) connected vi
 </table>
 <p> Table [3]: VGA COnnection with RP2040</p>
 <p>These connections are used to generate a 640x480 60Hz analog VGA signal, which is rendered with game graphics using custom drawing routines (fillCircle, draw_thick_line, writeString, etc.). The dual green resistors help with brightness modulation for that channel.</br></p>
-<img src="images/glove.jpg" alt="Gloves with IMU mounted" style="max-width:100%; height:auto;">
+<img src="images/glove.JPG" alt="Gloves with IMU mounted" style="max-width:100%; height:auto;">
 <p>Fig [11]: IMU mounted on the glove for the player</p>
 <p>To enable intuitive, gesture-based control of the paddles, each MPU6050 IMU was securely mounted onto a glove, one for each player. The IMUs were positioned on the back side of the hand near the wrist, which allowed them to capture tilt and motion data effectively without being obstructed by finger movements. To ensure a firm attachment, each IMU module was wrapped in copper tape to maintain a stable surface against the glove fabric. The modules were then firmly taped onto the gloves using insulating electrical tape, ensuring that the sensors did not shift during gameplay. To route the electrical connections back to the microcontroller, color-coded jumper wires were soldered to the IMU breakout boards. These wires were carefully secured along the wrist and arm area of the glove using heat shrink tubing and additional tape. This reinforcement minimized mechanical stress on the solder joints and prevented wire movement from interfering with sensor readings. The careful mounting and wiring ensured stable data reading, comfortable wearability, and consistent paddle control throughout the game.<br></p>
 <p>The VGA signal generation code was based on open-source VGA libraries tailored for RP2040 microcontrollers. The audio output method using DMA was adapted from public RP2040 sound examples. We modified them significantly to support real-time game triggering and frequency customization.<br>
@@ -525,7 +525,7 @@ Audio output is generated using a DAC (Digital-to-Analog Converter) connected vi
 </div>
     <p>In terms of accuracy, the paddle collision detection was reliable and precise, with a positional tolerance of about 2 pixels, making gameplay fair and consistent. At times the paddle would freeze and the animation would continue, this would be due to loose contact, when this happens on pressing the reset button, the game resumes from the start. The audio waveform generated via DMA and SPI closely matched the intended sine wave, with test measurements confirming frequency accuracy within ±3 Hz around the 500 Hz target. Video signal timing was carefully managed through the VGA libraries, and oscilloscope verification confirmed the correct synchronization of horizontal and vertical sync pulses, ensuring compatibility with standard VGA monitors.<br></p>
 <div style="text-align: center;">
-  <img src="images/heatshrink.jpg" alt="heat-Shrink Wiring" style="max-width: 100%; height: auto;">
+  <img src="images/heatshrink.JPG" alt="heat-Shrink Wiring" style="max-width: 100%; height: auto;">
   <p>Fig [12]: Heat Shrink used as Safety measure</p>
 </div>
 <p>Safety considerations were also addressed in the hardware design. All components were powered through the RP2040’s regulated 3.3V rail to prevent overvoltage. The IMUs were mounted securely on gloves, and all wiring was insulated and reinforced using heat shrink tubing to prevent accidental disconnections or shorts during gameplay. The pushbutton reset functionality allowed quick recovery in the rare event of a sensor freeze or signal loss, maintaining a safe and recoverable environment.<br></p>
@@ -567,7 +567,7 @@ Audio output is generated using a DAC (Digital-to-Analog Converter) connected vi
         <h2>Team Members and Work Distribution</h2>
 	<p> The development of this glove-controlled table tennis game was a collaborative effort by a team of three members, each contributing unique skills while also working collectively on core aspects of the project. All team members were jointly involved in conceptualizing the original game idea, outlining the project proposal, and formulating the logical flow of the game, including how gesture control, VGA graphics, and sound integration would work together cohesively.</p>
 <div style="text-align: center;">
-  <img src="images/teampicture.jpg" alt="Team Picture" style="max-width: 100%; height: auto;">
+  <img src="images/teampicture.JPG" alt="Team Picture" style="max-width: 100%; height: auto;">
   <p>Fig [13]: Picture of the Team with the Working Setup</p>
 </div>
 <p>The software development was primarily handled by hp475, who took lead on writing the core game logic, implementing the animation threads, integrating the paddle control algorithms, and managing the scoring and win conditions. The audio system, including DMA-based sound triggering and SPI communication with the DAC, was designed and implemented by zf248, who ensured smooth real-time audio playback without interrupting gameplay. asm367 was responsible for the hardware implementation, including breadboarding, soldering all connections between the Pico, DAC, VGA, and IMUs, and adding heat shrink tubing to stabilize the IMU wires and reduce interference between player inputs.
