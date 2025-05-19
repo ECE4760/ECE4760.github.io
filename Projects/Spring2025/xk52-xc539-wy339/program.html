@@ -1,0 +1,168 @@
+
+<!--
+  This webpage uses a template originally created by Iron Summit Media Strategies.
+  Licensed under the Apache License, Version 2.0.
+  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+  Modifications:
+  - Navigation bar item names changed
+  - Text content updated for each navigation-linked page
+  - Edited visual layout and structure as needed
+
+  Modified by Xuefei Chen on 2025-05-16
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Mathematical Art Project</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/clean-blog.min.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">Math Art</a>
+            </div>
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="index.html">Project Introduction</a></li>
+                    <li><a href="high_level.html">High level Design</a></li>
+                    <li><a href="program.html">Program Design</a></li>
+                    <li><a href="hardware.html">Hardware Design</a></li>
+                    <li><a href="results.html">Results</a></li>
+                    <li><a href="conclusion.html">Conclusion</a></li>
+                    <li><a href="appendix.html">Appendix</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="intro-header" style="background-image: url('img/main.jpg')">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    <div class="page-heading">
+                        <h1>Program Design</h1>
+                        <hr class="small">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Post Content -->
+    <article>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    <h2>Conway's Game of Life Algorithm</h2>
+                    <p>The software implementation of Conway's Game of Life is based on discrete two-dimensional cellular automaton. The grid is represented using two 2D arrays: cell_array for the current generation and cell_array_next for storing the next generation. Each element in the array corresponds to a cell that can be either alive (value 1) or dead (value 0). During each update cycle, the update_alive() function is invoked to evaluate the next state of each cell according to the standard rules of the Game of Life
+                      For every cell, the function is_alive(x, y) counts the number of alive neighbors and applies the transition rules: a dead cell with exactly three live neighbors becomes alive; a live cell with fewer than two or more than three neighbors dies. This logic ensures local interaction and non-linear evolution over time.
+                      The result of this evaluation is stored in cell_array_next. Once all updates are computed, the update_cell() function compares cell_array_next to the current state and applies changes to the display using the drawcell() function. This function maps a cell's logical state to visual output on the VGA screen by drawing a square of pixels at the appropriate coordinates.
+                      Initial patterns can be configured either using a fixed "Pi" pattern (via pi_initial()) or by randomly populating the grid (via random_initial()). Both of these are conditionally invoked depending on the selected menu option and user input. The game supports user interaction through cursor movement and manual cell activation using buttons, allowing for pattern drawing and experimentation.
+
+                    </p>
+                    
+                    <h2>Mandelbrot Algorithm</h2>
+                    <p>The Mandelbrot set is visualized by mapping a defined region of the complex plane onto the screen's pixel grid. The algorithm calculates, for each pixel, whether the corresponding complex number belongs to the Mandelbrot set. This is achieved by iterating the equation Zn+1 = Zn² + C, where Z₀ = 0 and C is the complex coordinate associated with the pixel
+                      The iteration continues until either the magnitude of Z exceeds 2 or a maximum iteration limit is reached.
+                      This logic is implemented in the mandelbrot() function. Arrays x[] and y[] are precomputed to map screen coordinates to real and imaginary components of the complex plane. The rendering loop processes each pixel, computes its escape time (iteration count), and assigns a color based on this value. The color-coding scheme ranges from dark to bright hues depending on how quickly the sequence diverges, with points inside the Mandelbrot set rendered in black.
+                      To support zooming functionality, a square selection box is displayed on the screen, whose size is determined by a potentiometer and whose position is controlled by directional buttons. The selected zoom region is defined by four coordinates: zoom_start_x, zoom_start_y, zoom_end_x, and zoom_end_y. Once the confirm button is pressed, new coordinate bounds for the Mandelbrot computation are calculated from the selected region. The x[] and y[] mappings are updated accordingly, and the display is refreshed to show a magnified view of the selected area. This process supports recursive zooming, allowing exploration of fine fractal details.
+
+                    </p>
+
+                    <h2>Menu</h2>
+                    <p>The system features a simple and efficient menu interface for selecting between application modes. The menu is invoked when the global state variable button_control is set to -1. The available options include Conway's Game of Life (Pi pattern), Conway's Game of Life (Random pattern), and Mandelbrot visualization
+                      These options are displayed on screen using text rendering functions, with the currently selected option highlighted using inverted text colors.
+                      The menu selection is controlled by a button connected to BUTTON_PIN. Each press of this button increments the menu_choice variable, cycling through the available items. Visual feedback is updated in real time to indicate the selected item. When the user presses the confirm button (PIN_CONFIRM), the selected item is activated by assigning its corresponding mode value to button_control. The menu system then initializes the appropriate resources and clears the screen in preparation for the chosen visualization.
+                      This modular design allows smooth transitions between different modes without rebooting or reinitializing the system. The menu remains accessible through a dedicated return mechanism, enabling users to switch applications with minimal overhead.
+                    </p>
+
+                    <h2>Sound Generation</h2>
+                    
+                    <p>
+                      The system uses Direct Digital Synthesis (DDS) and an interrupt-driven architecture to generate audio signals. A phase accumulator and a sine lookup table are employed to synthesize waveforms in real time. The audio output is handled by a digital-to-analog converter (DAC), which is controlled through SPI communication. DDS plays a central role in controlling the frequency of audio signals. It is a technique for generating sine waves and is particularly suitable for synthesizing sounds. DDS is based on the fundamental observation that an overflowing variable resembles a full rotation of a phasor. The projection of this rotating phasor onto the imaginary axis produces a sine wave. To achieve this, DDS scales the phase angle from 0 to 2π into a range from 0 to 2³² − 1 units and stores the rescaled value in a 32-bit phase accumulator. The sampling rate Fs, which determines how often the synthesized waveform is sampled for output, is controlled by an interrupt service routine (ISR). The output frequency Fout at each sample is translated into a corresponding phase increment N, using the equation: N = (Fout / Fs) × 2³². The system tracks the phase by accumulating these increments using: phase_accumulator += N. The upper 8 bits of the phase accumulator are used as an index into a precomputed 256-entry sine table. This table stores the magnitude of a full sine wave cycle at each phase value. Instead of allocating memory for a full 2³²-element table, the implementation uses a 2⁸-entry sine table. Each index from 0 to 255 maps to a phase angle between 0 and 2π, which is then used to compute the corresponding sine value. This sine value is multiplied by 2047 to scale it to the range from −2047 to +2047, and then shifted by an offset of +2048 to align with the 12-bit DAC range of 0 to 4095. The system supports two audio modes. In Conway's Game of Life, the sound frequency is dynamically adjusted based on the number of alive cells. During each update, the number of alive cells is counted, and the frequency is computed using the function: frequency = count × 10. Here, count represents the number of alive cells. The factor of 10 is used because the speaker performs poorly at frequencies below 150 Hz. By mapping the frequency to a higher range, we improve sound quality and make changes in frequency more perceptible to the user as the number of alive cells varies. For the Mandelbrot visualization, the system cycles through a predefined set of musical pitches. This approach creates a repetitive and ambient sound pattern that enhances the visual experience. The pitch sequence consists of the frequencies 261 Hz, 293 Hz, 329 Hz, and 392 Hz, providing four distinct tones that repeat in a loop.
+                    </p>
+                    <!-- <p>
+                        The system uses Direct Digital Synthesis (DDS) and an interrupt-driven architecture to generate audio signals. A phase accumulator and a sine lookup table are employed to synthesize waveforms in real time. The audio output is handled by a digital-to-analog converter (DAC), which is controlled through SPI communication. DDS plays a central role in controlling the frequency of audio signals. It is a technique for generating sine waves and is particularly suitable for synthesizing sounds. DDS is based on the fundamental observation that an overflowing variable resembles a full rotation of a phasor. The projection of this rotating phasor onto the imaginary axis produces a sine wave. To achieve this, DDS scales the phase angle from 0 to 2π into a range from 0 to 2³² − 1 units and stores the rescaled value in a 32-bit phase accumulator. The sampling rate <code>Fs</code>, which determines how often the synthesized waveform is sampled for output, is controlled by an interrupt service routine (ISR). The output frequency <code>Fout</code> at each sample is translated into a corresponding phase increment <code>N</code>, using the equation:<br>
+                        <code>N = (Fout / Fs) * 2³²</code><br>
+                        The system tracks the phase by accumulating these increments using:<br>
+                        <code>phase_accumulator += N</code><br>
+                        The upper 8 bits of the phase accumulator are used as an index into a precomputed 256-entry sine table. This table stores the magnitude of a full sine wave cycle at each phase value. Instead of allocating memory for a full 2³²-element table, the implementation uses a 2⁸-entry sine table. Each index from 0 to 255 maps to a phase angle between 0 and 2π, which is then used to compute the corresponding sine value. This sine value is multiplied by 2047 to scale it to the range from −2047 to +2047, and then shifted by an offset of +2048 to align with the 12-bit DAC range of 0 to 4095. The system supports two audio modes. In Conway's Game of Life, the sound frequency is dynamically adjusted based on the number of alive cells. During each update, the number of alive cells is counted, and the frequency is computed using the function:<br>
+                        <code>frequency = count * 10</code><br>
+                        Here, <code>count</code> represents the number of alive cells. The factor of 10 is used because the speaker performs poorly at frequencies below 150 Hz. By mapping the frequency to a higher range, we improve sound quality and make changes in frequency more perceptible to the user as the number of alive cells varies. For the Mandelbrot visualization, the system cycles through a predefined set of musical pitches. This approach creates a repetitive and ambient sound pattern that enhances the visual experience. The pitch sequence consists of the frequencies 261 Hz, 293 Hz, 329 Hz, and 392 Hz, providing four distinct tones that repeat in a loop.
+                    </p>
+                     -->
+                    <h2>Button Control</h2>
+                    <p>In this project, six physical buttons are employed to enable user interaction across different modes, including the menu interface, Conway's Game of Life visualization, and the Mandelbrot set. Each button is assigned a specific GPIO pin and has a distinct function depending on the current mode of operation,
+                      they are all pull-up buttons. To ensure reliable user input, a debouncing mechanism is implemented for all buttons using a finite state machine (FSM) architecture. Mechanical pushbuttons typically produce unstable voltage transitions when pressed or released. Without debouncing, these bounces may result in false or repeated activations. The FSM-based software debouncing approach effectively eliminates this problem by confirming each state transition through multiple stable reads.
+                      The FSM implemented for each button comprises five states: RESET, BUTTON_NOT_PRESSED, BUTTON_MAYBE_PRESSED, BUTTON_PRESSED, and BUTTON_MAYBE_NOT_PRESSED. Upon initialization, the FSM enters the RESET state, where it reads the initial button value and transitions to the BUTTON_NOT_PRESSED state. In this state, the system waits for a stable signal indicating a button press. If a high signal is detected, the FSM moves to the BUTTON_MAYBE_PRESSED state to verify the press. If the signal remains high during this confirmation phase, the FSM transitions to the BUTTON_PRESSED state, registering a valid press. If the signal fluctuates, it returns to BUTTON_NOT_PRESSED. While in the BUTTON_PRESSED state, the FSM monitors for a release signal. If such a signal appears, it proceeds to the BUTTON_MAYBE_NOT_PRESSED state. A sustained release results in a transition back to the BUTTON_NOT_PRESSED state, while signal instability causes a return to BUTTON_PRESSED. This sequence ensures that only deliberate and stable user actions are recognized.
+                      Each of the six buttons serves a specific role within the application. The switch or menu button, connected to GPIO pin 14 and referred to as BUTTON_PIN in the code, is responsible for cycling through the available menu options when the system is in menu mode. It updates the menu_choice variable and wraps around the menu index as needed. In any operational mode, pressing this button again resets the system to menu mode by setting button_control to -1.
+                      The left button, connected to GPIO pin 8 (PIN_LEFT), moves the user cursor to the left in Conway's Game of Life mode. In Mandelbrot mode, it moves the zoom-in box leftward. This movement is dynamic, as it uses an acceleration variable to increase the speed of repeated navigation. Similarly, the right button, assigned to GPIO pin 11 (PIN_RIGHT), allows horizontal movement in the opposite direction. The up and down buttons, connected to GPIO pins 9 (PIN_UP) and 10 (PIN_DOWN) respectively, allow vertical movement of the cursor or zoom-in box. These movements follow the same acceleration mechanism and cursor update logic as the horizontal directions.
+                      The confirm button, connected to GPIO pin 12 (PIN_CONFIRM), plays a pivotal role in all interaction modes. In menu mode, it confirms the currently selected item by setting button_control to the chosen menu index. In Conway's Game of Life mode, the confirm button finalizes the drawn alive cells on the display. The cursor positions recorded during drawing are used to mark the corresponding grid cells as alive. In Mandelbrot mode, pressing the confirm button initiates the zoom-in operation. It computes the new coordinate bounds based on the position and size of the zoom box and re-renders the fractal image accordingly.
+                      All button control functions are implemented in dedicated state machines using conditional branches. The code ensures that any new press triggers appropriate action while suppressing unintended signals due to bounce. Acceleration for directional buttons is implemented through multiplicative scaling, using the variable acc, which enhances user experience during long cursor movements.
+                      This software-based debouncing FSM not only improves reliability but also supports a robust interactive interface suitable for navigating complex visualizations. The consistent design of the FSM across all six buttons allows for scalable, modular handling of user inputs while maintaining responsiveness and stability in real time.
+                      
+                    </p>
+
+                    <h2>Potentiometer for Changing Zoom-in Box Size</h2>
+                    <p>In the Mandelbrot visualization mode, a potentiometer is employed to dynamically adjust the size of the zoom-in box. This feature enables users to intuitively control the area of interest before initiating a zoom operation</p>
+                    The potentiometer is connected to one of the ADC (Analog-to-Digital Converter) input pins of the Raspberry Pi Pico. The software continuously monitors the analog voltage level produced by the potentiometer, converts it to a digital value using the built-in ADC hardware, and maps this value to a discrete zoom size used by the system.
+                    The potentiometer is physically connected to GPIO pin 26, which is configured as an ADC input. The function change_zoom_size() is responsible for reading the potentiometer and updating the zoom box dimensions. This function is invoked periodically as part of a protothread dedicated to input processing. It begins by checking whether the current visualization mode corresponds to Mandelbrot, which is indicated when the variable button_control is set to 2. If so, the ADC channel is selected, and the digital value is read using adc_read(). The raw reading typically ranges from 0 to 4095, corresponding to the full voltage swing from 0V to 3.3V.
+                    To convert this raw ADC value into a zoom size, the software maps it to an integer in the range from min_zoom_size to max_zoom_size. This mapping is performed by a linear transformation that accounts for the calibration of the lower bound (often slightly above 0 due to analog noise) and scales proportionally to the range of valid zoom levels. The resulting value is then smoothed using a weighted average with the previous setting to avoid abrupt jumps in zoom size, ensuring a more stable and user-friendly experience.
+                    The updated zoom size is stored in the global variable zoom_size_set. This variable determines the side length of the square zoom box in pixels, which is computed as zoom_size_set multiplied by a fixed unit size (zoom_unit_size). When the zoom box is drawn on screen, the coordinates of its top-left and bottom-right corners are calculated based on the current cursor position and the computed box dimensions. These coordinates are stored in zoom_start_x, zoom_start_y, zoom_end_x, and zoom_end_y.
+                    During each rendering cycle, the draw_zoomin() function draws the zoom box using these coordinates. If the user confirms the selection using the confirm button, the Mandelbrot plot is recalculated with the new coordinate boundaries derived from the selected zoom area. This seamless integration of analog input allows the user to precisely define the zoom region with a simple turn of the potentiometer, greatly enhancing the interactivity and usability of the system.
+                    In summary, the potentiometer acts as an analog controller for adjusting zoom level. The software facilitates this by periodically sampling the ADC input, mapping and smoothing the result, updating the zoom parameters, and redrawing the zoom box accordingly. This interaction exemplifies effective integration of analog hardware control into a real-time graphical application.
+                    
+                    <h2>Limited RAM</h2>
+                    <p>Due to memory constraints, the system is unable to store the original pixel values underlying the zoom box. As a result, once the zoom box is moved, the background cannot be accurately restored.
+                      Although an attempt was made to erase the box by redrawing the background, the lack of available memory prevents storage of the required pixel data. Consequently, residual artifacts from the previous zoom box location remain visible on the screen.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <hr>
+
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="js/clean-blog.min.js"></script>
+
+</body>
+
+</html>

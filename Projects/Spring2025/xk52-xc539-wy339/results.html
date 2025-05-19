@@ -1,0 +1,242 @@
+<!--
+  This webpage uses a template originally created by Iron Summit Media Strategies.
+  Licensed under the Apache License, Version 2.0.
+  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+  Modifications:
+  - Navigation bar item names changed
+  - Text content updated for each navigation-linked page
+  - Edited visual layout and structure as needed
+
+  Modified by Xuefei Chen on 2025-05-16
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Mathematical Art Project</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/clean-blog.min.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">Math Art</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="index.html">Project Introduction</a>
+                    </li>
+                    <li>
+                        <a href="high_level.html">High level Design</a>
+                    </li>
+                    <li>
+                        <a href="program.html">Program Design</a>
+                    </li>
+                    <li>
+                        <a href="hardware.html">Hardware Design</a>
+                    </li>
+                    <li>
+                        <a href="results.html">Results</a>
+                    </li>
+                    <li>
+                        <a href="conclusion.html">Conclusion</a>
+                    </li>
+                    <li>
+                        <a href="appendix.html">Appendices</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+    <!-- Page Header -->
+    <!-- Set your background image for this header on the line below. -->
+    <header class="intro-header" style="background-image: url('img/main.jpg')">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    <div class="page-heading">
+                        <h1>Results</h1>
+                        <hr class="small">
+                        <span class="subheading"></span>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Post Content -->
+    <article>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    <h3>Animation Display</h3>
+                    <p>
+                      Our final system successfully demonstrated two interactive mathematical simulations—Conway's Game of Life and the Mandelbrot Set—rendered in real time on a VGA display powered by the Raspberry Pi Pico (RP2040). At startup, the system displays a menu interface that allows users to navigate between simulation modes using GPIO buttons. The menu highlights the currently selected option and provides a clear, accessible way to switch between Conway and Mandelbrot simulations. Once a mode is selected, the VGA display transitions to the corresponding visualization, where users can interact with the simulation in real time using additional controls. The system combined smooth graphics, responsive inputs, and integrated audio feedback to create a rich, multi-sensory experience.
+                    </p>
+                    <figure class="text-center">
+                        <img src="img/menu.jpg" class="img-responsive" alt="">
+                        <figcaption class="caption text-muted">Figure 1: Main Menu</figcaption>
+                    </figure>
+                    
+                    <p>
+                      In Conway's Game of Life, we implemented a dynamic, animated grid that evolves based on the classic cellular automaton rules. The VGA screen was divided into two sections: the left side displayed the evolving cell grid, while the right side showed the simulation title. Users interacted with the simulation through GPIO push buttons, using a yellow cursor to mark additional live cells on the grid. The cursor movement featured acceleration logic—repeated presses in the same direction increased movement speed, while switching directions reset the acceleration. This enhanced the user experience by making navigation intuitive and efficient.
+                    </p>
+            
+                    <p>
+                      Two initialization modes were available: a pre-defined “π”-shaped pattern and a randomly generated grid. Both modes produced complex, emergent behaviors that matched theoretical expectations. The simulation maintained a consistent update rate with no visible flicker or lag, ensuring smooth animation throughout execution.
+                    </p>
+            
+                    <p>
+                      We also integrated an audio feedback mechanism into the Game of Life simulation. During each update cycle, a synthesized tone was generated, with its peak frequency proportional to the number of live cells. This created a responsive auditory representation of the system’s activity: dense, highly populated grids produced higher-pitched tones, while sparser ones resulted in lower frequencies. The audio synthesis used Direct Digital Synthesis (DDS) with fixed-point sine wave generation and smooth amplitude modulation, yielding clean, harmonic sound output.
+                    </p>
+                    <figure>
+                        <div class="row">
+                          <div class="col-md-6">
+                            <img src="img/pi.jpg" class="img-responsive" alt="Figure 1">
+                          </div>
+                          <div class="col-md-6">
+                            <img src="img/random.jpg" class="img-responsive" alt="Figure 2">
+                          </div>
+                        </div>
+                        <figcaption class="caption text-muted text-center">
+                          Figure 2: Animation of Conway's game of life in mode Pi (left) and random (right).
+
+                        </figcaption>
+                    </figure>
+                    <figure>
+                        <div class="row">
+                          <div class="col-md-6">
+                            <img src="img/alive1.jpg" class="img-responsive" alt="Figure 1">
+                          </div>
+                          <div class="col-md-6">
+                            <img src="img/alive2.jpg" class="img-responsive" alt="Figure 2">
+                          </div>
+                        </div>
+                        <figcaption class="caption text-muted text-center">
+                          Figure 3: Display before (left) and after (right) updating alive cell  and random.
+                        </figcaption>
+                    </figure>
+                    <p>
+                      In the Mandelbrot Set visualization, we rendered the fractal using floating-point arithmetic to compute escape-time iterations for each pixel in the complex plane. A magenta zoom box allowed users to select and magnify specific regions of interest. This box could be repositioned and resized interactively via directional buttons and a potentiometer. Like the Game of Life cursor, the Mandelbrot zoom box also incorporated acceleration logic for efficient navigation.
+                    </p>
+            
+                    <p>
+                      After each zoom action, the fractal was recalculated and redrawn with updated coordinate bounds. Rendering was accurate and visually detailed through several layers of zoom. However, due to limited RAM on the RP2040, the system encountered a memory overflow around the 8th zoom level. This was caused by the accumulation of zoom box overlays without screen clearing, as the framebuffer memory was nearly exhausted. Despite this limitation, the visual output remained correct and compelling up to that point.
+                    </p>
+            
+                    <p>
+                      To complement the fractal visuals, the Mandelbrot module featured a looped ambient audio effect designed to evoke an astronomical or “spacey” atmosphere. A cycle of predefined frequencies was played at regular intervals using the same DDS technique as in Conway's Game of Life. The effect provided a soothing background soundtrack that enhanced the experience of exploring deep regions of the Mandelbrot set.
+                    </p>
+                    <figure>
+                        <div class="row">
+                          <div class="col-md-6">
+                            <img src="img/mandelbrot.jpg" class="img-responsive" alt="Figure 1">
+                          </div>
+                          <div class="col-md-6">
+                            <img src="img/mandelbrot2.jpg" class="img-responsive" alt="Figure 2">
+                          </div>
+                        </div>
+                        <figcaption class="caption text-muted text-center">
+                          Figure 4: Mandelbrot Plot before (left) and after (right) zoom in.
+                        </figcaption>
+                    </figure>
+
+                    <figure class="text-center">
+                        <img src="img/mandelbrot3.jpg" class="img-responsive" alt="">
+                        <figcaption class="caption text-muted">Figure 5: Break out figure after zoom in 8 times.
+                        </figcaption>
+                    </figure>
+                    
+                    <figure class="text-center">
+                        <img src="img/issue.jpg" class="img-responsive" alt="">
+                        <figcaption class="caption text-muted">Figure 6: Issue of updating the zoom in screen.
+                        </figcaption>
+                    </figure>
+                    
+                    <h3>Speed of Execution</h3>
+                    <p>
+                      The system delivered excellent performance in terms of responsiveness and real-time behavior. In Conway's Game of Life, the grid updated smoothly at approximately 1-millisecond intervals using <code>PT_YIELD_usec(1000)</code>, resulting in fluid animation without any visible hesitation or flickering. The VGA output remained stable throughout, with each generation transition rendered cleanly.
+                    </p>
+                    <p>
+                      In the Mandelbrot Set module, full-screen fractal recalculations after zoom actions introduced brief delays (typically 3-6 seconds), which is expected given the computational load. User interactions—including cursor navigation, zoom box manipulation, and button presses—were highly responsive. Concurrent execution of tasks such as video rendering, input handling, and audio playback was achieved through lightweight protothreads, ensuring smooth multitasking without blocking or performance degradation.
+                    </p>
+            
+                    <h3>Safety Enforcement</h3>
+                    <p>
+                      Safety was a core consideration in both hardware and software design. All GPIO pins operated at 3.3V logic levels, and VGA outputs were protected using 330Ω and 470Ω resistors to limit current and prevent overdriving the display. The audio DAC output was voltage-limited and properly biased to remain within safe operating ranges.
+                    </p>
+                    <p>
+                      Each GPIO was explicitly initialized and configured using <code>gpio_init()</code> and <code>gpio_set_dir()</code> to prevent floating inputs or misconfiguration. Input buttons were debounced using carefully designed finite state machines (FSMs), which eliminated spurious triggering and ensured stable interaction. SPI communication to the DAC was performed at safe baud rates with hardware buffer usage, minimizing any risk of data collision. No hazardous components or high-current elements were used, making the system safe for classroom, lab, or outreach use.
+                    </p>
+            
+                    <h3>Usability</h3>
+                    <p>
+                      The system was designed for intuitive and accessible interaction. At startup, a clearly presented menu allowed users to select between Conway's Game of Life and the Mandelbrot Set using simple button inputs. The currently selected option was highlighted for clarity, and transitions between modes were seamless.
+                    </p>
+                    <p>
+                      During simulation, directional buttons controlled either a yellow cursor (for Conway) or a zoom box (for Mandelbrot), with acceleration logic enabling both fine and rapid navigation. A potentiometer provided smooth, analog adjustment of zoom size in the Mandelbrot viewer. Text and graphical elements were rendered with high contrast and large fonts for readability, and sound effects provided real-time auditory feedback that enhanced the interactive experience. The system was tested by multiple users and found to be easy to operate, responsive, and engaging, making it suitable for a wide range of educational and demonstrative contexts.
+                    </p>
+            </div>
+        </div>
+    </article>
+
+    <hr>
+
+
+
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="js/clean-blog.min.js"></script>
+
+</body>
+
+</html>
