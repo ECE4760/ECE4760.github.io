@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project Overview — Realtime 3D Rubik’s Cube State Tracker & Solver</title>
+  <meta name="description" content="Project overview and system workflow for the RP2040-based realtime 3D Rubik’s Cube tracker & solver." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="header">
+  <div class="headerInner">
+    <div class="brand">
+      <div class="brandTitle"><a href="index.html">Realtime 3D Rubik’s Cube State Tracker &amp; Solver</a></div>
+      <div class="brandSub">Project Overview</div>
+    </div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="project_overview.html">Overview</a>
+      <a href="background_math.html">Background Math</a>
+      <a href="software_design.html">Software</a>
+      <a href="hardware_design.html">Hardware</a>
+      <a href="results.html">Results</a>
+      <a href="unsuccessful_attempts.html">Unsuccessful</a>
+      <a href="appendix.html">Appendix</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1>Project Overview</h1>
+    <p>
+      We built an IMU-driven 3D Rubik’s Cube viewer and solver demo on the RP2040, where face colors are entered by buttons
+      and solution steps are computed and replayed on a VGA display.
+    </p>
+    <div class="metaRow">
+      <span class="tag">Dual-core RP2040</span>
+      <span class="tag">TRIAD rotation matrix</span>
+      <span class="tag">VGA 3D rendering</span>
+      <span class="tag">IDDFS solver</span>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>Project Introduction</h2>
+    <p>
+      In our final project, an IMU-driven 3D Rubik’s Cube viewer and solver demo was built on the RP2040, where face colors
+      were entered by buttons and solution steps were found and shown on a VGA display.
+    </p>
+    <p>
+      RP2040 dual cores were used to separate IMU processing from VGA rendering, keeping the 3D cube display smooth and stable.
+      IMU data from the MPU6050 and GY271 were sampled at 100Hz and used to update a rotation matrix for real-time cube visualization.
+      A button-based 3×3 color grid for all six faces was implemented with a bottom preview to make color entry clear and reduce input errors.
+      The inputs were converted into a consistent internal cube-state model shared by both the renderer and the solver.
+      An RLFB solution was then found using iterative deepening search and was shown and applied one move at a time, so the solving steps
+      could be followed easily.
+    </p>
+
+    <div class="figure">
+      <a href="images/system.png"><img src="images/system.png" alt="System overview diagram" /></a>
+      <div class="figcap">System overview — <span class="code">images/system.png</span></div>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>High-Level Design</h2>
+
+    <h3>Project Idea</h3>
+    <p>
+      Our inspiration came from Lab 2 and Lab 3. In those labs, the VGA was used to display a digital Galton board, measured angles and control inputs.
+      However, the display content was limited to 2D graphics. This led us to explore whether 3D graphics could be shown on the VGA.
+      When we thought about a 3D cube, it naturally pointed us to a Rubik’s Cube. Therefore, we further decided to build a Rubik’s Cube solver as our final project.
+    </p>
+
+    <h3>Logical Structure</h3>
+    <p>
+      Two cores were used in our project. Core0 was responsible for running the IMU thread, while Core1 was responsible for running the VGA thread.
+      Core0 signals Core1 via a semaphore to refresh the display using the latest rotation matrix and UI state.
+    </p>
+    <p>
+      A state machine was used to manage transitions between different cases.
+      In Case 0, an IMU-driven 3D Rubik’s Cube visualization was displayed.
+      In Cases 1–6, the 3×3 grid colors for all six faces were collected one face at a time and previewed at the bottom of the screen.
+      In Case 7, the supported move set, the real-time cube state and the computed solutions were presented.
+    </p>
+
+    <h3>Hardware/Software Tradeoffs</h3>
+    <p>
+      The solver’s recovery capability was bounded by both sensing constraints and compute limits. To estimate the cube’s 3D pose accurately in real time,
+      we used an IMU (MPU6050) and a magnetometer (GY271). To rigidly mount both sensors on the physical cube while preserving stable axis alignment,
+      we attached one sensor to the top face and the other to the bottom face. This mechanical arrangement introduced a key constraint:
+      we could not perform U (up) or D (down) face rotations during operation, since those moves would disturb the fixed sensor alignment.
+    </p>
+    <p>
+      Our original plan was to solve the cube using Kociemba’s two-phase algorithm; however, the restriction on U/D moves meant that a standard full-move solution
+      pipeline was not applicable. As a result, we adopted a brute-force search approach using Iterative Deepening Depth-First Search (IDDFS) over the remaining four faces.
+      Because the RP2040 has limited computational resources, we bounded the search to solutions within a finite number of moves to avoid excessively long runtime.
+      Increasing the maximum search depth expands solvable configurations, but runtime grows rapidly with depth.
+    </p>
+
+    <h3>Relevant Patents/Copyrights/Trademarks</h3>
+    <p>
+      This project did not incorporate any patented technology, third-party intellectual property, or registered trademarks.
+    </p>
+  </section>
+
+  <div class="footer">
+    Jeongyoon Rhee (jr2487) · Tianyi Liu (tl955) · Cornell ECE 5730
+  </div>
+
+</div>
+</body>
+</html>

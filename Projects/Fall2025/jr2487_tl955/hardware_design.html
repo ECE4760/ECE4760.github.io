@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hardware Design — Realtime 3D Rubik’s Cube State Tracker & Solver</title>
+  <meta name="description" content="Hardware configuration including RP2040, MPU6050, GY271, VGA, buttons, and magnetic fixture." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="header">
+  <div class="headerInner">
+    <div class="brand">
+      <div class="brandTitle"><a href="index.html">Realtime 3D Rubik’s Cube State Tracker &amp; Solver</a></div>
+      <div class="brandSub">Hardware Design</div>
+    </div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="project_overview.html">Overview</a>
+      <a href="background_math.html">Background Math</a>
+      <a href="software_design.html">Software</a>
+      <a href="hardware_design.html">Hardware</a>
+      <a href="results.html">Results</a>
+      <a href="unsuccessful_attempts.html">Unsuccessful</a>
+      <a href="appendix.html">Appendix</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1>Hardware Design</h1>
+    <p>
+      Our hardware consists of an RP2040 microcontroller, an MPU6050 IMU, a GY271 magnetometer,
+      a VGA display, and an 8-button input module (six colors + NEXT + DELETE), plus a magnetic reference fixture.
+    </p>
+    <div class="metaRow">
+      <span class="tag">MPU6050</span>
+      <span class="tag">GY271</span>
+      <span class="tag">VGA</span>
+      <span class="tag">8-button input</span>
+      <span class="tag">Magnet fixture</span>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>System Hardware Configuration</h2>
+    <p>
+      The configuration consists of an RP2040, an MPU6050 IMU, a GY271 magnetometer, a VGA display, and eight push buttons.
+      To achieve accurate real-time 3D orientation tracking, we aligned the XYZ axes of the MPU6050 and GY271 and mounted the sensors
+      rigidly to preserve a consistent body frame throughout operation.
+    </p>
+
+    <div class="figure">
+      <a href="images/hardware_diagram.png"><img src="images/hardware_diagram.png" alt="Hardware diagram" /></a>
+      <div class="figcap">Hardware configuration — <span class="code">images/hardware_diagram.png</span></div>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>MPU6050 IMU (Accelerometer + Gyroscope)</h2>
+    <p>
+      The MPU6050 was placed on the cube’s down face. In our TRIAD pipeline, we used the accelerometer to construct the gravity-related
+      reference vector <b>v1</b>. We did not rely on the gyroscope since it requires integration and bias compensation and tends to drift.
+      We also applied a low-pass filter to the accelerometer data for a more stable gravity estimate and smoother 3D visualization.
+    </p>
+    <p>
+      For the MPU6050 in our coordinate convention: left is the x-axis, toward the user is the y-axis, and upward is the z-axis.
+    </p>
+
+    <div class="figure">
+      <a href="images/MPU6050.png"><img src="images/MPU6050.png" alt="MPU6050 module" /></a>
+      <div class="figcap">MPU6050 — <span class="code">images/MPU6050.png</span></div>
+    </div>
+
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>GY271 (Magnetometer)</h2>
+    <p>
+      The GY271 was placed on the cube’s up face. It provides a reference direction independent of gravity and is used to construct
+      TRIAD’s second reference vector <b>v2</b>, completing heading information for full 3D orientation estimation.
+    </p>
+    <p>
+      To avoid weak/disturbed indoor magnetic fields, we added a small magnet to produce a strong and repeatable field.
+      For the GY271, our axes convention matched the MPU6050 (left=x, toward user=y, upward=z).
+      The MPU6050 and GY271 axes were aligned, and the sensors were mounted on bottom/top faces of the cube.
+    </p>
+
+    <div class="figure">
+      <a href="images/GY271.png"><img src="images/GY271.png" alt="GY271 module" /></a>
+      <div class="figcap">GY271 — <span class="code">images/GY271.png</span></div>
+    </div>
+
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>8-Button Color Input Module</h2>
+    <p>
+      We required six buttons to enter the six face colors, plus NEXT and DELETE for state transitions and error recovery.
+      We used an 8-button color input module so users could identify colors more clearly.
+      The brown button was used for NEXT and the black button for DELETE.
+    </p>
+
+    <div class="figure">
+      <a href="images/button_module.png"><img src="images/button_module.png" alt="8-button module" /></a>
+      <div class="figcap">8-button input module — <span class="code">images/button_module.png</span></div>
+    </div>
+
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>Magnetic Reference Fixture</h2>
+    <p>
+      We used a small permanent magnet to provide a strong and repeatable magnetic field reference for the GY271.
+      Indoors, the Earth’s magnetic field can be weak and easily distorted; the magnet improves robustness and makes debugging/calibration easier.
+    </p>
+
+    <div class="figure">
+      <a href="images/magnet_fixture.png"><img src="images/magnet_fixture.png" alt="Magnetic fixture" /></a>
+      <div class="figcap">Magnetic fixture — <span class="code">images/magnet_fixture.png</span></div>
+    </div>
+
+  </section>
+
+  <div class="footer">
+    Jeongyoon Rhee (jr2487) · Tianyi Liu (tl955) · Cornell ECE 5730
+  </div>
+
+</div>
+</body>
+</html>

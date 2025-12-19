@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Results — Realtime 3D Rubik’s Cube State Tracker & Solver</title>
+  <meta name="description" content="Demo screenshots for realtime 3D view, face input UI, and step-by-step solver playback." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="header">
+  <div class="headerInner">
+    <div class="brand">
+      <div class="brandTitle"><a href="index.html">Realtime 3D Rubik’s Cube State Tracker &amp; Solver</a></div>
+      <div class="brandSub">Results</div>
+    </div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="project_overview.html">Overview</a>
+      <a href="background_math.html">Background Math</a>
+      <a href="software_design.html">Software</a>
+      <a href="hardware_design.html">Hardware</a>
+      <a href="results.html">Results</a>
+      <a href="unsuccessful_attempts.html">Unsuccessful</a>
+      <a href="appendix.html">Appendix</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1>Results</h1>
+    <p>
+      We visualized the real-time 3D cube, the color inputs for all six faces, and the final solving process on VGA.
+      The system is interactive and responsive due to the dual-core split, though occasional flicker can occur due to asynchrony.
+    </p>
+    <div class="metaRow">
+      <span class="tag">Live 3D view</span>
+      <span class="tag">Face input UI</span>
+      <span class="tag">Solver playback</span>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>State 0: Live IMU-Tracked 3D Visualization</h2>
+    <div class="figure">
+      <a href="images/0_start_state.png"><img src="images/0_start_state.png" alt="Start state" /></a>
+      <div class="figcap">Start state (live 3D cube) — <span class="code">images/0_start_state.png</span></div>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>States 1–6: Face-by-Face Color Entry</h2>
+    <p>
+      The user enters one face at a time (UP, FRONT, BACK, LEFT, RIGHT, DOWN). The 3×3 grid is filled using color buttons,
+      with a preview shown at the bottom to reduce input mistakes.
+    </p>
+
+    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 12px;">
+      <div class="figure">
+        <a href="images/1_input_up.png"><img src="images/1_input_up.png" alt="UP input" /></a>
+        <div class="figcap">UP — <span class="code">images/1_input_up.png</span></div>
+      </div>
+      <div class="figure">
+        <a href="images/2_input_front.png"><img src="images/2_input_front.png" alt="FRONT input" /></a>
+        <div class="figcap">FRONT — <span class="code">images/2_input_front.png</span></div>
+      </div>
+      <div class="figure">
+        <a href="images/3_input_back.png"><img src="images/3_input_back.png" alt="BACK input" /></a>
+        <div class="figcap">BACK — <span class="code">images/3_input_back.png</span></div>
+      </div>
+      <div class="figure">
+        <a href="images/4_input_left.png"><img src="images/4_input_left.png" alt="LEFT input" /></a>
+        <div class="figcap">LEFT — <span class="code">images/4_input_left.png</span></div>
+      </div>
+      <div class="figure">
+        <a href="images/5_input_right.png"><img src="images/5_input_right.png" alt="RIGHT input" /></a>
+        <div class="figcap">RIGHT — <span class="code">images/5_input_right.png</span></div>
+      </div>
+      <div class="figure">
+        <a href="images/6_input_down.png"><img src="images/6_input_down.png" alt="DOWN input" /></a>
+        <div class="figcap">DOWN — <span class="code">images/6_input_down.png</span></div>
+      </div>
+    </div>
+
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>State 7: Solver Playback (Step-by-Step)</h2>
+    <p>
+      After all faces are entered, we compute a solution using IDDFS over a restricted move set, then display and apply moves one-by-one.
+      Each press of NEXT applies exactly one move from the saved sequence.
+    </p>
+
+    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 12px;">
+      <div class="figure">
+        <a href="images/s1_solve_1.png"><img src="images/s1_solve_1.png" alt="Solve step 1" /></a>
+        <div class="figcap">Step 1 — <span class="code">images/s1_solve_1.png</span></div>
+      </div>
+      <div class="figure">
+        <a href="images/s2_solve_2.png"><img src="images/s2_solve_2.png" alt="Solve step 2" /></a>
+        <div class="figcap">Step 2 — <span class="code">images/s2_solve_2.png</span></div>
+      </div>
+      <div class="figure">
+        <a href="images/s3_solve_3.png"><img src="images/s3_solve_3.png" alt="Solve step 3" /></a>
+        <div class="figcap">Step 3 — <span class="code">images/s3_solve_3.png</span></div>
+      </div>
+      <div class="figure">
+        <a href="images/s4_solve_done.png"><img src="images/s4_solve_done.png" alt="Solve done" /></a>
+        <div class="figcap">Step 4 — <span class="code">images/s4_solve_done.png</span></div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:18px;">Notes</h3>
+    <p>
+      Execution is fast and interactive, and concurrency is strong due to the two-core design.
+      However, because of asynchrony, the display can sometimes flicker.
+    </p>
+  </section>
+
+  <div class="footer">
+    Jeongyoon Rhee (jr2487) · Tianyi Liu (tl955) · Cornell ECE 5730
+  </div>
+
+</div>
+</body>
+</html>

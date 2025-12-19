@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TARS Robot Controller | ECE 4760 Final Project</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="media/IMG_4808.jpg"><!-- Using a robot image as favicon for now -->
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="logo">TARS > RP2040</div>
+            <ul class="nav-links">
+                <li><a href="#intro">Intro</a></li>
+                <li><a href="#highlevel">High Level</a></li>
+                <li><a href="#design">Design</a></li>
+                <li><a href="#results">Results</a></li>
+                <li><a href="#conclusion">Conclusion</a></li>
+                <li><a href="#appendices">Appendices</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-content">
+            <h1>TARS Robot Controller</h1>
+            <p class="hero-subtitle">Miniature Walking Robot on Raspberry Pi Pico</p>
+            <p style="margin-top: 1rem; color: #fff;">Neil Chou (yc2897) | Thomas Lin (tal96)</p>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- Introduction -->
+        <section id="intro">
+            <h2>1. Project Introduction</h2>
+            <div class="glass-panel">
+                <h3>Overview</h3>
+                <p>This project implements a control system for a TARS-inspired walking robot using the Raspberry Pi
+                    Pico (RP2040). It uses three servo motors to drive the robot's legs and achieve a coordinated
+                    walking gait.</p>
+
+                <h3 style="margin-top: 1.5rem;">Summary</h3>
+                <p>Inspired by the robot TARS from the movie <em>Interstellar</em>, we built a miniaturized, mobile
+                    robot consisting of three connected rectangular modules. We implemented a custom C-based control
+                    system utilizing Protothreads for multitasking, enabling the robot to walk, rotate, and respond to
+                    user commands via a serial interface. The project demonstrates the feasibility of complex kinematic
+                    control on the RP2040 platform.</p>
+            </div>
+        </section>
+
+        <!-- High Level Design -->
+        <section id="highlevel">
+            <h2>2. High Level Design</h2>
+
+            <div class="glass-panel">
+                <h3>Rationale & Inspiration</h3>
+                <p>The idea was born from our fascination with the unique locomotion of the TARS robot in
+                    <em>Interstellar</em>. We wanted to replicate this non-standard walking mechanism—which relies on
+                    shifting centers of mass and coordinated limb rotation—on a small, embedded scale using the
+                    Raspberry Pi Pico.
+                </p>
+                <p>Our design draws inspiration from Charles Diaz’s open-source TARS project on Hackster.io. We aimed to
+                    miniaturize his design and port the control logic from Python to C to leverage the real-time
+                    capabilities and threading features of the Pico SDK.</p>
+            </div>
+
+            <div class="glass-panel">
+                <h3>Logical Structure</h3>
+                <p>The system is built on the <strong>Pico C SDK</strong> and utilizes <strong>Protothreads</strong> for
+                    cooperative multitasking. This architecture allows us to handle distinct tasks concurrently without
+                    blocking:</p>
+                <ul>
+                    <li><strong>Motor Thread:</strong> Handles the precise PWM signaling and smooth angle interpolation
+                        for the servos.</li>
+                    <li><strong>Gait Thread:</strong> Orchestrates the high-level sequencing of leg movements
+                        (Stick-Slip motion).</li>
+                    <li><strong>Command Thread:</strong> Listens for UART input to toggle modes (Walk, Stop, Calibrate).
+                    </li>
+                </ul>
+            </div>
+
+            <div class="glass-panel">
+                <h3>Hardware/Software Tradeoffs</h3>
+                <p><strong>Servo Control:</strong> We chose standard PWM servos for simplicity and cost. However, they
+                    lack position feedback, meaning we had to implement "blind" movement sequences and software-based
+                    calibration (trim offsets) to ensure the robot walks straight.</p>
+                <p><strong>Power:</strong> The servos draw significant current under load. We separated the servo power
+                    rail (5V external) from the Pico's logic power to prevent brownouts, sharing only a common ground.
+                </p>
+            </div>
+        </section>
+
+        <!-- Program/Hardware Design -->
+        <section id="design">
+            <h2>3. Program & Hardware Design</h2>
+
+            <div class="glass-panel">
+                <h3>Hardware Details</h3>
+                <p>The robot consists of three 3D-printed segments (Legs). The center leg holds the electronics, while
+                    the two side legs are actuated to provide forward thrust and balance.</p>
+                <ul>
+                    <li><strong>Microcontroller:</strong> Raspberry Pi Pico (RP2040)</li>
+                    <li><strong>Actuators:</strong> 3x MG90S Servos (Left, Right, Middle)</li>
+                    <li><strong>Power:</strong> 7.4V Li-Po Battery regulated to 5V for servos</li>
+                    <li><strong>Interface:</strong> Serial over USB / Button Input</li>
+                </ul>
+
+                <p><strong>Weight Distribution:</strong> Achieving the correct weight distribution was a significant
+                    challenge. Since the battery is relatively heavy compared to other components, its placement is
+                    crucial. After trial and error, we positioned the battery at the very bottom of the body. This
+                    lowers the center of gravity, increasing stability. Additionally, this placement provides more
+                    angular momentum when the body swings forward. We also added extra weight around the battery (using
+                    magnets) to further enhance stability.</p>
+
+                <div style="margin-top: 1rem;">
+                    <!-- Placeholder for schematic or wiring diagram -->
+                    <p><em>(Hardware connections described in README: GPIO 4, 5, 6 for Servos)</em></p>
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <h3>Software Implementation</h3>
+                <p>The core logic is implemented in C. We used a state machine approach for the walking gait:</p>
+                <ol>
+                    <li><strong>Lift Center:</strong> Side legs rotate effectively to lift the middle body.</li>
+                    <li><strong>Swing:</strong> The body swings forward relative to the planted legs.</li>
+                    <li><strong>Retract & Reset:</strong> The body lowers and the legs retract for the next cycle.</li>
+                </ol>
+                <p><strong>Motor Range & Calibration:</strong> All three servo motors have a maximum range of 270
+                    degrees, which is far more than required. Exceeding the safe operating angles could damage the
+                    mechanical assembly or the motors themselves. Therefore, we implemented strict software limits to
+                    constrain the motion within safe bounds.</p>
+                <p>Additionally, we observed slight angle drifts over time, likely due to mechanical tolerances or motor
+                    characteristics. To address this, we implemented a configurable offset system. Each motor has an
+                    offset angle that can be adjusted in real-time via the serial terminal, allowing us to calibrate the
+                    robot's posture without recompiling the code.</p>
+
+                <p><strong>Fine-tuning Challenges:</strong> Fine-tuning the motor speed and swing angle for the swing
+                    movement proved difficult:</p>
+                <ul>
+                    <li><strong>Motor Speed:</strong> If too slow, the body cannot fall forward and remains standing on
+                        the legs. If too high, the robot becomes unstable after standing on its body.</li>
+                    <li><strong>Swing Angle:</strong> If too small, the body cannot move forward. If too large, the
+                        center of gravity shifts too far back when the robot stands on its body, causing it to tip
+                        backwards.</li>
+                </ul>
+
+                <h3 style="margin-top: 2 rem;">System Architecture</h3>
+                <div class="glass-panel" style="text-align: center;">
+                    <img src="media/system_architecture.png" alt="System Architecture Diagram"
+                        style="max-width: 100%; border-radius: 8px;" onclick="openLightbox(this)">
+                    <div class="caption">Figure 7. System Architecture Block Diagram</div>
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <div class="gallery-grid">
+                    <div class="gallery-item">
+                        <img src="media/image.png" alt="Lubricating Oil" onclick="openLightbox(this)">
+                        <div class="caption">Figure 1. Lubricating oil used for the joints.</div>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="media/IMG_4808.jpg" alt="System Circuit" onclick="openLightbox(this)">
+                        <div class="caption">Figure 2. System circuit and wiring overview.</div>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="media/IMG_4809.jpg" alt="Front Side View" onclick="openLightbox(this)">
+                        <div class="caption">Figure 3. Front side view of the robot.</div>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="media/IMG_4810.jpg" alt="Right Arm Motor" onclick="openLightbox(this)">
+                        <div class="caption">Figure 4. Right arm motor assembly.</div>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="media/IMG_4811.jpg" alt="Torso Motor" onclick="openLightbox(this)">
+                        <div class="caption">Figure 5. Torso motor: controls torso up and down so arms can rotate.</div>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="media/IMG_4812.jpg" alt="Left Arm Motor" onclick="openLightbox(this)">
+                        <div class="caption">Figure 6. Left arm motor assembly.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results -->
+        <section id="results">
+            <h2>4. Results</h2>
+            <div class="glass-panel">
+                <h3>Performance</h3>
+                <p>The robot successfully demonstrates a walking gait. The movement is smooth due to our incremental
+                    servo update logic.</p>
+                <ul>
+                    <li><strong>Speed:</strong> Adjustable via serial command. Basic walking speed is approximately 3
+                        seconds per cycle.</li>
+                    <li><strong>Stability:</strong> The robot maintains balance during the swing phase on flat surfaces.
+                    </li>
+                </ul>
+            </div>
+
+            <div class="glass-panel">
+                <h3>Video Demo</h3>
+                <video controls style="width: 100%; border-radius: 8px;">
+                    <source src="media/IMG_4806.mp4" type="video/quicktime">
+                    <source src="media/IMG_4806.mp4" type="video/mp4"> <!-- Assuming conversion or browser support -->
+                    Your browser does not support the video tag.
+                </video>
+                <p style="margin-top: 0.5rem; font-size: 0.9em; opacity: 0.8;">Demo of the walking gait.</p>
+            </div>
+
+            <div class="glass-panel">
+                <h3>Effect of Surface Friction</h3>
+                <p>The robot's performance varies significantly with surface friction. In the demo video above, the
+                    robot is placed on a table with lower friction. This allows the robot to slide forward slightly when
+                    the body swings forward and catches itself, aiding the movement.</p>
+                <p>However, when placed on the ground, the higher friction prevents this forward slide. Instead, the
+                    momentum causes the robot to wobble back and forth when the body swings forward and catches itself.
+                </p>
+
+                <video controls style="width: 100%; border-radius: 8px; margin-top: 1rem;">
+                    <source src="media/IMG_5307.MOV" type="video/quicktime">
+                    <source src="media/IMG_5307.MOV" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p style="margin-top: 0.5rem; font-size: 0.9em; opacity: 0.8;">Failure Case: Wobbling on high-friction
+                    surface.</p>
+
+                <p><strong>Solution:</strong> To mitigate this, we adjusted the swing angle so that the legs can better
+                    support the body and prevent it from tipping backwards. We also added a time delay after the body
+                    swings forward, waiting for the body to stabilize before retracting the legs.</p>
+            </div>
+        </section>
+
+        <!-- Conclusions -->
+        <section id="conclusion">
+            <h2>5. Conclusions</h2>
+            <div class="glass-panel">
+                <p>We successfully built a miniature functional replica of TARS that can walk using a custom RP2040
+                    control backend. The results met our core expectation of replicating the unique "block walking"
+                    motion.</p>
+
+                <p><strong>Limitations:</strong> However, we observed that this specific walking gait is inherently
+                    inefficient and unstable. The open-loop nature of the control system makes it highly sensitive to
+                    environmental variables, particularly surface friction. Without active feedback, the robot cannot
+                    adapt to slips or uneven terrain, making the locomotion unreliable outside of controlled conditions.
+                </p>
+
+                <p><strong>Future Work:</strong> If we were to do this again, we would incorporate encoders or IMU
+                    feedback to enable self-balancing and closed-loop control, as the current open-loop gait is
+                    sensitive to surface friction and slight weight imbalances.</p>
+            </div>
+        </section>
+
+        <!-- Appendices -->
+        <section id="appendices">
+            <h2>Appendices</h2>
+
+            <!-- Permissions: USER INPUT REQUIRED -->
+            <div class="glass-panel alert-box">
+                <h3>Appendix A: Permissions</h3>
+                <p>The group approves this report for inclusion on the course website.</p>
+                <p>The group approves the video for inclusion on the course youtube channel.</p>
+            </div>
+
+            <div class="glass-panel">
+                <h3>Appendix B: Program Listings</h3>
+                <p>Code is available on our GitHub repository: <a
+                        href="https://github.com/Microcontroller-group/clone-Hunter-Adams-RP2040-Demos/tree/final_project_demo/PWM/PWM_Demo">GitHub
+                        Link</a>
+                </p>
+            </div>
+
+            <div class="glass-panel">
+                <h3>Appendix C: Task Distribution</h3>
+                <ul>
+                    <li><strong>Neil Chou:</strong> 3D printing, Mechanical Assembly, Gait Logic (C Implementation).
+                    </li>
+                    <li><strong>Thomas Lin:</strong> Circuit Design, PWM Driver Setup, Serial Interface.</li>
+                </ul>
+            </div>
+
+            <div class="glass-panel">
+                <h3>References</h3>
+                <ul>
+                    <li><a href="https://github.com/TARS-AI-Community/TARS-AI">TARS-AI Community GitHub</a> -
+                        Inspiration for mechanical design.</li>
+                    <li>Raspberry Pi Pico C/C++ SDK Documentation.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div class="container">
+                <p>&copy; 2025 Neil Chou & Thomas Lin. ECE 4760 Final Project.</p>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <span class="close-btn">&times;</span>
+        <img class="lightbox-content" id="lightbox-img">
+        <div id="caption" class="lightbox-caption"></div>
+    </div>
+
+    <script>
+        function openLightbox(img) {
+            var lightbox = document.getElementById("lightbox");
+            var lightboxImg = document.getElementById("lightbox-img");
+            var captionText = document.getElementById("caption");
+
+            lightbox.style.display = "flex";
+            lightboxImg.src = img.src;
+            captionText.innerHTML = img.parentNode.querySelector('.caption').innerHTML;
+        }
+
+        function closeLightbox() {
+            document.getElementById("lightbox").style.display = "none";
+        }
+    </script>
+
+
+
+
+</html>

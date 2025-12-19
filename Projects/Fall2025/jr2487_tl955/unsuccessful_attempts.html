@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Unsuccessful Attempts — Realtime 3D Rubik’s Cube State Tracker & Solver</title>
+  <meta name="description" content="Unsuccessful attempts: sixth-face inference, Euler-angle instability, and Kociemba constraints." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="header">
+  <div class="headerInner">
+    <div class="brand">
+      <div class="brandTitle"><a href="index.html">Realtime 3D Rubik’s Cube State Tracker &amp; Solver</a></div>
+      <div class="brandSub">Unsuccessful Attempts</div>
+    </div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="project_overview.html">Overview</a>
+      <a href="background_math.html">Background Math</a>
+      <a href="software_design.html">Software</a>
+      <a href="hardware_design.html">Hardware</a>
+      <a href="results.html">Results</a>
+      <a href="unsuccessful_attempts.html">Unsuccessful</a>
+      <a href="appendix.html">Appendix</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1>Unsuccessful Attempts</h1>
+    <p>
+      We explored several alternative approaches during development. Some were feasible in principle but did not fit our constraints
+      (hardware restrictions, compute/memory limits, robustness).
+    </p>
+    <div class="metaRow">
+      <span class="tag">Inference attempt</span>
+      <span class="tag">Euler-angle instability</span>
+      <span class="tag">Kociemba constraints</span>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>Sixth-Face Color Inference</h2>
+    <p>
+      We initially explored inferring the colors of the sixth face from the color information of the other five faces to reduce user inputs.
+      While feasible in principle (valid cubes have strict constraints), we were not able to build a robust inference procedure within our timeline.
+      In practice, small input mistakes, ambiguous corner/edge consistency, and the need for additional validity checks made the approach unreliable,
+      so we ultimately required explicit entry for all six faces.
+    </p>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>Euler-Angle Orientation Estimation</h2>
+    <p>
+      We also attempted an Euler-angle approach: roll and pitch from the gravity vector (accelerometer) and yaw from the horizontal projection
+      of the magnetometer. However, results were unstable. Yaw estimation was highly sensitive to accurate axis alignment and required proper tilt
+      compensation. When the cube tilted, a vertical component entered the magnetometer reading and yaw could deviate significantly or jump abruptly.
+    </p>
+    <p>
+      We also observed a severe wrap-around artifact at the -180°/+180° boundary: when heading crossed this overlap region,
+      computed yaw could flip by nearly 360°, making the cube appear to “spin” suddenly. Due to drift, flicker, and sudden heading changes,
+      we switched to TRIAD (rotation matrix directly from vectors), which was more stable.
+    </p>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>Kociemba Solver</h2>
+    <p>
+      We could not adopt a Kociemba(-Lite) solver under our constraints. Besides complexity and memory/compute overhead (pruning tables, cube-coordinate
+      encodings), our move set was fundamentally restricted by hardware.
+    </p>
+    <p>
+      Because the MPU6050 and GY271 must remain rigidly mounted with consistent axis alignment, our physical setup prevented performing U and D rotations
+      during operation. Since Kociemba’s pipeline assumes access to the full move set (including U/D) to guarantee completeness/optimality,
+      it was not applicable. In contrast, an IDDFS solver over the remaining four faces required minimal memory and was straightforward to implement and verify,
+      so we adopted IDDFS.
+    </p>
+  </section>
+
+  <div class="footer">
+    Jeongyoon Rhee (jr2487) · Tianyi Liu (tl955) · Cornell ECE 5730
+  </div>
+
+</div>
+</body>
+</html>

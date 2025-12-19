@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Background Math (TRIAD) — Realtime 3D Rubik’s Cube State Tracker & Solver</title>
+  <meta name="description" content="TRIAD attitude determination background and equations used for realtime cube orientation." />
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- MathJax for LaTeX equations -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="header">
+  <div class="headerInner">
+    <div class="brand">
+      <div class="brandTitle"><a href="index.html">Realtime 3D Rubik’s Cube State Tracker &amp; Solver</a></div>
+      <div class="brandSub">Background Math (TRIAD)</div>
+    </div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="project_overview.html">Overview</a>
+      <a href="background_math.html">Background Math</a>
+      <a href="software_design.html">Software</a>
+      <a href="hardware_design.html">Hardware</a>
+      <a href="results.html">Results</a>
+      <a href="unsuccessful_attempts.html">Unsuccessful</a>
+      <a href="appendix.html">Appendix</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1>Background Math: TRIAD Attitude Determination</h1>
+    <p>
+      We estimate cube orientation using the TRIAD method, which builds an orthonormal basis from two non-collinear reference directions
+      measured in both the reference frame and the body frame.
+    </p>
+    <div class="metaRow">
+      <span class="tag">Rotation matrix</span>
+      <span class="tag">Two reference vectors</span>
+      <span class="tag">Orthonormal triad</span>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>TRIAD Formulation</h2>
+    <p>
+      The goal of attitude determination is to compute the rotation that maps a vector expressed in a reference (inertial) frame
+      \(\mathcal{N}\) into the same vector expressed in the body frame \(\mathcal{B}\).
+      TRIAD solves this by comparing two non-collinear reference directions measured in both frames.
+    </p>
+
+    <p>
+      Given two reference vectors \(\mathbf{v}_1\) and \(\mathbf{v}_2\), TRIAD constructs an orthonormal triad:
+    </p>
+
+    <p>
+      \[
+      \hat{\mathbf{t}}_1=\frac{\mathbf{v}_1}{\|\mathbf{v}_1\|},\qquad
+      \hat{\mathbf{t}}_2=\frac{\hat{\mathbf{t}}_1\times \mathbf{v}_2}{\|\hat{\mathbf{t}}_1\times \mathbf{v}_2\|},\qquad
+      \hat{\mathbf{t}}_3=\hat{\mathbf{t}}_1\times \hat{\mathbf{t}}_2.
+      \]
+    </p>
+
+    <p>
+      Stacking these basis vectors yields a direction cosine matrix (DCM):
+    </p>
+
+    <p>
+      \[
+      \mathbf{T}=\big[\hat{\mathbf{t}}_1\ \hat{\mathbf{t}}_2\ \hat{\mathbf{t}}_3\big].
+      \]
+    </p>
+
+    <p>
+      We form \(\mathbf{T}_N\) in the reference frame and \(\mathbf{T}_B\) in the body frame. Since each \(\mathbf{T}\) is orthonormal,
+      \(\mathbf{T}^{-1}=\mathbf{T}^T\), and the rotation from \(\mathcal{N}\) to \(\mathcal{B}\) is:
+    </p>
+
+    <p>
+      \[
+      \mathbf{Q}=\mathbf{T}_B\mathbf{T}_N^T.
+      \]
+    </p>
+
+    <h2>Practical Notes</h2>
+    <ul>
+      <li>TRIAD requires at least two non-collinear vectors and becomes unstable if \(\mathbf{v}_1 \times \mathbf{v}_2 \approx \mathbf{0}\).</li>
+      <li>We use the accelerometer for a gravity-related direction and the magnetometer for a magnetic-field-related direction.</li>
+      <li>\(\mathbf{T}_N\) is initialized once at startup, and \(\mathbf{T}_B\) is recomputed at each update.</li>
+    </ul>
+
+    <p>
+      This produces a real-time rotation matrix \(\mathbf{Q}\), which drives the 3D cube rendering on the VGA display.
+      Special thanks to Prof. Adams for introducing this method.
+    </p>
+  </section>
+
+  <div class="footer">
+    Jeongyoon Rhee (jr2487) · Tianyi Liu (tl955) · Cornell ECE 5730
+  </div>
+
+</div>
+</body>
+</html>

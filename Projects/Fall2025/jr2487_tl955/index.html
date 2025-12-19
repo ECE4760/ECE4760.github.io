@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Realtime 3D Rubik’s Cube State Tracker & Solver — ECE 5730</title>
+  <meta name="description" content="Realtime 3D Rubik’s Cube State Tracker & Solver on RP2040 (TRIAD + VGA + IDDFS)." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="headerInner">
+      <div class="brand">
+        <div class="brandTitle"><a href="index.html">Realtime 3D Rubik’s Cube State Tracker &amp; Solver</a></div>
+        <div class="brandSub">ECE 5730 Final Project · Team jr2487_tl955</div>
+      </div>
+      <nav class="nav">
+        <a href="project_overview.html">Overview</a>
+        <a href="background_math.html">Background Math</a>
+        <a href="software_design.html">Software</a>
+        <a href="hardware_design.html">Hardware</a>
+        <a href="results.html">Results</a>
+        <a href="unsuccessful_attempts.html">Unsuccessful</a>
+        <a href="appendix.html">Appendix</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="wrap">
+
+    <section class="hero">
+      <h1>Realtime 3D Rubik’s Cube State Tracker &amp; Solver</h1>
+      <p>
+        In our final project, we built a real-time 3D Rubik’s Cube tracker and solver on the RP2040, using TRIAD to
+        estimate orientation from IMU and magnetometer measurements. The cube is rendered live in 3D on a VGA display,
+        face colors are entered via buttons, and the computed solution is presented step-by-step on the same VGA interface.
+      </p>
+      <div class="metaRow">
+        <span class="tag">TRIAD rotation matrix</span>
+        <span class="tag">VGA 3D rendering</span>
+        <span class="tag">UI state machine</span>
+        <span class="tag">IDDFS solver</span>
+      </div>
+    </section>
+
+    <section class="grid2">
+      <div class="card">
+        <h2>Team &amp; Deliverables</h2>
+
+        <div class="kv">
+          <div class="k">Team</div>
+          <div class="v">Jeongyoon Rhee (jr2487), Tianyi Liu (tl955)</div>
+
+          <div class="k">Course</div>
+          <div class="v">Cornell ECE 5730</div>
+        </div>
+
+        <div class="btnRow">
+          <a class="btn" href="report.pdf">
+            <span>📄 Final Report (PDF)</span><span class="small">report.pdf</span>
+          </a>
+
+          <a class="btn" href="jr2487_tl955_code.zip" download>
+            <span>⬇️ Download Code (ZIP)</span><span class="small">jr2487_tl955_code.zip</span>
+          </a>
+
+          <a class="btn" href="https://youtu.be/xEEFOJA4oqk" target="_blank" rel="noopener">
+            <span>🎥 Demo Video (YouTube)</span><span class="small">youtube.com</span>
+          </a>
+        </div>
+
+        <div class="hr"></div>
+
+        <h2>Contents</h2>
+        <div class="toc">
+          <a href="project_overview.html">
+            <div class="title">1) Project Overview</div>
+            <div class="desc">Goal, system workflow, and the overall demo structure (includes system figure).</div>
+          </a>
+
+          <a href="background_math.html">
+            <div class="title">2) Background Math (TRIAD)</div>
+            <div class="desc">How we compute the rotation matrix Q from accel + magnetometer vectors.</div>
+          </a>
+
+          <a href="software_design.html">
+            <div class="title">3) Software Design</div>
+            <div class="desc">Dual-core architecture, rendering pipeline, solver execution, and UI state machine.</div>
+          </a>
+
+          <a href="hardware_design.html">
+            <div class="title">4) Hardware Design</div>
+            <div class="desc">RP2040 + MPU6050 + GY271 + button module + magnetic fixture (with diagrams).</div>
+          </a>
+
+          <a href="results.html">
+            <div class="title">5) Results</div>
+            <div class="desc">Screenshots of start state, face input UI, and step-by-step solving playback.</div>
+          </a>
+
+          <a href="unsuccessful_attempts.html">
+            <div class="title">6) Unsuccessful Attempts</div>
+            <div class="desc">Sixth-face inference, Euler-angle approach instability, Kociemba constraints.</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Quick Visual</h2>
+        <p>Demo video (embedded).</p>
+
+        <div class="figure">
+        <iframe
+          style="width:100%; aspect-ratio:16/9; border:0; display:block;"
+          src="https://www.youtube-nocookie.com/embed/xEEFOJA4oqk"
+          title="Demo Video"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen>
+        </iframe>
+          <div class="figcap">Demo video (YouTube) — <span class="code">xEEFOJA4oqk</span></div>
+        </div>
+
+        <div class="hr"></div>
+
+
+        <h3>System snapshot</h3>
+        <div class="kv">
+          <div class="k">MCU</div><div class="v">RP2040 (dual-core)</div>
+          <div class="k">Sensors</div><div class="v">MPU6050 + GY271</div>
+          <div class="k">Estimator</div><div class="v">TRIAD rotation matrix</div>
+          <div class="k">Display</div><div class="v">VGA (live 3D cube + UI + solution playback)</div>
+          <div class="k">Solver</div><div class="v">IDDFS (constrained move set)</div>
+
+      </div>
+    </section>
+
+    <div class="footer">
+      Jeongyoon Rhee (jr2487) · Tianyi Liu (tl955) · Cornell ECE 5730
+    </div>
+
+  </div>
+</body>
+</html>

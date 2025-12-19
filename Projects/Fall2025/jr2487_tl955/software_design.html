@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Software Design — Realtime 3D Rubik’s Cube State Tracker & Solver</title>
+  <meta name="description" content="Software architecture, TRIAD implementation, 3D rendering pipeline, solver, and UI state machine." />
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- MathJax for LaTeX equations -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="header">
+  <div class="headerInner">
+    <div class="brand">
+      <div class="brandTitle"><a href="index.html">Realtime 3D Rubik’s Cube State Tracker &amp; Solver</a></div>
+      <div class="brandSub">Software Design</div>
+    </div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="project_overview.html">Overview</a>
+      <a href="background_math.html">Background Math</a>
+      <a href="software_design.html">Software</a>
+      <a href="hardware_design.html">Hardware</a>
+      <a href="results.html">Results</a>
+      <a href="unsuccessful_attempts.html">Unsuccessful</a>
+      <a href="appendix.html">Appendix</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1>Software Design</h1>
+    <p>
+      The program is split across two RP2040 cores: Core0 acquires sensors and user input and updates the rotation matrix,
+      while Core1 focuses on VGA rendering and UI drawing. Core0 signals Core1 via a semaphore to refresh the display using
+      the latest orientation estimate and UI state.
+    </p>
+    <div class="metaRow">
+      <span class="tag">Dual-core split</span>
+      <span class="tag">TRIAD</span>
+      <span class="tag">3D VGA rendering</span>
+      <span class="tag">IDDFS backtracking</span>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>Overall Architecture</h2>
+    <p>
+      The overall software architecture is summarized below. The state machine organizes the user workflow from live 3D viewing,
+      through face-by-face color entry, to step-by-step solution playback.
+    </p>
+
+    <div class="figure">
+      <a href="images/cube_solver_sw_diagram.png"><img src="images/cube_solver_sw_diagram.png" alt="Software diagram" /></a>
+      <div class="figcap">Software diagram — <span class="code">images/cube_solver_sw_diagram.png</span></div>
+    </div>
+
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>Orientation Estimation (TRIAD)</h2>
+    <p>
+      We used TRIAD to estimate cube orientation in real time and drive the live 3D Rubik’s Cube visualization on VGA.
+      At each update, the accelerometer vector is used as \(\mathbf{v}_1\), and the magnetometer vector is used as \(\mathbf{v}_2\).
+    </p>
+
+    <p>
+      From these two non-collinear vectors, we construct an orthonormal basis:
+      \(\mathbf{e}_1=\hat{\mathbf{v}}_1\),
+      \(\mathbf{e}_2=\widehat{\mathbf{e}_1\times \mathbf{v}_2}\),
+      and \(\mathbf{e}_3=\mathbf{e}_1\times\mathbf{e}_2\),
+      so that \(\mathbf{T}=[\mathbf{e}_1\ \mathbf{e}_2\ \mathbf{e}_3]\).
+    </p>
+
+    <p>
+      Since \(\mathbf{T}_N\) and \(\mathbf{T}_B\) are orthonormal, \(\mathbf{T}^{-1}=\mathbf{T}^T\), and:
+      \[
+      \mathbf{Q}=\mathbf{T}_B\mathbf{T}_N^{T}.
+      \]
+    </p>
+
+    <p>Expanded TRIAD form (as referenced in the report):</p>
+    <p>
+      \[
+      {}^{N}\!Q^{B}
+      =
+      {}^{N}\!\left[
+      \hat{\mathbf v}_1 \;\;
+      (\hat{\mathbf v}_1 \times \hat{\mathbf v}_2) \;\;
+      \bigl(\hat{\mathbf v}_1 \times (\hat{\mathbf v}_1 \times \hat{\mathbf v}_2)\bigr)
+      \right]\,
+      \left(
+      {}^{B}\!\left[
+      \hat{\mathbf v}_1 \;\;
+      (\hat{\mathbf v}_1 \times \hat{\mathbf v}_2) \;\;
+      \bigl(\hat{\mathbf v}_1 \times (\hat{\mathbf v}_1 \times \hat{\mathbf v}_2)\bigr)
+      \right]
+      \right)^{-1}.
+      \]
+    </p>
+
+    <div class="figure">
+      <a href="images/triad_code.png"><img src="images/triad_code.png" alt="TRIAD build_triad code" /></a>
+      <div class="figcap">TRIAD basis construction — <span class="code">images/triad_code.png</span></div>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>Real-Time 3D Cube Rendering</h2>
+    <p>
+      We rotate the cube’s eight predefined 3D vertices using \(\mathbf{Q}^T\) and map the rotated coordinates onto the VGA display
+      using an orthographic projection with a fixed scale factor.
+    </p>
+
+    <div class="figure">
+      <a href="images/cube_rendering.png"><img src="images/cube_rendering.png" alt="Vertex rotation and projection code" /></a>
+      <div class="figcap">Vertex rotation and projection — <span class="code">images/cube_rendering.png</span></div>
+    </div>
+
+    <p>
+      To render solid faces, we estimate each face’s depth using the average \(z\) value of its vertices, treat faces with positive depth
+      as visible, and draw them from far to near. Each visible face is divided into a \(3\times3\) grid and filled using triangles,
+      with grid lines overlaid to complete the 3D Rubik’s Cube visualization.
+    </p>
+
+    <div class="figure">
+      <a href="images/detect_z_direction.png"><img src="images/detect_z_direction.png" alt="Face visibility and depth estimation" /></a>
+      <div class="figcap">Face visibility/depth estimation — <span class="code">images/detect_z_direction.png</span></div>
+    </div>
+
+    <h3>Consistent Face Mapping</h3>
+    <p>
+      We adopted a fixed solver convention for the six faces and stored the cube state in a \(6\times3\times3\) sticker array.
+      Each entered face grid is converted into this canonical representation via a face-specific in-plane rotation and (if needed) mirroring,
+      ensuring consistent mapping between UI input, internal model, and rendering.
+    </p>
+
+    <div class="figure">
+      <a href="images/cube_display_mapping.png"><img src="images/cube_display_mapping.png" alt="Display mapping parameters" /></a>
+      <div class="figcap">Face-dependent display mapping — <span class="code">images/cube_display_mapping.png</span></div>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>Solving Algorithm and Execution (IDDFS)</h2>
+    <p>
+      After the user finishes entering all six faces, we convert the six \(3\times3\) color grids into the internal cube state.
+      We then search for a solution using iterative deepening depth-first search (IDDFS) with a limited move set.
+    </p>
+    <p>
+      At each depth, DFS enumerates candidate moves and performs backtracking:
+      record the current move, apply it, recursively search, and undo it if the recursive call fails.
+      Once a valid sequence is found, we restore the cube to the original state, save the move list,
+      and allow the user to apply one move per NEXT press in solver mode.
+    </p>
+
+    <div class="figure">
+      <a href="images/dfs_search.png"><img src="images/dfs_search.png" alt="DFS backtracking loop" /></a>
+      <div class="figcap">Core DFS backtracking loop — <span class="code">images/dfs_search.png</span></div>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <h2>User Interface State Machine</h2>
+    <p>
+      The UI is organized into three stages: State 0 (live IMU-tracked 3D cube), States 1–6 (face-by-face color entry),
+      and State 7 (solution display and step-by-step application). NEXT advances states and applies moves in State 7.
+    </p>
+
+    <div class="figure">
+      <a href="images/cube_solver_state_diagram.png"><img src="images/cube_solver_state_diagram.png" alt="UI state machine" /></a>
+      <div class="figcap">UI state machine — <span class="code">images/cube_solver_state_diagram.png</span></div>
+    </div>
+  </section>
+
+  <div class="footer">
+    Jeongyoon Rhee (jr2487) · Tianyi Liu (tl955) · Cornell ECE 5730
+  </div>
+
+</div>
+</body>
+</html>
