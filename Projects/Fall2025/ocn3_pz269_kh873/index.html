@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="Pico W Audio Streaming and Walkie-Talkie Project Report" />
+    <meta name="author" content="ECE 5730 Project Team" />
+    <title>Pico W Audio Streamer - Final Report</title>
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css?family=Varela+Round" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+        rel="stylesheet" />
+    <link href="css/styles.css" rel="stylesheet" />
+    <style>
+        /* Windows 11 Pro Compatibility Fixes */
+        * {
+            -ms-overflow-style: scrollbar; /* Edge scrollbar fix */
+        }
+        
+        html {
+            scroll-behavior: smooth;
+            -ms-overflow-style: -ms-autohiding-scrollbar;
+        }
+        
+        @supports (-ms-ime-align: auto) {
+            /* Edge-specific fixes */
+            .masthead h1, .masthead .h1 {
+                color: rgba(255, 255, 255, 0.9) !important;
+            }
+        }
+        
+        section {
+            padding: 5rem 0;
+        }
+
+        .bg-dark-section {
+            background-color: #1a1a1a;
+            color: white;
+        }
+
+        .logic-box {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-left: 5px solid #64a19d;
+            margin: 1.5rem 0;
+            color: #212529;
+            border-radius: 0.25rem;
+        }
+
+        .table-custom {
+            width: 100%;
+            margin-bottom: 2rem;
+            border-collapse: collapse;
+            color: inherit;
+        }
+
+        .table-custom th,
+        .table-custom td {
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            vertical-align: top;
+        }
+
+        .math-text {
+            font-family: "Times New Roman", Times, serif;
+            font-style: italic;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 10px 0;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body id="page-top">
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+        <div class="container px-4 px-lg-5">
+            <a class="navbar-brand" href="#page-top">Pico W Audio Project</a>
+            <button class="navbar-toggler navbar-toggler-right" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+                aria-label="Toggle navigation">
+                Menu <i class="fas fa-bars"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#page-top">Introduction</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#intro">Design</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#logic">Software Logic</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#hardware">Hardware</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#results">Results</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#safety">Standards</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#conclusions">Conclusions</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#appendix">Appendices</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="masthead"
+        style="height: auto !important; min-height: auto !important; padding: 200px 0 0 0 !important;">
+        <div class="container px-4 px-lg-5">
+            <div class="text-center">
+                <h1 class="mx-auto text-uppercase" style="margin-bottom: 30px !important;">Project Introduction</h1>
+                <h2 class="text-white-50 mx-auto"
+                    style="margin-top: 0; margin-bottom: 20px; max-width: none !important;">
+                    A wireless audio transceiver system using Raspberry Pi Pico W and UDP.
+                </h2>
+                <p class="text-white-50" style="margin-bottom: 40px;">By Owen Neuman and Pengcheng Zhang</p>
+                <div style="margin-bottom: 40px;">
+                    <iframe width="560" height="315" src="https://www.youtube.com/embed/615_7CmObtg"
+                        title="YouTube video player" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowfullscreen style="max-width: 100%; display: block; margin: 0 auto;">
+                    </iframe>
+                </div>
+                <div style="margin-bottom: 40px;">
+                    <video width="560" height="315" controls preload="metadata" playsinline style="max-width: 100%; display: block; margin: 0 auto;">
+                        <source src="assets/IMG_1047.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                <div style="margin-bottom: 0;">
+                    <a class="btn btn-primary" href="#intro">Read Report</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="intro" class="about-section text-center">
+        <div class="container px-4 px-lg-5">
+            <h2 class="text-white mb-4">High Level Design</h2>
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-lg-10 text-start text-white-50">
+                    <h4>Rationale and Sources of Inspiration</h4>
+                    <p>
+                        We wanted to create a project that incorporated topics covered in labs as well as new elements.
+                        Utilizing the Pico W as an audio transmitter/receiver, essentially transforming units into
+                        walkie-talkies, accomplished this goal. Additionally, the devices are able stream music when in
+                        receive mode using a PC to broadcast the audio data.
+                        The use of a DAC for audio sampling was a core component
+                        of the birdsong and Galton Board Labs, and played a fundamental role in our final project. The
+                        use of the RP 2040
+                        ADC input pins, introduced in the Galton Board lab, was a significant aspect of our project as
+                        well. However,
+                        the realm of Wi-Fi connection and UDP communication was a topic not covered during the labs,
+                        which we thought would be fun to explore. The dual broadcast/receive functionality adds extra
+                        complexity, with both devices able
+                        to toggle between modes. The concept of state change was a fundamental aspect of labs 1 and 2,
+                        which served as a source of inspiration for this feature.
+                        Dr. Adams' lecture on UDP communication and the accompanying demo code on the <a
+                            href="https://vanhunteradams.com/Pico/UDP/UDP_Chat.html" target="_blank"
+                            style="color: #64a19d; text-decoration: underline;">course website</a> were a helpful
+                        starting point.
+                    </p>
+
+                    <h4>Logical Structure & Tradeoffs</h4>
+                    <p>
+                        The primary software/hardware tradeoffs involve managing network overhead while maintaining the
+                        high sampling rate of 44.1KHz. Although this rate
+                        exceeds the sampling rate needed to capture the full human vocal range, it is optimal when
+                        streaming music and adds an extra constraint to the project for the sake of a challenge.
+                        The architecture carefully separates timing-critical real-time operations (handled by the ISR)
+                        from bursty network I/O (managed by cooperative protothreads), using double-buffering on the
+                        transmit path and a thread-safe circular queue on the receive path to decouple these domains.
+                        Audio packets of 1024 samples (11.6 ms, 2048 bytes) are transmitted approximately 86 times per
+                        second, balancing network efficiency against latency. The receive buffer holds 8192 samples
+                        (~185 ms), providing substantial tolerance for WiFi jitter at the cost of end-to-end latency. A
+                        low-pass filter with 5-6 kHz cutoff is applied to microphone input to reduce noise while
+                        preserving voice intelligibility. The system runs entirely on a single core with lock-free
+                        synchronization primitives, prioritizing audio timing integrity over network responsiveness—a
+                        necessary tradeoff given the RP2040's resource constraints. While uncompressed PCM transmission
+                        is bandwidth-intensive, it minimizes CPU overhead and latency, making it suitable for real-time
+                        voice communication where the ~200 ms total system latency (buffering + network + processing)
+                        remains acceptable for conversational use.
+                    </p>
+
+                    <h4 class="mt-4">Background Mathematics & System Architecture</h4>
+                    <div class="math-text">
+                        Sample rate: 44,100 Hz | Stereo: 2 samples captured per ISR call (duplicated mono) | Buffer
+                        size: 1024 samples (512 stereo pairs)<br>
+                        Time to fill buffer: 1024 samples / (2 samples/ISR * 44,100 Hz) ≈ 11.6 ms<br>
+                        Packets per second: 1000 ms / 11.6 ms ≈ 86 packets/second
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 bg-dark text-white p-4" style="border-radius:0.5rem; overflow-x:auto; text-align:center;">
+                <pre class="ascii-diagram"><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                     RASPBERRY PI PICO W AUDIO STREAMING SYSTEM              │
+│                              (Single Core - Core 0)                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                              HARDWARE LAYER
+┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+│   Microphone     │  │   MCP4822 DAC    │  │   WiFi Module    │
+│   (GPIO 26)      │  │   (SPI0)         │  │   (CYW43439)     │
+│   ADC0 12-bit    │  │   Dual 12-bit    │  │                  │
+└────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘
+         │                     │                     │
+         │ Analog              │ SPI @ 20MHz         │ SDIO
+         │                     │ (blocking)          │
+         ▼                     ▼                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           INTERRUPT SERVICE ROUTINE                         │
+│                        (TIMER_IRQ_0 - Priority 0x00)                        │
+│                          Fires every 22.68 μs (44.1 kHz)                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────────────────────┐    ┌──────────────────────────────┐       │
+│  │      TRANSMIT MODE           │    │      RECEIVE MODE            │       │
+│  │                              │    │                              │       │
+│  │  1. adc_read()               │    │  1. deQueue() L sample       │       │
+│  │  2. Low-pass filter          │    │  2. deQueue() R sample       │       │
+│  │     (exponential average)    │    │  3. Format for DAC           │       │
+│  │  3. Store to tx_write_buffer │    │  4. spi_write16_blocking()   │       │
+│  │  4. When full (1024 samples) │    │  5. Pulse LDAC pin           │       │
+│  │     → Swap buffers           │    │                              │       │
+│  │     → Set tx_buffer_ready    │    │  If buffer empty:            │       │
+│  │                              │    │     → Stop playback          │       │
+│  └──────────────────────────────┘    └──────────────────────────────┘       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    ▲                                    ▲
+                    │ Highest Priority                   │ Preempts
+                    │ (preempts all)                     │
+                    │                                    │
+┌───────────────────┴────────────────────────────────────┴───────────────────┐
+│                         BUFFERING & SYNCHRONIZATION                        │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  TRANSMIT PATH (Double Buffer):                                            │
+│  ┌──────────────────┐          ┌──────────────────┐                        │
+│  │ tx_write_buffer  │  swap    │ tx_send_buffer   │                        │
+│  │ (ISR writes)     │ ◄─────►  │ (thread reads)   │                        │
+│  │ 1024 samples     │          │ 1024 samples     │                        │
+│  └──────────────────┘          └──────────────────┘                        │
+│           │                              │                                 │
+│           │ tx_buffer_ready flag         │                                 │
+│           ▼                              ▼                                 │
+│                                                                            │
+│  RECEIVE PATH (Circular Queue):                                            │
+│  ┌───────────────────────────────────────────────────────────┐             │
+│  │        CircularQueue&lt;uint16_t, 8192&gt;                      │             │
+│  │        Thread-safe (atomic start/end indices)             │             │
+│  │        ~185ms buffer at 44.1kHz stereo                    │             │
+│  │                                                           │             │
+│  │   [UDP writes] ──enQueue()──► │ │ │ ──deQueue()──► [ISR]  │             │
+│  │                               ▲                           │             │
+│  │                  512 samples = playback start threshold   │             │
+│  └───────────────────────────────────────────────────────────┘             │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+                    ▲                                    │
+                    │ enQueue()                          │ Packet ready
+                    │                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    COOPERATIVE PROTOTHREAD SCHEDULER                        │
+│                         (Lower Priority - Yields CPU)                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────────────┐  ┌──────────────────────┐  ┌─────────────────┐    │
+│  │ protothread_tx_audio │  │ protothread_receive  │  │ protothread_send│    │
+│  │                      │  │                      │  │                 │    │
+│  │ Polls every 1ms:     │  │ On semaphore signal: │  │ Serial console  │    │
+│  │ if tx_buffer_ready:  │  │ • Calculate bandwidth│  │ UDP test msgs   │    │
+│  │   • Allocate pbuf    │  │ • Print stats every  │  │ (user input)    │    │
+│  │   • memcpy() data    │  │   1 second           │  │                 │    │
+│  │   • udp_sendto()     │  │                      │  │                 │    │
+│  │   • pbuf_free()      │  │ Yield every 22μs     │  │                 │    │
+│  │ Yield 1ms            │  │                      │  │                 │    │
+│  └──────────┬───────────┘  └──────────┬───────────┘  └────────┬────────┘    │
+│             │                         │                       │             │
+└─────────────┼─────────────────────────┼───────────────────────┼─────────────┘
+              │                         ▲                       │
+              │ UDP TX                  │ Stats                 │ UDP TX
+              ▼                         │                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         LWIP NETWORK STACK                                  │
+│                         (Lower Priority Interrupts)                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌────────────────────┐              ┌────────────────────┐                 │
+│  │  UDP Transmit PCB  │              │  UDP Receive PCB   │                 │
+│  │  Port: 1234        │              │  Port: 1234 (bind) │                 │
+│  │  Target: 172.20... │              │                    │                 │
+│  └──────────┬─────────┘              └──────────┬─────────┘                 │
+│             │                                   │                           │
+│             │ Send packets                      │ udpecho_raw_recv()        │
+│             │ (~86/sec)                         │ callback on RX            │
+│             │                                   │                           │
+│             ▼                                   ▼                           │
+│  ┌────────────────────────────────────────────────────────┐                 │
+│  │              IP Layer (IPv4)                           │                 │
+│  │              Adds 20-byte header                       │                 │
+│  └────────────────────┬───────────────────────┬───────────┘                 │
+│                       │                       │                             │
+│                       ▼                       ▼                             │
+│  ┌──────────────────────────────────────────────────────────────┐           │
+│  │              WiFi Driver (CYW43439)                          │           │
+│  │              Handles MAC/PHY layer                           │           │
+│  └──────────────────────┬───────────────────────┬───────────────┘           │
+└─────────────────────────┼───────────────────────┼───────────────────────────┘
+                          │ TX                    │ RX
+                          ▼                       ▼
+                    ┌────────────────────────────────┐
+                    │      WiFi Network (802.11)     │
+                    │      ~1.41 Mbps bandwidth      │
+                    │      172 KB/s audio data       │
+                    │      86 packets/second         │
+                    │      2048 bytes/packet         │
+                    └────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              TIMING DIAGRAM                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ISR fires:     |---22.68μs---|---22.68μs---|---22.68μs---|---22.68μs---    │
+│                 ▲             ▲             ▲             ▲                 │
+│                 │             │             │             │                 │
+│  TX: ADC read   ●             ●             ●             ●                 │
+│  RX: DAC write  ●             ●             ●             ●                 │
+│                                                                             │
+│  Buffer swap:   ├─────────── 11.6 ms (1024 samples) ──────────┤             │
+│                 │                                                           │
+│                 │   tx_buffer_ready                                         │
+│                 ▼                                                           │
+│  Thread polls:  ◆────1ms────◆────1ms────◆────1ms────◆────1ms────◆           │
+│                              │                                              │
+│                              │   Detect ready, send packet                  │
+│                              ▼                                              │
+│  Network RX:    [Packet arrives] ──► Callback ──► enQueue ──► Semaphore     │
+│                 (variable timing, ~86/sec average)                          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            DATA FLOW SUMMARY                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  TRANSMIT: Mic → ADC → Filter → TX Buffer → UDP → WiFi                      │
+│            └─ 44.1kHz ISR ─┘ └─ Double buffer ─┘ └─ Thread ─┘               │
+│                                                                             │
+│  RECEIVE:  WiFi → UDP → Circular Queue → DAC → Speaker                      │
+│            └─ Callback ─┘ └─ Thread-safe ─┘ └─ 44.1kHz ISR ─┘               │
+│                                                                             │
+│  Bandwidth: 1.41 Mbps (raw audio) + 19 kbps (UDP/IP overhead) = 1.43 Mbps   │
+│  Latency:   ~11ms (TX buffer) + ~100ms (network) + ~100ms (RX buffer)       │
+│             = ~211ms total end-to-end                                       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘</code></pre>
+            </div>
+
+            <style>
+                .ascii-diagram {
+                    margin: 0;
+                    color: #00ff00;
+
+
+                    text-align: left;
+                    display: inline-block;
+
+
+                    white-space: pre;
+
+                    overflow-x: auto;
+                    max-width: 100%;
+
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                        "Liberation Mono", "DejaVu Sans Mono", "Noto Sans Mono",
+                        "Courier New", monospace;
+                    font-size: 12px;
+                    line-height: 1.15;
+                    font-variant-ligatures: none;
+                }
+
+                .ascii-diagram code {
+                    font-family: inherit;
+                }
+            </style>
+        </div>
+    </section>
+
+    <section id="logic" class="projects-section bg-light">
+        <div class="container px-4 px-lg-5">
+            <h2 class="text-center mb-5">Program Details and Logic</h2>
+            <div class="row gx-4 gx-lg-5">
+                <div class="col-lg-12">
+                    <h4>Audio Transmission Thread Logic</h4>
+                    <div class="logic-box">
+                        The audio transmission is handled by a dedicated protothread. It operates in an infinite loop,
+                        checking if the device is in transmit mode and if the audio buffer is ready. When ready, the
+                        thread allocates a packet buffer (pbuf) from the transport layer. It then copies the 16-bit
+                        audio data from the transmit buffer into the packet payload. The packet is sent to the target IP
+                        address and port via UDP. After transmission, the pbuf is freed to prevent memory leaks, and the
+                        ready flag is cleared to allow the next buffer swap in the ISR.
+                    </div>
+
+                    <h4>UDP Reception and Buffering Logic</h4>
+                    <div class="logic-box">
+                        For receiving audio, the system uses the LWIP raw receive callback. When a UDP packet arrives,
+                        the callback verifies the content and copies the payload into a data buffer. The raw bytes are
+                        cast to 16-bit samples and enqueued into a circular audio buffer. To ensure smooth playback and
+                        mitigate network jitter, the system only begins playing once the circular queue is half-filled
+                        (at least 512 samples). Once buffered, a semaphore signals the thread to begin processing.
+                    </div>
+
+                    <h4>DAC Output and SPI Synchronicity</h4>
+                    <div class="logic-box">
+                        The actual audio output is driven by an alarm interrupt occurring 44,100 times per second. In
+                        each cycle, the ISR dequeues two 16-bit samples for stereo playback. If the buffer is empty, the
+                        system stops playing. For valid samples, the high 4 bits are appended with DAC configuration
+                        data (selecting Channel A or B). These values are sent to the DAC via blocking SPI transfers.
+                        Finally, the LDAC pin is pulsed low to latch the data from the input registers to the analog
+                        output for synchronous playback across both channels.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="hardware" class="projects-section bg-dark-section">
+        <div class="container px-4 px-lg-5 text-white">
+            <h2 class="text-center mb-5">Hardware Design and Connections</h2>
+            <div class="row gx-4 gx-lg-5">
+                <div class="col-lg-6">
+                    <h4>Materials List</h4>
+                    <ul>
+                        <li><strong>Raspberry Pi Pico W:</strong> Core microcontroller with Wi-Fi capability.</li>
+                        <li><strong>MCP-4822 DAC:</strong> 12-bit dual-channel digital-to-analog converter.</li>
+                        <li><strong>MAX 4466 Microphone:</strong> Electret microphone amplifier for audio capture.</li>
+                        <li><strong>AmazonBasics computer speakers v216US:</strong> Used for audio output.</li>
+                        <li><strong>Pi Pico Serial Debug Probe:</strong> Used for monitoring and debugging.</li>
+                        <li><strong>Miscellaneous:</strong> Audio jack, Tactile button, LED, 330 Ohm resistor,
+                            Breadboard, and jumper wires.</li>
+                    </ul>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <img src="assets/img/DAC datasheet.png" alt="MCP4822 8-Pin Package Diagram" class="img-fluid border"
+                        style="width: 100%; max-width: 600px; height: auto; object-fit: contain;">
+                    <p class="mt-2 small">Note: Package types include 8-Pin PDIP, SOIC, and MSOP.</p>
+                </div>
+            </div>
+
+            <div class="row gx-4 gx-lg-5 mt-4 justify-content-center">
+                <div class="col-lg-6 text-center">
+                    <img src="assets/img/max4466_microphone_pinout.png" alt="MAX4466 Microphone Pinout"
+                        class="img-fluid border"
+                        style="width: 100%; max-width: 600px; height: auto; object-fit: contain;">
+                    <p class="mt-2 small">MAX4466 Electret Microphone Amplifier Pinout</p>
+                </div>
+            </div>
+
+            <h4 class="mt-5 text-center">Physical Pin Mapping (Pi Pico W)</h4>
+            <table class="table-custom text-white">
+                <thead>
+                    <tr>
+                        <th>Pico W Pin</th>
+                        <th>Connection Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Pins 1, 2, 3</td>
+                        <td>Connected to the serial debugger probe.</td>
+                    </tr>
+                    <tr>
+                        <td>Pin 5</td>
+                        <td>330 Ohm resistor connected to a button leading to Ground.</td>
+                    </tr>
+                    <tr>
+                        <td>Pin 7</td>
+                        <td>Connected to DAC Pin 2 (Chip Select - CS).</td>
+                    </tr>
+                    <tr>
+                        <td>Pin 9</td>
+                        <td>Connected to DAC Pin 3 (Serial Clock - SCK).</td>
+                    </tr>
+                    <tr>
+                        <td>Pin 10</td>
+                        <td>Connected to DAC Pin 4 (Serial Data Input - SDI).</td>
+                    </tr>
+                    <tr>
+                        <td>Pin 11</td>
+                        <td>Connected to DAC Pin 5 (Latch Data - LDAC).</td>
+                    </tr>
+                    <tr>
+                        <td>Pin 12</td>
+                        <td>Connected to an LED leading to Ground.</td>
+                    </tr>
+                    <tr>
+                        <td>Pin 31</td>
+                        <td>Connected to the MAX 4466 microphone output.</td>
+                    </tr>
+                    <tr>
+                        <td>Pin 36 / 38</td>
+                        <td>Vcc and Ground rails for the breadboard.</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>Connect DAC pins 6 & 8 (audio output channels) to the audio jack.</p>
+            <p>Remember to ground the audio jack, DAC, and microphone as well.</p>
+            <p style="font-family: 'Varela Round', cursive; font-style: italic;">You'll need two of everything if you
+                want to make two devices!</p>
+        </div>
+    </section>
+
+    <section id="results" class="projects-section bg-light">
+        <div class="container px-4 px-lg-5">
+            <h2 class="text-center mb-5">Results and Performance Analysis</h2>
+            <div class="row gx-4 gx-lg-5">
+                <div class="col-lg-6">
+                    <h4>Bandwidth Metrics</h4>
+                    <p>
+                        We observed the bandwidth based on the rate of received packets. Streaming from a PC to the Pico
+                        proved near ideal, while the Pico W as a transmitter showed significant packet loss. The loss of
+                        approximately 50% of audio samples had a significant impact on playback quality.
+                    </p>
+                    <ul>
+                        <li><strong>PC Transmitter:</strong> Averaged between 170.80 KB/s and 194.61 KB/s.</li>
+                        <li><strong>Pico W Transmitter:</strong> Averaged between 82.50 KB/s and 87.17 KB/s.</li>
+                    </ul>
+                    <p>
+                        The audio quality was well-preserved when streaming music from a PC(tested with <i>Viva la
+                            Vida</i> by
+                        Coldplay) from a PC. However, when using the voice transmission feature between Pico units, the
+                        audio was distorted. We tested playback with pure sine wave tones and direct ADC-to-DAC
+                        connections (no UDP transmission) which eliminated the microphone as a possible source of noise.
+                    </p>
+                </div>
+                <div class="col-lg-6">
+                    <h4>Bandwidth Calculations</h4>
+                    <div class="math-text d-block">
+                        Theory: 44,100 Hz * 2 channels * 2 bytes/sample = 176,400 bytes/second.<br>
+                        Kilobytes/second: 176,400 / 1024 = 172.27 KB/s.<br>
+                        Network Overhead: 8 bytes (UDP) + 20 bytes (IP) = 28 bytes per packet.<br>
+                        Total Overhead: 86.13 packets/s * 28 bytes ≈ 2.4 KB/s.<br>
+                        Total Ideal Bandwidth: 172.27 + 2.4 = 174.67 KB/s (1,423 kbps).
+                    </div>
+                    <p class="mt-3">
+                        The bandwidth metrics indicate that packet loss during UDP transmission is the primary cause of
+                        the audio distortion. They also suggest that the Pico W's Wi-Fi transmission capabilities may be
+                        limited in comparison to that of a PC, which was able to maintain a near ideal bandwidth. It is
+                        worth noting that the WiFi network was provided using an iPhone hotspot, which may have
+                        contributed to the instability of the connection.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="safety" class="projects-section bg-dark-section">
+        <div class="container px-4 px-lg-5 text-white">
+            <h2 class="text-center mb-5">Regulations, Safety, and IP</h2>
+            <div class="row gx-4 gx-lg-5">
+                <div class="col-lg-4">
+                    <h4>Safety Precautions</h4>
+                    <p>Soldering was required to connect header pins to the Pico W and microphones. Eye protection was
+                        worn at all times during soldering. We also ensured the supply voltage to the breadboard was
+                        disconnected when adjusting any wiring.</p>
+                </div>
+                <div class="col-lg-4">
+                    <h4>Standards & Regulations</h4>
+                    <p>As this project uses Wi-Fi to transmit signals, it qualifies as an intentional radiator under FCC
+                        Part 15 regulations. We ensured compliance by using the stock Pico W module, which carries FCC
+                        certification, and avoided modifying the antenna or firmware.</p>
+                </div>
+                <div class="col-lg-4">
+                    <h4>Intellectual Property</h4>
+                    <p>
+                        The UDP demo code is the intellectual property of Andrew McDonnell (Copyright 2022). The LWIP
+                        stack was originally developed by Adam Dunkels and is open source. No patent opportunities were
+                        pursued, and no non-disclosure agreements were required.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="conclusions" class="about-section text-center">
+        <div class="container px-4 px-lg-5">
+            <h2 class="text-white mb-4">Conclusions and Future Work</h2>
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-lg-10 text-start text-white-50">
+                    <p>
+                        The design met expectations for PC-to-Pico streaming but showed packet loss limitations in
+                        Pico-to-Pico transmission. If given more time, we would explore strategic physical orientation
+                        of the network access point, Wi-Fi Pico W antenna, and surrounding jumper wires in the hopes of
+                        mitigating packet loss. Another interesting area for
+                        exploration is the implementation of a software audio mixer using potentiometers for volume,
+                        bass, mid, and treble control, potentially utilizing an FFT for frequency domain tuning.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="appendix" class="projects-section bg-dark-section">
+        <div class="container px-4 px-lg-5 text-white">
+            <h2 class="text-center mb-5">Appendix A (Permissions)</h2>
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-lg-10">
+                    <p>
+                        The group approves this report for inclusion on the course website.
+                    </p>
+                    <p>The group approves the video for inclusion on the course youtube channel.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="projects-section bg-light">
+        <div class="container px-4 px-lg-5">
+            <h2 class="text-center mb-5">Appendix B (Code Listing)</h2>
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-lg-10">
+                    <h4>Project Source Files</h4>
+                    <p>Download the complete source code:</p>
+                    <ul>
+                        <li><a href="assets/UDP/picow_udp_beacon.cpp" download
+                                class="text-primary"><strong>picow_udp_beacon.cpp</strong></a> - Main application code
+                        </li>
+                        <li><a href="assets/UDP/CircularQueue.hpp" download
+                                class="text-primary"><strong>CircularQueue.hpp</strong></a> - Circular queue
+                            implementation for audio buffering
+                        </li>
+                        <li><a href="assets/UDP/connect.h" download class="text-primary"><strong>connect.h</strong></a>
+                            - WiFi connection utilities
+                        </li>
+                        <li><a href="assets/UDP/pt_cornell_rp2040_v1_4.h" download
+                                class="text-primary"><strong>pt_cornell_rp2040_v1_4.h</strong></a> - Protothreads
+                            library
+                        </li>
+                        <li><a href="assets/UDP/fix15.hpp" download class="text-primary"><strong>fix15.hpp</strong></a>
+                            - Fixed-point math utilities
+                        </li>
+                        <li><a href="assets/UDP/CMakeLists.txt" download
+                                class="text-primary"><strong>CMakeLists.txt</strong></a> - Build configuration
+                        </li>
+                        <li><a href="assets/UDP/lwipopts.h" download
+                                class="text-primary"><strong>lwipopts.h</strong></a> - LWIP stack configuration
+                        </li>
+                        <li><a href="assets/UDP/lwipopts_examples_common.h" download
+                                class="text-primary"><strong>lwipopts_examples_common.h</strong></a> - LWIP common
+                            options
+                        </li>
+                        <li><a href="assets/wave_sender.cpp" download
+                                class="text-primary"><strong>wave_sender.cpp</strong></a> - Stream wave from
+                            macOS/Linux to the Pico W
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="projects-section bg-dark-section">
+        <div class="container px-4 px-lg-5 text-white">
+            <h2 class="text-center mb-5">Appendix C (Datasheets)</h2>
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-lg-10">
+                    <h4>Component Documentation</h4>
+                    <ul>
+                        <li><a href="https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/20002249B.pdf"
+                                target="_blank" class="text-white"><strong>MCP4822 DAC Datasheet</strong></a> - 12-bit
+                            dual-channel digital-to-analog converter specifications</li>
+                        <li><a href="https://www.analog.com/media/en/technical-documentation/data-sheets/MAX4465-MAX4469.pdf"
+                                target="_blank" class="text-white"><strong>MAX4466 Microphone Datasheet</strong></a> -
+                            Electret microphone amplifier specifications</li>
+                        <li><a href="https://www.raspberrypi.com/documentation/microcontrollers/pico-series.html"
+                                target="_blank" class="text-white"><strong>Raspberry Pi Pico W
+                                    Documentation</strong></a> - Complete microcontroller documentation and
+                            specifications</li>
+                        <li><a href="https://www.raspberrypi.com/products/debug-probe/" target="_blank"
+                                class="text-white"><strong>Raspberry Pi Debug Probe</strong></a> - Serial debug probe
+                            information and specifications</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer bg-black small text-center text-white-50">
+        <div class="container px-4 px-lg-5">
+            Copyright &copy; ECE 5730 Final Project 2025<br>
+            The group approves this report for inclusion on the course website.
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/scripts.js"></script>
+</body>
+
+</html>
