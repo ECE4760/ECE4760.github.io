@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Airdrum Kit – ECE 4760 Final Project</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});">
+</script>
+</head>
+
+<body>
+
+<!-- Navigation bar -->
+<nav class="topnav">
+  <a href="#intro">Introduction</a>
+  <a href="#highlevel">High Level Design</a>
+  <a href="#design">Program / Hardware Design</a>
+  <a href="#results">Results</a>
+  <a href="#conclusion">Conclusions</a>
+  <a href="#ip">IP Considerations</a>
+  <a href="#appendix">Appendices</a>
+</nav>
+
+<!-- Hero Section -->
+<div class="hero">
+  <div class="hero-overlay">
+    <h1>Airdrum Kit</h1>
+    <p>ECE 4760 Final Project</p>
+    <p>Liam Lahar · Christina Huang · Alex Baker</p>
+  </div>
+</div>
+
+<!-- Title section -->
+<section id="intro">
+  <h1>Airdrum Kit</h1>
+  <p><strong>Team Members:</strong> Liam Lahar (ljl97), Christina Huang (ch2233), Alex Baker (amb663)</p>
+  <p><strong>Course:</strong> ECE 4760 – Designing with Microcontrollers</p>
+
+  <h2>Introduction</h2>
+  <p>
+    Traditional drum kits are expensive, bulky, difficult to transport, and often impractical for on-the-go 
+    practice for the average busy person. However, air drumsticks offer a portable and accessible alternative for both 
+    practice and entertainment, allowing users to make drumming gestures in the air to trigger sound effects that emulate 
+    the percussion instruments of a real drum kit.
+  </p>
+
+  <h2>Project Summary</h2>
+ <p>
+  For the final project, we developed and designed a set of air drumsticks that provide a motion-based auditory interface,
+  allowing users to trigger and control sounds by mimicking the action of striking a physical drum.
+</p>
+
+<p>
+  To accomplish this, we designed a set of 3D-printed drumsticks with half-shell enclosures and integrated each
+  with a 9-DOF IMU (BNO085), enabling complete angular orientation awareness. The drumsticks are able to play
+  different sounds depending on the radial location (yaw) at which the virtual “drum” is struck. A drum strike is
+  determined using an angular threshold (pitch), while the volume of the sound produced depends on the velocity
+  at which the “drum” is hit.
+</p>
+
+<p>
+  Additionally, we implemented unique air drum modes by utilizing a twisting gesture (roll) to switch between four
+  preprogrammed sound modes: Drum Kit, Piano, Special Effects, and Drum Solo. We also added a recalibration feature
+  that allows the user to zero the position of all three angular axes of each drumstick, enabling a comfortable and
+  customizable drum orientation and playing angle.
+</p>
+
+<p>
+  Finally, we integrated all hardware external to the drumsticks into a small, portable enclosure that houses the
+  electronic components and connects to each drumstick via a pair of thin wires. This enclosure contains each stick’s
+  Raspberry Pi Pico, mini MP3 DFPlayer, speaker, and recalibration button, all of which are cleanly incorporated onto
+  a single protoboard, resulting in a compact and self-contained system design.
+</p>
+
+<p>
+  Our air drumsticks generate sound electronically based on striking motions and gestures, providing a cheaper, more
+  portable, versatile, and entertaining alternative to purchasing a physical drum set. While our implementation is
+  by no means a market-ready product, it provides a strong proof of concept that demonstrates the feasibility and
+  flexibility of motion-based musical interfaces built using embedded systems.
+</p>
+
+
+
+  <figure>
+    <img src="images/airdrum.jpg" alt="Airdrum Kit hardware prototype" class="project-image">
+    <figcaption>Figure 1: Handheld Airdrum controllers and speaker module.</figcaption>
+  </figure>
+</section>
+
+<section id="highlevel">
+  <h2>High Level Design</h2>
+
+  <h3>Rationale and Sources</h3>
+  <p>
+  When deciding on a final project, we prioritized iterability, the ability to add features, our interests, and cost.
+  Our group was heavily influenced by the third lab project for ECE 4760, PID control of a 1D helicopter, as it strongly
+  exemplified how embedded circuitry can work in unison with mechanical systems. We found that the best avenue to achieve
+  these goals was to create drumsticks that play sounds when the user mimics the motion of hitting a drum. This project
+  is both interesting to demonstrate and to develop, as the technical challenge of playing a sound from a simple arm
+  movement at a specific location requires precise arithmetic and careful attention to accuracy.
+</p>
+
+<p>
+  In particular, we were attracted to the iterative nature of the project. At its core, a simple implementation using
+  a basic 6-DoF IMU and a button to switch drum sounds already presents interesting design challenges, such as determining
+  when a hit occurs and triggering the correct sound file. However, our implementation was able to expand significantly
+  beyond this baseline. We implemented more flexible methods of sound production using a DFPlayer communicating over
+  UART, and by using a 9-DoF IMU, we were able to obtain complete angular orientation. Collectively, these features gave
+  us substantial creative freedom in designing our drumsticks.
+</p>
+
+<p>
+  The 9-DoF IMU enabled a more sophisticated approach to selecting drum sounds based on angular position relative to the
+  body, resulting in a more realistic experience similar to a physical drum kit. Additionally, the use of DFPlayers
+  provided virtually limitless potential for sound selection, quality, and storage. As a result, our drumsticks are
+  capable of playing a full drum kit, a piano, triggering sound effects, performing complex drum solos, or supporting
+  many other sound modes. By incorporating IMU-based sensing, we were also able to develop hand gestures as an intuitive
+  and interactive method for switching between these preprogrammed modes.
+</p>
+
+<p>
+  Lastly, while we are very happy with our current air drumstick implementation, the project remains extremely versatile.
+  Additional features such as wireless communication, motor vibration feedback on drum hits, expanded user options for
+  drum modes, or integration with a VGA display to interact with a drumming or other video game are all possible
+  extensions of our baseline architecture.
+</p>
+
+
+  <h3>Background Math</h3>
+  <p>
+    The IMU used for this project is a <strong>BNO085</strong>. This IMU contains a
+    3-axis accelerometer, 3-axis gyroscope, 3-axis magnetometer, an on-chip
+    microcontroller, and sensor-fusion firmware. Because the IMU contains an embedded
+    microcontroller, it is able to process, calculate, and filter sensor data internally
+    before sending orientation information to the RP2040.
+  </p>
+
+  <p>
+    The BNO085 IMU internally estimates 3D orientation using a unit quaternion
+    representation, which is maintained and updated through Bosch’s closed-source
+    sensor-fusion firmware. Although the exact fusion algorithm is proprietary, the device
+    outputs a normalized quaternion whose magnitude is constrained to one for numerical
+    stability.
+  </p>
+
+  <p>
+    The quaternion is defined as
+    $$ Q = (w, x, y, z) $$
+    where
+    $$ w = \cos\left(\frac{\theta}{2}\right) $$
+    and
+    $$ (x, y, z) = \sin\left(\frac{\theta}{2}\right)\,\hat{\mathbf{u}} $$
+    with $\hat{\mathbf{u}}$ representing the unit rotation axis. This representation avoids
+    drift issues associated with Euler angle integration.
+  </p>
+
+  <p>
+    Yaw, pitch, and roll are computed from this quaternion using standard
+    quaternion-to-Euler angle transformations:
+  </p>
+
+$$
+\text{roll} = \operatorname{atan2}\!\left(2(wz + xy),\, 1 - 2(y^2 + z^2)\right)
+$$
+
+$$
+\text{pitch} = \arcsin\!\left(2(wy - zx)\right)
+$$
+
+$$
+\text{yaw} = \operatorname{atan2}\!\left(2(wx + yz),\, 1 - 2(x^2 + y^2)\right)
+$$
+
+
+  <p>
+  These equations are standard in orientation estimation and can be found implemented in
+  libraries such as Adafruit’s BNO08x Arduino library, which was used in this project.
+  The function call <code>atan2</code> is a special inverse tangent function that examines
+  the signs of its two inputs and maps the result into the correct quadrant, producing an
+  output between $-\pi$ and $+\pi$, which corresponds to the valid range for roll and yaw.
+  The first parameter of the function,
+  $2(wx + yz)$, is essentially $\sin(\text{roll})$ or $\sin(\text{yaw})$, while the second
+  parameter, $1 - 2(x^2 + y^2)$, represents $\cos(\text{roll})$ or $\cos(\text{yaw})$.
+  By using both sine- and cosine-like terms, the IMU is able to preserve orientation and
+  compute angles continuously across $360^\circ$, resulting in accurate directional
+  estimates. Pitch does not use <code>atan2</code> since its range is limited to
+  $-\pi/2$ to $+\pi/2$.
+  In addition to orientation estimation, the BNO085 performs gravity vector estimation,
+  gyroscope bias correction, and sensor fusion across accelerometer, gyroscope, and
+  magnetometer data to improve stability and long-term accuracy.
+</p>
+
+ <figure>
+    <img src="images/BNO085.png" alt="BNO085 IMU Reference: Adafruit" class="project-image">
+    <figcaption>Figure 2: BNO085 IMU Reference: Adafruit</figcaption>
+  </figure>
+
+
+  <h3>Logical Structure</h3>
+
+  <p>
+    Our drumstick structure consists of a dual-microcontroller architecture, where each
+    of two RP2040 microcontrollers independently handles the functionality of a single
+    drumstick. Each RP2040 communicates with a BNO085 IMU over I2C to acquire orientation
+    data in the form of yaw, pitch, and roll, which are then used for further calculations.
+    Each RP2040 also communicates with an external DFPlayer module over UART to trigger
+    sound playback. These serial commands instruct the DFPlayer to decode the selected
+    audio file, convert it to an analog signal, and amplify it for output through a
+    speaker.
+  </p>
+
+  <p>
+    Within the software, multiple protothreads are instantiated to handle the different
+    computation and control tasks. To calibrate the origin of the drumstick, each unit
+    includes a dedicated push button that resets the yaw, pitch, and roll reference to the
+    current orientation of the drumstick at the moment the button is pressed. Another
+    protothread continuously gathers yaw, pitch, and roll data from the IMU; these values
+    are then normalized relative to the user’s position and used to calculate the velocity
+    of the drumstick.
+  </p>
+
+  <p>
+    Modular arithmetic is used to define the threshold required for a drum sound to play
+    and to determine which sound is triggered based on the angular location of the
+    drumstick. To prevent discontinuities in yaw, pitch, or roll, angular wrapping is
+    employed to eliminate sudden jumps in the calculated orientation when crossing
+    positive or negative angle boundaries. This is achieved by adding or subtracting
+    $2\pi$ to map negative angles to their equivalent positive values.
+  </p>
+
+  <p>
+    Because the IMU’s coordinate system is defined relative to the Earth’s frame, it was
+    necessary to allow the yaw and pitch origins to align with the user’s orientation.
+    Since all calculations are based on the IMU starting at the origin, recalibrating the
+    origin enables the user to face any direction while maintaining consistent control. By
+    recording the initial yaw and pitch values, subsequent measurements are computed
+    relative to the user by subtracting these initial values from the raw IMU data.
+  </p>
+
+  <p>
+    To determine the volume of sound produced when the user strikes a virtual drum,
+    angular velocity is approximated by taking the difference between successive pitch
+    measurements and dividing by the sampling period. This value is then scaled to better
+    distinguish rapid pitch changes caused by striking motions from slower, intentional
+    movements of the drumstick. The resulting velocity is discretely mapped to a set of
+    volume levels using an inverse sigmoid-like function, allowing faster swings of the
+    drumstick to produce louder sounds, analogous to a real drum.
+  </p>
+
+  <p>
+    Finally, different virtual drums are modeled using angular yaw thresholds. When the
+    drumstick’s yaw falls within a specified inequality range, the corresponding sound
+    associated with that angular region is triggered, enabling the user to play multiple
+    drums by swinging the drumstick to different positions in space.
+  </p>
+
+  <h3>Relevant Patents and Prior Work</h3>
+  <p>
+    Motion-controlled musical instruments are already a well-established domain within
+    the toy and entertainment market. There exist numerous electronic air drum systems,
+    most of which utilize body and stick motion to trigger percussion sounds. Patents
+    associated with these products typically rely on specific hardware designs and
+    implementations, motion-sensing and gesture-categorization techniques, and audio
+    synthesis methods. A patent for electronic air drumsticks (WO2011097371A1) does exist;
+    however, it has expired, meaning that the design is now part of the public domain.
+  </p>
+</section>
+
+<section id="design">
+  <h2>Program and Hardware Design</h2>
+
+  <h3>Program Details</h3>
+  <p>
+    The overall software design of the project is implemented using protothreads
+    and controls all functions of a single drumstick. The same codebase is flashed onto both
+    drumsticks, allowing each RP2040 to operate independently while maintaining identical
+    functionality. For a single drumstick, we implemented five protothreads:
+    <code>protothread_imu</code>, <code>protothread_hit</code>,
+    <code>protothread_drums</code>, <code>protothread_button</code>, and
+    <code>protothread_music_select</code>.
+  </p>
+
+  <p>
+    Both the IMUs and DFPlayers are initialized in the <code>main()</code> function. During
+    initialization, each IMU establishes an I2C connection on I2C0 to allow orientation data
+    to be read reliably. The DFPlayers are also reset upon boot, and their UART buses are
+    initialized in <code>main()</code> to enable audio playback control.
+  </p>
+
+  <p>
+    <strong>protothread_imu:</strong> This thread reads orientation data from the IMU using
+    the <code>IMU.getYaw()</code>, <code>IMU.getRoll()</code>, and
+    <code>IMU.getPitch()</code> functions. These values are normalized relative to the
+    user’s calibrated origin and are used to compute angular velocities of the drumstick.
+    The calculated angular velocity during a strike is later used to determine the volume
+    of the sound played, mimicking the behavior of a real drumkit.
+  </p>
+
+  <p>
+    <strong>protothread_drums:</strong> This thread divides the yaw angle of the IMU into
+    discrete angular regions corresponding to different virtual drums, depending on which
+    sound folder is currently selected. By assigning ranges of yaw values to specific sound
+    files, striking different radial positions around the user triggers different drum
+    sounds, allowing a full drumkit to be emulated using a single handheld drumstick.
+  </p>
+
+  <p>
+    <strong>protothread_hit:</strong> This thread contains the logic for detecting when a
+    drum hit has occurred. The pitch threshold for detecting a hit depends on the orientation
+    at which the drumsticks were initially booted, and this reference point can be reset at
+    any time using the external buttons to adjust the perceived drum height. When the IMU
+    pitch falls below the hit threshold, the corresponding sound is triggered. A simple
+    two-state state machine is used to debounce hit detection. The angular velocity of the
+    strike is also mapped to a fitted inverse sigmoid function to determine playback volume.
+  </p>
+
+  <p>
+    <strong>protothread_button:</strong> This thread handles input from an external latching
+    push button mounted on each drumstick. Any detected transition resets the yaw, pitch, and
+    roll reference values to the current IMU readings, allowing users to recenter the
+    drumkit orientation and adjust drum height at any time.
+  </p>
+
+  <p>
+    <strong>protothread_music_select:</strong> This thread controls which sound library is
+    active on the drumsticks. Different sound kits are stored in separate folders on the
+    DFPlayer microSD card. Users switch sound libraries by rotating the drumstick about its
+    roll axis. A transition is detected when the roll value exceeds
+    $ \frac{3\pi}{4} $ or is less than $ -\frac{3\pi}{4} $. This motion is debounced using
+    logic similar to the keypad debouncing implemented in Lab 1 to prevent unintended
+    multiple transitions. When a valid transition occurs, an audio cue announces the newly
+    selected sound library. The available sound libraries include <em>Drumkit</em>,
+    <em>Piano</em>, <em>Special Effects</em>, and <em>Drum Solo</em>.
+  </p>
+
+  <p>
+    The volume response of the system is determined using an inverse sigmoid function. This
+    function is evaluated during the <code>main()</code> function and mapped into an array to
+    avoid expensive floating-point computations inside the protothreads. The DFPlayer
+    supports volume levels from 1 to 30. Each of these discrete volume values is substituted
+    into the sigmoid equation, and the resulting thresholds are stored for fast lookup
+    during runtime.
+  </p>
+
+  <p>
+    Using an inverse sigmoid mapping allows for a more dynamic and natural sound response.
+    Mid-range volumes occur more frequently, while very quiet and very loud sounds are still
+    possible but less dominant. The parameters of the sigmoid were determined experimentally
+    using angular velocity data obtained from the IMU during slow and fast strikes.
+  </p>
+
+  <p>The inverse sigmoid equation used is:</p>
+
+  $$
+  x + 20 = \frac{20}{1 + e^{0.25(y - 15)}}
+  $$
+
+  <p> </p>
+
+  <figure>
+    <img src="images/sigmoid.jpg"
+         alt="Airdrum virtual drumkit layout"
+         class="project-image">
+    <figcaption>Fig 3. Inverse sigmoid curve using to determine volume</figcaption>
+  </figure>
+
+
+
+
+<p> </p>
+
+  <figure>
+    <img src="images/airdrum_drumkit.jpg"
+         alt="Airdrum virtual drumkit layout"
+         class="project-image">
+    <figcaption>Fig 4. Virtual drumkit mapping used in the Airdrum set</figcaption>
+  </figure>
+<p> </p>
+  <figure>
+    <img src="images/airdrum_piano.jpg"
+         alt="Airdrum virtual piano layout"
+         class="project-image">
+    <figcaption>Fig 5. Virtual piano mapping used in the Airdrum set</figcaption>
+  </figure>
+<p> </p>
+
+
+
+  <h3>Hardware Details</h3>
+   
+<p>
+  For the hardware implementation, we utilized two Raspberry Pi Picos operating in parallel, each running identical
+  firmware corresponding to one drumstick. For each drumstick, we 3D-printed two half-shells and hollowed the center
+  of the stick to route IMU wiring internally. Each BNO085 IMU was securely mounted using heat-set inserts, ensuring
+  that the sensor’s position and orientation remained fixed relative to the drumstick. This mechanical stability is
+  critical for accurately determining strike events, sound selection, volume scaling, and operating mode based on
+  motion and orientation data.
+</p>
+
+<p>
+  We chose the BNO085 IMU for its simplicity, performance, and full 9-axis sensor fusion, incorporating a gyroscope,
+  accelerometer, and magnetometer to provide stable and accurate 3-axis orientation. Unlike six-axis IMUs used in
+  previous labs, which combine only gyroscope and accelerometer data and therefore lack an absolute yaw reference,
+  the BNO085 is capable of estimating yaw through magnetometer fusion. This capability enables more reliable
+  orientation tracking, which we use to determine which sound is played by the user.
+</p>
+
+<p>
+  To maximize simplicity, audio quality, versatility, volume, and storage capacity, our air drum implementation
+  makes use of two DFPlayer Mini MP3 player modules. Each DFPlayer operates as a self-contained audio player, reading
+  compressed audio files (MP3/WAV) from an onboard microSD card and decoding them internally. The DFPlayer utilizes
+  an integrated digital audio decoder with an internal high-resolution 24-bit DAC followed by an onboard audio
+  amplifier. Once a play command is received from the microcontroller over a UART serial interface, the selected
+  audio file is decoded and converted to an analog signal internally, then amplified to a level sufficient to
+  directly drive an external speaker through the module’s speaker outputs.
+</p>
+
+<p>
+  Because the DFPlayer functions as an audio decoder, DAC, amplifier, and storage device, it eliminates the need
+  for significant external audio hardware. This enables a straightforward implementation in which audio files are
+  simply organized into folders on a microSD card and selected for playback through MCU firmware. By connecting
+  3 W speakers to each of the two DFPlayer modules, the system supports simultaneous playback from both drumsticks
+  while maintaining audible, high-quality sound output.
+</p>
+
+<p>
+  To maintain a clean, compact, and portable hardware implementation, we chose to integrate all electronics
+  external to the drumstick bodies into a single enclosure. This enclosure houses the two Raspberry Pi Picos,
+  DFPlayer modules, speakers, and calibration buttons. All components are neatly assembled onto a single
+  protoboard, reducing wiring complexity and improving overall system reliability. Two thin, flexible twisted
+  wire pairs (commonly used for differential harnessing) connect the enclosure to each corresponding drumstick,
+  providing power, ground, clock, and data signals to the IMUs.
+</p>
+
+<p>
+  Additionally, both Raspberry Pi Picos are powered from a single 5 V USB input through one Pico, meaning that
+  after the initial firmware flash, only a single USB power connection is required to operate the system. This
+  architecture results in a robust, modular, and portable hardware platform that supports future expansion and
+  feature additions.
+</p>
+
+
+  <figure>
+    <img src="images/hardware.png"
+         alt="Airdrum virtual drumkit layout"
+         class="project-image">
+    <figcaption>Fig 6. Full Hardware schematic of Airdum kit</figcaption>
+  </figure>
+
+  <h3>Bill of Materials</h3>
+  </p>
+
+<table class="bom-table">
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Quantity</th>
+      <th>Cost</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <a href="https://www.amazon.com/dp/B0738NLFTG?th=1" target="_blank">
+          CQRobot 3 Watt Speaker
+        </a>
+      </td>
+      <td>2</td>
+      <td>$7.99</td>
+    </tr>
+
+    <tr>
+      <td>
+        <a href="https://www.amazon.com/dp/B01D1D0E7Q" target="_blank">
+          HiLetgo Mini MP3 DFPlayer
+        </a>
+      </td>
+      <td>2</td>
+      <td>$7.99</td>
+    </tr>
+
+    <tr>
+      <td>
+        <a href="https://www.digikey.com/en/products/detail/adafruit-industries-llc/4754/13426653" target="_blank">
+          Adafruit 9-DOF Orientation IMU – BNO085
+        </a>
+      </td>
+      <td>2</td>
+      <td>$49.90</td>
+    </tr>
+
+    <tr>
+      <td>
+        <a href="https://www.mcmaster.com/94459A419/" target="_blank">
+          Plastic M2.5 Heat Set Inserts
+        </a>
+      </td>
+      <td>1 pack of 25</td>
+      <td>$5.81</td>
+    </tr>
+
+    <tr>
+      <td>
+        <a href="https://www.mcmaster.com/91292A009/" target="_blank">
+          M2.5 × 0.45mm Socket Head Screws
+        </a>
+      </td>
+      <td>1 pack of 100</td>
+      <td>$6.00</td>
+    </tr>
+
+    <tr>
+      <td>
+        <a href="https://www.amazon.com/dp/B074B4P7KD" target="_blank">
+          16GB Micro SD Card
+        </a>
+      </td>
+      <td>2</td>
+      <td>Free (Lab)</td>
+    </tr>
+
+    <tr>
+      <td>Raspberry Pi Pico</td>
+      <td>2</td>
+      <td>Free (Lab)</td>
+    </tr>
+
+    <tr>
+      <td>Protoboard</td>
+      <td>1</td>
+      <td>Free (Lab)</td>
+    </tr>
+
+    <tr>
+      <td>Latching Push Button</td>
+      <td>2</td>
+      <td>Free (FSAE)</td>
+    </tr>
+
+    <tr>
+      <td>Two Conductor Insulated Wire</td>
+      <td>~4’</td>
+      <td>Free (FSAE)</td>
+    </tr>
+
+    <tr>
+      <td>Cardboard Box</td>
+      <td>1</td>
+      <td>Free</td>
+    </tr>
+
+    <tr>
+      <td>3D Printed Drumsticks</td>
+      <td>2</td>
+      <td>Free</td>
+    </tr>
+  </tbody>
+</table>
+
+  <h3>Designs or Code Used from Others</h3>
+  <p>
+    Publicly available BNO085 IMU libraries and example DFPlayer drivers were used and
+    modified to suit the needs of this project. These Githubs are cited in the appendix of this website.
+  </p>
+
+  <h3>Things That Did Not Work</h3>
+  <p>
+    Initially, the idea was to use a singular RP2040 and have the drumsticks operations on two separate cores. 
+    Each IMU communicated on a different I2C bus, I2C1 and I2C0. Additionally, each DFPlayer communicated on different 
+    UART busses, UART0 and UART1. This would totally isolate the left drumstick from the right drumstick. We initially 
+    tested this, by ensuring that each drumstick worked individually and could fulfill all the functions. However, when we 
+    tried to integrate both IMUs with the code, we found out that the BNO085 library that we were using could not handle two 
+    instances of the IMU. This proved difficult as the two likely choices were to rewrite the driver for the library to handle 
+    two IMUs or use two RP2040’s, one for each IMU. We chose the second option as this was more time efficient and allowed us 
+    to work more with the functionality of our project. 
+  </p>
+  <p></p>
+  Additionally, we briefly pursued an implementation that decoded and played .wav files using the original 12-bit DAC from the 
+  first Birdsong lab. However, we quickly determined that this approach would be significantly more tedious to implement in software, 
+  would restrict the ease of adding or modifying sound files, and would severely limit the number and length of available audio clips 
+  due to both the lower-resolution 12-bit DAC and the limited on-chip flash memory (~2 MB versus up to 16 GB on a microSD card). This 
+  approach would also restrict audio playback to .wav files only, offer poor volume control, and likely require an external amplifier 
+  to achieve sufficient output volume. For these reasons, we quickly abandoned this implementation and shifted towards the DFPlayers.
+</p>
+
+  <h3>AI Usage</h3>
+  <p>
+    AI tools were used for debugging assistance and documentation
+    support. All design decisions and implementations were performed by the team.
+   AI was used to create and format this webpage and proofread all of its contents.
+  </p>
+
+  <p>
+  <a href="docs/airdrum_chat_log.pdf" target="_blank">
+    ChatGPT Design & Website Development Log (PDF)
+  </a>
+</p>
+</section>
+
+<section id="results">
+  <h2>Results of the Design</h2>
+
+  <p>
+    The results of this project are primarily qualitative and behavior-based, as the system uses interactive hardware. 
+    Thus, the performance can be evaluated through real-time response and user interaction rather than through numerical 
+    analysis. System performance was validated through repeated live testing of gesture detection, sound triggering, volume 
+    modulation, and mode switching during normal operation.
+  </p>
+
+  <p>
+  Strike detection consistently occurred only when the pitch threshold was exceeded and only one sound played signaling our
+   debouncing worked as intended. Yaw-based sound zoning reliably mapped angular position to the intended sound selection.  
+   Volume modulation using our inverse sigmoid function matched the perceived intensity of each strike calculated from the 
+   velocity of our pitch. Mode switching using roll gestures functioned consistently across all sound libraries.
+  </p>
+
+  <h3>Functional Testing and Verification</h3>
+
+  <p>
+    The system was tested by repeatedly performing strike gestures at varying speeds, angles, and orientations to verify 
+    correct hit detection, sound selection, and volume scaling. Each drumstick was tested independently as well as concurrently 
+    to ensure that simultaneous operation did not result in missed triggers or incorrect sound playback. We followed an iterative 
+    design process, incrementally adding and testing features as the project progressed. Each feature added to the project was 
+    tested as we implemented and integrated it into the final Airdrum set, thus allowing us to progress smoothly and find issues 
+    more easily. While writing and testing our code, internal system behavior was validated through serial debugging output and 
+    extensive live testing. This approach was sufficient given the interactive and event-driven nature of the project.
+  </p>
+
+  <h3>Speed of Execution and Responsiveness</h3>
+
+  <p>
+    The air drumsticks demonstrated low-latency response between detected strike events and audio playback. No noticeable 
+    hesitation or lag was observed during normal use or extended periods of continuous play. The only thing we noted was 
+    that a weak connection in the hardware at any point of use could disrupt the I2C communication between the IMU and the 
+    RP2040 and thus would cause the RP2040 to stop reading data from the IMU. An easy fix was to power cycle whenever this 
+    occurred. Mode switching from a twisting gesture occurred reliably and without audible interruption to ongoing sound 
+    playback as the transition audio played with no lag. Concurrent operation of both drumsticks was stable and did not degrade 
+    system responsiveness.
+  </p>
+
+  <h3>Safety Considerations</h3>
+
+  <p>
+    Safety was enforced through both hardware and software design choices. The system operates entirely at low
+    voltage (5&nbsp;V), with no exposed high-current or high-temperature components. All electronics were enclosed
+    within the drumstick bodies or the external box enclosure. Software safeguards prevented unintended continuous audio 
+    playback or unstable system behavior.
+  </p>
+
+  <h3>Usability and User Interaction</h3>
+
+  <p>
+    The air drumsticks were tested by multiple users, including Professor Adams.
+    Users were able to quickly understand how to trigger sounds, control volume, and switch modes. The recalibration 
+    feature allowed users to adjust the reference orientation of the drumsticks,
+    improving comfort and accessibility. Overall, the system provided an intuitive and engaging user experience.
+  </p>
+
+  <p>
+    Overall, the system exceeded the design goals of responsiveness, accuracy, and usability, demonstrating
+    a robust and intuitive Airdrum kit suitable for real-time interaction.
+  </p>
+
+  <h3>Project Demonstration Video</h3>
+
+  <div class="video-container">
+    <iframe
+      src="https://www.youtube.com/embed/zrTrFg73C7o?rel=0"
+      title="Airdrum Kit Demonstration"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen>
+    </iframe>
+  </div>
+  
+</section>
+
+<section id="conclusion">
+  <h2>Conclusions</h2>
+  <p>
+  Our expectations for the electronic air drumsticks was to be able to model the function and sound of a drumset.
+  Specifically, we wanted the ability for different sounds to be played like you were hitting a different drum
+  while also changing volume based on the force of the swing. We met this and went beyond the expectations, as we
+  also included the ability to change what kind of instrument sounds were to be played through the roll feature
+  of the drumstick. This feature both changed the kind of library being played and modified the yaw bounds
+  accordingly to allow for libraries with different amounts of sounds to be stored on the DFPlayer and executed
+  on the drumstick.
+</p>
+
+<p>
+  Since we found that using two RP2040s was beneficial towards the end of designing our project, it became very
+  clear to us that it is possible to integrate all electronic components to make the drumsticks completely
+  independent from peripheral systems. A Raspberry Pi Pico W, reset button, DFPlayer, and power source could be
+  directly integrated into the drumstick along with the IMU to make the drumstick a self-governing system with
+  connection to an external Bluetooth speaker. We chose to 3D print the drumsticks for the high-modification
+  capabilities, so physical design iterations for function and aesthetics could be improved, such as a more slim
+  diameter and a more accurate weight ratio to match a regular drumstick. To further simulate an actual
+  drumstick, this design could be made with wood for a near authentic feel and experience.
+</p>
+
+<p>
+  Our design of the electronic air drumsticks was independent from other designs and we did not reverse engineer
+  other designs. Although there exist other similar products available for commercial sale and completed in the
+  past within ECE 4760, we approached this design through our own lens. We did utilize external code, ensuring the
+  proper citation of our sources. Our custom function components, such as gesture classification, yaw zoning,
+  discrete mapping for volume modulation, and hit detection are fully original and were designed specifically for
+  this project.
+</p>
+
+<p>
+  Due to the drumsticks being a design prototype meant for educational purposes, there was no requirement to
+  adhere to safety or consumer standards or any other requirements for commercial sale. Trademarks such as
+  Raspberry Pi Pico, Adafruit, and BNO085 are for descriptive purposes only, which is permitted under nominative
+  fair use. No protective logos or branding is displayed on our final product. We did not sign any nondisclosure
+  agreements and did not utilize any confidential hardware.
+</p>
+
+<p>
+  While other IMU-based virtual instruments exist, the specificity of our design such as the rotation feature to
+  change libraries and hit and zone detection software differentiates us from other similar products. There are
+  patent opportunities for our specific design of the electronic air drumsticks, as any patent claims would be
+  tied to system architecture and specific algorithms, which is what we designed.
+</p>
+
+</section>
+
+<section id="ip">
+  <h2>Intellectual Property Considerations</h2>
+  <p>
+    No proprietary code or hardware designs were reused. All external code was sourced
+    from public repositories and appropriately credited. No NDAs were required, and
+    no patentable components were identified.
+  </p>
+</section>
+
+<section id="appendix">
+  <h2>Appendix A – Permissions</h2>
+  <p>
+    The group approves this report for inclusion on the course website.
+  </p>
+  <p>
+    The group approves the video for inclusion on the course YouTube channel.
+  </p>
+
+  <h2>Additional Appendices</h2>
+  <ul>
+
+  <section id="appendix-b">
+  <li>Appendix B: Commented C Code Listing</li>
+
+  <p>
+    This appendix contains the fully commented primary C source code used for the Airdrum Kit project.
+  </p>
+
+     <pre class="code-block"><code>
+// Include standard libraries
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;math.h&gt;
+#include &lt;string.h&gt;
+
+// Include PICO libraries
+#include "pico/stdlib.h"
+#include "pico/multicore.h"
+
+// Include hardware libraries
+#include "hardware/pwm.h"
+#include "hardware/dma.h"
+#include "hardware/irq.h"
+#include "hardware/adc.h"
+#include "hardware/pio.h"
+#include "hardware/i2c.h"
+#include "hardware/clocks.h"
+
+// Include custom libraries
+#include "vga16_graphics_v2.h"
+#include "mpu6050.h"
+#include "pt_cornell_rp2040_v1_4.h"
+#include "bno08x.h"
+#include "dfPlayerDriver.h"
+
+BNO08x IMU;
+DfPlayerDriver dfp(uart1, 8, 9);
+
+// Pound define values
+#define PI 3.14159265358979328462643383279028841
+#define TWO_PI (2.0 * PI)
+#define PI_OVER_FOUR PI/4.0
+#define PI_OVER_SIX PI/6.0
+#define PI_OVER_THREE PI/3.0
+#define PI_OVER_TWO PI/2.0
+#define THREE_PI_OVER_FOUR (3.0 * PI)/4.0
+
+// Some macros for max/min/abs
+#define min(a,b) ((a&lt;b) ? a:b)
+#define max(a,b) ((a&lt;b) ? b:a)
+#define abs(a) ((a&gt;0) ? a:-a)
+
+float hit_thresh = 0;
+float margin = 0.05;
+
+// One drumstick
+float yaw = 0.0f;
+float pitch = 0.0f;
+float roll = 0.0f;
+
+float old_yaw = 0.0f;
+float old_pitch = 0.0f;
+float old_roll = 0.0f;
+
+int state = 0;
+int state2 = 0;
+float og_yaw = 0.0f;
+float og_pitch = 0.0f;
+float og_roll = 0.0f;
+int drums = 0;
+
+float yaw_dx = 0;
+float roll_dx = 0;
+float pitch_dx = 0;
+
+// external button
+int button_pressed = 0;
+#define BUTTON_PIN 12
+
+int folder = 1;
+int folder_max = 4;
+int current_state;
+int last_state;
+
+float x;
+float y;
+float volume[31];
+
+///////////////////////////////////////////////////////////////////////
+/////////////////////////// FIRST DRUMSTICK ///////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+static PT_THREAD (protothread_imu(struct pt *pt)) {
+    PT_BEGIN(pt);
+    PT_INTERVAL_INIT();
+
+    while (true) {
+
+        // reading data from the IMU
+        // recenters all value at a specified location that can be recalibrated
+        if (IMU.getSensorEvent()) {
+            if (IMU.getSensorEventID() == SENSOR_REPORTID_ROTATION_VECTOR) {
+                yaw = IMU.getYaw() - og_yaw;
+                if (yaw &gt; PI) yaw -= TWO_PI;
+                else if (yaw &lt; -PI) yaw += TWO_PI;
+
+                roll = IMU.getRoll() - og_roll;
+                if (roll &gt; PI) roll -= TWO_PI;
+                else if (roll &lt; -PI) roll += TWO_PI;
+
+                pitch = IMU.getPitch() - og_pitch;
+                if (pitch &gt; PI) pitch -= TWO_PI;
+                else if (pitch &lt; -PI) pitch += TWO_PI;
+            }
+        }
+
+        // scaling roll pitch and yaw speed for easier use
+        roll_dx = 150 * (roll - old_roll);
+        pitch_dx = 150 * (pitch - old_pitch);
+        yaw_dx = 150 * (yaw - old_yaw);
+
+        // remembers the yaw of the previous scan
+        old_yaw = yaw;
+        old_roll = roll;
+        old_pitch = pitch;
+
+        PT_YIELD(pt);
+    }
+    PT_END(pt);
+}
+
+///////////////////////////////////////////////////////////////////////
+//////////// determines radial location of different sounds ///////////
+///////////////////////////////////////////////////////////////////////
+
+static PT_THREAD (protothread_drums(struct pt *pt)) {
+    PT_BEGIN(pt);
+    PT_INTERVAL_INIT();
+
+    while (true) {
+
+        // drumkit and meme kit
+        if(folder == 1 || folder == 3) {
+            if (yaw &gt;= -PI_OVER_TWO &amp;&amp; yaw &lt; -PI_OVER_THREE) drums = 6;
+            else if (yaw &gt;= -PI_OVER_THREE &amp;&amp; yaw &lt; -PI_OVER_SIX) drums = 5;
+            else if (yaw &gt;= -PI_OVER_SIX &amp;&amp; yaw &lt; 0) drums = 4;
+            else if (yaw &gt;= 0 &amp;&amp; yaw &lt; PI_OVER_SIX) drums = 3;
+            else if (yaw &gt;= PI_OVER_SIX &amp;&amp; yaw &lt; PI_OVER_THREE) drums = 2;
+            else if (yaw &gt;= PI_OVER_THREE &amp;&amp; yaw &lt; PI_OVER_TWO) drums = 1;
+            else drums = 0;
+        }
+
+        // piano scale
+        else if(folder == 2) {
+            if (yaw &gt;= -PI &amp;&amp; yaw &lt; -THREE_PI_OVER_FOUR) drums = 6;
+            else if (yaw &gt;= -THREE_PI_OVER_FOUR &amp;&amp; yaw &lt; -PI_OVER_TWO) drums = 5;
+            else if (yaw &gt;= -PI_OVER_TWO &amp;&amp; yaw &lt; -PI_OVER_FOUR) drums = 4;
+            else if (yaw &gt;= -PI_OVER_FOUR &amp;&amp; yaw &lt; 0) drums = 3;
+            else if (yaw &gt;= 0 &amp;&amp; yaw &lt; PI_OVER_FOUR) drums = 2;
+            else if (yaw &gt;= PI_OVER_FOUR &amp;&amp; yaw &lt; PI_OVER_TWO) drums = 1;
+            else if (yaw &gt;= PI_OVER_TWO &amp;&amp; yaw &lt; THREE_PI_OVER_FOUR) drums = 8;
+            else if (yaw &gt;= THREE_PI_OVER_FOUR &amp;&amp; yaw &lt;= PI) drums = 7;
+        }
+
+        // drum solo
+        else if(folder == 4) {
+            drums = 1;
+        }
+
+        PT_YIELD(pt);
+    }
+    PT_END(pt);
+}
+
+///////////////////////////////////////////////////////////////////////
+/////////////////////////// HIT DETECTION /////////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+static PT_THREAD (protothread_hit(struct pt *pt)) {
+    PT_BEGIN(pt);
+    PT_INTERVAL_INIT();
+
+    while (true) {
+        if (state == 0 &amp;&amp; pitch &lt; hit_thresh &amp;&amp; drums != 0) {
+
+            // inverse sigmoid sound mapping
+            if(pitch_dx &lt; volume[30]) {dfp.volume(30);}
+            else if(pitch_dx &lt; volume[29]) {dfp.volume(29);}
+            else if(pitch_dx &lt; volume[28]) {dfp.volume(28);}
+            else if(pitch_dx &lt; volume[27]) {dfp.volume(27);}
+            else if(pitch_dx &lt; volume[26]) {dfp.volume(26);}
+            else if(pitch_dx &lt; volume[25]) {dfp.volume(25);}
+            else if(pitch_dx &lt; volume[24]) {dfp.volume(24);}
+            else if(pitch_dx &lt; volume[23]) {dfp.volume(23);}
+            else if(pitch_dx &lt; volume[22]) {dfp.volume(22);}
+            else if(pitch_dx &lt; volume[21]) {dfp.volume(21);}
+            else if(pitch_dx &lt; volume[20]) {dfp.volume(20);}
+            else if(pitch_dx &lt; volume[19]) {dfp.volume(19);}
+            else if(pitch_dx &lt; volume[18]) {dfp.volume(18);}
+            else if(pitch_dx &lt; volume[17]) {dfp.volume(17);}
+            else if(pitch_dx &lt; volume[16]) {dfp.volume(16);}
+            else if(pitch_dx &lt; volume[15]) {dfp.volume(15);}
+            else if(pitch_dx &lt; volume[14]) {dfp.volume(14);}
+            else if(pitch_dx &lt; volume[13]) {dfp.volume(13);}
+            else if(pitch_dx &lt; volume[12]) {dfp.volume(12);}
+            else if(pitch_dx &lt; volume[11]) {dfp.volume(11);}
+            else if(pitch_dx &lt; volume[10]) {dfp.volume(10);}
+            else if(pitch_dx &lt; volume[9]) {dfp.volume(9);}
+            else if(pitch_dx &lt; volume[8]) {dfp.volume(8);}
+            else if(pitch_dx &lt; volume[7]) {dfp.volume(7);}
+            else if(pitch_dx &lt; volume[6]) {dfp.volume(6);}
+            else if(pitch_dx &lt; volume[5]) {dfp.volume(5);}
+            else if(pitch_dx &lt; volume[4]) {dfp.volume(4);}
+            else if(pitch_dx &lt; volume[3]) {dfp.volume(3);}
+            else if(pitch_dx &lt; volume[2]) {dfp.volume(2);}
+            else {dfp.volume(1);}
+
+            if(folder == 4) {
+                dfp.volume(30);
+            }
+
+            // playing the specified sound track
+            dfp.playFolderTrack(folder, drums);
+            state = 1;
+        }
+        else if (state == 1 &amp;&amp; pitch &gt; hit_thresh + margin) {
+            state = 0;
+        }
+
+        PT_YIELD(pt);
+    }
+    PT_END(pt);
+}
+
+///////////////////////////////////////////////////////////////////////
+////////////////////// TRANSITION AUDIO ///////////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+void play_transition() {
+    dfp.volume(20);
+    dfp.playFolderTrack(5, folder);
+}
+
+///////////////////////////////////////////////////////////////////////
+//////////////////// MOTION MUSIC SELECT //////////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+static PT_THREAD(protothread_music_select(struct pt *pt)) {
+    PT_BEGIN(pt);
+    PT_INTERVAL_INIT();
+
+    while(true) {
+        if(state2 == 0) {
+            if ((roll &gt; THREE_PI_OVER_FOUR) || (roll &lt; -THREE_PI_OVER_FOUR)) {
+                state2 = 1;
+            }
+        }
+        else if(state2 == 1) {
+            if ((roll &gt; THREE_PI_OVER_FOUR) || (roll &lt; -THREE_PI_OVER_FOUR)) {
+                state2 = 2;
+                folder += 1;
+                if(folder &gt; folder_max) {folder = 1;}
+                play_transition();
+            }
+            else {
+                state2 = 0;
+            }
+        }
+        else if(state2 == 2) {
+            if ((roll &gt; THREE_PI_OVER_FOUR) || (roll &lt; -THREE_PI_OVER_FOUR)) {
+                state2 = 2;
+            }
+            else {
+                state2 = 3;
+            }
+        }
+        else {
+            if ((roll &gt; THREE_PI_OVER_FOUR) || (roll &lt; -THREE_PI_OVER_FOUR)) {
+                state2 = 2;
+            }
+            else {
+                state2 = 0;
+            }
+        }
+
+        PT_YIELD(pt);
+    }
+    PT_END(pt);
+}
+
+///////////////////////////////////////////////////////////////////////
+//////////////////// EXTERNAL BUTTON THREAD ///////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+static PT_THREAD(protothread_button(struct pt *pt)) {
+    PT_BEGIN(pt);
+
+    current_state = gpio_get(BUTTON_PIN);
+    last_state = current_state;
+
+    while (true) {
+        current_state = gpio_get(BUTTON_PIN);
+
+        // Trigger on any transition (HIGH → LOW or LOW → HIGH)
+        if (current_state != last_state) {
+            og_yaw = IMU.getYaw();
+            og_pitch = IMU.getPitch();
+        }
+
+        last_state = current_state;
+        PT_YIELD(pt);
+    }
+    PT_END(pt);
+}
+
+///////////////////////////////////////////////////////////////////////
+//////////////////////////// MAIN /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+int main() {
+
+    set_sys_clock_khz(150000, true);
+    stdio_init_all();
+
+    ////////////////////////////////////////////////////////////////////
+    ////////////////////// IMU CONFIGURATION ///////////////////////////
+
+    i2c_inst_t* i2c_port0 = i2c0;
+    i2c_init(i2c_port0, 400 * 1000);
+    gpio_set_function(SDA_PIN, GPIO_FUNC_I2C);
+    gpio_set_function(SCL_PIN, GPIO_FUNC_I2C);
+    gpio_pull_up(4);
+    gpio_pull_up(5);
+
+    // makes sure the IMU and RP2040 set up I2C communication
+    while (!IMU.begin(0x4A, i2c_port0)) {
+        printf("BNO08x not detected at default I2C address. Check wiring.\n");
+        sleep_ms(1000);
+    }
+
+    IMU.enableRotationVector();
+
+    // grabs the yaw measurement to reset it as the origin
+    while(og_yaw == 0.0) {
+        if (IMU.getSensorEvent()) {
+            if (IMU.getSensorEventID() == SENSOR_REPORTID_ROTATION_VECTOR) {
+                og_yaw = IMU.getYaw();
+            }
+        }
+    }
+
+    // grabs the pitch measurement to reset it as the origin
+    while(og_pitch == 0.0) {
+        if (IMU.getSensorEvent()) {
+            if (IMU.getSensorEventID() == SENSOR_REPORTID_ROTATION_VECTOR) {
+                og_pitch = IMU.getPitch();
+            }
+        }
+    }
+
+    // grabs the roll measurement to reset it as the origin
+    while(og_roll == 0.0) {
+        if (IMU.getSensorEvent()) {
+            if (IMU.getSensorEventID() == SENSOR_REPORTID_ROTATION_VECTOR) {
+                og_roll = IMU.getRoll();
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////
+    ////////////////////// DFP CONFIGURATION ///////////////////////////
+
+    gpio_set_function(8, GPIO_FUNC_UART);
+    gpio_set_function(9, GPIO_FUNC_UART);
+    uart_init(uart1, 9600);
+
+    dfp.reset();
+    sleep_ms(1500);
+
+    dfp.volume(30);
+    sleep_ms(200);
+
+    // initialize external button for recalibration of origin
+    gpio_init(BUTTON_PIN);
+    gpio_set_dir(BUTTON_PIN, GPIO_IN);
+    gpio_pull_up(BUTTON_PIN);
+
+    // mapping the inverse sigmoid function into an array for sound mapping
+    for(int i = 0; i &lt;= 30; i++) {
+        x = (20.0 / (1.0 + exp(0.25 * (i - 15.0)))) - 20.0;
+        volume[i] = x;
+    }
+
+    ////////////////////////////////////////////////////////////////////
+    ///////////////////////// ROCK AND ROLL ////////////////////////////
+    ////////////////////////////////////////////////////////////////////
+
+    // start core 0
+    pt_add_thread(protothread_imu);
+    pt_add_thread(protothread_hit);
+    pt_add_thread(protothread_drums);
+    pt_add_thread(protothread_button);
+    pt_add_thread(protothread_music_select);
+
+    pt_schedule_start;
+}
+  </code></pre>
+</section>
+
+    <li>Appendix C: Team task breakdown</li>
+    <p>
+    Christina Huang and Liam Lahar created the overall structure of the main code file. Alex Baker created the CAD for the custom drumstick and IMU integration. All team members contributed to the code of the project and debugging process. All team members contributed to the writing of this website.
+  </p>
+  </ul>
+
+  <h2>References</h2>
+  <ul>
+  <li>
+    <a href="https://cdn-learn.adafruit.com/downloads/pdf/adafruit-9-dof-orientation-imu-fusion-breakout-bno085.pdf"
+       target="_blank" rel="noopener noreferrer">
+      BNO085 Datasheet (Adafruit)
+    </a>
+  </li>
+
+  <li>
+    <a href="https://picaxe.com/docs/spe033.pdf"
+       target="_blank" rel="noopener noreferrer">
+      DFPlayer Mini Datasheet
+    </a>
+  </li>
+
+  <li>
+    <a href="https://github.com/robotcopper/BNO08x_Pico_Library/blob/main/README.md"
+       target="_blank" rel="noopener noreferrer">
+      BNO085 Pico Library – GitHub
+    </a>
+  </li>
+
+  <li>
+    <a href="https://github.com/nyh-workshop/pico-dfPlayer/blob/main/dfPlayer/dfPlayer.h"
+       target="_blank" rel="noopener noreferrer">
+      DFPlayer Pico Driver – GitHub
+    </a>
+  </li>
+</ul>
+</section>
+
+<footer>
+  © 2025 ECE 4760 Airdrum Kit Team
+</footer>
+
+</body>
+</html>
