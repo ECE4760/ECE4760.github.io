@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Use Statement - ECE4760 Star Tracker</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #fff;
+      padding-top: 60px;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: #333;
+      padding: 1rem 2rem;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: opacity 0.2s;
+    }
+
+    nav a:hover {
+      opacity: 0.8;
+    }
+
+    nav a.active {
+      font-weight: 600;
+    }
+
+    /* Hamburger menu for mobile */
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+    }
+
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Sections */
+    section {
+      margin-bottom: 3rem;
+    }
+
+    /* Home Section */
+    #home {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #ddd;
+    }
+
+    #home h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #1a1a1a;
+    }
+
+    #home p {
+      margin-bottom: 0.5rem;
+      color: #555;
+      text-align: center;
+    }
+
+    /* Section Titles */
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      color: #1a1a1a;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #ddd;
+    }
+
+    h5 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      color: #2c3e50;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      text-align: justify;
+      color: #444;
+    }
+
+    /* Code Blocks */
+    pre {
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      padding: 1rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      border-radius: 4px;
+    }
+
+    pre code {
+      white-space: pre-wrap;
+      font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+      font-size: 0.9rem;
+      color: #000;
+      line-height: 1.5;
+    }
+
+    code {
+      font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+      background-color: #f5f5f5;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    /* Links */
+    a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Lists */
+    ul {
+      margin-left: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    ul li {
+      margin-bottom: 0.5rem;
+      color: #444;
+    }
+
+    /* Color coding for chat names */
+    .user-name {
+      color: #0066cc;
+      font-weight: 600;
+    }
+
+    .chatgpt-name {
+      color: #10a37f;
+      font-weight: 600;
+    }
+
+    /* Chat boxes */
+    .chat-box {
+      border: 2px solid;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .user-box {
+      border-color: #0066cc;
+      background-color: #f0f7ff;
+    }
+
+    .chatgpt-box {
+      border-color: #10a37f;
+      background-color: #f0fdf4;
+    }
+
+    /* Error message styling in code blocks */
+    pre code .error-line {
+      color: #dc2626;
+    }
+
+    pre code .error-text {
+      color: #dc2626;
+    }
+
+    pre code .normal-text {
+      color: #000;
+    }
+
+    pre code .build-failed {
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    /* Back to Main Button */
+    .back-button {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #333;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+
+    .back-button:hover {
+      background-color: #555;
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+
+      nav ul {
+        display: none;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      nav ul.active {
+        display: flex;
+      }
+
+      .container {
+        padding: 1rem;
+      }
+
+      #home h1 {
+        font-size: 1.5rem;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <ul id="nav-menu">
+      <li><a href="index.html">Back to Main</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+
+    <!-- Home Section -->
+    <section id="home">
+      <h1>AI Use Statement</h1>
+      <p>ECE4760 Star Tracker Project</p>
+    </section>
+
+    <!-- AI Use Statement Section -->
+    <section id="ai-use">
+      <h2>AI Use Statement</h2>
+      <p>Utilization of artificial intelligence during the course of this project was limited to debugging error codes. 
+        AI is extremely helpful in decoding a thrown error from the compiler (g++) because most of the time, error messages can look like random collections of lines of code in your file, filepaths, 
+        or dependencies you didn't know were used as a part of another library. An example chatlog is shown below:
+        </p>
+      
+      <div class="chat-box user-box">
+        <h5><strong class="user-name">USER:</strong> what does this error message mean:</h5>
+        
+        <pre><code>[main] Building folder: c:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build all
+
+[build] Starting build
+
+[proc] Executing command: C:\Users\vigna/.pico-sdk/cmake/v3.31.5/bin/cmake --build "c:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build" --config Debug --target all --
+
+[build] [4/76   1% :: 0.087] Generating hsync.pio.h
+
+[build] [4/76   2% :: 0.102] Generating vsync.pio.h
+
+[build] [4/76   3% :: 0.120] Generating rgb.pio.h
+
+[build] [4/76   5% :: 0.130] Building ASM object pico-sdk/src/rp2040/boot_stage2/CMakeFiles/bs2_default.dir/compile_time_choice.S.obj
+
+[build] [5/76   6% :: 0.313] Linking ASM executable pico-sdk\src\rp2040\boot_stage2\bs2_default.elf
+
+[build] [6/76   7% :: 0.357] Generating bs2_default.bin
+
+[build] [7/76   9% :: 0.476] Generating bs2_default_padded_checksummed.S
+
+[build] [29/76  10% :: 1.006] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2040/pico_platform/platform.c.obj
+
+[build] [30/76  11% :: 1.215] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_platform_common/common.c.obj
+
+[build] [31/76  13% :: 1.229] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_sync/sync.c.obj
+
+[build] [32/76  14% :: 1.242] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/common/hardware_claim/claim.c.obj
+
+[build] [33/76  15% :: 1.252] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_stdlib/stdlib.c.obj
+
+[build] [34/76  17% :: 1.263] Building ASM object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_irq/irq_handler_chain.S.obj
+
+[build] [35/76  18% :: 1.274] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_platform_panic/panic.c.obj
+
+[build] [36/76  19% :: 1.302] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_sync_spin_lock/sync_spin_lock.c.obj
+
+[build] [37/76  21% :: 1.317] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_sync_spin_lock/sync_spin_lock.c.obj
+
+[build] [37/76  21% :: 1.317] Building C object CMakeFiles/MPU6050_IMU.dir/mpu6050.c.obj
+
+[build] [38/76  22% :: 1.327] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/common/pico_sync/sem.c.obj
+
+[build] [39/76  23% :: 1.409] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/common/pico_time/timeout_helper.c.obj
+
+[build] [40/76  25% :: 1.419] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/common/pico_sync/critical_section.c.obj
+
+[build] [41/76  26% :: 1.435] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/common/pico_sync/lock_core.c.obj
+
+[build] [42/76  27% :: 1.515] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_gpio/gpio.c.obj
+
+[build] [43/76  28% :: 1.533] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/common/pico_sync/mutex.c.obj
+
+[build] [44/76  30% :: 1.556] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/common/pico_util/datetime.c.obj
+
+[build] [45/76  31% :: 1.577] Building C object CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj
+
+[build] [46/76  32% :: 1.595] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_irq/irq.c.obj
+
+[build] [47/76  34% :: 1.731] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_ticks/ticks.c.obj
+
+[build] [48/76  35% :: 1.871] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_vreg/vreg.c.obj
+
+[build] [49/76  36% :: 1.902] Building ASM object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_divider/divider.S.obj
+
+[build] [50/76  38% :: 1.929] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_pll/pll.c.obj
+
+[build] [51/76  39% :: 1.940] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_timer/timer.c.obj
+
+[build] [52/76  40% :: 1.952] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_bootrom/bootrom_lock.c.obj
+
+[build] [53/76  42% :: 1.984] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_xosc/xosc.c.obj
+
+[build] [54/76  43% :: 1.994] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_boot_lock/boot_lock.c.obj
+
+[build] [55/76  44% :: 2.040] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_flash/flash.c.obj
+
+[build] [56/76  46% :: 2.050] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_bootrom/bootrom.c.obj
+
+[build] [57/76  47% :: 2.082] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_runtime_init/runtime_init_stack_guard.c.obj
+
+[build] [58/76  48% :: 2.092] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/common/pico_util/pheap.c.obj
+
+[build] [59/76  50% :: 2.137] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_runtime/runtime.c.obj
+
+[build] [60/76  51% :: 2.154] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_uart/uart.c.obj
+
+[build] [61/76  52% :: 2.164] Building C object CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj
+
+[build] [62/76  53% :: 2.189] Building ASM object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_bit_ops/bit_ops_aeabi.S.obj
+
+[build] [63/76  55% :: 2.201] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_runtime_init/runtime_init_clocks.c.obj
+
+[build] [64/76  56% :: 2.214] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/common/pico_util/queue.c.obj
+
+[build] [65/76  57% :: 2.232] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_watchdog/watchdog.c.obj
+
+[build] [66/76  59% :: 2.247] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_runtime_init/runtime_init.c.obj
+
+[build] [67/76  60% :: 2.257] Building ASM object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_double/double_aeabi_rp2040.S.obj
+
+[build] [68/76  61% :: 2.273] Building ASM object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_int64_ops/pico_int64_ops_aeabi.S.obj
+
+[build] [69/76  63% :: 2.285] Building ASM object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_divider/divider_hardware.S.obj
+
+[build] [70/76  64% :: 2.298] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/common/pico_time/time.c.obj
+
+[build] [71/76  65% :: 2.308] Building ASM object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_double/double_v1_rom_shim_rp2040.S.obj
+
+[build] [72/76  67% :: 2.343] Building ASM object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_float/float_aeabi_rp2040.S.obj
+
+[build] [73/76  68% :: 2.420] Building ASM object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_float/float_v1_rom_shim_rp2040.S.obj
+
+[build] [74/76  69% :: 2.489] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_double/double_init_rom_rp2040.c.obj
+
+[build] [75/76  71% :: 2.506] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_clocks/clocks.c.obj
+
+[build] [75/76  72% :: 2.562] Building ASM object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_mem_ops/mem_ops_aeabi.S.obj
+
+[build] [75/76  73% :: 2.660] Building ASM object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_crt0/crt0.S.obj
+
+[build] [75/76  75% :: 2.665] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_float/float_init_rom_rp2040.c.obj
+
+[build] [75/76  76% :: 2.671] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_malloc/malloc.c.obj
+
+[build] [75/76  77% :: 2.744] Building ASM object pico-sdk/src/rp2040/boot_stage2/CMakeFiles/bs2_default_library.dir/bs2_default_padded_checksummed.S.obj
+
+[build] [75/76  78% :: 2.747] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_standard_binary_info/standard_binary_info.c.obj
+
+[build] [75/76  80% :: 2.800] Building CXX object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_cxx_options/new_delete.cpp.obj
+
+[build] [75/76  81% :: 2.854] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_adc/adc.c.obj
+
+[build] [75/76  82% :: 2.877] Building C object CMakeFiles/MPU6050_IMU.dir/32c9db161a03f435f66bb99569328cc7/src/rp2_common/pico_bootsel_via_double_reset/pico_bootsel_via_double_reset.c.obj
+
+[build] [75/76  84% :: 2.900] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_dma/dma.c.obj
+
+[build] [75/76  85% :: 2.937] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_atomic/atomic.c.obj
+
+[build] [75/76  86% :: 2.998] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_stdio_uart/stdio_uart.c.obj
+
+[build] [75/76  88% :: 3.001] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_clib_interface/newlib_interface.c.obj
+
+[build] [75/76  89% :: 3.115] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_multicore/multicore.c.obj
+
+[build] [75/76  90% :: 3.177] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_stdio/stdio.c.obj
+
+[build] [75/76  92% :: 3.206] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_i2c/i2c.c.obj
+
+[build] [75/76  93% :: 3.276] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_float/float_math.c.obj
+
+[build] [75/76  94% :: 3.323] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_pio/pio.c.obj
+
+[build] [75/76  96% :: 3.324] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_double/double_math.c.obj
+
+[build] [75/76  97% :: 3.514] Building C object CMakeFiles/MPU6050_IMU.dir/C_/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_printf/printf.c.obj
+
+[build] [75/76  98% :: 3.994] Building C object CMakeFiles/MPU6050_IMU.dir/vga16_graphics_v2.c.obj
+
+[build] [76/76 100% :: 4.445] Linking CXX executable MPU6050_IMU.elf
+
+<span class="build-failed">[build] FAILED: [code=1] MPU6050_IMU.elf MPU6050_IMU.dis MPU6050_IMU.hex MPU6050_IMU.bin MPU6050_IMU.uf2 C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build/MPU6050_IMU.dis C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build/MPU6050_IMU.hex C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build/MPU6050_IMU.bin C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build/MPU6050_IMU.uf2</span>
+
+[build] C:\WINDOWS\system32\cmd.exe /C "cd . && C:\Users\vigna\.pico-sdk\toolchain\14_2_Rel1\bin\arm-none-eabi-g++.exe -mcpu=cortex-m0plus -mthumb -g -O3 -DNDEBUG -Wl,--build-id=none "-Wl,-Map=C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build/MPU6050_IMU.elf.map" --specs=nosys.specs -Wl,--wrap=__clzsi2 -Wl,--wrap=__clzdi2 -Wl,--wrap=__ctzsi2 -Wl,--wrap=__popcountsi2 -Wl,--wrap=__popcountdi2 -Wl,--wrap=__clz -Wl,--wrap=__clzl -Wl,--wrap=__clzll -Wl,--wrap=__ctzdi2 -Wl,--wrap=__aeabi_idiv -Wl,--wrap=__aeabi_idivmod -Wl,--wrap=__aeabi_ldivmod -Wl,--wrap=__aeabi_uidiv -Wl,--wrap=__aeabi_uidivmod -Wl,--wrap=__aeabi_uldivmod -Wl,--wrap=__aeabi_dadd -Wl,--wrap=__aeabi_ddiv -Wl,--wrap=__aeabi_dmul -Wl,--wrap=__aeabi_drsub -Wl,--wrap=__aeabi_dsub -Wl,--wrap=__aeabi_cdcmpeq -Wl,--wrap=__aeabi_cdrcmple -Wl,--wrap=__aeabi_cdcmple -Wl,--wrap=__aeabi_dcmpeq -Wl,--wrap=__aeabi_dcmplt -Wl,--wrap=__aeabi_dcmple -Wl,--wrap=__aeabi_dcmpge -Wl,--wrap=__aeabi_dcmpgt -Wl,--wrap=__aeabi_dcmpun -Wl,--wrap=__aeabi_i2d -Wl,--wrap=__aeabi_l2d -Wl,--wrap=__aeabi_ui2d -Wl,--wrap=__aeabi_ul2d -Wl,--wrap=__aeabi_d2iz -Wl,--wrap=__aeabi_d2lz -Wl,--wrap=__aeabi_d2uiz -Wl,--wrap=__aeabi_d2ulz -Wl,--wrap=__aeabi_d2f -Wl,--wrap=sqrt -Wl,--wrap=cos -Wl,--wrap=sin -Wl,--wrap=tan -Wl,--wrap=atan2 -Wl,--wrap=exp -Wl,--wrap=log -Wl,--wrap=ldexp -Wl,--wrap=copysign -Wl,--wrap=trunc -Wl,--wrap=floor -Wl,--wrap=ceil -Wl,--wrap=round -Wl,--wrap=sincos -Wl,--wrap=asin -Wl,--wrap=acos -Wl,--wrap=atan -Wl,--wrap=sinh -Wl,--wrap=cosh -Wl,--wrap=tanh -Wl,--wrap=asinh -Wl,--wrap=acosh -Wl,--wrap=atanh -Wl,--wrap=exp2 -Wl,--wrap=log2 -Wl,--wrap=exp10 -Wl,--wrap=log10 -Wl,--wrap=pow -Wl,--wrap=powint -Wl,--wrap=hypot -Wl,--wrap=cbrt -Wl,--wrap=fmod -Wl,--wrap=drem -Wl,--wrap=remainder -Wl,--wrap=remquo -Wl,--wrap=expm1 -Wl,--wrap=log1p -Wl,--wrap=fma -Wl,--wrap=__aeabi_lmul -Wl,--wrap=__aeabi_fadd -Wl,--wrap=__aeabi_fdiv -Wl,--wrap=__aeabi_fmul -Wl,--wrap=__aeabi_frsub -Wl,--wrap=__aeabi_fsub -Wl,--wrap=__aeabi_cfcmpeq -Wl,--wrap=__aeabi_cfrcmple -Wl,--wrap=__aeabi_cfcmple -Wl,--wrap=__aeabi_fcmpeq -Wl,--wrap=__aeabi_fcmplt -Wl,--wrap=__aeabi_fcmple -Wl,--wrap=__aeabi_fcmpge -Wl,--wrap=__aeabi_fcmpgt -Wl,--wrap=__aeabi_fcmpun -Wl,--wrap=__aeabi_i2f -Wl,--wrap=__aeabi_ui2f -Wl,--wrap=__aeabi_f2iz -Wl,--wrap=__aeabi_f2uiz -Wl,--wrap=__aeabi_l2f -Wl,--wrap=__aeabi_ul2f -Wl,--wrap=__aeabi_f2lz -Wl,--wrap=__aeabi_f2ulz -Wl,--wrap=__aeabi_f2d -Wl,--wrap=sqrtf -Wl,--wrap=cosf -Wl,--wrap=sinf -Wl,--wrap=tanf -Wl,--wrap=atan2f -Wl,--wrap=expf -Wl,--wrap=logf -Wl,--wrap=sincosf -Wl,--wrap=ldexpf -Wl,--wrap=copysignf -Wl,--wrap=truncf -Wl,--wrap=floorf -Wl,--wrap=ceilf -Wl,--wrap=roundf -Wl,--wrap=asinf -Wl,--wrap=acosf -Wl,--wrap=atanf -Wl,--wrap=sinhf -Wl,--wrap=coshf -Wl,--wrap=tanhf -Wl,--wrap=asinhf -Wl,--wrap=acoshf -Wl,--wrap=atanhf -Wl,--wrap=exp2f -Wl,--wrap=log2f -Wl,--wrap=exp10f -Wl,--wrap=log10f -Wl,--wrap=powf -Wl,--wrap=powintf -Wl,--wrap=hypotf -Wl,--wrap=cbrtf -Wl,--wrap=fmodf -Wl,--wrap=dremf -Wl,--wrap=remainderf -Wl,--wrap=remquof -Wl,--wrap=expm1f -Wl,--wrap=log1pf -Wl,--wrap=fmaf -Wl,--wrap=malloc -Wl,--wrap=calloc -Wl,--wrap=realloc -Wl,--wrap=free -Wl,--wrap=memcpy -Wl,--wrap=memset -Wl,--wrap=__aeabi_memcpy -Wl,--wrap=__aeabi_memset -Wl,--wrap=__aeabi_memcpy4 -Wl,--wrap=__aeabi_memset4 -Wl,--wrap=__aeabi_memcpy8 -Wl,--wrap=__aeabi_memset8 "-Wl,-LC:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build" -Wl,--script=C:/Users/vigna/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_crt0/rp2040/memmap_default.ld -Wl,-z,max-page-size=4096 -Wl,--gc-sections -Wl,--no-warn-rwx-segments -Wl,--wrap=sprintf -Wl,--wrap=snprintf -Wl,--wrap=vsnprintf -Wl,--wrap=printf -Wl,--wrap=vprintf -Wl,--wrap=puts -Wl,--wrap=putchar -Wl,--wrap=getchar @CMakeFiles\MPU6050_IMU.rsp -o MPU6050_IMU.elf && C:\WINDOWS\system32\cmd.exe /C "cd /D "C:\Users\vigna\Desktop\Dani\Cornell\Classes\Fall 2025\ECE 4760\ECE4760-main\Sensors\MPU6050_IMU_Demo\build" && C:\Users\vigna\.pico-sdk\toolchain\14_2_Rel1\bin\arm-none-eabi-objdump.exe -h "C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build/MPU6050_IMU.elf" > MPU6050_IMU.dis && C:\Users\vigna\.pico-sdk\toolchain\14_2_Rel1\bin\arm-none-eabi-objcopy.exe -Oihex "C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build/MPU6050_IMU.elf" MPU6050_IMU.hex && cd /D "C:\Users\vigna\Desktop\Dani\Cornell\Classes\Fall 2025\ECE 4760\ECE4760-main\Sensors\MPU6050_IMU_Demo\build" && C:\Users\vigna\.pico-sdk\toolchain\14_2_Rel1\bin\arm-none-eabi-objcopy.exe -Obinary "C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build/MPU6050_IMU.elf" MPU6050_IMU.bin && cd /D "C:\Users\vigna\Desktop\Dani\Cornell\Classes\Fall 2025\ECE 4760\ECE4760-main\Sensors\MPU6050_IMU_Demo\build" && C:\Users\vigna\.pico-sdk\picotool\2.2.0-a4\picotool\picotool.exe uf2 convert --quiet "C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/build/MPU6050_IMU.elf" MPU6050_IMU.uf2 --family rp2040""
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj: in function `pt_add':</span>
+
+<span class="error-line">[build] C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:676: multiple definition of `pt_add'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:676: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:654: multiple definition of `pt_task_count'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:654: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj: in function `pt_add1':</span>
+
+<span class="error-line">[build] C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:696: multiple definition of `pt_add1'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:696: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:655: multiple definition of `pt_task_count1'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:655: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj: in function `pt_serialout_polled':</span>
+
+<span class="error-line">[build] C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:962: multiple definition of `pt_serialout_polled'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:962: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:440: multiple definition of `pt_executed'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:440: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:900: multiple definition of `pt_serial_out_buffer'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:900: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:440: multiple definition of `pt_executed1'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:440: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:899: multiple definition of `pt_serial_in_buffer'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:899: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:753: multiple definition of `sched_count1'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:753: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:753: multiple definition of `sched_count'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:753: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:752: multiple definition of `thread_time1'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:752: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:752: multiple definition of `sched_thread_time1'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:752: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:751: multiple definition of `thread_time'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:751: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:751: multiple definition of `sched_thread_time'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:751: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:750: multiple definition of `sched_thread_stats1'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:750: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:750: multiple definition of `sched_thread_stats'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:750: first defined here</span>
+
+<span class="error-line">[build] C:/Users/vigna/.pico-sdk/toolchain/14_2_Rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:744: multiple definition of `pt_sched_method'; CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj:C:/Users/vigna/Desktop/Dani/Cornell/Classes/Fall 2025/ECE 4760/ECE4760-main/Sensors/MPU6050_IMU_Demo/pt_cornell_rp2040_v1_4.h:744: first defined here</span>
+
+<span class="error-line">[build] collect2.exe: error: ld returned 1 exit status</span></code></pre>
+      </div>
+      
+      <div class="chat-box chatgpt-box">
+        <p><strong class="chatgpt-name">ChatGPT:</strong></p>
+      <p>This error message indicates a Linker Error related to multiple definitions of functions and variables during the final stage of building your Pico project.</p>
+      <p>The build process successfully compiled many source files (indicated by [build] Building C object...), but failed when the linker tried to combine all those compiled objects into the final executable file (MPU6050_IMU.elf).</p>
+      
+      <p><strong>🚨 Error Summary</strong></p>
+      <p>The core issue is "multiple definition of..." followed by names like pt_add, pt_task_count, pt_serialout_polled, etc.</p>
+      <p>This means that certain functions and variables, which appear to belong to the pt_cornell_rp2040_v1_4.h header file (likely a Protothreads or cooperative multitasking implementation for the Pico), are being defined (i.e., their memory is being allocated) in more than one compiled object file.</p>
+      <p>The linker specifically points out that these symbols are defined in both:</p>
+      <ul>
+        <li>CMakeFiles/MPU6050_IMU.dir/vga_graphics_v3.c.obj (compiled from vga_graphics_v3.c)</li>
+        <li>CMakeFiles/MPU6050_IMU.dir/imu_demo.c.obj (compiled from imu_demo.c)</li>
+      </ul>
+      <p>When the linker tries to create the final executable (MPU6050_IMU.elf), it finds two separate definitions for the same functions/variables, which is not allowed in C/C++ and causes the build to FAIL with exit code 1.</p>
+      
+      <p><strong>🛠️ How to Fix the Error (The Solution)</strong></p>
+      <p>The most common cause for this specific type of multiple definition error involving a header file is incorrectly including function/variable definitions in a header file.</p>
+      <p>You should examine the file pt_cornell_rp2040_v1_4.h and make sure it is set up correctly:</p>
+      <p>Definitions in a Header (.h): The header file pt_cornell_rp2040_v1_4.h should contain only declarations (function prototypes and extern variables). If it contains the actual definitions of the functions (the function bodies) or variables (without the extern keyword), every .c file that includes it will generate a definition, leading to the multiple definition error.</p>
+      <p><strong>The Correct Fix:</strong></p>
+      <ul>
+        <li><strong>Variables:</strong> For global variables like pt_task_count, they should be declared using the extern keyword in the header (pt_cornell_rp2040_v1_4.h). The actual non-extern definition must exist in only one .c file (e.g., in a dedicated pt_library.c or perhaps just in imu_demo.c).</li>
+        <li><strong>Functions:</strong> For functions like pt_add or pt_serialout_polled, their definitions (the code bodies) should either be placed in exactly one .c file, OR they must be defined in the header using the static inline keywords.</li>
+      </ul>
+      <p><strong>Recommended Action:</strong></p>
+      <p>Open the file pt_cornell_rp2040_v1_4.h and review the definitions for the symbols listed in the error: pt_add, pt_task_count, pt_add1, pt_task_count1, etc.</p>
+      <p>The cleanest fix is usually to:</p>
+      <p>Move the body (definition) of functions and the non-extern definitions of global variables out of pt_cornell_rp2040_v1_4.h and into a corresponding .c file (e.g., pt_library.c or a file that is only compiled once).</p>
+      </div>
+
+      <p>As seen from the user input, the entire compilation output was given to Google's Gemini AI Assistant, and was definitely not something that could easily be interpreted without plenty of experience handling the Pico SDK and C programming language as well as the GCC Package. Gemini's response was extremely helpful and almost immediately solved a compilation problem that would have probably taken much longer to figure out without the use of AI.</p>
+
+    </section>
+
+  </div>
+
+  <script>
+    // Mobile menu toggle
+    function toggleMenu() {
+      const menu = document.getElementById('nav-menu');
+      menu.classList.toggle('active');
+    }
+  </script>
+</body>
+</html>
+

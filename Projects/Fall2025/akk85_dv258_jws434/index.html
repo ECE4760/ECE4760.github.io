@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ECE4760 Star Tracker</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #fff;
+      padding-top: 60px;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: #333;
+      padding: 1rem 2rem;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: opacity 0.2s;
+    }
+
+    nav a:hover {
+      opacity: 0.8;
+    }
+
+    nav a.active {
+      font-weight: 600;
+    }
+
+    /* Hamburger menu for mobile */
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+    }
+
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Sections */
+    section {
+      margin-bottom: 3rem;
+    }
+
+    /* Home Section */
+    #home {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #ddd;
+    }
+
+    #home h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #1a1a1a;
+    }
+
+    #home p {
+      margin-bottom: 0.5rem;
+      color: #555;
+      text-align: center;
+    }
+
+    /* Section Titles */
+    h1 {
+      color: #2c3e50;
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      color: #2c3e50;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #ddd;
+    }
+
+    h5 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      color: #34495e;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      text-align: justify;
+      color: #444;
+    }
+
+    /* Images */
+    .img-block {
+      max-width: 60%;        
+      width: auto;             
+      height: auto;
+      margin: 1.5rem auto;     
+      display: block;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      margin: 1.5rem 0;
+    }
+
+    /* Image Containers */
+    .image-container, .two-image-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+      transition: opacity 0.5s ease, transform 0.3s ease;
+    }
+    .image-container:hover, .two-image-container:hover {
+      transform: scale(1.02);
+    }
+    .image-container img, .two-image-container img {
+      opacity: 0;
+      animation: fadeIn 1s ease-in forwards;
+      max-width: 30%; /* Fits three images side by side */
+      max-height: 600px;
+      height: auto;
+      margin: 0;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .two-image-container img {
+      max-width: 48%; /* Fits two images side by side */
+      max-height: 600px;
+      height: auto;
+      margin: 0;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Code Blocks */
+    pre {
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      padding: 1rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      border-radius: 4px;
+    }
+
+    pre code {
+      white-space: pre-wrap;
+      font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+      font-size: 0.9rem;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    code {
+      font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+      background-color: #f5f5f5;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    /* Links */
+    a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Lists */
+    ul {
+      margin-left: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    ul li {
+      margin-bottom: 0.5rem;
+      color: #444;
+    }
+
+    /* Blockquote */
+    blockquote {
+      border-left: 4px solid #ddd;
+      padding-left: 1rem;
+      margin: 1.5rem 0;
+      color: #666;
+      font-style: italic;
+    }
+
+    /* Figures */
+    figure {
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    figcaption {
+      font-style: italic;
+      color: #666;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+    }
+
+    table th,
+    table td {
+      border: 1px solid #ddd;
+      padding: 0.75rem;
+      text-align: left;
+    }
+
+    table th {
+      background-color: #f5f5f5;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    table tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+
+      nav ul {
+        display: none;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      nav ul.active {
+        display: flex;
+      }
+
+      .container {
+        padding: 1rem;
+      }
+
+      #home h1 {
+        font-size: 1.5rem;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <ul id="nav-menu">
+      <li><a href="#home" class="active">Home</a></li>
+      <li><a href="#introduction">Introduction</a></li>
+      <li><a href="#high-level">High-Level Design</a></li>
+      <li><a href="#hardware">Program/Hardware Design</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#conclusions">Conclusions</a></li>
+      <li><a href="#appendices">Appendices</a></li>
+      <li><a href="#references">References</a></li>
+        </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+
+    <!-- Home Section -->
+    <section id="home">
+      <h1>Star Tracker</h1>
+      <p>Daniel Vigna (dv258), Tony Kariuki (akk85), Jeremy Simon (jws434)</p>
+    </section>
+
+    <!-- Introduction Section -->
+    <section id="introduction">
+      <h2>1. Introduction</h2>
+      <p>For this project, we made a 3-axis gimbal to be used as a star tracker for astrophotography. 
+        Although a traditional ground based star tracker only requires 2 axis of rotation (one to align with Earth's pole and another to rotate to follow a star's path across the sky), 
+        we chose to design a 3 axis gimbal…
+      <p>
+      </p>
+      
+      <figure>
+        <img class="img-block" src="startracker.jpg" alt="Star Tracker">
+      </figure>
+      
+      <p>The star tracker uses stepper motors to control each axis of rotation due to their precise, incremental motion control and their ability to count their steps, 
+        thus avoiding the possible need for a motor encoder. We used a magnetometer to rotate our star tracker around the z-axis to align with Earth's pole and a GPS module to rotate our star tracker 
+        around the y-axis to follow a star across the sky
+      <p>
+      </p>
+        Our current implementation did not make use of the ability to rotate around the x-axis, however the combination of the GPS module and magnetometer would theoretically allow us to use this third axis 
+        to eliminate the drift that occurs and keep the camera sensor aligned in the same orientation.
+      </p>
+    </section>
+
+    <!-- High-Level Design -->
+    <section id="high-level">
+      <h2>2. High-Level Design</h2>
+      <h5>Rationale</h5>
+      <p>The original idea behind this project was to design a device that was capable of being placed anywhere on earth, and automatically stay locked onto a position in the night sky 
+        by compensating for the rotation of the Earth. To do this, it would require an electrically controlled gimbal which could in some way match the angular velocity of the Earth by means of GPS and magnetometer data.
+      </p>
+
+      <h5>Background Math</h5>
+      <p>One of the most complicated parts of the original design was going to be the math required to achieve this. First off, we have to understand that every star in the night sky is actually moving at vastly diverse velocities, 
+        and are spaced apart up to billions of light years away, but the light makes it all to the same spot: the surface of the earth. 
+        So why don't we see this with the naked eye? It's all about perspective: imagine you're on a roadtrip in Colorado and as you're driving North, the Rocky Mountains are to your left. 
+      <p>
+
+      </p>From your perspective, how fast are the mile markers moving? What about the mountains in the background? 
+        This effect is called parallax, and is exactly the same reason why the stars in the night sky all seem to move together, even though they really aren't. 
+        If that's the case, then we surely can't use the star as a reference frame… or can we? Enter celestial coordinates. 
+        In the below image from the University of Central Florida, we can see that there is some sort of imaginary sphere placed conspherically around the Earth.
+      </p>
+      
+      <figure>
+        <img class="img-block" src="celestialsphere.png" alt="The Celestial Sphere">
+        <figcaption>Figure 1: The Celestial Sphere</figcaption>
+      </figure>
+      
+      <p>This is what we call the celestial sphere. Similarly to Earth, we can define both the celestial poles and the celestial equator. 
+        As for the radius of the celestial sphere, we consider it to be infinite, but it is required as a reference point for angles based on our zenith. 
+        With all of this in mind, we can now see how to implement this mathematical approach into a digital design.
+      </p>
+
+
+      <h5>Hardware/Software Tradeoffs</h5>
+      <p>One thing that is important to keep in mind is the general complexity of this project. There are many extremely advanced designs that utilize statistical approaches with error calculations to consistently ensure alignment. 
+      <p>
+
+      </p>Our system was originally designed to be as simple as possible, ensuring functionality and alignment for much shorter time periods than a typical astronomical image requires. 
+        For example, there are some commercially available products, such as arcsec's Saggita startracker, that have extremely high precision (2 arcseconds) and are specialized for harsh space weather conditions. 
+        However, these types of devices have been designed by a team of specialized engineers over a long period of time, making an implementation of accurate star tracking software far beyond our scope.
+      </p>
+
+      <p>Another important thing to note here is that the concept of "star tracking" isn't what's being copyrighted or patented. Instead, it's the specific algorithms that are used at the industry level. 
+        For example, most notably would be Raytheon's patent #12442642, "Star trackers for range determination in rendezvous and proximity operations", 
+        which details information on a new system using two star trackers for high precision operations at close proximity in orbit.
+      </p>
+    </section>
+
+    <!-- Program/Hardware Design Section -->
+    <section id="hardware">
+      <h2>3. Program/Hardware Design</h2>
+      <h5>Magnetometer</h5>
+      <p>
+        The magnetometer calibration was a critical step in ensuring the accuracy of our star tracking system, this was particularly important because we used the sensor in multiple environments such as my apartment, duffield atrium and the lab. 
+      <p>
+
+      </p>
+      The raw readings from the magnetometer are affected by both hard iron offsets, caused by permanent magnetic materials near the sensor, and soft iron effects caused by ferromagnetic materials that distort magnetic fields such as our phones, lab speakers, screws etc. 
+      <p>
+
+      </p>
+      Initially, we manually rotated the sensor through all  orientations in each environment, collected raw X, Y, and Z readings, and applied corrections to compensate for these effects. 
+        To remove the hard iron offsets, we calculated the center of the measurement ellipses and subtracted it from all readings, while for soft iron offsets, we corrected them by applying scaling factors to normalize the axis. 
+      <p>
+
+      </p>
+      This process was time consuming and manually tiring as we had to do this every testing session. 
+        We decided to write a python calibration script that automated these steps by having us just rotate the sensor once while logging data, compute the necessary hard and soft iron corrections and apply them in real time.
+      </p>
+      
+
+      <h5>GPS</h5>
+      <p>
+        The next device that was required to set up was the Adafruit Ultimate GPS v3 breakout board, hosting an on-chip antenna and the actual PA1616S GPS module. 
+        Communication with this device for our purposes required a unidirectional UART connection. 
+        At no point would the pico need to send data to the GPS, therefore only requiring the Tx (GPS) to Rx (Pico), and of course power and ground. 
+      <p>
+
+      </p>The next step would be to decode, or parse, the information being sent through the UART channel to the pico as usable data for certain calculations as mentioned in the mathematics. 
+        In order to do this, we must first understand the format of the raw data being presented to the MCU. 
+        
+      <p>
+
+      </p>The National Marine Electronics Association, or NMEA, has a standard for GPS data, namely, NMEA-0183. 
+        The basic structure of this format revolves around NMEA sentences, at maximum 82 characters, with specific tags and delimiters, as seen in Table 1.
+      </p>
+
+      <table>
+        <caption style="font-weight: 600; margin-bottom: 0.5rem; text-align: left;">Table 1: NMEA-0183 Delimiters</caption>
+        <thead>
+          <tr>
+            <th>ASCII</th>
+            <th>Hex</th>
+            <th>Dec</th>
+            <th>Use</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>&lt;CR&gt;</td>
+            <td>0x0d</td>
+            <td>13</td>
+            <td>Carriage return</td>
+          </tr>
+          <tr>
+            <td>&lt;LF&gt;</td>
+            <td>0x0a</td>
+            <td>10</td>
+            <td>Line feed, end delimiter</td>
+          </tr>
+          <tr>
+            <td>!</td>
+            <td>0x21</td>
+            <td>33</td>
+            <td>Start of encapsulation sentence delimiter</td>
+          </tr>
+          <tr>
+            <td>$</td>
+            <td>0x24</td>
+            <td>36</td>
+            <td>Start delimiter</td>
+          </tr>
+          <tr>
+            <td>*</td>
+            <td>0x2a</td>
+            <td>42</td>
+            <td>Checksum delimiter</td>
+          </tr>
+          <tr>
+            <td>,</td>
+            <td>0x2c</td>
+            <td>44</td>
+            <td>Field delimiter</td>
+          </tr>
+          <tr>
+            <td>\</td>
+            <td>0x5c</td>
+            <td>92</td>
+            <td>TAG block delimiter</td>
+          </tr>
+          <tr>
+            <td>^</td>
+            <td>0x5e</td>
+            <td>94</td>
+            <td>Code delimiter for HEX representation of ISO/IEC 8859-1 (ASCII) characters</td>
+          </tr>
+          <tr>
+            <td>~</td>
+            <td>0x7e</td>
+            <td>126</td>
+            <td>Reserved</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        Having a standardized format makes string parsing much easier. Luckily, only one type of NMEA sentence was required for purposes of this design, tagged “$GPGGA”, signifying that this sentence will be a GPS Fix sentence, meaning that it includes UTC, latitude, and longitude. 
+        This is exactly what is needed in order to find our zenith and allow for the program to work anywhere on the surface of the earth. 
+      <p>
+
+      </p>This all did not go without its struggles, however. 
+        String parsing in C is such a challenge because of the versatility of strings and how C allocates memory for them. Ensuring the correct char pointers were being accessed between dependencies was incredibly challenging, so in the end, the GPS software was all written in the main file tracker.c.
+      </p>
+
+      <h5>Stepper Drivers</h5>
+      <p>
+        The last, and probably most important component of this device was the TMC2209 Stepper Driver. Without this, we would not be able to accurately control the rotation of each motor. 
+        Though it does allow for a UART connection, 3 stepper drivers and a gps would need 4 isolated UART channels, which is only possible on the RP2040 through means of a PIO program to simulate the protocol using software on any other GPIO. 
+      <p>
+
+      </p>The way around this was to manually control the driver by its STEP and DIR pins. For example, when a pulse (rising edge) is sent to the driver into the STEP pin, it will step the motor once, in our case 1.8 degrees. 
+        DIR is automatically LOW, so when set HIGH, will reverse the direction of the step. With just these two connections on each driver, we can now allocate enough GPIOs from the Pico to be able to communicate with all other peripheral devices.
+      </p>
+
+      <h5>HOW DOES THIS ALL COME TOGETHER?</h5>
+      <p>
+        As seen below, the RP2040 uses the GPS positioning data to get our zenith and celestial poles. Originally, the idea was to align with magnetic north and then find Polaris based on the position obtained from the GPS, which is also celestial north. 
+      <p>
+
+      </p>Once the device is pointing straight towards celestial north, it would just need to rotate about the celestial north axis.
+        From here, we’d only need one stepper to control the rotation at 15.041 degrees per hour to perfectly compensate for the rotation of the Earth.
+      </p>
+
+      <h5>Hardware implementation</h5>
+      <p>
+        The hardware of our star tracker would allow anyone to easily replicate our project. The entire structure of our 3-axis gimbal was 3D printed from basic materials such as PLA and PETG. 
+        We used heat set inserts and socket head bolts to fasten the parts together, aluminum rod to connect the hinges, and threaded rod to connect to the motor output shafts. 
+      <p>
+      <p>
+        For the electrical side of the hardware, we used commonly used stepper motors, stepper motor drivers (TMC2209), a GPS module (PA1616S), a magnetometer (MMC5603), and the Raspberry Pi Pico, which are all also easy for anyone to acquire.
+      </p>
+
+      <p>
+        The hardware design took quite a lot of time to complete, due to the complexity of successfully implementing motion constraints in CAD. 
+        However taking the time to ensure everything moved together properly in CAD without interference meant that almost everything fit together perfectly on the first try. The one exception was that the electrical connector protruding 
+        from the motor meant that we had to modify the design to allow the motors to slide into the motor holders. 
+        Here, extensive prior experience with design for 3D printing and manufacturing was very beneficial since we had a good intuition about what tolerances to add between moving parts in the assembly. 
+      <p>
+
+      </p>One fundamental issue with the original design that we discovered in CAD was with the original plan to have both stepper motors below their respective plates.
+         When making the CAD, it soon became clear that the y-axis stepper motor would have interfered with the assembly below as the plates rotate. 
+         This issue was easily resolved by inverting the y-axis stepper motor assembly and having the motor above.
+      </p>
+
+
+
+      <h5>Mechanical Design</h5>
+      <p>
+        The mechanical design of our 3-axis gimbal uses one stepper motor to control each axis of rotation. 
+        First, the base has a wide platform to remain stable on the ground, a gear for the z-axis rotation around halfway up its shaft, and a small circular indentation where a pin from the plate above rests. 
+        The interface between the pin and socket was surprisingly frictionless despite us not having a bearing or adding any lubrication to the area. 
+        This allowed smooth rotation, but given more time and resources this would easily be replaced with a bearing.
+      </p>
+      
+      <figure>
+        <div class="two-image-container">
+          <img src="imagea.png" alt="CAD image of base and lower assembly">
+          <img src="imageb.png" alt="CAD image of upper assembly and hinges">
+        </div>
+      </figure>
+      
+      <p>
+        Next, the base plate has a pin on bottom to sit on the base, a stepper motor pointing down with a gear on its output shaft, a hinge for the next plate to connect to, and an arch that guides the movement for the x-axis rotation. 
+        The design of these two arches on the base plate took slight inspiration from the “OG star tracker” YouTube channel’s design of their “OG star tracker V2”. 
+        The motor to control the x-axis rotation hangs from this plate, and a threaded rod connected through its output shaft converts its rotational motion into linear motion that lifts the x-axis plate. 
+        The rotational motion is converted into linear motion as the threaded rod rotates through a heat set insert in a 3D printed rod that slides through the two arches.
+      <p>
+
+        <figure>
+          <div class="two-image-container">
+            <img src="imagec.png" alt="CAD image of base and lower assembly">
+            <img src="imaged.png" alt="CAD image of upper assembly and hinges">
+          </div>
+        </figure>
+
+      <p>
+        The next plate, the x-axis plate, has a hinge on the bottom to interface with the base plate which allows this plate to rotate up and down as the x-axis motor is turned. 
+        Connected to the bottom of the plate, two small arches secure a 3D printed rod with a heat set insert that reacts with the threaded rod for the y-axis rotation. 
+        The design of this arch is arguably better than the design of the arches for the x-axis rotation and given more time to iterate, we would use this connection for both the x and y rotation. Then a hinge on the top side connects with the y-axis plate.
+      </p>
+
+
+      <figure>
+        <img class="img-block" src="image5.png" alt="Cad image e">
+      </figure>
+
+      <p>
+        Finally, the y-axis plate has a hinge on the bottom to interface with the x-axis plate. 
+        The stepper motor to control the y-axis rotation is stood off above this plate with two arms that allow the motor to rotate in place as the angle of the plates relative to each other change. 
+        The camera mount of choice is then connected to the top of this plate so that the camera sees the benefit of all three rotational axes. Due to our rush to finish assembly for our final presentation, 
+        we ended up gluing one of our old motor mounts to the y-axis plate to hold a GoPro taking a timelapse.
+      </p>
+
+      <figure>
+        <img class="img-block" src="imagef.png" alt="Cad image f">
+      </figure>
+
+      <p>
+        In summary, the x and y axes each use a stepper motor with a threaded rod to react through a heat set insert to convert the rotational motion from the motors into linear motion to rotate 
+        their plates and the z-axis uses a gear on the third stepper motor to rotate the entire assembly around the base.
+      </p>
+
+      <p>
+        In order to split our design and testing into stages, we first designed our gimbal to only have rotation around the x and y axes. 
+        This allowed us to integrate the motors and circuitry with the mechanical assembly and test the motor control while we finished designing the base and gears for rotation around the z-axis.
+        During this testing stage, we noticed that the motors were getting pulled slightly out from their holders which meant we would not have precise or accurate control. 
+        As a result, we modified the motor holder design slightly so that the motors could be screwed into the motor holders. 
+        Once the new base with the z-axis rotation gears and new motor holders were done being printed, we disassembled the gimbal and reassembled with the new components.
+      </p>
+      
+      
+      <h5>AI USE STATEMENT</h5>
+      <p>For information about how we used AI during this project, please see our <a href="ai.html">AI Use Statement</a>.</p>
+    </section>
+
+    <!-- Conclusions Section -->
+    <section id="conclusions">
+      <h2>5. Conclusions</h2>
+      <p>
+        Something we didn’t know at the beginning was that we’d only end up needing two motors for the entire system instead of three, but with the final design including 3 degrees of freedom, 
+        there is much more elbow room to repurpose the same device as a generic 3 axis electrically controlled gimbal.
+      </p>
+
+      <p>
+        This resulted in an overcomplication of the project that really slowed us down trying to include the third axis on an already robust device. 
+        The lesson learned here is that it is very important to have a good idea of the exact physical workings of the device before buying anything. 
+        This added level of complexity made other parts of the project more difficult. 
+        For example, if we didn’t have to include the third axis, mounting of the electronics would have been substantially simpler, 
+        and there wouldn’t have been a need to devise a solution during the final hours of our available time.
+      </p>
+
+      </p>
+        As for a comparison on our device versus commercially available products, there is still a long way to go.
+        As previously mentioned, advanced star tracking systems are extremely complex, even using computer vision and databases to identify star patterns in the sky in order to correct for any minute errors that are accumulated over time.
+      <p>
+
+      <h5>Final Comments</h5>
+      <ul>
+        <li>All code was written originally by our group, except for the standard C libraries and the Pico SDK</li>
+        <li>No legal issues involving patents, trademarks, or copywrites, or NDAs</li>
+        <li>Our project would not be eligible for a patent because of the relative simplicity it represents compared to the larger scale industry giants. (This idea is not original)</li>
+      </ul>
+
+    </section>
+
+    <!-- Appendices Section -->
+    <section id="appendices">
+      <h2>6. Appendices</h2>
+
+      <p>"The group approves this report for inclusion on the course website."</p>
+      <p>"The group approves the video for inclusion on the course youtube channel."</p>
+
+      <h5>7A. Commented C code</h5>
+      <p>View our complete code listings: <a href="code.html">Code Listings Page</a></p>
+
+
+      <h5>7B. Schematics</h5>
+      <figure>
+        <img class="img-block" src="schematic.png" alt="Star Tracker Schematic">
+        <figcaption>Figure 2: Star Tracker Schematic</figcaption>
+      </figure>
+
+      <h5>7C. Tasks by each team member</h5>
+      <p>Jeremy designed the entirety of the mechanical structure in CAD, 3D printed all the components, cut the hinge and threaded rods, and assembled the components.</p>
+      <p>Dani took on the task of writing the GPS and stepper driver code, physical circuit design and build.</p>
+      <p>Tony took on the task of writing the magnetometer code and final integration of all components to work together.</p>
+      <p>We all communicated our progress throughout the project and worked together for the final integration of the protoboard and wiring to the motors.</p>
+      
+    </section>
+
+    <!-- References Section -->
+    <section id="references">
+      <h2>8. References</h2>
+      <ul>
+        <li>Stepper motor <a href="https://www.omc-stepperonline.com/download/17HS16-2004S1.pdf" target="_blank">datasheet</a></li>
+        <li>Our mechanical design took slight inspiration from the "<a href="https://www.youtube.com/@ogstartracker" target="_blank">OG star tracker</a>" design on YouTube, specifically with the design of the arches used for the x-axis rotation</li>
+        <li><a href="https://pressbooks.online.ucf.edu/ast2002tjb/chapter/2-1-the-sky-above/" target="_blank">Celestial Sphere reference</a></li>
+        <li><a href="https://en.wikipedia.org/wiki/NMEA_0183" target="_blank">NMEA 0183</a> (Table 1)</li>
+      </ul>
+    </section>
+
+  </div>
+
+  <script>
+    // Mobile menu toggle
+    function toggleMenu() {
+      const menu = document.getElementById('nav-menu');
+      menu.classList.toggle('active');
+    }
+
+    // Update active nav link on scroll
+    window.addEventListener('scroll', function() {
+      const sections = document.querySelectorAll('section[id]');
+      const navLinks = document.querySelectorAll('nav a');
+      
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (pageYOffset >= sectionTop - 100) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+    });
+
+    // Smooth scrolling
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+          // Close mobile menu if open
+          document.getElementById('nav-menu').classList.remove('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

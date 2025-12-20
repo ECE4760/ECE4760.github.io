@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Code Listings - ECE4760 Star Tracker</title>
+
+  <!-- Highlight.js for syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #fff;
+      padding-top: 60px;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: #333;
+      padding: 1rem 2rem;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: opacity 0.2s;
+    }
+
+    nav a:hover {
+      opacity: 0.8;
+    }
+
+    nav a.active {
+      font-weight: 600;
+    }
+
+    /* Hamburger menu for mobile */
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Sections */
+    section {
+      margin-bottom: 3rem;
+    }
+
+    /* Home Section */
+    #home {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #ddd;
+    }
+
+    #home h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #1a1a1a;
+    }
+
+    /* Section Titles */
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      color: #1a1a1a;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #ddd;
+    }
+
+    h3 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      color: #2c3e50;
+    }
+
+    h5 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      color: #2c3e50;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      text-align: justify;
+      color: #444;
+    }
+
+    /* Code Blocks */
+    pre {
+      background-color: #1e1e1e;
+      border: 1px solid #3e3e3e;
+      padding: 1rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      border-radius: 4px;
+    }
+
+    pre code {
+      white-space: pre;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      display: block;
+      background: transparent !important;
+      padding: 0;
+    }
+
+    /* Override highlight.js styles to match VS Code Dark Theme */
+    pre code.hljs,
+    pre code {
+      background: #1e1e1e !important;
+      color: #d4d4d4 !important;
+      padding: 0 !important;
+    }
+
+    /* Ensure code blocks have dark background */
+    pre {
+      background-color: #1e1e1e !important;
+    }
+
+    /* VS Code Dark Theme syntax highlighting colors */
+    .hljs-keyword,
+    .hljs-selector-tag,
+    .hljs-built_in,
+    .hljs-name,
+    .hljs-type,
+    code.hljs .hljs-keyword,
+    code.hljs .hljs-selector-tag,
+    code.hljs .hljs-built_in,
+    code.hljs .hljs-name,
+    code.hljs .hljs-type {
+      color: #569cd6 !important;
+      font-weight: normal;
+    }
+
+    .hljs-string,
+    .hljs-attr,
+    .hljs-attribute,
+    code.hljs .hljs-string,
+    code.hljs .hljs-attr,
+    code.hljs .hljs-attribute {
+      color: #ce9178 !important;
+    }
+
+    .hljs-comment,
+    .hljs-quote,
+    code.hljs .hljs-comment,
+    code.hljs .hljs-quote {
+      color: #6a9955 !important;
+      font-style: italic;
+    }
+
+    .hljs-number,
+    .hljs-literal,
+    code.hljs .hljs-number,
+    code.hljs .hljs-literal {
+      color: #b5cea8 !important;
+    }
+
+    .hljs-function,
+    .hljs-title,
+    .hljs-title.function_,
+    code.hljs .hljs-function,
+    code.hljs .hljs-title,
+    code.hljs .hljs-title.function_ {
+      color: #dcdcaa !important;
+    }
+
+    .hljs-meta,
+    .hljs-meta-keyword,
+    .hljs-meta .hljs-keyword,
+    code.hljs .hljs-meta,
+    code.hljs .hljs-meta-keyword {
+      color: #569cd6 !important;
+    }
+
+    .hljs-preprocessor,
+    .hljs-preprocessor .hljs-keyword,
+    .hljs-doctag,
+    code.hljs .hljs-preprocessor,
+    code.hljs .hljs-doctag {
+      color: #569cd6 !important;
+    }
+
+    .hljs-variable,
+    .hljs-params,
+    code.hljs .hljs-variable,
+    code.hljs .hljs-params {
+      color: #9cdcfe !important;
+    }
+
+    .hljs-char,
+    code.hljs .hljs-char {
+      color: #ce9178 !important;
+    }
+
+    .hljs-built_in,
+    .hljs-class .hljs-title,
+    code.hljs .hljs-built_in {
+      color: #4ec9b0 !important;
+    }
+
+    .hljs-symbol,
+    .hljs-property,
+    code.hljs .hljs-symbol,
+    code.hljs .hljs-property {
+      color: #d4d4d4 !important;
+    }
+
+    code {
+      font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+      background-color: #f5f5f5;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    /* Links */
+    a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Lists */
+    ul {
+      margin-left: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    ul li {
+      margin-bottom: 0.5rem;
+      color: #444;
+    }
+
+    /* Back to Main Button */
+    .back-button {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #333;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+
+    .back-button:hover {
+      background-color: #555;
+      text-decoration: none;
+    }
+
+    /* Code file section */
+    .code-file {
+      margin-bottom: 3rem;
+    }
+
+    .code-file-header {
+      background-color: #252526;
+      padding: 0.75rem 1rem;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+      border-bottom: 1px solid #3e3e3e;
+      font-weight: 600;
+      color: #d4d4d4;
+    }
+
+    .code-file pre {
+      margin-top: 0;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+
+      nav ul {
+        display: none;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      nav ul.active {
+        display: flex;
+      }
+
+      .container {
+        padding: 1rem;
+      }
+
+      #home h1 {
+        font-size: 1.5rem;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      pre {
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <ul id="nav-menu">
+      <li><a href="index.html">Back to Main Report</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+
+    <!-- Home Section -->
+    <section id="home">
+      <h1>Code Listings</h1>
+      <p>ECE4760 Star Tracker Project</p>
+    </section>
+
+    <!-- Code Listings Section -->
+    <section id="code-listings">
+      <h2>Commented C and Other Program Listings</h2>
+      <p>All code was written originally by our group, except for the standard C libraries and the Pico SDK.</p>
+
+      <!-- tracker.c -->
+      <div class="code-file">
+        <div class="code-file-header">tracker.c</div>
+        <pre><code class="language-c">/**
+ * Main file for StarTracker
+ * tracker.c
+ *
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <stdlib.h>
+#include "magnetometer.h"
+#include "libs/mpu6050.h"
+#include "libs/stepper.h"
+#include "libs/gps.h"
+#include "libs/vga16_graphics_v2.h"
+#include "orientation.h"
+#include "libs/pt_cornell_rp2040_v1_4.h"
+
+// Include Pico libraries
+#include "pico/stdlib.h"
+#include "pico/divider.h"
+#include "pico/multicore.h"
+// Include hardware libraries
+#include "hardware/pio.h"
+#include "hardware/dma.h"
+#include "hardware/clocks.h"
+#include "hardware/pll.h"
+#include "hardware/spi.h"
+#include "hardware/adc.h"
+#include "hardware/uart.h"
+#include "hardware/pwm.h"
+
+#define PI 3.14159265358979323846
+
+// Global variables for sensor data 
+static magnetometer magnetometer_data;
+static imu_data imu_data_global;
+static orientation current_orientation;
+static const float dt = 0.05f;  // 50ms = 0.05 seconds
+
+// Include Stepper Motor Library
+#include "libs/stepper.h"
+
+// Include GPS Library
+#include "libs/gps.h"
+
+#define FRAME_RATE 33000
+
+#define PWM_OUT 15
+#define SYSTEM_CLK_KHZ 150000
+#define CLK_DIV 250.0f
+
+// --- Buffer Configuration ---
+#define NMEA_BUFFER_SIZE 256
+char nmea_buffer[NMEA_BUFFER_SIZE];
+int buffer_index = 0;
+bool new_sentence_ready = false;
+
+#define GPS_RX 13
+#define GPS_TX 12
+
+#define UART_ID uart0
+#define BAUD_RATE 9600
+
+// Stepper Motor Control Pins
+#define PITCH_DIR 16
+#define AZIMUTH_DIR 14
+#define BOTTOM_MOTOR 15
+#define MOTOR_PITCH 17
+#define MOTOR_ROTATE_DIR 19
+#define MOTOR_ROTATE_STEP 18
+
+// Global variables for stepping gimble 
+float magnetic_north = 0.0f;
+float heading;
+float heading_difference;
+int steps_to_do = 0;
+float steps_per_degree = 1600.0f / 360.0f;  // ~4.444 steps per degree
+const float DEADBAND = 5.0f;  // error degree tolerance
+const int MAX_STEPS = 100;    // ~22.5 degrees per iteration (6% of full rotation)
+
+// protothread to display compass like approaching magnetic north on vga screen 
+static PT_THREAD (protothread_vga(struct pt *pt)){
+    PT_BEGIN(pt);
+    
+    static short center_x = 320; 
+    static short center_y = 240;  
+    static short compass_radius = 150;  
+    static float heading_rad;
+    static short needle_x, needle_y;
+    static char heading_str[20];
+    static char error_str[20];
+    static char color_indicator;
+    
+    while(1) {
+        // Clear compass area (draw background circle)
+        fillCircle(center_x, center_y, compass_radius + 5, BLACK);
+        drawCircle(center_x, center_y, compass_radius, WHITE);
+        
+        // cardinal directions
+        drawChar(center_x - 3, center_y - compass_radius - 15, 'N', RED, BLACK, 2);
+        drawChar(center_x + compass_radius + 10, center_y - 3, 'E', WHITE, BLACK, 2);
+        drawChar(center_x - 3, center_y + compass_radius + 10, 'S', WHITE, BLACK, 2);
+        drawChar(center_x - compass_radius - 15, center_y - 3, 'W', WHITE, BLACK, 2);
+        
+        // Draw tick marks every 30 degrees
+        for (int i = 0; i < 12; i++) {
+            float angle_rad = (i * 30.0f) * PI / 180.0f;
+            short x1 = center_x + (short)((compass_radius - 10) * sinf(angle_rad));
+            short y1 = center_y - (short)((compass_radius - 10) * cosf(angle_rad));
+            short x2 = center_x + (short)(compass_radius * sinf(angle_rad));
+            short y2 = center_y - (short)(compass_radius * cosf(angle_rad));
+            drawLine(x1, y1, x2, y2, WHITE);
+        }
+        
+        heading_rad = (heading - 90.0f) * PI / 180.0f;
+        
+        // Draw compass needle pointing to current heading (red)
+        needle_x = center_x + (short)(compass_radius * 0.8f * cosf(heading_rad));
+        needle_y = center_y - (short)(compass_radius * 0.8f * sinf(heading_rad));
+        drawLine(center_x, center_y, needle_x, needle_y, RED);
+        
+        // Draw small circle at center
+        fillCircle(center_x, center_y, 5, RED);
+        
+        // Draw arrow pointing to magnetic north (green)
+        short north_x = center_x + (short)(compass_radius * 0.6f * cosf(-PI/2));  // -90° = North
+        short north_y = center_y - (short)(compass_radius * 0.6f * sinf(-PI/2));
+        drawLine(center_x, center_y, north_x, north_y, GREEN);
+        
+        // Color indicator based on error from magnetic north
+        if (fabsf(heading_difference) < 5.0f) {
+            color_indicator = GREEN;  
+        } else if (fabsf(heading_difference) < 15.0f) {
+            color_indicator = YELLOW;  
+        } else {
+            color_indicator = RED;  
+        }
+        
+        // Draw status box at bottom
+        fillRect(10, 450, 300, 25, BLACK);
+        drawRect(10, 450, 300, 25, WHITE);
+        
+        // Display heading value
+        sprintf(heading_str, "Heading: %.1f", heading);
+        setCursor(15, 455);
+        setTextColor(WHITE);
+        writeString(heading_str);
+        
+        // Display error from magnetic north
+        sprintf(error_str, "Error: %.1f", heading_difference);
+        setCursor(200, 455);
+        setTextColor(color_indicator);
+        writeString(error_str);
+        
+        // Draw indicator bar showing alignment (0-100%)
+        short bar_width = (short)(280 * (1.0f - fabsf(heading_difference) / 180.0f));
+        if (bar_width < 0) bar_width = 0;
+        fillRect(15, 430, bar_width, 10, color_indicator);
+        drawRect(15, 430, 280, 10, WHITE);
+        
+        PT_YIELD_usec(50000);  // Update every 50ms
+    }
+    
+    PT_END(pt);
+}
+
+
+
+void on_uart_rx() {
+    // Only read one byte at a time
+    while (uart_is_readable(UART_ID)) {
+        char c = uart_getc(UART_ID);
+        // Add character to buffer if not full
+        if (buffer_index < NMEA_BUFFER_SIZE - 1) {
+            nmea_buffer[buffer_index++] = c;
+            // Check for end of sentence (e.g., newline character \n or \r)
+            if (c == '\n') {
+                nmea_buffer[buffer_index] = '\0'; // Null-terminate the string
+                parseNMEA(nmea_buffer);          // Process non-blocking data
+                buffer_index = 0;                // Reset buffer
+                break; // Exit the while loop
+            }
+        } else {
+            // Buffer overflow, reset index
+            buffer_index = 0;
+        }
+    }
+}
+
+void initGPS() {
+    // Set up our UART with the specified baud rate
+    uart_init(UART_ID, BAUD_RATE);
+
+    // Set the GPIO pins for the UART function
+    gpio_set_function(GPS_TX, GPIO_FUNC_UART);
+    gpio_set_function(GPS_RX, GPIO_FUNC_UART);
+
+    // Disable hardware flow control (typical for GPS modules)
+    uart_set_hw_flow(UART_ID, false, false);
+
+    // Set data format (8 bits, no parity, 1 stop bit - standard for NMEA)
+    uart_set_format(UART_ID, 8, 1, UART_PARITY_NONE);
+
+    // Set up the interrupt handler
+    int UART_IRQ = UART_ID == uart0 ? UART0_IRQ : UART1_IRQ;
+
+    // And set up and enable the interrupt
+    irq_set_exclusive_handler(UART_IRQ, on_uart_rx);
+    irq_set_enabled(UART_IRQ, true);
+
+    // Enable the UART to fire an interrupt on receive data ready
+    uart_set_irq_enables(UART_ID, true, false);
+
+    printf("UART initialized on GPIO%d (RX) at %d baud.\n", GPS_RX, BAUD_RATE);   
+}
+
+int main(void) 
+{
+    set_sys_clock_khz(150000, true) ;
+    stdio_init_all();
+    initVGA();
+
+    // GPS
+    initGPS();
+    initSteppers();
+    initMagnetometer();
+
+    magnetometer_data = magnetometer_calibrate();
+        
+    heading = magnetometer_get_filtered_heading(magnetometer_data);
+    
+    printf("heading: %f\n", heading);
+    
+    // take shortest path to magnetic north
+    heading_difference = heading - magnetic_north;
+    if (heading_difference > 180.0f) {
+        heading_difference = heading_difference - 360.0f;
+    } else if (heading_difference < -180.0f) {
+        heading_difference = heading_difference + 360.0f;
+    }
+
+    if (fabsf(heading_difference) > DEADBAND) { 
+        steps_to_do = (int)(heading_difference * steps_per_degree);
+    }
+
+    stepMotor(steps_to_do, MOTOR_PITCH);
+    
+}</code></pre>
+      </div>
+
+      <!-- magnetometer.c -->
+      <div class="code-file">
+        <div class="code-file-header">magnetometer.c</div>
+        <pre><code class="language-c">/**
+ * Tony Kariuki (akk85@cornell.edu)
+ * 
+ * magnetometer.c
+ *
+ */
+
+#include <stdint.h>
+#include <hardware/i2c.h>
+#include <hardware/gpio.h>
+#include <stdio.h>
+#include <math.h>
+#include "pico/stdlib.h"
+#include "magnetometer.h"
+
+// Full 3x3 soft-iron (ellipsoid → sphere) calibration
+typedef struct {
+    float hard_iron_bias[3];      
+    float soft_iron_matrix[3][3]; 
+} magnetometer_calibration;
+
+
+static const magnetometer_calibration calibration_data = {
+    // Hard iron bias in raw LSB units (calibrated values)
+    .hard_iron_bias = {
+        -8.0f,
+        -8.0f,
+        -8.0f
+    },
+    
+    .soft_iron_matrix = {
+        {1.000000f, 0.0f, 0.0f},
+        {0.0f, 1.000000f, 0.0f},
+        {0.0f, 0.0f, 1.000000f}
+    }
+};
+
+// Reset/recover I2C bus if it's stuck (internal helper)
+static void i2c_bus_recover(void) {
+    // Deinitialize I2C
+    i2c_deinit(I2C_CHAN);
+    
+    // Set pins as GPIO temporarily
+    gpio_set_function(SDA_PIN, GPIO_FUNC_NULL);
+    gpio_set_function(SCL_PIN, GPIO_FUNC_NULL);
+    
+    // Configure as outputs and drive high
+    gpio_init(SDA_PIN);
+    gpio_init(SCL_PIN);
+    gpio_set_dir(SDA_PIN, GPIO_OUT);
+    gpio_set_dir(SCL_PIN, GPIO_OUT);
+    gpio_put(SDA_PIN, 1);
+    gpio_put(SCL_PIN, 1);
+    
+    // Clock recovery - send 9 clock pulses while SDA is high
+    for (int pulse_count = 0; pulse_count < 9; pulse_count++) {
+        gpio_put(SCL_PIN, 0);
+        sleep_us(10);
+        gpio_put(SCL_PIN, 1);
+        sleep_us(10);
+    }
+    
+    // Set SDA high, then SCL high (idle state)
+    gpio_put(SDA_PIN, 1);
+    gpio_put(SCL_PIN, 1);
+    sleep_ms(10);
+}
+
+// I2C configuration
+void initMagnetometer(void) {
+    i2c_bus_recover();
+    
+    i2c_init(I2C_CHAN, I2C_BAUD_RATE);
+    gpio_set_function(SDA_PIN, GPIO_FUNC_I2C);
+    gpio_set_function(SCL_PIN, GPIO_FUNC_I2C);
+    gpio_pull_up(SDA_PIN);
+    gpio_pull_up(SCL_PIN);
+    
+    sleep_ms(10);  // Let bus stabilize
+}
+
+
+// ---- Low-level helpers ----
+static bool i2c_write(uint8_t register_address, uint8_t register_value) {
+    uint8_t write_buffer[2] = {register_address, register_value};
+    return i2c_write_blocking(I2C_CHAN, MAG_ADDRESS, write_buffer, 2, false) == 2;
+}
+
+// Read N bytes from the magnetometer
+static bool i2c_read(uint8_t register_address, uint8_t *read_buffer, size_t byte_count) {
+    if (i2c_write_blocking(I2C_CHAN, MAG_ADDRESS, &register_address, 1, true) != 1) {
+        return false;
+    }
+    return i2c_read_blocking(I2C_CHAN, MAG_ADDRESS, read_buffer, byte_count, false) == (int)byte_count;
+}
+
+// ---- Raw data unpack (20-bit two's complement) ----
+static inline int32_t unpack20(uint8_t high_byte, uint8_t mid_byte, uint8_t low_nibble) {
+    int32_t unpacked_value = ((int32_t)high_byte << 12) | ((int32_t)mid_byte << 4) | (low_nibble & 0x0F);
+    if (unpacked_value & (1 << 19)) unpacked_value -= (1 << 20);  // sign-extend
+    return unpacked_value;
+}
+
+
+
+// Raw magnetometer values (20-bit signed integers)
+typedef struct {
+    int32_t x;
+    int32_t y;
+    int32_t z;
+} magnetometer_raw;
+
+static magnetometer_raw magnetometer_read_raw(void) {
+    magnetometer_raw result = {0, 0, 0};
+
+    uint8_t control_value = MMC5603_CTRL0_AUTO_SR_EN | MMC5603_CTRL0_TM_M;
+    if (!i2c_write(MMC5603_REG_CTRL0, control_value)) {
+        return result;  // Return zeros if write fails
+    }
+
+    sleep_ms(20);
+    
+    uint8_t status_register = 0;
+    const int max_poll_attempts = 500;  // ~100ms timeout
+    bool measurement_complete = false;
+    
+    for (int poll_count = 0; poll_count < max_poll_attempts; poll_count++) {
+        if (!i2c_read(MMC5603_REG_STATUS, &status_register, 1)) {
+            return result;  // Return zeros if read fails
+        }
+        
+        if ((status_register & MMC5603_STATUS_MEAS_DONE) != 0) {
+            measurement_complete = true;
+            break;
+        }
+        
+        sleep_us(200);
+    }
+
+    uint8_t raw_data_bytes[9];
+    if (!i2c_read(MMC5603_REG_XOUT0, raw_data_bytes, 9)) {
+        return result;  // Return zeros if read fails
+    }
+
+    result.x = unpack20(raw_data_bytes[0], raw_data_bytes[1], raw_data_bytes[6]);
+    result.y = unpack20(raw_data_bytes[2], raw_data_bytes[3], raw_data_bytes[7]);
+    result.z = unpack20(raw_data_bytes[4], raw_data_bytes[5], raw_data_bytes[8]);
+
+    // Clear TM_M bit 
+    i2c_write(MMC5603_REG_CTRL0, MMC5603_CTRL0_AUTO_SR_EN);
+
+    return result;
+}
+
+// Full 3x3 soft-iron calibration (sphere)
+magnetometer magnetometer_calibrate(void) {
+    magnetometer result = {0.0f, 0.0f, 0.0f};
+    
+    magnetometer_raw raw = magnetometer_read_raw();
+
+    // Apply hard-iron bias in raw LSB units (before conversion to microtesla)
+    float centered_x_lsb = (float)raw.x - calibration_data.hard_iron_bias[0];
+    float centered_y_lsb = (float)raw.y - calibration_data.hard_iron_bias[1];
+    float centered_z_lsb = (float)raw.z - calibration_data.hard_iron_bias[2];
+
+    // Apply soft-iron matrix in LSB units
+    float corrected_x_lsb = calibration_data.soft_iron_matrix[0][0]*centered_x_lsb + 
+                             calibration_data.soft_iron_matrix[0][1]*centered_y_lsb + 
+                             calibration_data.soft_iron_matrix[0][2]*centered_z_lsb;
+    float corrected_y_lsb = calibration_data.soft_iron_matrix[1][0]*centered_x_lsb + 
+                             calibration_data.soft_iron_matrix[1][1]*centered_y_lsb + 
+                             calibration_data.soft_iron_matrix[1][2]*centered_z_lsb;
+    float corrected_z_lsb = calibration_data.soft_iron_matrix[2][0]*centered_x_lsb + 
+                             calibration_data.soft_iron_matrix[2][1]*centered_y_lsb + 
+                             calibration_data.soft_iron_matrix[2][2]*centered_z_lsb;
+
+    // Convert calibrated LSB values to microtesla
+    // Datasheet scale: 0.0625 mG/LSB = 0.00625 µT/LSB
+    result.x = corrected_x_lsb * 0.00625f;
+    result.y = corrected_y_lsb * 0.00625f;
+    result.z = corrected_z_lsb * 0.00625f;
+
+    return result;
+}
+
+// get heading in degrees x and y values from magnetometer_calibrate data 
+float magnetometer_get_heading(float magnetic_x, float magnetic_y) {
+    float heading = atan2f(magnetic_x, magnetic_y) * 180.0f / PI;
+    if (heading < 0) {
+        heading += 360.0f;
+    }
+    return heading;
+}
+
+
+// Helper function to normalize angle difference (handles 360° wrap-around)
+static float normalize_angle_diff(float angle1, float angle2) {
+    float diff = angle2 - angle1;
+    if (diff > 180.0f) {
+        diff -= 360.0f;
+    }
+    if (diff < -180.0f) {
+        diff += 360.0f;
+    }
+    return diff;
+}
+
+// Filter magnetometer values and calculate smoothed heading
+float magnetometer_get_filtered_heading(magnetometer mag_data) {
+    // Static variables for filtering (persist across function calls)
+    static float filtered_mag_x = 0.0f;
+    static float filtered_mag_y = 0.0f;
+    static bool first_mag = true;
+    
+    static float smoothed_heading = 0.0f;
+    static bool first_heading = true;
+    
+    // Filter magnetometer X and Y values to reduce noise and jumps
+    if (first_mag) {
+        filtered_mag_x = mag_data.x;
+        filtered_mag_y = mag_data.y;
+        first_mag = false;
+    } else {
+        // Exponential moving average for magnetometer values
+        // Use heavy smoothing (0.2 factor) to reduce jumps
+        float mag_filter = 0.2f;
+        filtered_mag_x = filtered_mag_x * (1.0f - mag_filter) + mag_data.x * mag_filter;
+        filtered_mag_y = filtered_mag_y * (1.0f - mag_filter) + mag_data.y * mag_filter;
+    }
+    
+    // Get heading from filtered magnetometer values
+    float raw_heading = magnetometer_get_heading(filtered_mag_x, filtered_mag_y);
+    
+    // Apply smoothing to heading
+    if (first_heading) {
+        smoothed_heading = raw_heading;
+        first_heading = false;
+    } else {
+        float diff = normalize_angle_diff(smoothed_heading, raw_heading);
+        
+        // Adaptive smoothing: more smoothing for small changes, faster for large
+        float adaptive_factor = 0.5f;  // Default moderate smoothing
+        if (fabsf(diff) < 1.0f) {
+            adaptive_factor = 0.3f;  // Heavy smoothing for noise
+        } else if (fabsf(diff) > 5.0f) {
+            adaptive_factor = 0.7f;  // Fast response for rotation
+        }
+        
+        smoothed_heading += diff * adaptive_factor;
+        if (smoothed_heading < 0.0f) {
+            smoothed_heading += 360.0f;
+        }
+        if (smoothed_heading >= 360.0f) {
+            smoothed_heading -= 360.0f;
+        }
+    }
+    
+    return smoothed_heading;
+}</code></pre>
+      </div>
+
+      <!-- magnetometer.h -->
+      <div class="code-file">
+        <div class="code-file-header">magnetometer.h</div>
+        <pre><code class="language-c">/**
+ * Tony Kariuki (akk85@cornell.edu)
+ * 
+ * magnetometer.h
+ *
+ */
+
+/* 3 axisMagnetometer 
+* -+ 30 Gauss
+* I2C address 0x30
+SCL = GPIO 5 (GP5)
+SDA = GPIO 4 (GP4)
+*/
+#include <stdint.h>
+#include <stdbool.h>
+// Note: Fixed-point macros are defined in mpu6050.h to avoid duplication
+ // Fixed point data type
+ typedef signed int fix15 ;
+ #define multfix15(a,b) ((fix15)(((( signed long long)(a))*(( signed long long)(b)))>>16)) 
+ #define float2fix15(a) ((fix15)((a)*65536.0f)) // 2^16
+ #define fix2float15(a) ((float)(a)/65536.0f) 
+ #define int2fix15(a) ((a)<<16)
+ #define fix2int15(a) ((a)>>16)
+ #define divfix(a,b) ((fix15)(((( signed long long)(a) << 16 / (b)))))
+
+// ==== MMC5603 Register Map (subset we need) ====
+// Output registers (auto-increment starting at 0x00)
+#define MMC5603_REG_XOUT0       0x00   // X[19:12]
+#define MMC5603_REG_STATUS      0x18   // status bits (Meas done = bit1)
+#define MMC5603_REG_ODR         0x1A   // output data rate (not used yet)
+#define MMC5603_REG_CTRL0       0x1B   // control (trigger single measure, etc.)
+#define MMC5603_REG_CTRL1       0x1C   // control (continuous mode etc., not yet)
+#define MMC5603_REG_CTRL2       0x1D   // control (set/reset etc., not yet)
+#define MMC5603_REG_PRODUCTID   0x39   // should read 0x10 on MMC5603
+
+
+// ==== Bit masks we'll use ====
+#define MMC5603_STATUS_MEAS_DONE   0x02  // STATUS bit1: magnetic measurement complete
+#define MMC5603_CTRL0_TM_M         0x20  // CTRL0 bit5: trigger one magnetic measurement
+#define MMC5603_CTRL0_AUTO_SR_EN   0x01  // CTRL0 bit0: enable auto set/reset
+
+
+
+#define MAG_ADDRESS 0x30  // Primary address, some boards use 0x60
+#define MAG_ADDRESS_ALT 0x60  // Alternative address for MMC5603
+#define I2C_CHAN       i2c0
+#define SDA_PIN        4   // GP4 = I2C0 SDA
+#define SCL_PIN        5   // GP5 = I2C0 SCL
+#define I2C_BAUD_RATE  400000  
+
+#define PI 3.14159265358979323846
+
+// Calibrated magnetic field values
+typedef struct {
+    float x;  
+    float y;  
+    float z;  
+} magnetometer;
+
+
+// I2C and magnetometer functions
+void initMagnetometer(void);
+magnetometer magnetometer_calibrate(void);
+float magnetometer_get_heading(float magnetic_x, float magnetic_y);
+float magnetometer_get_filtered_heading(magnetometer mag_data);</code></pre>
+      </div>
+
+      <!-- stepper.c -->
+      <div class="code-file">
+        <div class="code-file-header">stepper.c</div>
+        <pre><code class="language-c">// Include the VGA grahics library
+#include "vga16_graphics_v2.h"
+#include "vga_graphics_v3.h"
+// Include standard libraries
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+// Include Pico libraries
+#include "pico/stdlib.h"
+#include "pico/divider.h"
+#include "pico/multicore.h"
+// Include hardware libraries
+#include "hardware/pio.h"
+#include "hardware/dma.h"
+#include "hardware/clocks.h"
+#include "hardware/pll.h"
+#include "hardware/spi.h"
+#include "hardware/adc.h"
+#include "hardware/uart.h"
+#include "hardware/pwm.h"
+
+// Stepper Motor Control Pins
+#define PITCH_DIR 16
+#define AZIM_DIR 14
+#define MOTOR_AZIM 15
+#define MOTOR_PITCH 17
+#define MOTOR_ROTATE_DIR 19
+#define MOTOR_ROTATE_STEP 18
+
+#define SYSTEM_CLK_KHZ 150000
+#define CLK_DIV 250.0f
+
+
+
+
+void resetMotors() {
+    gpio_put(AZIM_DIR, 1);
+    gpio_put(PITCH_DIR, 1);
+    gpio_put(MOTOR_ROTATE_DIR, 1);
+}
+
+
+void initSteppers() {
+    gpio_init(MOTOR_AZIM);
+    gpio_init(MOTOR_PITCH);
+    gpio_init(AZIM_DIR);
+    gpio_init(PITCH_DIR);
+    gpio_init(MOTOR_ROTATE_DIR);
+    gpio_init(MOTOR_ROTATE_STEP);
+
+
+    gpio_set_dir(MOTOR_PITCH, GPIO_OUT);
+    gpio_set_dir(MOTOR_AZIM, GPIO_OUT);
+    gpio_set_dir(AZIM_DIR, GPIO_OUT);
+    gpio_set_dir(PITCH_DIR, GPIO_OUT);
+    gpio_set_dir(MOTOR_ROTATE_DIR, GPIO_OUT);
+    gpio_set_dir(MOTOR_ROTATE_STEP, GPIO_OUT);
+    
+    
+    resetMotors();
+}
+
+// Step Once
+void step(int motor) {
+    sleep_ms(1);
+    gpio_put(motor, 1);
+    sleep_us(1);
+    gpio_put(motor, 0);
+}
+
+void stepMotor(int num_steps, int motor) {
+
+    if (num_steps < 0) {
+            gpio_put(AZIM_DIR, 0);
+            gpio_put(PITCH_DIR, 0);
+            gpio_put(MOTOR_ROTATE_DIR, 0);
+    }
+    else {
+        gpio_put(AZIM_DIR, 1);
+        gpio_put(PITCH_DIR, 1);
+        gpio_put(MOTOR_ROTATE_DIR, 1);
+    }
+    
+    for (int i = 0; i < abs(num_steps); i++) {
+        step(motor);
+    } 
+
+    resetMotors();
+    
+}</code></pre>
+      </div>
+
+      <!-- stepper.h -->
+      <div class="code-file">
+        <div class="code-file-header">stepper.h</div>
+        <pre><code class="language-c">void initSteppers();
+void resetMotors();
+void step(int motor);
+void stepMotor(int num_steps, int motor);</code></pre>
+      </div>
+
+      <!-- gps.c -->
+      <div class="code-file">
+        <div class="code-file-header">gps.c</div>
+        <pre><code class="language-c">// Include standard libraries - stdint.h must be first
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+// Include Pico libraries
+#include "pico/stdlib.h"
+#include "pico/divider.h"
+#include "pico/multicore.h"
+// Include hardware libraries
+#include "hardware/pio.h"
+#include "hardware/dma.h"
+#include "hardware/clocks.h"
+#include "hardware/pll.h"
+#include "hardware/spi.h"
+#include "hardware/adc.h"
+#include "hardware/uart.h"
+
+#include "vga16_graphics_v2.h"
+#include "vga_graphics_v3.h"
+
+
+char read_buff[82];
+char nmea_gpgga[82];
+
+float lat;
+float lon;
+float utc;
+
+void parseNMEA(char raw_nmea[]) {
+    char* nmea_sentence = strstr((char*)raw_nmea, "$GPGGA");
+    
+    if (nmea_sentence != NULL) {
+        for (int i = 1; i < strlen(nmea_sentence); i++) {
+            if (nmea_sentence[i] == '$') {
+                strncpy(nmea_gpgga, nmea_sentence, 82);
+                break;
+            }
+        }
+    }
+}
+
+void getLat() { 
+    uint8_t comma_count = 0; 
+    char lat_str[12];
+    for (int i = 0; i < 82; i++) {
+        if (nmea_gpgga[i] == ',') {
+            comma_count++;
+        }
+        if (comma_count == 4) {
+            printf("%s\n\n", strncpy(lat_str, nmea_gpgga, i));
+        }
+    }
+    
+    return;
+}
+
+float getLon() {
+    return lon;
+}
+
+void getUTC() {
+    uint8_t comma_count = 0; 
+    char utc_str[11];
+    for (int i = 0; i < 82; i++) {
+        if (nmea_gpgga[i] == ',') {
+            comma_count++;
+        }
+        if (comma_count == 2) {
+            printf("%s\n\n", strncpy(utc_str, nmea_gpgga + 7, i - 7));
+        }
+    }
+
+    return; 
+}</code></pre>
+      </div>
+
+      <!-- gps.h -->
+      <div class="code-file">
+        <div class="code-file-header">gps.h</div>
+        <pre><code class="language-c">void parseNMEA(char raw_nmea[]);
+
+void getLat();
+float getLon();
+void getUTC();</code></pre>
+      </div>
+
+      <a href="index.html" class="back-button">Back to Main Report</a>
+    </section>
+
+  </div>
+
+  <script>
+    // Mobile menu toggle
+    function toggleMenu() {
+      const menu = document.getElementById('nav-menu');
+      menu.classList.toggle('active');
+    }
+
+    // Initialize syntax highlighting - ensure it runs after everything loads
+    function initHighlighting() {
+      if (typeof hljs !== 'undefined') {
+        hljs.highlightAll();
+        // Force re-highlighting if needed
+        document.querySelectorAll('pre code').forEach((block) => {
+          hljs.highlightElement(block);
+        });
+      }
+    }
+
+    // Try multiple times to ensure highlight.js is loaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initHighlighting);
+    } else {
+      initHighlighting();
+    }
+    
+    // Also try on window load as a fallback
+    window.addEventListener('load', initHighlighting);
+  </script>
+</body>
+</html>
+
