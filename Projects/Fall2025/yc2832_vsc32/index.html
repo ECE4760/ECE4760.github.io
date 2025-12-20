@@ -1,0 +1,2268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>The Ball Catcher – ECE 4760 Final Project</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+  <!-- <link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet"> -->
+
+  <!-- Custom styles for this template -->
+  <link href="starter-template.css" rel="stylesheet">
+
+  <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+  <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+  <!-- <script src="../../assets/js/ie-emulation-modes-warning.js"></script> -->
+
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+          aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#"> The Ball Catcher</a>
+      </div>
+      <div id="navbar" class="collapse navbar-collapse">
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="#">Home</a></li>
+          <li><a href="#intro">Introduction</a></li>
+          <li><a href="#obj">Project Objective</a></li>
+          <li><a href="#high_level_design">High Level Design</a></li>
+          <li><a href="#design">Hardware & Program Design</a></li>
+          <li><a href="#results">Results of the design</a></li>
+          <li><a href="#conclusions">Conclusions</a></li>
+          <!-- <li><a href="#future_work">Future Work</a></li> -->
+          <li><a href="#references">References</a></li>
+          <li><a href="#appendixA">Appendix A</a></li>
+          <li><a href="#appendixB">Appendix B</a></li>
+          <li><a href="#appendixC">Appendix C</a></li>
+          <li><a href="#appendixD">Appendix D</a></li>
+        </ul>
+      </div><!--/.nav-collapse -->
+    </div>
+  </nav>
+
+  <div class="header-banner">
+    <h1 style="font-size: 5rem; font-weight: 700;"> Vision-Guided Ball Catcher </h1>
+    <p class="lead">
+      <em> See It, Catch It </em>
+      <br>
+      <br>
+      A Project By Yusheng Chen (yc2832), Shashank Chalamalasetty (vsc32)
+      <br>
+      Dec 19, 2025
+    </p>
+  </div>
+
+  <div class="container">
+
+    <hr>
+    <div class="center-block">
+      <iframe width="640" height="360" src="https://youtu.be/ZalUMAx4A78" title="Project Demo Video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
+      <h4 style="text-align:center;">Project Demo Video</h4>
+    </div>
+
+    <hr id="intro">
+
+    <div style="text-align:center;">
+      <h2>Introduction</h2>
+      <p style="text-align: left;">
+        <em> A real-time vision-guided ball-catching system that integrates sensing,
+          computation, and actuation to react to fast, dynamic events, in this case a flying ball. </em>
+      </p>
+
+      <p style="text-align:left;">
+        This reactive ball-catching machine was developed by Yusheng Chen and Shashank Chalamalasetty as the final
+        project for ECE 5730 at Cornell University in Fall 2025. The system is capable of detecting a moving ball,
+        predicting its motion, and driving a two-axis plotter to intercept it in real time. A top-down camera is used to
+        track the ball's position across consecutive frames, and the resulting data is processed by a computer vision
+        pipeline running on a Raspberry Pi 3 via a Picamera. The estimated state of the ball is then communicated to a
+        deterministic, real-time control system implemented on a Raspberry Pi Pico, which commands the plotter to move
+        toward the predicted landing position as quickly and accurately as possible.
+      </p>
+
+      <p style="text-align:left;">
+        The primary goal of this project is to simulate human hand–eye coordination during object catching using a
+        machine-driven system. This responsiveness-oriented design explores how embedded systems coordinate sensing,
+        computation, and actuation under strict timing constraints, specifically before the ball lands. Due to hardware
+        limitations and engineering trade-offs, the project does not aim to achieve perfectly accurate physical
+        modeling. Instead, it emphasizes successful system integration, real-time responsiveness, effective task
+        partitioning between devices, reliable inter-device communication and control, and practical debugging and
+        visualization techniques.
+      </p>
+
+    </div>
+
+    <hr id="obj">
+
+    <div class="row">
+      <div class="col-md-12 text-center">
+        <h2 style="margin-bottom:25px;">Project Objective</h2>
+      </div>
+    </div>
+
+    <div class="row obj-content">
+      <div class="col-md-4 text-center">
+        <figure>
+          <img class="img-rounded" src="pics/objective.png" alt="Objective" height="160">
+          <figcaption style="font-size: 13px;"><em>
+              FIG. 1. High-level sketch of the project.</em>
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="col-md-8" style="padding-left:100px;">
+        <ul style="margin-top:0;">
+          <li>Real-time interaction with the physical world</li>
+          <li>Vision-based sensing and perception</li>
+          <li>Embedded control and responsiveness</li>
+          <li>Serial communication channel</li>
+          <li>Integrated hardware-software systems</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr id="high_level_design">
+
+    <div style="text-align:center;">
+      <h2>High Level Design</h2>
+
+      <h2 style="text-align:left; font-size:18px;">Rationale and sources of idea</h2>
+      <p style="text-align:left;">
+        The core idea investigated in this project is responsiveness. The motivation comes from observing how humans
+        handle fast and uncertain physical interactions with little explicit computation. When catching a falling or
+        thrown object, humans rely on incomplete sensory information, make rapid predictions, and continuously adjust
+        their motion, rather than solving a precise physical model. This behavior highlights an important principle in
+        real-world systems: effective performance often emerges from timely, approximate decisions instead of exact
+        calculations.
+      </p>
+
+      <p style="text-align:left;">
+        In practice, many engineered systems similarly prioritize responsiveness and robustness over optimality. For
+        example, industrial sorting lines identify and divert objects within fractions of a second without fully
+        reconstructing their shape. Automated door systems respond to human motion using simple sensors without detailed
+        prediction of intent. In the context of this project, a closely related inspiration is the concept of a robotic
+        goalkeeper, which must intercept a flying ball before it enters the net using limited sensing and short reaction
+        times.
+      </p>
+
+      <figure style="text-align:center; margin-top:15px;">
+        <img class="img-rounded" src="pics/robot_gk.png" alt="goalkeeper" height="240">
+        <figcaption style="font-size: 13px;"><em>
+            FIG. 2. Robotic Goalkeeper that can intercept a flying football.</em>
+        </figcaption>
+      </figure>
+
+      <h2 style="text-align:left; font-size:18px;">Background Math</h2>
+      <p style="text-align:left;">
+        The mathematical components used in this project are intentionally lightweight in order to minimize
+        computational burden and achieve fast system response. With ball detection and catcher actuation distributed
+        between the Raspberry Pi computer and the Raspberry Pi Pico microcontroller, two key mathematical tools are
+        employed: a geometric measure for object detection on the vision side and a digital filtering technique for
+        noise reduction on the control side.
+      </p>
+
+      <p style="text-align:left;">
+        On the vision processing side, object detection relies on a circularity metric to identify the ball among
+        candidate contours extracted from each frame. For each detected contour, circularity is computed using the
+        formula.
+      </p>
+
+      <div style="text-align:center; font-size:22px; margin:20px 0;">
+        <i>C</i> =
+        <span style="display:inline-block; vertical-align:middle;">
+          <span style="display:block; border-bottom:1px solid #000; padding:0 6px;">
+            4πA
+          </span>
+          <span style="display:block;">
+            P²
+          </span>
+        </span>
+      </div>
+
+      <p style="text-align:left;">
+        where A and P are the area and perimeter of the region, respectively. This dimensionless metric approaches unity
+        for perfect circles and decreases as the shape becomes less circular. By thresholding this value using a minimum
+        circularity parameter, the system effectively filters out irregular shapes caused by noise or background
+        artifacts.
+      </p>
+
+      <p style="text-align:left;">
+        On the embedded control side, a digital low-pass filter is applied to the received position measurements to
+        reduce noise and prevent abrupt actuator commands. In practice, raw data often contains noise introduced by
+        sensor imperfections and inherent mechanical or electrical fluctuations in the system. In this project, the
+        primary noise affecting the Pico originates from the PiCamera connected to the Raspberry Pi computer. Without
+        appropriate digital filtering, these measurements would exhibit instability, obscuring the underlying motion
+        trend and degrading the accuracy of subsequent computations.
+      </p>
+
+      <p style="text-align:left;">
+        To address this issue, the filter is implemented as an evolving weighted average between the raw measurement and
+        the previously smoothed value. In particular, a first-order infinite impulse response filter is used, which can
+        be expressed iteratively as
+      </p>
+
+      <div style="text-align:center; font-size:22px; margin:25px 0;">
+        <i>x</i><sub>filtered</sub>[k]
+        =
+        α · <i>x</i><sub>raw</sub>[k]
+        + (1 - α) · <i>x</i><sub>filtered</sub>[k - 1]
+      </div>
+
+      <p>
+        with an identical formulation applied to the y coordinate.
+        Here, <em>x<sub>raw</sub>[k]</em> represents the current measurement,
+        <em>x<sub>filtered</sub>[k]</em> the filtered output, and
+        <em>α</em> a smoothing coefficient between zero and one.
+        This digital filter attenuates high-frequency noise while preserving
+        the overall motion trend.
+      </p>
+
+      <h2 style="text-align:left; font-size:18px;">Logical Structure</h2>
+      <p style="text-align:left;">
+        The logical flow of each ball-catching attempt operates as a closed-loop pipeline that converts visual
+        observations into real-time actuator commands. At a high level, as the ball moves through the workspace, its
+        position is repeatedly measured by the camera and processed to produce updated predictions of its future
+        location. These predictions are continuously transmitted to the embedded controller, which adjusts the motion of
+        the catcher in response.
+      </p>
+
+      <p style="text-align:left;">
+        At a more detailed level, the process begins with sensing, where a top-down camera captures images of the
+        workspace at 30 frames per second. Each frame is processed on the Raspberry Pi 3 to detect the ball and extract
+        its position within the camera's field of view. The resulting position data is packaged and sent to the
+        Raspberry Pi Pico over a serial communication channel.
+      </p>
+
+      <p style="text-align:left;">
+        Upon receiving this data, the Pico applies digital filtering to stabilize the measurements and performs
+        additional processing, including estimating the ball's motion and generating a short-term prediction of its
+        future location. This prediction yields a target landing position, which is mapped to actuator commands for the
+        two-axis plotter. The actuator commands drive the catcher toward the predicted interception point while
+        maintaining smooth and responsive motion. By separating vision processing from control execution, the system
+        prevents computationally intensive tasks from interfering with time-critical actuation.
+      </p>
+
+      <h2 style="text-align:left; font-size:18px;">Hardware and Software Trade-offs</h2>
+      <p style="text-align: left;">
+        A primary architectural trade-off in this project is the separation of responsibilities between the Raspberry Pi
+        3 and the Raspberry Pi Pico. The Raspberry Pi runs a full operating system and supports camera interfacing and
+        computer vision libraries, making it well suited for image processing in Python with extensive library support.
+        However, this flexibility comes at the cost of nondeterministic timing and variable latency due to operating
+        system overhead. In contrast, the RP2040 on the Pico provides deterministic execution and low-latency response,
+        which are critical for real-time actuator control, but it has limited computational resources for visual
+        processing. In line with the project's emphasis on Pico-based embedded design, the Pi is therefore responsible
+        only for extracting ball state information from the PiCamera, while all signal processing and motion control
+        tasks are assigned to the Pico. This division balances computational capability with real-time reliability.
+      </p>
+
+      <p style="text-align: left;">
+        Another important trade-off involves the relationship between camera placement and mechanical actuation limits.
+        Experimental testing showed that the two-axis plotter requires approximately 0.6 seconds to move across the
+        workspace, which corresponds to a free-fall distance of about 1.77 meters in the absence of communication and
+        processing delays. If the estimated Pi-to-Pico communication latency of roughly 0.05 seconds is assumed, the
+        required detection height increases to over 2 meters to allow sufficient reaction time. Practical constraints
+        such as laboratory space and field-of-view limitations make this configuration less reliable. As a compromise,
+        the camera is placed approximately 1 meter above the workspace, and the experimental setup emphasizes controlled
+        ball release rather than unpredictable throws. This approach maintains the responsiveness-focused nature of the
+        project while remaining within mechanical and sensing constraints.
+      </p>
+
+    </div>
+
+    <hr id='design'>
+
+    <div style="text-align:center;">
+      <h2 style="text-align:center;">Hardware & Program Design</h2>
+
+      <h2 style="text-align:left; font-size:18px;">Hardware Details</h2>
+
+      <p class="subsection-title">
+        <em> Pi-Camera-OV5647 </em>
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        The vision pipeline uses a Raspberry Pi-compatible camera module based on the OV5647 image sensor. The camera is
+        equipped with an M12 wide-angle lens, providing a sufficiently large field of view to cover the entire plotter
+        workspace from an overhead mounting position. The camera is connected to the Raspberry Pi 3 via the CSI ribbon
+        cable interface. The Pi computer alongside the camera are mounted approximately 1 meter above the workspace in a
+        fixed top-down configuration.
+      </p>
+
+      <figure style="text-align:center; margin-top:15px;">
+        <div style="display: inline-block; margin-right: 10px;">
+          <img class="img-rounded" src="pics/PiCamera.png" alt="picamera" height="240">
+        </div>
+        <div style="display: inline-block;">
+          <img class="img-rounded" src="pics/topdown_cam.png" alt="top-down mounting" height="240">
+        </div>
+        <figcaption style="font-size: 13px; margin-top: 10px;">
+          <em>FIG. 3. PiCamera module (left) and the setup to provide a top-down perspective (right).</em>
+        </figcaption>
+      </figure>
+
+      <p class="subsection-title">
+        <em> Raspberry Pi 3 </em>
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Lightweight computer responsible for image acquisition and ball detection. It interfaces directly with the
+        camera module and runs a Python-based vision pipeline using standard computer vision libraries. The Pi extracts
+        the ball's position from each frame and transmits this information to the embedded controller via serial
+        communication channel. is not used for any time-critical control tasks.
+      </p>
+
+      <p class="subsection-title">
+        <em> Raspberry Pi Pico </em>
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        The Raspberry Pi Pico, based on the RP2040 microcontroller, serves as the central real-time control unit of the
+        system. It receives ball position data from the Raspberry Pi via a serial communication interface and is
+        responsible for driving the plotter end effector to the appropriate position.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        The Pico generates plotter control signals through two passive voltage divider circuits, one for each axis,
+        which will be described later. Upon receiving a new ball state update, the Pico performs all signal
+        conditioning, short-term prediction, and actuator command generation. All control logic is implemented in C to
+        ensure predictable execution timing and deterministic behavior. In addition to control tasks, the Pico renders a
+        VGA-based graphical interface that displays real-time system state information, including the latest position of
+        the ball. The Pico's low interrupt latency and deterministic execution make it well suited for handling
+        timing-sensitive control and its dual-core capability enables visualization tasks in parallel.
+      </p>
+
+      <p class="subsection-title">
+        <em> Voltage Divider Circuit (Breadboard Circuit) </em>
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        The interface between the Raspberry Pi Pico and the XY plotter is implemented using a passive resistive ladder
+        for each axis, as shown in the schematic. Each DAC channel from the Pico drives a series chain of resistors
+        connected to ground. For the X-axis, DAC Channel A feeds a ladder consisting of a 2 kΩ resistor (R1), a 100 Ω
+        sense resistor (R2), and a 22 kΩ resistor (R3). An identical structure using DAC Channel B and resistors R4-R6
+        is used for the Y-axis.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Rather than measuring a single node voltage relative to ground, the plotter’s analog input for each axis is
+        connected differentially across the 100 Ω resistor in the ladder. As a result, the plotter senses the voltage
+        drop across this resistor, which is proportional to the current flowing through the entire resistor chain. This
+        current is controlled directly by the DAC output voltage and the total resistance of the ladder.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Inspiration came from the voltage divider circuit of this
+        <a href="https://people.ece.cornell.edu/land/courses/ece4760/FinalProjects/f2019/lma227_jh2232_nhz2/lma227_jh2232_nhz2/lma227_jh2232_nhz2/lma227_jh2232_nhz2/lma227_jh2232_nhz2/ECELabWebPage.html"
+          target="_blank" rel="noopener noreferrer">
+          Latte Art Machine project
+        </a>,
+        but the resistance values are determined by trial and failure.
+      </p>
+
+      <figure style="text-align:center; margin-top:15px;">
+        <div style="display: inline-block; margin-right: 10px;">
+          <img class="img-rounded img-responsive" src="pics/voltage_divider_scheme.png" alt="Voltage divider schematic"
+            style="display:inline-block; margin-right:10px; max-height:240px;">
+        </div>
+        <div style="display: inline-block; margin-right: 10px;">
+          <img class="img-rounded img-responsive" src="pics/breadboard_wiring.png" alt="Breadboard wiring to Pico"
+            style="display:inline-block; max-height:240px;">
+        </div>
+        <figcaption style="font-size:13px; margin-top:10px;">
+          <em>FIG. 4. Voltage divider schematic (left) and breadboard wiring to the Pico (right).</em>
+        </figcaption>
+      </figure>
+
+      <p class="subsection-title">
+        <em> Bausch & Lomb Recorder 2000 </em>
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        This is a legacy precision plotting device originally designed for laboratory and optical instrumentation
+        applications. The plotter provides two orthogonal, independently controlled linear motion axes and accepts
+        analog control voltages to command the X and Y positions of its end effector. Because the plotter does not
+        provide direct position feedback to the controller, accurate operation relies on careful calibration of the
+        voltage-to-position linear mapping and repeatable mechanical behavior.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        In this project, the catcher mechanism is mounted at the plotter's end effector, allowing it to translate across
+        the workspace to intercept the ball. The plotter's analog control interface makes it well suited for integration
+        with microcontroller-based systems, as position commands can be generated directly from scaled DAC outputs.
+      </p>
+
+      <figure style="text-align:center; margin-top:15px;">
+        <img class="img-rounded" src="pics/plotter.png" alt="The 2D plotter" height="240">
+        <figcaption style="font-size: 13px;"><em>
+            FIG. 5. The two-dimensional XY plotter from 1980s.</em>
+        </figcaption>
+      </figure>
+
+      <h2 style="text-align:left; font-size:18px;">Software Details</h2>
+
+      <p class="subsection-title">
+        <em> Pi Feature: Calibration Window </em>
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Within the vision processing pipeline, the state of the robot is ideally characterized by pixel coordinates in
+        each frame, which requires a clear and consistent definition of the coordinate origin at system startup.
+        Accordingly, the first operation performed during initialization on the Raspberry Pi is manual definition of a
+        region of interest. The program displays a live camera feed and prompts the user to select four corner points
+        corresponding to the boundaries of the plotter workspace. These points are then used to compute a perspective
+        transformation that maps the camera view into a rectified top-down coordinate frame. This calibration step
+        ensures that all subsequent ball position measurements are expressed in a consistent and repeatable coordinate
+        system.
+      </p>
+
+      <figure style="text-align:center; margin-top:15px;">
+        <div style="display: inline-block; margin-right: 10px;">
+          <img class="img-rounded img-responsive" src="pics/calibration_window.png" alt="Startup calibration window"
+            style="display:inline-block; margin-right:10px; max-height:240px;">
+        </div>
+        <div style="display: inline-block; margin-right: 10px;">
+          <img class="img-rounded img-responsive" src="pics/calWind_code.png" alt="Code for the calibration window"
+            style="display:inline-block; max-height:240px;">
+        </div>
+        <figcaption style="font-size:13px; margin-top:10px;">
+          <em>FIG. 6. Manual keyboard calibration interface. The user selects four corner points of the region of
+            interest in the camera view (left), while the corresponding calibration logic and coordinate handling are
+            shown in the implementation (right).</em>
+        </figcaption>
+      </figure>
+
+      <p class="subsection-title">
+        <em> Pi Feature: Ball Detection Using Color Map and Circularity Checking </em>
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Ball detection on the Raspberry Pi is performed using a combination of color-based segmentation and circularity
+        checking aforementioned. Each captured frame is first converted into an appropriate color space, and a color
+        mask is applied to isolate pixels corresponding to the ball. For this project, we use a purely green ball for
+        high contrast. Next, candidate contours are filtered using a circularity metric computed from contour area and
+        perimeter, allowing the system to reject irregular shapes and background artifacts. The shape that best
+        resembles the geometry of a circle and falls into the defined threshold is identified as a “ball”.
+      </p>
+
+      <figure style="text-align:center; margin-top:15px;">
+        <img class="img-rounded" src="pics/ballDetect_code.png" alt="ball detection code" height="240">
+        <figcaption style="font-size: 13px;"><em>
+            FIG. 7. Ball detection algorithm implementation. Green color segmentation in HSV space is combined with
+            morphological opening and closing, contour extraction, and circularity-based scoring to identify the target
+            ball.</em>
+        </figcaption>
+      </figure>
+
+      <p style="text-align:left; font-size: 14px;">
+        Ball detection logic uses HSV color thresholding, contour extraction, and minimum enclosing circle, inspired by
+        the PyImageSearch
+        <a href="https://pyimagesearch.com/2015/09/14/ball-tracking-with-opencv/"
+          target="_blank" rel="noopener noreferrer">
+          "Ball Tracking with OpenCV" tutorial
+        </a>.
+      </p>
+
+      <p class="subsection-title">
+        <em> Pi Feature: Timestamped Serial Communication Format </em>
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Once a valid ball position is detected, the Raspberry Pi transmits the ball state to the Pico using a
+        lightweight serial protocol. Each message is formatted as a single line containing a timestamp and the
+        normalized x and y coordinates of the ball, where the workspace width and height are treated as unit length, in
+        the form “timestamp x_coord y_coord”. Including an explicit timestamp allows the Pico to account for irregular
+        update intervals, discard consecutive messages with negligible change to improve efficiency, and estimate motion
+        based on actual time differences between measurements. This design improves tolerance to communication latency
+        and variability introduced by operating system scheduling.
+      </p>
+
+      <figure style="text-align:center; margin-top:15px;">
+        <div style="display: inline-block; margin-right: 10px;">
+          <img class="img-rounded img-responsive" src="pics/serial_UI.png" alt="serial UI"
+            style="display:inline-block; margin-right:10px; max-height:240px;">
+        </div>
+        <div style="display: inline-block; margin-right: 10px;">
+          <img class="img-rounded img-responsive" src="pics/serial_code.png" alt="Code for serial communication"
+            style="display:inline-block; max-height:240px;">
+        </div>
+        <figcaption style="font-size: 13px;"><em>
+            FIG. 8. Serial communication pipeline between the Raspberry Pi and the Pico. Normalized and bounded position
+            data are packaged into a formatted message and streamed over the serial interface, as shown by the runtime
+            console output (left) and the corresponding code implementation (right).</em>
+        </figcaption>
+      </figure>
+
+      <p class="subsection-title">
+        <em> Pico Feature: Short-Term Motion Prediction </em>
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Once the position of the ball is sensed, there is an inherent delay before the corresponding actuation can occur
+        due to communication and mechanical response time. As a result, attempting to intercept the ball based solely on
+        its current measured position would consistently result in a delayed response. To address this issue, the Pico
+        computes a short-term prediction of the ball’s future position using the timestamped data received from the
+        Raspberry Pi, thereby compensating for both communication and actuation latency.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        In this project, the Pico maintains a history of the three most recent ball state updates. For each actuation
+        cycle, a linear extrapolation is performed using the two most recent measurements to predict the ball’s position
+        a short time step into the future. By doing so, the plotter is able to react proactively to where the ball is
+        expected to be, rather than where it was last observed. At the same time, because new measurements continuously
+        update the prediction, the system retains the ability to correct its motion when the latest observation deviates
+        from the predicted trajectory.
+      </p>
+
+      <p class="subsection-title">
+        <em> Pico Feature: DAC Output to Plotter Position Mapping </em>
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        The final stage of the control pipeline on the Raspberry Pi Pico is the conversion of normalized position
+        commands into analog control voltages for the XY plotter. This is implemented using an external dual-channel DAC
+        (MCP4822) driven over SPI. Each actuation update generates one command for the X axis and one for the Y axis,
+        which together define the desired end-effector position.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Normalized position values received and processed by the Pico are linearly mapped to DAC codes within a
+        predefined range. This linear mapping was selected based on experimental characterization of the plotter
+        response using an external laboratory power supply, which demonstrated an approximately linear relationship
+        between applied control voltage and plotter displacement over the usable workspace.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Before transmission, all DAC commands are explicitly clamped to valid bounds to prevent out-of-range voltages
+        that could drive the plotter beyond its mechanical limits. DAC updates are sent over SPI, with each channel
+        packaged as a 16-bit command word containing both configuration bits and the desired output value. Chip-select
+        is controlled manually in software to ensure deterministic framing and synchronized updates across both
+        channels.
+      </p>
+
+      <figure style="text-align:center; margin-top:15px;">
+        <img class="img-rounded" src="pics/DAC_plotter_mapping.png" alt="DAC-plotter mapping" height="240">
+        <figcaption style="font-size: 13px;"><em>
+            FIG. 9. Code implementing conversion of normalized coordinates to DAC commands and SPI transmission.</em>
+        </figcaption>
+      </figure>
+
+      <p class="subsection-title">
+        <em> Pico Feature: VGA Graphical User Interface </em>
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        In addition to generating control inputs, the Pico renders a VGA-based graphical user interface that displays
+        real-time system state information. This includes the incoming serial message and the corresponding DAC output
+        values for the X and Y channels, shown as text in the top-left corner of the display. A rectangular region
+        representing the calibrated workspace is also drawn, within which a white marker indicates the current sensed
+        position of the ball.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        From a system design perspective, the VGA rendering workload is executed entirely on core 1 of the RP2040, while
+        core 0 is dedicated to signal processing and actuation command computation. Synchronization between the two
+        cores is achieved through shared state variables written by core 0 and sampled by core 1 at the beginning of
+        each display refresh cycle. This separation exploits the dual-core architecture of the RP2040 to realize
+        parallelism and ensures that visualization tasks do not interfere with timing-sensitive control operations.
+      </p>
+
+      <figure style="text-align:center; margin-top:15px;">
+        <img class="img-rounded" src="pics/VGA.png" alt="VGA Display" height="240">
+        <figcaption style="font-size: 13px;"><em>
+            FIG. 10. Live VGA display of target position.</em>
+        </figcaption>
+      </figure>
+
+      <h2 style="text-align:left; font-size:18px;">Things Tried but Did Not Work</h2>
+
+      <p style="text-align:left; font-size: 14px;">
+        Several approaches were explored during development that proved unreliable or impractical for the final system.
+        On the vision side, early attempts to perform ball detection using fixed color thresholds without additional
+        geometric filtering resulted in frequent false positives under varying lighting conditions and background noise.
+        These approaches were highly sensitive to illumination changes and required constant retuning, which motivated
+        the introduction of circularity-based filtering to improve robustness.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        On the embedded control side, initial attempts to directly map GPIO output signal levels to the physical
+        position of the plotter end effector without repeated calibration led to inconsistent behavior. Mechanical
+        variation and assembly tolerances caused noticeable drift in the voltage-to-position relationship, making a
+        one-time calibration insufficient. This demonstrated the necessity of performing calibration during each system
+        setup.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Serial communication between the Raspberry Pi and the Pico also presented challenges. Initial implementations
+        did not enforce strict end-of-line detection and assumed regular update timing. In practice, this led to cases
+        where incomplete or concatenated messages were parsed on the Pico, causing the plotter to move in a periodic and
+        seemingly random manner. This behavior was further undermined by automatic serial buffer flushing, which
+        occasionally caused loss of synchronization between transmitted data and control commands. These issues
+        ultimately motivated tighter message formatting and more robust parsing logic in the final design.
+      </p>
+
+      <h2 style="text-align:left; font-size:18px;">AI Discussion</h2>
+
+      <p style="text-align:left; font-size: 14px;">
+        Artificial intelligence tools were used selectively during the development of this project as an assistive
+        resource. All high-level system architecture, algorithm selection, hardware interfacing decisions, and control
+        logic were designed and implemented by the project authors. AI assistance was limited to generating scaffolding
+        code patterns, refining syntax, and performing sanity checks, with the goal of reducing development overhead
+        rather than replacing engineering judgment.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        On the Raspberry Pi side, AI assistance was primarily used as a reference tool for identifying relevant library
+        methods and standard usage patterns. In particular, it was used to help locate and construct common OpenCV
+        operations such as morphological filtering calls and basic rendering utilities for user feedback during
+        calibration, as well as perspective transform boilerplate. AI tools also suggested general performance
+        optimizations, such as reducing image resolution to improve processing speed, which informed the decision to
+        temporarily downscale the calibrated region during ball detection. However, the underlying vision pipeline,
+        including ball detection logic, coordinate normalization, and serial message formatting, was designed and
+        implemented manually. The circularity metric, threshold selection, and scoring logic were chosen based on
+        mathematical reasoning and iterative experimental testing rather than AI generated suggestions.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        On the Raspberry Pi Pico side, no AI generated code was used for control logic, real time processing, inter core
+        scheduling, or hardware interfacing. The Pico firmware is adapted from publicly available Cornell ECE4760
+        reference code by V. Hunter Adams, as stated in the file header, including the protothreads framework and VGA
+        graphics infrastructure. All additional functionalities and modifications, including serial parsing, timestamp
+        handling, digital filtering, short term motion prediction, deadband logic, DAC configuration, SPI communication,
+        manual chip select control, semaphore based synchronization, and dual core task partitioning, were authored,
+        tested, and debugged by the project team. AI tools were used only minimally for syntax verification or
+        conceptual sanity checks, since correct hardware timing behavior required direct reasoning and hands-on
+        experimentation.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Throughout development, AI tools were occasionally consulted for documentation lookup or alternative ways to
+        express existing logic. All AI generated suggestions were carefully reviewed and incorporated only when they
+        aligned with the experimental observations.
+      </p>
+    </div>
+
+    <hr id='results'>
+    <div style="text-align:center;">
+      <h2>Results of the design</h2>
+
+      <h2 style="text-align:left; font-size:18px;">Test Condition</h2>
+      <p style="text-align:left; font-size: 14px;">
+        The combined software and hardware design resulted in a system that is responsive, observable, and relatively
+        easy to operate. The setup process is straightforward, and the calibration workflow on the Raspberry Pi makes
+        defining the workspace intuitive. The addition of a VGA display driven by the Pico significantly improves
+        system observability by providing real-time feedback on the interpreted ball position and corresponding
+        plotter commands. This feature proved especially valuable during debugging and calibration, as the plotter
+        head is sensitive to loose connections on the breadboard. Even minor wiring issues can skew the end-effector
+        position or alter movement scaling. The VGA display allows such issues to be quickly identified and corrected.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        Several analog knobs on the plotter control the input gain and positional offset of the end effector. These
+        parameters directly affect how the analog control signals generated by the Pico translate into physical
+        motion. Proper calibration of these knobs is necessary for accurate operation and would be difficult to
+        perform reliably without visual feedback. With the VGA display providing a clear indication of the expected
+        plotter position, calibration becomes significantly more manageable. Once the basic behavior of the plotter
+        controls is understood, the system is easy to set up and use.
+      </p>
+
+      <h2 style="text-align:left; font-size:18px;">Speed and Accuracy</h2>
+      <p style="text-align:left; font-size: 14px;">
+        In terms of speed and accuracy, the system performs well when tracking a ball that is held and moved by hand
+        within the workspace. When the ball is moved to a new location and held stationary, the plotter head follows
+        closely and settles directly beneath the ball. While precise numerical error metrics were not measured,
+        qualitative testing during demonstrations showed that the closed-loop response is smooth and stable, with
+        minimal hesitation or jitter under normal operating conditions. This confirms that the vision pipeline,
+        communication scheme, and control logic operate effectively in real time.
+      </p>
+
+      <h2 style="text-align:left; font-size:18px;">Safety Considerations</h2>
+      <p style="text-align:left; font-size: 14px;">
+        Safety considerations are enforced primarily through software-level constraints. Throughout the control
+        pipeline, normalized position values are clamped to valid bounds before being processed or transmitted. On the
+        Pico side, predicted positions are similarly clamped before being mapped to DAC outputs, preventing
+        out-of-range voltages from being sent to the plotter. Additional deadband thresholds are applied to suppress
+        small fluctuations caused by noise, reducing unnecessary actuator motion. These measures ensure that the
+        plotter does not attempt to move beyond its mechanical limits or respond erratically to transient measurement
+        errors, contributing to stable and safe operation during testing.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        A demonstration video showcasing system setup, real-time tracking behavior, and representative test scenarios
+        is provided below. The video illustrates the system's responsiveness during controlled motion, such as holding
+        the ball in place, as well as the trade-offs associated with drop height and the safeguards used to maintain
+        reliable performance.
+      </p>
+
+      <video width="640" controls>
+        <source src="video/test.mp4" type="video/mp4">
+      </video>
+    </div>
+
+    <hr id='conclusions'>
+
+    <div style="text-align:center;">
+      <h2>Conclusion</h2>
+      <p style="text-align:left; font-size: 14px;">
+        The design largely met the project expectations, with the main limitation being reliable ball catching. As
+        discussed in the results section, this limitation stems primarily from the constraints of the single-camera
+        detection hardware rather than the control framework. A natural extension would be the use of stereo vision
+        to estimate the ball's three-dimensional trajectory and final landing position directly, instead of relying
+        on short-term position extrapolation. This would allow the plotter to move directly to the interception
+        point, reduce reaction-time constraints, and increase the observable region of the workspace.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        From a design and standards perspective, the system follows the principles emphasized in the course.
+        Time-critical tasks are handled deterministically on the microcontroller, nondeterministic behavior is
+        isolated to the vision-processing computer, and safety is enforced through software-level clamping, deadband
+        thresholds, and bounded actuation ranges. Communication and concurrency are managed in a structured and
+        predictable manner.
+      </p>
+
+      <p style="text-align:left; font-size: 14px;">
+        With respect to intellectual property considerations, this project relies on the C libraries and reference
+        code provided for this course, as well as the open-source OpenCV library for vision processing, all of which
+        are used in accordance with their respective license terms. The actuation hardware is a Bausch & Lomb
+        Recorder 2000 plotter, whose detailed documentation and licensing information are no
+        longer readily available online. Integration of the plotter was therefore limited to noninvasive external
+        electrical interfacing and minor mechanical adaptations, without modification of internal circuitry or
+        reverse engineering of proprietary components. No other restricted documentation or
+        non-disclosure agreements were involved in the development of this project.
+      </p>
+    </div>
+
+    <hr id="references">
+
+    <div style="font-size:18px">
+      <h2 style="text-align:center;">References</h2>
+      <ul>
+        <li>
+          PyImageSearch. 
+          <em>Ball Tracking with OpenCV.</em>
+          <a href="https://pyimagesearch.com/2015/09/14/ball-tracking-with-opencv/" target="_blank">
+            https://pyimagesearch.com/2015/09/14/ball-tracking-with-opencv/
+          </a>
+        </li>
+
+        <li>
+          L. Ma, J. Huang, N. Zhou. 
+          <em>Latte Art Machine – ECE 4760 Final Project.</em>
+          Cornell University, Fall 2019.
+          <a href="https://people.ece.cornell.edu/land/courses/ece4760/FinalProjects/f2019/lma227_jh2232_nhz2/lma227_jh2232_nhz2/lma227_jh2232_nhz2/lma227_jh2232_nhz2/lma227_jh2232_nhz2/ECELabWebPage.html"
+            target="_blank">
+            Project Web Page
+          </a>
+        </li>
+
+        <li>
+          Microchip Technology Inc.
+          <em>MCP4822 Dual 12-Bit DAC Datasheet.</em>
+          <a href="https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/20002249B.pdf"
+            target="_blank">
+            Datasheet
+          </a>
+        </li>
+
+        <li>
+          Raspberry Pi Ltd.
+          <em>RP2040 Microcontroller Datasheet.</em>
+          <a href="https://pip-assets.raspberrypi.com/categories/814-rp2040/documents/RP-008371-DS-1-rp2040-datasheet.pdf"
+            target="_blank">
+            Datasheet
+          </a>
+        </li>
+
+        <li>
+          Raspberry Pi Ltd.
+          <em>Raspberry Pi Pico Datasheet.</em>
+          <a href="https://pip-assets.raspberrypi.com/categories/610-raspberry-pi-pico/documents/RP-008307-DS-1-pico-datasheet.pdf"
+            target="_blank">
+            Datasheet
+          </a>
+        </li>
+
+        <li>
+          Adams, V. Hunter.
+          <em>RP2040 PWM Demonstration Code.</em>
+          GitHub Repository.
+          <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/blob/master/PWM/PWM_Demo/pwm-demo.c"
+            target="_blank">
+            Source Code
+          </a>
+        </li>
+
+        <li>
+          Adams, V. Hunter.
+          <em>RP2040 Audio Beep Synthesis Demonstration Code.</em>
+          GitHub Repository.
+          <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/blob/master/Audio/c_Audio_Beep_Synthesis_Single_Core/beep_beep.c"
+            target="_blank">
+            Source Code
+          </a>
+        </li>
+
+        <li>
+          Adams, V. Hunter.
+          <em>RP2040 VGA Graphics Library.</em>
+          GitHub Repository.
+          <a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/blob/master/VGA_Graphics/Animation_Demo/vga16_graphics_v2.h"
+            target="_blank">
+            Source Code
+          </a>
+        </li>
+
+        <li>
+          Raspberry Pi Ltd.
+          <em>Raspberry Pi 3 Model B+ Product Brief.</em>
+          <a href="https://datasheets.raspberrypi.com/rpi3/raspberry-pi-3-b-plus-product-brief.pdf"
+            target="_blank">
+            Datasheet
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <hr id="appendixA">
+
+    <div class="row">
+      <div class="col-md-12">
+        <h2 style="text-align:center;">Appendix A: Permissions</h2>
+
+        <h3 style="font-size:18px;">Project on the course website</h3>
+        <p style="font-size:16px; margin-top:10px;">
+          The group approves this report for inclusion on the course website.
+        </p>
+
+        <h3 style="font-size:18px; margin-top:25px;">Project on the course YouTube channel</h3>
+        <p style="font-size:16px; margin-top:10px;">
+          The group approves the video for inclusion on the course youtube channel.
+        </p>
+      </div>
+    </div>
+
+
+    <hr id="appendixB">
+
+    <div class="row">
+      <div class="col-md-12">
+        <h2 style="text-align:center;">Appendix B: Code Implementation</h2>
+      </div>
+    </div>
+
+    <!-- Pi Code -->
+
+    <div class="row" style="margin-top:20px;">
+      <div class="col-md-12">
+
+        <h4 style="text-align:left;">Program 1: Raspberry Pi Vision Pipeline</h4>
+
+        <div class="code-block">
+          <!-- HTML generated using hilite.me -->
+          <div
+            style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;">
+            <table>
+              <tr>
+                <td>
+                  <pre style="margin: 0; line-height: 125%;">  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256</pre>
+                </td>
+                <td>
+                  <pre style="margin: 0; line-height: 125%;"><span></span><span style="color: #888">#!/usr/bin/env python3</span>
+<span style="color: #080; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #0E84B5; font-weight: bold">time</span>
+<span style="color: #080; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #0E84B5; font-weight: bold">serial</span>
+<span style="color: #080; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #0E84B5; font-weight: bold">cv2</span>
+<span style="color: #080; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #0E84B5; font-weight: bold">numpy</span><span style="color: #BBB"> </span><span style="color: #080; font-weight: bold">as</span><span style="color: #BBB"> </span><span style="color: #0E84B5; font-weight: bold">np</span>
+<span style="color: #080; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #0E84B5; font-weight: bold">picamera2</span><span style="color: #BBB"> </span><span style="color: #080; font-weight: bold">import</span> Picamera2
+
+<span style="color: #888"># Some Configuration settings</span>
+MIN_RADIUS <span style="color: #333">=</span> <span style="color: #00D; font-weight: bold">5</span>
+MAX_RADIUS <span style="color: #333">=</span> <span style="color: #00D; font-weight: bold">80</span>
+<span style="color: #888"># Circularity threshold</span>
+MIN_CIRCULARITY <span style="color: #333">=</span> <span style="color: #60E; font-weight: bold">0.7</span>
+ROI_SCALE <span style="color: #333">=</span> <span style="color: #60E; font-weight: bold">0.5</span>
+FRAME_TIME <span style="color: #333">=</span> <span style="color: #007020">int</span>(<span style="color: #00D; font-weight: bold">1_000_000</span> <span style="color: #333">/</span> <span style="color: #00D; font-weight: bold">30</span>)
+
+<span style="color: #888"># Camera setup</span>
+picam2 <span style="color: #333">=</span> Picamera2()
+picam2<span style="color: #333">.</span>configure(
+<span style="color: #888"># =====================This block of code is generated by AI==============================</span>
+    picam2<span style="color: #333">.</span>create_video_configuration(
+        main<span style="color: #333">=</span>{<span style="background-color: #FFF0F0">&quot;size&quot;</span>: (<span style="color: #00D; font-weight: bold">640</span>, <span style="color: #00D; font-weight: bold">480</span>), <span style="background-color: #FFF0F0">&quot;format&quot;</span>: <span style="background-color: #FFF0F0">&quot;BGR888&quot;</span>},
+        controls<span style="color: #333">=</span>{<span style="background-color: #FFF0F0">&quot;AeEnable&quot;</span>: <span style="color: #080; font-weight: bold">False</span>, <span style="background-color: #FFF0F0">&quot;FrameDurationLimits&quot;</span>: (FRAME_TIME, FRAME_TIME)},
+    )
+)
+<span style="color: #888"># =====================This block of code is generated by AI==============================</span>
+
+<span style="color: #888"># Manually set the exposure time so that there is no vagues trace of the ball due to slow shutter speed</span>
+picam2<span style="color: #333">.</span>set_controls({<span style="background-color: #FFF0F0">&quot;ExposureTime&quot;</span>: <span style="color: #00D; font-weight: bold">8000</span>, <span style="background-color: #FFF0F0">&quot;AnalogueGain&quot;</span>: <span style="color: #60E; font-weight: bold">8.0</span>})
+picam2<span style="color: #333">.</span>start()
+time<span style="color: #333">.</span>sleep(<span style="color: #00D; font-weight: bold">2</span>)
+
+<span style="color: #888"># Serial setup, the device ID is that of the Pico</span>
+ser <span style="color: #333">=</span> serial<span style="color: #333">.</span>Serial(<span style="background-color: #FFF0F0">&quot;/dev/ttyACM0&quot;</span>, <span style="color: #00D; font-weight: bold">115200</span>, timeout<span style="color: #333">=</span><span style="color: #60E; font-weight: bold">0.01</span>)
+
+<span style="color: #888"># Global variable for the calibrated view</span>
+pts <span style="color: #333">=</span> []
+<span style="color: #888"># The perspective transform matrix</span>
+M <span style="color: #333">=</span> <span style="color: #080; font-weight: bold">None</span>
+warp_w <span style="color: #333">=</span> <span style="color: #080; font-weight: bold">None</span>
+warp_h <span style="color: #333">=</span> <span style="color: #080; font-weight: bold">None</span>
+t0 <span style="color: #333">=</span> time<span style="color: #333">.</span>time()
+
+<span style="color: #888"># Mouse callback function used in calibration</span>
+<span style="color: #080; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">_mouse_cb</span>(event, x, y, flags, param):
+    <span style="color: #080; font-weight: bold">if</span> event <span style="color: #333">==</span> cv2<span style="color: #333">.</span>EVENT_LBUTTONDOWN <span style="color: #000; font-weight: bold">and</span> <span style="color: #007020">len</span>(pts) <span style="color: #333">&lt;</span> <span style="color: #00D; font-weight: bold">4</span>:
+        pts<span style="color: #333">.</span>append((x, y))
+
+<span style="color: #888"># Build rectangle from the 4 corner clicked</span>
+<span style="color: #080; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">_rect_from_pts</span>(p):
+    xs <span style="color: #333">=</span> [q[<span style="color: #00D; font-weight: bold">0</span>] <span style="color: #080; font-weight: bold">for</span> q <span style="color: #000; font-weight: bold">in</span> p]
+    ys <span style="color: #333">=</span> [q[<span style="color: #00D; font-weight: bold">1</span>] <span style="color: #080; font-weight: bold">for</span> q <span style="color: #000; font-weight: bold">in</span> p]
+    x0, x1 <span style="color: #333">=</span> <span style="color: #007020">min</span>(xs), <span style="color: #007020">max</span>(xs)
+    y0, y1 <span style="color: #333">=</span> <span style="color: #007020">min</span>(ys), <span style="color: #007020">max</span>(ys)
+    <span style="color: #080; font-weight: bold">return</span> [(x0, y0), (x1, y0), (x0, y1), (x1, y1)]  <span style="color: #888"># TL TR BL BR</span>
+
+<span style="color: #888"># Perspective warp</span>
+<span style="color: #080; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">_make_warp</span>(rect_pts):
+    TL, TR, BL, BR <span style="color: #333">=</span> rect_pts
+    src <span style="color: #333">=</span> np<span style="color: #333">.</span>float32([TL, TR, BL, BR])
+
+    <span style="color: #888"># Width and height of the warped view</span>
+    wt <span style="color: #333">=</span> np<span style="color: #333">.</span>hypot(TR[<span style="color: #00D; font-weight: bold">0</span>] <span style="color: #333">-</span> TL[<span style="color: #00D; font-weight: bold">0</span>], TR[<span style="color: #00D; font-weight: bold">1</span>] <span style="color: #333">-</span> TL[<span style="color: #00D; font-weight: bold">1</span>])
+    wb <span style="color: #333">=</span> np<span style="color: #333">.</span>hypot(BR[<span style="color: #00D; font-weight: bold">0</span>] <span style="color: #333">-</span> BL[<span style="color: #00D; font-weight: bold">0</span>], BR[<span style="color: #00D; font-weight: bold">1</span>] <span style="color: #333">-</span> BL[<span style="color: #00D; font-weight: bold">1</span>])
+    hl <span style="color: #333">=</span> np<span style="color: #333">.</span>hypot(BL[<span style="color: #00D; font-weight: bold">0</span>] <span style="color: #333">-</span> TL[<span style="color: #00D; font-weight: bold">0</span>], BL[<span style="color: #00D; font-weight: bold">1</span>] <span style="color: #333">-</span> TL[<span style="color: #00D; font-weight: bold">1</span>])
+    hr <span style="color: #333">=</span> np<span style="color: #333">.</span>hypot(BR[<span style="color: #00D; font-weight: bold">0</span>] <span style="color: #333">-</span> TR[<span style="color: #00D; font-weight: bold">0</span>], BR[<span style="color: #00D; font-weight: bold">1</span>] <span style="color: #333">-</span> TR[<span style="color: #00D; font-weight: bold">1</span>])
+
+    w <span style="color: #333">=</span> <span style="color: #007020">max</span>(<span style="color: #007020">int</span>(<span style="color: #007020">max</span>(wt, wb)), <span style="color: #00D; font-weight: bold">10</span>)
+    h <span style="color: #333">=</span> <span style="color: #007020">max</span>(<span style="color: #007020">int</span>(<span style="color: #007020">max</span>(hl, hr)), <span style="color: #00D; font-weight: bold">10</span>)
+    dst <span style="color: #333">=</span> np<span style="color: #333">.</span>float32([[<span style="color: #00D; font-weight: bold">0</span>, <span style="color: #00D; font-weight: bold">0</span>], [w <span style="color: #333">-</span> <span style="color: #00D; font-weight: bold">1</span>, <span style="color: #00D; font-weight: bold">0</span>], [<span style="color: #00D; font-weight: bold">0</span>, h <span style="color: #333">-</span> <span style="color: #00D; font-weight: bold">1</span>], [w <span style="color: #333">-</span> <span style="color: #00D; font-weight: bold">1</span>, h <span style="color: #333">-</span> <span style="color: #00D; font-weight: bold">1</span>]])
+
+    <span style="color: #080; font-weight: bold">return</span> cv2<span style="color: #333">.</span>getPerspectiveTransform(src, dst), w, h
+
+<span style="color: #888"># Interactive UI for calibration</span>
+<span style="color: #080; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">calibrate</span>():
+    <span style="color: #080; font-weight: bold">global</span> M, warp_w, warp_h
+    pts<span style="color: #333">.</span>clear()
+    M <span style="color: #333">=</span> <span style="color: #080; font-weight: bold">None</span>
+
+    cv2<span style="color: #333">.</span>destroyAllWindows()
+    cv2<span style="color: #333">.</span>namedWindow(<span style="background-color: #FFF0F0">&quot;Calibrate&quot;</span>, cv2<span style="color: #333">.</span>WINDOW_NORMAL)
+    cv2<span style="color: #333">.</span>setMouseCallback(<span style="background-color: #FFF0F0">&quot;Calibrate&quot;</span>, _mouse_cb)
+
+    <span style="color: #007020">print</span>(<span style="background-color: #FFF0F0">&quot;Calibration: click 4 corners of the ROI, ESC to cancel&quot;</span>)
+
+    <span style="color: #080; font-weight: bold">while</span> <span style="color: #080; font-weight: bold">True</span>:
+        frame <span style="color: #333">=</span> picam2<span style="color: #333">.</span>capture_array()
+        disp <span style="color: #333">=</span> frame<span style="color: #333">.</span>copy()
+
+        <span style="color: #888"># draw  the clicked points</span>
+        <span style="color: #888"># =====================This block of code is generated by AI==============================</span>
+        <span style="color: #080; font-weight: bold">for</span> i, p <span style="color: #000; font-weight: bold">in</span> <span style="color: #007020">enumerate</span>(pts):
+            cv2<span style="color: #333">.</span>circle(disp, p, <span style="color: #00D; font-weight: bold">5</span>, (<span style="color: #00D; font-weight: bold">0</span>, <span style="color: #00D; font-weight: bold">255</span>, <span style="color: #00D; font-weight: bold">255</span>), <span style="color: #333">-</span><span style="color: #00D; font-weight: bold">1</span>)
+            cv2<span style="color: #333">.</span>putText(
+                disp,
+                <span style="color: #007020">str</span>(i <span style="color: #333">+</span> <span style="color: #00D; font-weight: bold">1</span>),
+                (p[<span style="color: #00D; font-weight: bold">0</span>] <span style="color: #333">+</span> <span style="color: #00D; font-weight: bold">5</span>, p[<span style="color: #00D; font-weight: bold">1</span>] <span style="color: #333">-</span> <span style="color: #00D; font-weight: bold">5</span>),
+                cv2<span style="color: #333">.</span>FONT_HERSHEY_SIMPLEX,
+                <span style="color: #60E; font-weight: bold">0.6</span>,
+                (<span style="color: #00D; font-weight: bold">255</span>, <span style="color: #00D; font-weight: bold">255</span>, <span style="color: #00D; font-weight: bold">255</span>),
+                <span style="color: #00D; font-weight: bold">2</span>,
+            )
+        <span style="color: #888"># =====================This block of code is generated by AI==============================</span>
+
+        <span style="color: #888"># Draw the potential rectangle</span>
+        <span style="color: #080; font-weight: bold">if</span> <span style="color: #007020">len</span>(pts) <span style="color: #333">&gt;=</span> <span style="color: #00D; font-weight: bold">2</span>:
+            TL, TR, BL, BR <span style="color: #333">=</span> _rect_from_pts(pts)
+            poly <span style="color: #333">=</span> np<span style="color: #333">.</span>array([TL, TR, BR, BL], np<span style="color: #333">.</span>int32)
+            cv2<span style="color: #333">.</span>polylines(disp, [poly], <span style="color: #080; font-weight: bold">True</span>, (<span style="color: #00D; font-weight: bold">0</span>, <span style="color: #00D; font-weight: bold">255</span>, <span style="color: #00D; font-weight: bold">255</span>), <span style="color: #00D; font-weight: bold">2</span>)
+
+        cv2<span style="color: #333">.</span>putText(
+            disp,
+            <span style="background-color: #FFF0F0">&quot;Click 4 ROI corners (ESC to cancel)&quot;</span>,
+            (<span style="color: #00D; font-weight: bold">15</span>, <span style="color: #00D; font-weight: bold">30</span>),
+            cv2<span style="color: #333">.</span>FONT_HERSHEY_SIMPLEX,
+            <span style="color: #60E; font-weight: bold">0.7</span>,
+            (<span style="color: #00D; font-weight: bold">255</span>, <span style="color: #00D; font-weight: bold">255</span>, <span style="color: #00D; font-weight: bold">255</span>),
+            <span style="color: #00D; font-weight: bold">2</span>,
+        )
+
+        cv2<span style="color: #333">.</span>imshow(<span style="background-color: #FFF0F0">&quot;Calibrate&quot;</span>, disp)
+        k <span style="color: #333">=</span> cv2<span style="color: #333">.</span>waitKey(<span style="color: #00D; font-weight: bold">1</span>) <span style="color: #333">&amp;</span> <span style="color: #058; font-weight: bold">0xFF</span>
+        <span style="color: #080; font-weight: bold">if</span> k <span style="color: #333">==</span> <span style="color: #00D; font-weight: bold">27</span>:
+            cv2<span style="color: #333">.</span>destroyWindow(<span style="background-color: #FFF0F0">&quot;Calibrate&quot;</span>)
+            <span style="color: #080; font-weight: bold">return</span> <span style="color: #080; font-weight: bold">False</span>
+        <span style="color: #080; font-weight: bold">if</span> <span style="color: #007020">len</span>(pts) <span style="color: #333">==</span> <span style="color: #00D; font-weight: bold">4</span>:
+            <span style="color: #080; font-weight: bold">break</span>
+
+    rect_pts <span style="color: #333">=</span> _rect_from_pts(pts)
+    M, warp_w, warp_h <span style="color: #333">=</span> _make_warp(rect_pts)
+    cv2<span style="color: #333">.</span>destroyWindow(<span style="background-color: #FFF0F0">&quot;Calibrate&quot;</span>)
+    <span style="color: #007020">print</span>(<span style="background-color: #FFF0F0">&quot;Calibration complete.&quot;</span>)
+    <span style="color: #080; font-weight: bold">return</span> <span style="color: #080; font-weight: bold">True</span>
+
+<span style="color: #888"># Ball detection in the region of interest (combining color mask + geometry detection)</span>
+<span style="color: #080; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">ball_xy</span>(warp_small):
+    h, w <span style="color: #333">=</span> warp_small<span style="color: #333">.</span>shape[:<span style="color: #00D; font-weight: bold">2</span>]
+
+    <span style="color: #888"># Ensure BGR schematic</span>
+    <span style="color: #080; font-weight: bold">if</span> warp_small<span style="color: #333">.</span>ndim <span style="color: #333">==</span> <span style="color: #00D; font-weight: bold">2</span>:
+        bgr <span style="color: #333">=</span> cv2<span style="color: #333">.</span>cvtColor(warp_small, cv2<span style="color: #333">.</span>COLOR_GRAY2BGR)
+    <span style="color: #080; font-weight: bold">elif</span> warp_small<span style="color: #333">.</span>shape[<span style="color: #00D; font-weight: bold">2</span>] <span style="color: #333">==</span> <span style="color: #00D; font-weight: bold">4</span>:
+        bgr <span style="color: #333">=</span> cv2<span style="color: #333">.</span>cvtColor(warp_small, cv2<span style="color: #333">.</span>COLOR_BGRA2BGR)
+    <span style="color: #080; font-weight: bold">else</span>:
+        bgr <span style="color: #333">=</span> warp_small
+
+    hsv <span style="color: #333">=</span> cv2<span style="color: #333">.</span>cvtColor(bgr, cv2<span style="color: #333">.</span>COLOR_BGR2HSV)
+
+    <span style="color: #888"># Green color mask since the ball is purely green</span>
+    lo <span style="color: #333">=</span> np<span style="color: #333">.</span>array([<span style="color: #00D; font-weight: bold">40</span>, <span style="color: #00D; font-weight: bold">80</span>, <span style="color: #00D; font-weight: bold">50</span>], np<span style="color: #333">.</span>uint8)
+    hi <span style="color: #333">=</span> np<span style="color: #333">.</span>array([<span style="color: #00D; font-weight: bold">80</span>, <span style="color: #00D; font-weight: bold">255</span>, <span style="color: #00D; font-weight: bold">255</span>], np<span style="color: #333">.</span>uint8)
+    mask <span style="color: #333">=</span> cv2<span style="color: #333">.</span>inRange(hsv, lo, hi)
+
+    <span style="color: #888"># Disregard the noises</span>
+    <span style="color: #888"># =====================This block of code is generated by AI==============================</span>
+    k <span style="color: #333">=</span> np<span style="color: #333">.</span>ones((<span style="color: #00D; font-weight: bold">5</span>, <span style="color: #00D; font-weight: bold">5</span>), np<span style="color: #333">.</span>uint8)
+    mask <span style="color: #333">=</span> cv2<span style="color: #333">.</span>morphologyEx(mask, cv2<span style="color: #333">.</span>MORPH_OPEN, k)
+    mask <span style="color: #333">=</span> cv2<span style="color: #333">.</span>morphologyEx(mask, cv2<span style="color: #333">.</span>MORPH_CLOSE, k)
+    <span style="color: #888"># =====================This block of code is generated by AI==============================</span>
+
+    contours, _ <span style="color: #333">=</span> cv2<span style="color: #333">.</span>findContours(mask, cv2<span style="color: #333">.</span>RETR_EXTERNAL, cv2<span style="color: #333">.</span>CHAIN_APPROX_SIMPLE)
+    <span style="color: #080; font-weight: bold">if</span> <span style="color: #000; font-weight: bold">not</span> contours:
+        <span style="color: #080; font-weight: bold">return</span> <span style="color: #080; font-weight: bold">None</span>
+
+    <span style="color: #888"># Picke the most likely circle using the contours + the circularity check (if close to 1)</span>
+    best <span style="color: #333">=</span> <span style="color: #080; font-weight: bold">None</span>
+    best_score <span style="color: #333">=</span> <span style="color: #60E; font-weight: bold">0.0</span>
+    <span style="color: #080; font-weight: bold">for</span> c <span style="color: #000; font-weight: bold">in</span> contours:
+        area <span style="color: #333">=</span> cv2<span style="color: #333">.</span>contourArea(c)
+        <span style="color: #080; font-weight: bold">if</span> area <span style="color: #333">&lt;=</span> <span style="color: #00D; font-weight: bold">0</span>:
+            <span style="color: #080; font-weight: bold">continue</span>
+        peri <span style="color: #333">=</span> cv2<span style="color: #333">.</span>arcLength(c, <span style="color: #080; font-weight: bold">True</span>)
+        <span style="color: #080; font-weight: bold">if</span> peri <span style="color: #333">==</span> <span style="color: #00D; font-weight: bold">0</span>:
+            <span style="color: #080; font-weight: bold">continue</span>
+
+        (cx, cy), r <span style="color: #333">=</span> cv2<span style="color: #333">.</span>minEnclosingCircle(c)
+        <span style="color: #080; font-weight: bold">if</span> r <span style="color: #333">&lt;</span> MIN_RADIUS <span style="color: #000; font-weight: bold">or</span> r <span style="color: #333">&gt;</span> MAX_RADIUS:
+            <span style="color: #080; font-weight: bold">continue</span>
+
+        circ <span style="color: #333">=</span> <span style="color: #60E; font-weight: bold">4.0</span> <span style="color: #333">*</span> np<span style="color: #333">.</span>pi <span style="color: #333">*</span> area <span style="color: #333">/</span> (peri <span style="color: #333">*</span> peri)
+        <span style="color: #080; font-weight: bold">if</span> circ <span style="color: #333">&lt;</span> MIN_CIRCULARITY:
+            <span style="color: #080; font-weight: bold">continue</span>
+
+        sc <span style="color: #333">=</span> circ <span style="color: #333">*</span> area
+        <span style="color: #080; font-weight: bold">if</span> sc <span style="color: #333">&gt;</span> best_score:
+            best_score <span style="color: #333">=</span> sc
+            best <span style="color: #333">=</span> c
+
+    <span style="color: #080; font-weight: bold">if</span> best <span style="color: #000; font-weight: bold">is</span> <span style="color: #080; font-weight: bold">None</span>:
+        <span style="color: #080; font-weight: bold">return</span> <span style="color: #080; font-weight: bold">None</span>
+
+    (cx, cy), _ <span style="color: #333">=</span> cv2<span style="color: #333">.</span>minEnclosingCircle(best)
+    cx <span style="color: #333">=</span> <span style="color: #007020">int</span>(<span style="color: #007020">round</span>(cx))
+    cy <span style="color: #333">=</span> <span style="color: #007020">int</span>(<span style="color: #007020">round</span>(cy))
+
+    <span style="color: #888"># origin at bottom-left</span>
+    <span style="color: #080; font-weight: bold">return</span> cx, (h <span style="color: #333">-</span> cy), w, h
+
+
+<span style="color: #080; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">main</span>():
+    <span style="color: #080; font-weight: bold">global</span> t0
+
+    <span style="color: #007020">print</span>(<span style="background-color: #FFF0F0">&quot;Starting calibration...&quot;</span>)
+    <span style="color: #080; font-weight: bold">if</span> <span style="color: #000; font-weight: bold">not</span> calibrate() <span style="color: #000; font-weight: bold">or</span> M <span style="color: #000; font-weight: bold">is</span> <span style="color: #080; font-weight: bold">None</span>:
+        <span style="color: #007020">print</span>(<span style="background-color: #FFF0F0">&quot;Calibration cancelled or failed.&quot;</span>)
+        <span style="color: #080; font-weight: bold">return</span>
+
+    <span style="color: #007020">print</span>(<span style="background-color: #FFF0F0">&quot;Run mode: no UI. Press Ctrl+C in terminal to stop.</span><span style="color: #666; font-weight: bold; background-color: #FFF0F0">\n</span><span style="background-color: #FFF0F0">&quot;</span>)
+
+    <span style="color: #080; font-weight: bold">try</span>:
+        <span style="color: #080; font-weight: bold">while</span> <span style="color: #080; font-weight: bold">True</span>:
+            frame <span style="color: #333">=</span> picam2<span style="color: #333">.</span>capture_array()
+
+            warped <span style="color: #333">=</span> cv2<span style="color: #333">.</span>warpPerspective(frame, M, (warp_w, warp_h))
+
+            <span style="color: #888"># downscale the frame for faster processing</span>
+            small <span style="color: #333">=</span> cv2<span style="color: #333">.</span>resize(warped, <span style="color: #080; font-weight: bold">None</span>, fx<span style="color: #333">=</span>ROI_SCALE, fy<span style="color: #333">=</span>ROI_SCALE)
+
+            r <span style="color: #333">=</span> ball_xy(small)
+            <span style="color: #080; font-weight: bold">if</span> r <span style="color: #000; font-weight: bold">is</span> <span style="color: #080; font-weight: bold">None</span>:
+                <span style="color: #080; font-weight: bold">continue</span>
+
+            x, y, ww, hh <span style="color: #333">=</span> r
+            xn <span style="color: #333">=</span> x <span style="color: #333">/</span> <span style="color: #007020">float</span>(ww)
+            yn <span style="color: #333">=</span> y <span style="color: #333">/</span> <span style="color: #007020">float</span>(hh)
+
+            <span style="color: #888"># clamping the normalized values</span>
+            <span style="color: #080; font-weight: bold">if</span> xn <span style="color: #333">&lt;</span> <span style="color: #60E; font-weight: bold">0.0</span>:
+                xn <span style="color: #333">=</span> <span style="color: #60E; font-weight: bold">0.0</span>
+            <span style="color: #080; font-weight: bold">elif</span> xn <span style="color: #333">&gt;</span> <span style="color: #60E; font-weight: bold">1.0</span>:
+                xn <span style="color: #333">=</span> <span style="color: #60E; font-weight: bold">1.0</span>
+            <span style="color: #080; font-weight: bold">if</span> yn <span style="color: #333">&lt;</span> <span style="color: #60E; font-weight: bold">0.0</span>:
+                yn <span style="color: #333">=</span> <span style="color: #60E; font-weight: bold">0.0</span>
+            <span style="color: #080; font-weight: bold">elif</span> yn <span style="color: #333">&gt;</span> <span style="color: #60E; font-weight: bold">1.0</span>:
+                yn <span style="color: #333">=</span> <span style="color: #60E; font-weight: bold">1.0</span>
+
+            t <span style="color: #333">=</span> time<span style="color: #333">.</span>time() <span style="color: #333">-</span> t0
+            msg <span style="color: #333">=</span> <span style="background-color: #FFF0F0">f&quot;</span><span style="background-color: #EEE">{</span>t<span style="background-color: #EEE">:</span><span style="background-color: #FFF0F0">.6f</span><span style="background-color: #EEE">}</span><span style="background-color: #FFF0F0"> </span><span style="background-color: #EEE">{</span>xn<span style="background-color: #EEE">:</span><span style="background-color: #FFF0F0">.4f</span><span style="background-color: #EEE">}</span><span style="background-color: #FFF0F0"> </span><span style="background-color: #EEE">{</span>yn<span style="background-color: #EEE">:</span><span style="background-color: #FFF0F0">.4f</span><span style="background-color: #EEE">}</span><span style="color: #666; font-weight: bold; background-color: #FFF0F0">\r\n</span><span style="background-color: #FFF0F0">&quot;</span>
+
+            <span style="color: #888"># Print and send to the pico via serial interface</span>
+            <span style="color: #007020">print</span>(<span style="background-color: #FFF0F0">&quot;SEND:&quot;</span>, msg<span style="color: #333">.</span>strip())
+            <span style="color: #080; font-weight: bold">try</span>:
+                ser<span style="color: #333">.</span>write(msg<span style="color: #333">.</span>encode())
+            <span style="color: #080; font-weight: bold">except</span> <span style="color: #F00; font-weight: bold">Exception</span> <span style="color: #080; font-weight: bold">as</span> e:
+                <span style="color: #007020">print</span>(<span style="background-color: #FFF0F0">&quot;Serial error:&quot;</span>, e)
+
+    <span style="color: #080; font-weight: bold">except</span> <span style="color: #F00; font-weight: bold">KeyboardInterrupt</span>:
+        <span style="color: #007020">print</span>(<span style="background-color: #FFF0F0">&quot;</span><span style="color: #666; font-weight: bold; background-color: #FFF0F0">\n</span><span style="background-color: #FFF0F0">Stopping...&quot;</span>)
+
+    <span style="color: #080; font-weight: bold">finally</span>:
+        picam2<span style="color: #333">.</span>stop()
+        ser<span style="color: #333">.</span>close()
+        cv2<span style="color: #333">.</span>destroyAllWindows()
+
+
+<span style="color: #080; font-weight: bold">if</span> <span style="color: #963">__name__</span> <span style="color: #333">==</span> <span style="background-color: #FFF0F0">&quot;__main__&quot;</span>:
+    main()
+</pre>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Pico Code -->
+
+    <div class="row" style="margin-top:30px;">
+      <div class="col-md-12">
+
+        <h4 style="text-align:left;">Program 2: Raspberry Pi Pico Signal Conditioning + Control Firmware</h4>
+
+        <div class="code-block">
+          <!-- HTML generated using hilite.me -->
+          <div
+            style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;">
+            <table>
+              <tr>
+                <td>
+                  <pre style="margin: 0; line-height: 125%;">  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377</pre>
+                </td>
+                <td>
+                  <pre style="margin: 0; line-height: 125%;"><span></span><span style="color: #888">/**</span>
+<span style="color: #888"> * Adapted from:</span>
+<span style="color: #888"> * V. Hunter Adams (vha3@cornell.edu)</span>
+<span style="color: #888"> * PWM demo code with serial input</span>
+<span style="color: #888"> * </span>
+<span style="color: #888"> */</span>
+
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&lt;stdio.h&gt;</span>
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&lt;stdlib.h&gt;</span>
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&lt;math.h&gt;</span>
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&lt;string.h&gt;</span>
+
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;pico/stdlib.h&quot;</span>
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;pico/multicore.h&quot;</span>
+
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;hardware/pwm.h&quot;</span>
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;hardware/irq.h&quot;</span>
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;hardware/spi.h&quot;</span>
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;hardware/sync.h&quot;</span>
+
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;pt_cornell_rp2040_v1_4.h&quot;</span>
+
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;vga16_graphics_v2.h&quot;</span>
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;hardware/pio.h&quot;</span>
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;hardware/dma.h&quot;</span>
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;hardware/clocks.h&quot;</span>
+<span style="color: #579">#include</span><span style="color: #BBB"> </span><span style="color: #888">&quot;hardware/pll.h&quot;</span>
+
+<span style="color: #888">// Semaphore</span>
+<span style="color: #080; font-weight: bold">static</span><span style="color: #BBB"> </span><span style="color: #080; font-weight: bold">struct</span><span style="color: #BBB"> </span><span style="color: #B06; font-weight: bold">pt_sem</span><span style="color: #BBB"> </span>dac_semaphore;
+<span style="color: #888">// SPI data</span>
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">uint16_t</span><span style="color: #BBB"> </span>DAC_data_x<span style="color: #BBB"> </span>;
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">uint16_t</span><span style="color: #BBB"> </span>DAC_data_y<span style="color: #BBB"> </span>;
+
+<span style="color: #888">// serial inputs from the pi computer</span>
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>x_pos_norm_old<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>;
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>x_pos_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>;
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>y_pos_norm_old<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>;
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>y_pos_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>;
+
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>last_time_stamp<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>;
+
+<span style="color: #888">// DAC parameters (see the DAC datasheet)</span>
+<span style="color: #888">// A-channel, 1x, active</span>
+<span style="color: #579">#define DAC_config_chan_A 0b0011000000000000</span>
+<span style="color: #888">// B-channel, 1x, active</span>
+<span style="color: #579">#define DAC_config_chan_B 0b1011000000000000</span>
+
+<span style="color: #888">//SPI configurations (note these represent GPIO number, NOT pin number)</span>
+<span style="color: #579">#define PIN_MISO 4</span>
+<span style="color: #579">#define PIN_CS   5</span>
+<span style="color: #579">#define PIN_SCK  6</span>
+<span style="color: #579">#define PIN_MOSI 7</span>
+<span style="color: #579">#define LDAC     8</span>
+<span style="color: #579">#define LED      25</span>
+<span style="color: #579">#define SPI_PORT spi0</span>
+
+<span style="color: #888">//GPIO for timing the ISR</span>
+<span style="color: #579">#define ISR_GPIO 2</span>
+
+<span style="color: #888">//Camera configuration</span>
+<span style="color: #579">#define DAC_X_RANGE 1800.0f</span>
+<span style="color: #579">#define DAC_Y_RANGE 1000.0f</span>
+
+<span style="color: #888">// PWM wrap value and clock divide value</span>
+<span style="color: #888">// For a CPU rate of 125 MHz, this gives</span>
+<span style="color: #888">// a PWM frequency of 1 kHz.</span>
+<span style="color: #579">#define WRAPVAL 5000</span>
+<span style="color: #579">#define CLKDIV 25.0f</span>
+
+<span style="color: #888">// Variable to hold PWM slice number</span>
+uint<span style="color: #BBB"> </span>slice_num<span style="color: #BBB"> </span>;
+
+<span style="color: #888">// Filtering and Extrapolation</span>
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">int</span><span style="color: #BBB"> </span>initialized<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>;
+<span style="color: #080; font-weight: bold">const</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>alpha<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.1f</span>;
+<span style="color: #080; font-weight: bold">const</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>time_step<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.2f</span>;
+<span style="color: #080; font-weight: bold">const</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>movement_threshold<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.01f</span>;
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>x_pos_filt<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>;
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>y_pos_filt<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>;
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>x_pos_prev<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>;
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>y_pos_prev<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>;
+
+<span style="color: #888">// =======================For GUI========================</span>
+<span style="color: #888">// GUI frame pacing (microseconds per frame)</span>
+<span style="color: #579">#define FRAME_US 33000   </span><span style="color: #888">// ~30 Hz</span>
+
+<span style="color: #888">// Arena pixel bounds (same as your GUI)</span>
+<span style="color: #579">#define ARENA_X0 100</span>
+<span style="color: #579">#define ARENA_X1 540</span>
+<span style="color: #579">#define ARENA_Y0 100</span>
+<span style="color: #579">#define ARENA_Y1 380</span>
+
+<span style="color: #888">// Map DAC units -&gt; pixel</span>
+<span style="color: #080; font-weight: bold">static</span><span style="color: #BBB"> </span><span style="color: #080; font-weight: bold">inline</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">int</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">dacXToPixel</span>(<span style="color: #339; font-weight: bold">uint16_t</span><span style="color: #BBB"> </span>x_dac)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(x_dac<span style="color: #BBB"> </span><span style="color: #333">&gt;</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">uint16_t</span>)DAC_X_RANGE)<span style="color: #BBB"> </span>x_dac<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">uint16_t</span>)DAC_X_RANGE;
+<span style="color: #BBB">    </span><span style="color: #080; font-weight: bold">return</span><span style="color: #BBB"> </span>ARENA_X0<span style="color: #BBB"> </span><span style="color: #333">+</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">int</span>)((x_dac<span style="color: #BBB"> </span><span style="color: #333">*</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">float</span>)(ARENA_X1<span style="color: #333">-</span>ARENA_X0))<span style="color: #BBB"> </span><span style="color: #333">/</span><span style="color: #BBB"> </span>DAC_X_RANGE);
+}
+<span style="color: #080; font-weight: bold">static</span><span style="color: #BBB"> </span><span style="color: #080; font-weight: bold">inline</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">int</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">dacYToPixel</span>(<span style="color: #339; font-weight: bold">uint16_t</span><span style="color: #BBB"> </span>y_dac)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(y_dac<span style="color: #BBB"> </span><span style="color: #333">&gt;</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">uint16_t</span>)DAC_Y_RANGE)<span style="color: #BBB"> </span>y_dac<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">uint16_t</span>)DAC_Y_RANGE;
+<span style="color: #BBB">    </span><span style="color: #080; font-weight: bold">return</span><span style="color: #BBB"> </span>ARENA_Y1<span style="color: #BBB"> </span><span style="color: #333">-</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">int</span>)((y_dac<span style="color: #BBB"> </span><span style="color: #333">*</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">float</span>)(ARENA_Y1<span style="color: #333">-</span>ARENA_Y0))<span style="color: #BBB"> </span><span style="color: #333">/</span><span style="color: #BBB"> </span>DAC_Y_RANGE);
+}
+
+<span style="color: #080; font-weight: bold">static</span><span style="color: #BBB"> </span><span style="color: #080; font-weight: bold">inline</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">void</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">drawArena</span>(<span style="color: #339; font-weight: bold">void</span>)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span>drawVLine(ARENA_X0,<span style="color: #BBB"> </span>ARENA_Y0,<span style="color: #BBB"> </span>(ARENA_Y1<span style="color: #333">-</span>ARENA_Y0),<span style="color: #BBB"> </span>WHITE);
+<span style="color: #BBB">    </span>drawVLine(ARENA_X1,<span style="color: #BBB"> </span>ARENA_Y0,<span style="color: #BBB"> </span>(ARENA_Y1<span style="color: #333">-</span>ARENA_Y0),<span style="color: #BBB"> </span>WHITE);
+<span style="color: #BBB">    </span>drawHLine(ARENA_X0,<span style="color: #BBB"> </span>ARENA_Y0,<span style="color: #BBB"> </span>(ARENA_X1<span style="color: #333">-</span>ARENA_X0),<span style="color: #BBB"> </span>WHITE);
+<span style="color: #BBB">    </span>drawHLine(ARENA_X0,<span style="color: #BBB"> </span>ARENA_Y1,<span style="color: #BBB"> </span>(ARENA_X1<span style="color: #333">-</span>ARENA_X0),<span style="color: #BBB"> </span>WHITE);
+}
+
+<span style="color: #888">// For GUI drawing</span>
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">uint16_t</span><span style="color: #BBB"> </span>gui_x_dac<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>;
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">uint16_t</span><span style="color: #BBB"> </span>gui_y_dac<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>;
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>gui_x_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>;
+<span style="color: #080; font-weight: bold">volatile</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>gui_y_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>;
+<span style="color: #888">// =======================For GUI========================</span>
+
+<span style="color: #080; font-weight: bold">static</span><span style="color: #BBB"> </span>PT_THREAD<span style="color: #BBB"> </span>(protothread_serial(<span style="color: #080; font-weight: bold">struct</span><span style="color: #BBB"> </span><span style="color: #B06; font-weight: bold">pt</span><span style="color: #BBB"> </span><span style="color: #333">*</span>pt))
+{
+<span style="color: #BBB">    </span>PT_BEGIN(pt);
+<span style="color: #BBB">    </span><span style="color: #080; font-weight: bold">static</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">int</span><span style="color: #BBB"> </span>input_val;
+
+<span style="color: #BBB">    </span><span style="color: #080; font-weight: bold">while</span><span style="color: #BBB"> </span>(<span style="color: #00D; font-weight: bold">1</span>)<span style="color: #BBB"> </span>{
+
+<span style="color: #BBB">        </span>serial_read;
+
+<span style="color: #BBB">        </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>timestamp,<span style="color: #BBB"> </span>x_pos_in,<span style="color: #BBB"> </span>y_pos_in;
+
+<span style="color: #BBB">        </span><span style="color: #339; font-weight: bold">int</span><span style="color: #BBB"> </span>n<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>sscanf(pt_serial_in_buffer,<span style="color: #BBB"> </span><span style="background-color: #FFF0F0">&quot;%f %f %f&quot;</span>,<span style="color: #BBB"> </span><span style="color: #333">&amp;</span>timestamp,<span style="color: #BBB"> </span><span style="color: #333">&amp;</span>x_pos_in,<span style="color: #BBB"> </span><span style="color: #333">&amp;</span>y_pos_in);
+<span style="color: #BBB">        </span>
+<span style="color: #BBB">        </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(n<span style="color: #BBB"> </span><span style="color: #333">==</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">3</span>)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">            </span><span style="color: #888">// Clamp to expected ranges (adjust as needed)</span>
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(x_pos_in<span style="color: #BBB"> </span><span style="color: #333">&lt;</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>)<span style="color: #BBB"> </span>x_pos_in<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>;
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(x_pos_in<span style="color: #BBB"> </span><span style="color: #333">&gt;</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">1.0f</span>)<span style="color: #BBB"> </span>x_pos_in<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">1.0f</span>;
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(y_pos_in<span style="color: #BBB"> </span><span style="color: #333">&lt;</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>)<span style="color: #BBB"> </span>y_pos_in<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>;
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(y_pos_in<span style="color: #BBB"> </span><span style="color: #333">&gt;</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">1.0f</span>)<span style="color: #BBB"> </span>y_pos_in<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">1.0f</span>;
+
+<span style="color: #BBB">            </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>x_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_pos_norm;<span style="color: #BBB">   </span><span style="color: #888">// default to current</span>
+<span style="color: #BBB">            </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>y_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_pos_norm;
+
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(<span style="color: #333">!</span>initialized)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">                </span>x_pos_filt<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_pos_in;
+<span style="color: #BBB">                </span>y_pos_filt<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_pos_in;
+<span style="color: #BBB">                </span>x_pos_prev<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_pos_filt;
+<span style="color: #BBB">                </span>y_pos_prev<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_pos_filt;
+<span style="color: #BBB">                </span>last_time_stamp<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>timestamp;
+<span style="color: #BBB">                </span>initialized<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">1</span>;
+
+<span style="color: #BBB">                </span>x_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_pos_filt;
+<span style="color: #BBB">                </span>y_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_pos_filt;
+
+<span style="color: #BBB">                </span><span style="color: #888">// FIRST OUTPUT MUST GO OUT</span>
+<span style="color: #BBB">                </span>x_pos_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_cmd;
+<span style="color: #BBB">                </span>y_pos_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_cmd;
+<span style="color: #BBB">                </span>PT_SEM_SIGNAL(pt,<span style="color: #BBB"> </span><span style="color: #333">&amp;</span>dac_semaphore);
+<span style="color: #BBB">                </span><span style="color: #888">// dac_semaphore.count = 1;</span>
+<span style="color: #BBB">                </span><span style="color: #080; font-weight: bold">continue</span>;
+<span style="color: #BBB">            </span>}
+
+<span style="color: #BBB">            </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>dt<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>timestamp<span style="color: #BBB"> </span><span style="color: #333">-</span><span style="color: #BBB"> </span>last_time_stamp;
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(dt<span style="color: #BBB"> </span><span style="color: #333">&lt;</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span><span style="color: #BBB"> </span><span style="color: #333">||</span><span style="color: #BBB"> </span>dt<span style="color: #BBB"> </span><span style="color: #333">&gt;</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.5f</span>)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">                </span>x_pos_filt<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_pos_in;
+<span style="color: #BBB">                </span>y_pos_filt<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_pos_in;
+<span style="color: #BBB">                </span>x_pos_prev<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_pos_filt;
+<span style="color: #BBB">                </span>y_pos_prev<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_pos_filt;
+<span style="color: #BBB">                </span>last_time_stamp<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>timestamp;
+
+<span style="color: #BBB">                </span>x_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_pos_filt;
+<span style="color: #BBB">                </span>y_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_pos_filt;
+
+<span style="color: #BBB">                </span>x_pos_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_cmd;
+<span style="color: #BBB">                </span>y_pos_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_cmd;
+<span style="color: #BBB">                </span>PT_SEM_SIGNAL(pt,<span style="color: #BBB"> </span><span style="color: #333">&amp;</span>dac_semaphore);
+<span style="color: #BBB">                </span><span style="color: #888">// dac_semaphore.count = 1;</span>
+<span style="color: #BBB">                </span><span style="color: #080; font-weight: bold">continue</span>;
+<span style="color: #BBB">            </span>}
+
+<span style="color: #BBB">            </span><span style="color: #888">// normal update</span>
+<span style="color: #BBB">            </span>x_pos_filt<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>alpha<span style="color: #BBB"> </span><span style="color: #333">*</span><span style="color: #BBB"> </span>x_pos_in<span style="color: #BBB"> </span><span style="color: #333">+</span><span style="color: #BBB"> </span>(<span style="color: #60E; font-weight: bold">1.0f</span><span style="color: #BBB"> </span><span style="color: #333">-</span><span style="color: #BBB"> </span>alpha)<span style="color: #BBB"> </span><span style="color: #333">*</span><span style="color: #BBB"> </span>x_pos_filt;
+<span style="color: #BBB">            </span>y_pos_filt<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>alpha<span style="color: #BBB"> </span><span style="color: #333">*</span><span style="color: #BBB"> </span>y_pos_in<span style="color: #BBB"> </span><span style="color: #333">+</span><span style="color: #BBB"> </span>(<span style="color: #60E; font-weight: bold">1.0f</span><span style="color: #BBB"> </span><span style="color: #333">-</span><span style="color: #BBB"> </span>alpha)<span style="color: #BBB"> </span><span style="color: #333">*</span><span style="color: #BBB"> </span>y_pos_filt;
+
+<span style="color: #BBB">            </span><span style="color: #888">// prediction (currently time_step=0, so x_cmd==x_pos_filt)</span>
+<span style="color: #BBB">            </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>vx<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>(x_pos_filt<span style="color: #BBB"> </span><span style="color: #333">-</span><span style="color: #BBB"> </span>x_pos_prev)<span style="color: #BBB"> </span><span style="color: #333">/</span><span style="color: #BBB"> </span>dt;
+<span style="color: #BBB">            </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>vy<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>(y_pos_filt<span style="color: #BBB"> </span><span style="color: #333">-</span><span style="color: #BBB"> </span>y_pos_prev)<span style="color: #BBB"> </span><span style="color: #333">/</span><span style="color: #BBB"> </span>dt;
+
+<span style="color: #BBB">            </span>x_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_pos_filt<span style="color: #BBB"> </span><span style="color: #333">+</span><span style="color: #BBB"> </span>vx<span style="color: #BBB"> </span><span style="color: #333">*</span><span style="color: #BBB"> </span>time_step;
+<span style="color: #BBB">            </span>y_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_pos_filt<span style="color: #BBB"> </span><span style="color: #333">+</span><span style="color: #BBB"> </span>vy<span style="color: #BBB"> </span><span style="color: #333">*</span><span style="color: #BBB"> </span>time_step;
+
+<span style="color: #BBB">            </span><span style="color: #888">// clamp</span>
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(x_cmd<span style="color: #BBB"> </span><span style="color: #333">&lt;</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>)<span style="color: #BBB"> </span>x_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>;
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(x_cmd<span style="color: #BBB"> </span><span style="color: #333">&gt;</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">1.0f</span>)<span style="color: #BBB"> </span>x_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">1.0f</span>;
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(y_cmd<span style="color: #BBB"> </span><span style="color: #333">&lt;</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>)<span style="color: #BBB"> </span>y_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">0.0f</span>;
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(y_cmd<span style="color: #BBB"> </span><span style="color: #333">&gt;</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">1.0f</span>)<span style="color: #BBB"> </span>y_cmd<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #60E; font-weight: bold">1.0f</span>;
+
+<span style="color: #BBB">            </span><span style="color: #888">// update prev + timestamp</span>
+<span style="color: #BBB">            </span>x_pos_prev<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_pos_filt;
+<span style="color: #BBB">            </span>y_pos_prev<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_pos_filt;
+<span style="color: #BBB">            </span>last_time_stamp<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>timestamp;
+
+<span style="color: #BBB">            </span><span style="color: #888">// deadband against last value</span>
+<span style="color: #BBB">            </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>dx<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_cmd<span style="color: #BBB"> </span><span style="color: #333">-</span><span style="color: #BBB"> </span>x_pos_norm_old;
+<span style="color: #BBB">            </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>dy<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_cmd<span style="color: #BBB"> </span><span style="color: #333">-</span><span style="color: #BBB"> </span>y_pos_norm_old;
+
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(fabsf(dx)<span style="color: #BBB"> </span><span style="color: #333">&gt;=</span><span style="color: #BBB"> </span>movement_threshold<span style="color: #BBB"> </span><span style="color: #333">||</span><span style="color: #BBB"> </span>fabsf(dy)<span style="color: #BBB"> </span><span style="color: #333">&gt;=</span><span style="color: #BBB"> </span>movement_threshold)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">                </span>x_pos_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_cmd;
+<span style="color: #BBB">                </span>y_pos_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_cmd;
+<span style="color: #BBB">                </span>PT_SEM_SIGNAL(pt,<span style="color: #BBB"> </span><span style="color: #333">&amp;</span>dac_semaphore);
+<span style="color: #BBB">                </span><span style="color: #888">// dac_semaphore.count = 1;</span>
+<span style="color: #BBB">            </span>}
+
+<span style="color: #BBB">        </span>}<span style="color: #BBB"> </span><span style="color: #080; font-weight: bold">else</span><span style="color: #BBB"> </span>{
+<span style="color: #BBB">        </span>}
+
+<span style="color: #BBB">    </span>}
+<span style="color: #BBB">    </span>PT_END(pt);
+}
+
+
+<span style="color: #080; font-weight: bold">static</span><span style="color: #BBB"> </span>PT_THREAD<span style="color: #BBB"> </span>(protothread_dac(<span style="color: #080; font-weight: bold">struct</span><span style="color: #BBB"> </span><span style="color: #B06; font-weight: bold">pt</span><span style="color: #BBB"> </span><span style="color: #333">*</span>pt))
+{
+<span style="color: #BBB">    </span>PT_BEGIN(pt);
+
+<span style="color: #BBB">    </span><span style="color: #080; font-weight: bold">while</span><span style="color: #BBB"> </span>(<span style="color: #00D; font-weight: bold">1</span>)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">        </span>PT_SEM_WAIT(pt,<span style="color: #BBB"> </span><span style="color: #333">&amp;</span>dac_semaphore);
+
+<span style="color: #BBB">        </span><span style="color: #888">// If the desired DAC code changed, update the DAC</span>
+<span style="color: #BBB">        </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(x_pos_norm<span style="color: #BBB"> </span><span style="color: #333">!=</span><span style="color: #BBB"> </span>x_pos_norm_old<span style="color: #BBB"> </span><span style="color: #333">||</span><span style="color: #BBB"> </span>y_pos_norm<span style="color: #BBB"> </span><span style="color: #333">!=</span><span style="color: #BBB"> </span>y_pos_norm_old)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">            </span>x_pos_norm_old<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_pos_norm;
+<span style="color: #BBB">            </span>y_pos_norm_old<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_pos_norm;
+
+<span style="color: #BBB">            </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>x_dac_f<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">float</span>)(x_pos_norm<span style="color: #BBB"> </span><span style="color: #333">*</span><span style="color: #BBB"> </span>DAC_X_RANGE);
+<span style="color: #BBB">            </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>y_dac_f<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">float</span>)(y_pos_norm<span style="color: #BBB"> </span><span style="color: #333">*</span><span style="color: #BBB"> </span>DAC_Y_RANGE);
+
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(x_dac_f<span style="color: #BBB"> </span><span style="color: #333">&lt;</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>)<span style="color: #BBB"> </span>x_dac_f<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>;
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(y_dac_f<span style="color: #BBB"> </span><span style="color: #333">&lt;</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>)<span style="color: #BBB"> </span>y_dac_f<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>;
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(x_dac_f<span style="color: #BBB"> </span><span style="color: #333">&gt;</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">4095</span>)<span style="color: #BBB"> </span>x_dac_f<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">4095</span>;
+<span style="color: #BBB">            </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(y_dac_f<span style="color: #BBB"> </span><span style="color: #333">&gt;</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">4095</span>)<span style="color: #BBB"> </span>y_dac_f<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">4095</span>;
+
+<span style="color: #BBB">            </span>DAC_data_x<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">uint16_t</span>)<span style="color: #BBB"> </span>x_dac_f;
+<span style="color: #BBB">            </span>DAC_data_y<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>(<span style="color: #339; font-weight: bold">uint16_t</span>)<span style="color: #BBB"> </span>y_dac_f;
+
+<span style="color: #BBB">            </span><span style="color: #888">// Construct the 16-bit DAC word:</span>
+<span style="color: #BBB">            </span><span style="color: #888">// upper 4 bits = config, lower 12 bits = data</span>
+<span style="color: #BBB">            </span><span style="color: #339; font-weight: bold">uint16_t</span><span style="color: #BBB"> </span>DAC_word<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>DAC_config_chan_A<span style="color: #BBB"> </span><span style="color: #333">|</span><span style="color: #BBB"> </span>(DAC_data_x<span style="color: #BBB"> </span><span style="color: #333">&amp;</span><span style="color: #BBB"> </span><span style="color: #058; font-weight: bold">0x0FFF</span>);
+<span style="color: #BBB">            </span><span style="color: #339; font-weight: bold">uint16_t</span><span style="color: #BBB"> </span>DAC_word2<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>DAC_config_chan_B<span style="color: #BBB"> </span><span style="color: #333">|</span><span style="color: #BBB"> </span>(DAC_data_y<span style="color: #BBB"> </span><span style="color: #333">&amp;</span><span style="color: #BBB"> </span><span style="color: #058; font-weight: bold">0x0FFF</span>);
+
+<span style="color: #BBB">            </span><span style="color: #888">// Send to DAC over SPI</span>
+<span style="color: #BBB">            </span><span style="color: #888">// Manually toggle the CS line because we want synchronization of both DAC channels</span>
+<span style="color: #BBB">            </span>gpio_put(PIN_CS,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>);
+<span style="color: #BBB">            </span>spi_write16_blocking(SPI_PORT,<span style="color: #BBB"> </span><span style="color: #333">&amp;</span>DAC_word,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">1</span>);
+<span style="color: #BBB">            </span>gpio_put(PIN_CS,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">1</span>);
+
+<span style="color: #BBB">            </span>gpio_put(PIN_CS,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>);
+<span style="color: #BBB">            </span>spi_write16_blocking(SPI_PORT,<span style="color: #BBB"> </span><span style="color: #333">&amp;</span>DAC_word2,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">1</span>);
+<span style="color: #BBB">            </span>gpio_put(PIN_CS,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">1</span>);
+
+<span style="color: #BBB">            </span>gui_x_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x_pos_norm;
+<span style="color: #BBB">            </span>gui_y_norm<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y_pos_norm;
+<span style="color: #BBB">            </span>gui_x_dac<span style="color: #BBB">  </span><span style="color: #333">=</span><span style="color: #BBB"> </span>DAC_data_x;
+<span style="color: #BBB">            </span>gui_y_dac<span style="color: #BBB">  </span><span style="color: #333">=</span><span style="color: #BBB"> </span>DAC_data_y;
+<span style="color: #BBB">        </span>}
+
+<span style="color: #BBB">    </span>}
+
+<span style="color: #BBB">    </span>PT_END(pt);
+}
+
+<span style="color: #888">// =======================For GUI========================</span>
+<span style="color: #080; font-weight: bold">static</span><span style="color: #BBB"> </span>PT_THREAD(protothread_gui(<span style="color: #080; font-weight: bold">struct</span><span style="color: #BBB"> </span><span style="color: #B06; font-weight: bold">pt</span><span style="color: #BBB"> </span><span style="color: #333">*</span>pt))<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span>PT_BEGIN(pt);
+
+<span style="color: #BBB">    </span><span style="color: #080; font-weight: bold">static</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">uint64_t</span><span style="color: #BBB"> </span>next_t<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>;
+<span style="color: #BBB">    </span><span style="color: #080; font-weight: bold">static</span><span style="color: #BBB"> </span><span style="color: #339; font-weight: bold">int</span><span style="color: #BBB"> </span>prev_x<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">-1</span>,<span style="color: #BBB"> </span>prev_y<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">-1</span>;
+
+<span style="color: #BBB">    </span><span style="color: #888">// Initial clear + arena</span>
+<span style="color: #BBB">    </span>clearRect(<span style="color: #00D; font-weight: bold">0</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">640</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">60</span>,<span style="color: #BBB"> </span>BLACK);
+<span style="color: #BBB">    </span>drawArena();
+
+<span style="color: #BBB">    </span><span style="color: #080; font-weight: bold">while</span><span style="color: #BBB"> </span>(<span style="color: #00D; font-weight: bold">1</span>)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">        </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(next_t<span style="color: #BBB"> </span><span style="color: #333">==</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>)<span style="color: #BBB"> </span>next_t<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>time_us_64()<span style="color: #BBB"> </span><span style="color: #333">+</span><span style="color: #BBB"> </span>FRAME_US;
+<span style="color: #BBB">        </span>PT_YIELD_UNTIL(pt,<span style="color: #BBB"> </span>time_us_64()<span style="color: #BBB"> </span><span style="color: #333">&gt;=</span><span style="color: #BBB"> </span>next_t);
+<span style="color: #BBB">        </span>next_t<span style="color: #BBB"> </span><span style="color: #333">+=</span><span style="color: #BBB"> </span>FRAME_US;
+
+<span style="color: #BBB">        </span><span style="color: #888">// Snapshot shared state</span>
+<span style="color: #BBB">        </span><span style="color: #339; font-weight: bold">uint16_t</span><span style="color: #BBB"> </span>x_dac<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>gui_x_dac;
+<span style="color: #BBB">        </span><span style="color: #339; font-weight: bold">uint16_t</span><span style="color: #BBB"> </span>y_dac<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>gui_y_dac;
+<span style="color: #BBB">        </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>x_n<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>gui_x_norm;
+<span style="color: #BBB">        </span><span style="color: #339; font-weight: bold">float</span><span style="color: #BBB"> </span>y_n<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>gui_y_norm;
+
+<span style="color: #BBB">        </span><span style="color: #339; font-weight: bold">int</span><span style="color: #BBB"> </span>x<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>dacXToPixel(x_dac);
+<span style="color: #BBB">        </span><span style="color: #339; font-weight: bold">int</span><span style="color: #BBB"> </span>y<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>dacYToPixel(y_dac);
+
+<span style="color: #BBB">        </span>clearRect(<span style="color: #00D; font-weight: bold">0</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">640</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">60</span>,<span style="color: #BBB"> </span>BLACK);
+
+<span style="color: #BBB">        </span><span style="color: #888">// Erase previous marker (FILLED to avoid ghosting)</span>
+<span style="color: #BBB">        </span><span style="color: #080; font-weight: bold">if</span><span style="color: #BBB"> </span>(prev_x<span style="color: #BBB"> </span><span style="color: #333">&gt;=</span><span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">            </span>fillRect(prev_x,<span style="color: #BBB"> </span>prev_y,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">10</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">10</span>,<span style="color: #BBB"> </span>BLACK);
+<span style="color: #BBB">        </span>}
+
+<span style="color: #BBB">        </span><span style="color: #888">// Redraw arena in case erase touched border</span>
+<span style="color: #BBB">        </span>drawArena();
+
+<span style="color: #BBB">        </span><span style="color: #888">// Draw new marker</span>
+<span style="color: #BBB">        </span>fillRect(x,<span style="color: #BBB"> </span>y,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">10</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">10</span>,<span style="color: #BBB"> </span>WHITE);
+<span style="color: #BBB">        </span>prev_x<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>x;
+<span style="color: #BBB">        </span>prev_y<span style="color: #BBB"> </span><span style="color: #333">=</span><span style="color: #BBB"> </span>y;
+
+<span style="color: #BBB">        </span><span style="color: #888">// HUD text (top 60 px)</span>
+<span style="color: #BBB">        </span>setCursor(<span style="color: #00D; font-weight: bold">10</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">10</span>);
+<span style="color: #BBB">        </span>setTextColor(WHITE);
+
+<span style="color: #BBB">        </span><span style="color: #339; font-weight: bold">char</span><span style="color: #BBB"> </span>buf[<span style="color: #00D; font-weight: bold">80</span>];
+<span style="color: #BBB">        </span>sprintf(buf,<span style="color: #BBB"> </span><span style="background-color: #FFF0F0">&quot;x=%.3f y=%.3f  DACx=%u DACy=%u&quot;</span>,<span style="color: #BBB"> </span>x_n,<span style="color: #BBB"> </span>y_n,<span style="color: #BBB"> </span>x_dac,<span style="color: #BBB"> </span>y_dac);
+<span style="color: #BBB">        </span>writeString(buf);
+<span style="color: #BBB">    </span>}
+
+<span style="color: #BBB">    </span>PT_END(pt);
+}
+<span style="color: #888">// =======================For GUI========================</span>
+<span style="color: #339; font-weight: bold">void</span><span style="color: #BBB"> </span>core1_main()<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span>pt_add_thread(protothread_gui);
+<span style="color: #BBB">    </span>pt_schedule_start;
+}
+
+<span style="color: #339; font-weight: bold">int</span><span style="color: #BBB"> </span>main()<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span><span style="color: #888">// Initialize stdio</span>
+<span style="color: #BBB">    </span>stdio_init_all();
+<span style="color: #BBB">    </span>
+<span style="color: #BBB">    </span>set_sys_clock_khz(<span style="color: #00D; font-weight: bold">150000</span>,<span style="color: #BBB"> </span><span style="color: #007020">true</span>);
+<span style="color: #BBB">    </span>initVGA();
+<span style="color: #BBB">    </span>setTextWrap(<span style="color: #00D; font-weight: bold">0</span>);
+<span style="color: #BBB">    </span>setTextSize(<span style="color: #00D; font-weight: bold">1</span>);
+
+<span style="color: #BBB">    </span>multicore_reset_core1();
+<span style="color: #BBB">    </span>multicore_launch_core1(core1_main);
+<span style="color: #BBB">    </span>
+<span style="color: #BBB">    </span>uart_init(uart0,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">115200</span>);
+<span style="color: #BBB">    </span>gpio_set_function(<span style="color: #00D; font-weight: bold">0</span>,<span style="color: #BBB"> </span>GPIO_FUNC_UART);
+<span style="color: #BBB">    </span>gpio_set_function(<span style="color: #00D; font-weight: bold">1</span>,<span style="color: #BBB"> </span>GPIO_FUNC_UART);<span style="color: #BBB"> </span>
+
+<span style="color: #BBB">    </span><span style="color: #888">// Initialize SPI channel (channel, baud rate set to 20MHz)</span>
+<span style="color: #BBB">    </span>spi_init(SPI_PORT,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">20000000</span>)<span style="color: #BBB"> </span>;
+<span style="color: #BBB">    </span><span style="color: #888">// Format (channel, data bits per transfer, polarity, phase, order)</span>
+<span style="color: #BBB">    </span>spi_set_format(SPI_PORT,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">16</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>);
+
+<span style="color: #BBB">    </span><span style="color: #888">// Map SPI signals to GPIO ports</span>
+<span style="color: #BBB">    </span>gpio_set_function(PIN_MISO,<span style="color: #BBB"> </span>GPIO_FUNC_SPI);
+<span style="color: #BBB">    </span>gpio_set_function(PIN_SCK,<span style="color: #BBB"> </span>GPIO_FUNC_SPI);
+<span style="color: #BBB">    </span>gpio_set_function(PIN_MOSI,<span style="color: #BBB"> </span>GPIO_FUNC_SPI);
+<span style="color: #BBB">    </span><span style="color: #888">// gpio_set_function(PIN_CS, GPIO_FUNC_SPI) ;</span>
+<span style="color: #BBB">    </span>gpio_init(PIN_CS);
+<span style="color: #BBB">    </span>gpio_set_dir(PIN_CS,<span style="color: #BBB"> </span>GPIO_OUT);
+<span style="color: #BBB">    </span>gpio_put(PIN_CS,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">1</span>);
+
+<span style="color: #BBB">    </span><span style="color: #888">// Map LDAC pin to GPIO port, hold it low (could alternatively tie to GND)</span>
+<span style="color: #BBB">    </span>gpio_init(LDAC)<span style="color: #BBB"> </span>;
+<span style="color: #BBB">    </span>gpio_set_dir(LDAC,<span style="color: #BBB"> </span>GPIO_OUT)<span style="color: #BBB"> </span>;
+<span style="color: #BBB">    </span>gpio_put(LDAC,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>)<span style="color: #BBB"> </span>;
+
+<span style="color: #BBB">    </span><span style="color: #888">// Setup the ISR-timing GPIO</span>
+<span style="color: #BBB">    </span>gpio_init(ISR_GPIO)<span style="color: #BBB"> </span>;
+<span style="color: #BBB">    </span>gpio_set_dir(ISR_GPIO,<span style="color: #BBB"> </span>GPIO_OUT);
+<span style="color: #BBB">    </span>gpio_put(ISR_GPIO,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>)<span style="color: #BBB"> </span>;
+
+<span style="color: #BBB">    </span><span style="color: #888">// Map LED to GPIO port, make it low</span>
+<span style="color: #BBB">    </span>gpio_init(LED)<span style="color: #BBB"> </span>;
+<span style="color: #BBB">    </span>gpio_set_dir(LED,<span style="color: #BBB"> </span>GPIO_OUT)<span style="color: #BBB"> </span>;
+<span style="color: #BBB">    </span>gpio_put(LED,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>)<span style="color: #BBB"> </span>;
+
+<span style="color: #BBB">    </span>PT_SEM_INIT(<span style="color: #333">&amp;</span>dac_semaphore,<span style="color: #BBB"> </span><span style="color: #00D; font-weight: bold">0</span>);
+<span style="color: #BBB">    </span><span style="color: #888">////////////////////////////////////////////////////////////////////////</span>
+<span style="color: #BBB">    </span><span style="color: #888">///////////////////////////// ROCK AND ROLL ////////////////////////////</span>
+<span style="color: #BBB">    </span><span style="color: #888">////////////////////////////////////////////////////////////////////////</span>
+<span style="color: #BBB">    </span>pt_add_thread(protothread_serial)<span style="color: #BBB"> </span>;
+<span style="color: #BBB">    </span>pt_add_thread(protothread_dac);
+<span style="color: #BBB">    </span>pt_schedule_start;
+}
+</pre>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+
+    <hr id="appendixC">
+
+    <div class="row">
+      <div class="col-md-12">
+        <h2 style="text-align:center;">Appendix C: External Hardware Schematics</h2>
+
+        <figure style="text-align:center; margin-top:20px;">
+          <img class="img-rounded img-responsive" src="pics/pico_schematics.png" alt="External hardware schematic"
+            style="display:block; margin:0 auto; max-width:800px; width:100%;">
+          <figcaption style="font-size:13px; margin-top:10px;">
+            <em>FIG. C.1. External hardware schematic drawn in ExpressPCB.</em>
+          </figcaption>
+        </figure>
+
+      </div>
+    </div>
+
+    <hr id="appendixD">
+
+    <div class="row">
+      <div class="col-md-12">
+
+        <h2 style="text-align:center;">Appendix D: Task Division</h2>
+
+        <p style="font-size:16px; text-align:left; margin-top:15px;">
+          During the initial stages of the design, <strong>Yusheng Chen</strong> was primarily responsible for developing the
+          ball tracking system on the Raspberry Pi, including camera setup, image processing, and position extraction.
+          During this same period, <strong>Shashank Chalamalasetty</strong> focused on designing a two-dimensional gantry
+          system intended to move a cup or basket to intercept the ball.
+        </p>
+
+        <p style="font-size:16px; text-align:left;">
+          Midway through the project, a strain-gauge data plotter was provided to the group, which eliminated the need to
+          purchase high-performance stepper motors and significantly altered the system architecture. Following this change,
+          both <strong>Yusheng</strong> and <strong>Shashank</strong> shifted their focus to understanding and controlling the
+          plotter using analog voltage commands generated by the Raspberry Pi Pico. This phase involved characterizing the
+          plotter response and establishing a stable voltage-to-position mapping.
+        </p>
+
+        <p style="font-size:16px; text-align:left;">
+          Once basic position control was established, <strong>Yusheng</strong> returned to improving the robustness of the
+          ball tracking pipeline, including filtering, prediction, and normalization of position data. In parallel,
+          <strong>Shashank</strong> developed a VGA-based display on the Pico to visualize incoming position commands and
+          plotter outputs, which served as a real-time debugging and calibration tool.
+        </p>
+
+        <p style="font-size:16px; text-align:left;">
+          In the final stage of the project, <strong>Yusheng</strong> and <strong>Shashank</strong> worked collaboratively to
+          implement and test a serial communication interface between the Raspberry Pi and Raspberry Pi Pico. This ensured
+          reliable transmission of normalized position data and completed the closed-loop integration between the vision
+          system and the plotter-based actuation.
+        </p>
+
+      </div>
+    </div>
+
+
+    <!-- Bootstrap core JavaScript
+================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
+    <script src="dist/js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <!-- <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script> -->
+
+</div>
+</body>
+</html>

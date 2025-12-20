@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>ECE4760 Final Project - Erica Jiang and Max Trager</title>
+
+  <link rel="stylesheet" type="text/css" href="site.css" />
+</head>
+
+<body>
+  <nav>
+    <div class="container">
+      <div class="menu">
+        <a href="index.html" class="drop" id="home">Introduction</a>
+        <!-- class block toggles their view when the screen is narrow -->
+        <a class="" href="high_level_overview.html">High-Level Overview</a>
+        <a class="" href="electrical_design.html">Electrical Design</a>
+        <a class="" href="software_design.html">Software Design</a>
+        <a class="" href="testing_and_results.html">Testing & Results</a>
+        <a class="" href="conclusion.html">Conclusion</a>
+        <a class="" href="appendix.html">Appendix</a>
+      </div>
+    </div>
+  </nav>
+  <br />
+
+  <main>
+    <h2 >Conclusion</h2>
+      <p class="project">
+        This project successfully demonstrated the design and implementation of a custom 3-phase BLDC motor controller using 
+        trapezoidal commutation. Our system included a custom PCB to interface with the phases of the motor, allowing us to design 
+        testpoints around significant signals and analyze the voltage waveforms associated with driving a motor. The electrical section 
+        achieved consistent performance and supported the power requirements of driving the motor we selected. On the software side, the 
+        system achieved accurate commutation and was sufficiently optimized for switching timing requirements. The implementation of feedback 
+        controls with user-inputted targets was well-filtered and responsive.
+      </p>
+      <p class="project">
+        We proposed this project with two central overarching goals. Firstly, we hoped for our project to serve as an educational exploration 
+        of fundamental aspects of motor control. We aimed to develop a system for which each aspect of the motor control is implemented intentionally, 
+        taking each component of controls logic and motor physics into consideration. The results of our project, and the analysis that we were able to 
+        perform as described in section 4, fulfilled this goal!
+      </p>
+      <p class="project">
+        Secondly, we hoped for our project to demonstrate the implementation of motor control with accessible hardware and open-source tools, in order 
+        to ultimately serve as a foundation for exploring more advanced controls techniques. This ties into our vision for expanding the technical scope 
+        of our project to explore other control systems. After we first fix the bugs in current sensing and header placement from our original PCB design, 
+        we could expand the controls suite in <span style="font-style: italic;">many</span> ways:
+        <ol>
+          <li>Currently, we essentially have an open-loop deadtime, which enforces a deadtime of exactly 64 clock cycles. However, a better implementation may include the placement of a voltage sensor on the switch node in order to detect the moment at which the switch node is fully tristated, upon which the other MOSFET should begin conducting.</li>
+          <li>The V/Hz algorithm was interesting to implement as a feedback-loop controller we had not previously encountered in-class. However, it would be interesting to implement more corrective controllers, such as the PID controller. </li>
+          <li>Upon integrating current and voltage sensors for each phase, the variety of methods by which the motor can be driven is widely expanded. Trapezoidal control was ideal in the scenario in which our available sensors were 6 hall effect sensors, and in the case of our BLDC motor. However, incorporating current sensors allows us to directly measure the torque applied by the motor. We could use this feedback to perform current control to precisely configure the torque applied by the rotor, whether we want a constant torque—as was applied using trapezoidal control—or a variable torque controller.</li>
+          <li>The circuitry to drive a sinusoidal motor—such as the PMSM motor—is identical to that which we implemented. The ideal waveform to apply onto the phases of a sinusoidal motor is a sinusoid. Similar to the DDS we conducted in Lab 1, we could expand our commutation table to a much higher resolution to imitate a sinusoidal waveform. By applying PWM to multiple phases, the current waveform could be manipulated to be sinusoidal to match V<sub>bemf</sub>.</li>
+        </ol>
+      </p>
+      <p class="project">
+        Beyond the goals established in the project proposal, we developed our system upon strong engineering principles throughout the design and implementation 
+        process. We made each of our design decisions according to the electrical characteristics and physics of the system, with several factors of safety to 
+        ensure safe power distribution. Our program was developed to be modular, readable, reusable, and easily configurable. In an expansion of the project, we 
+        are confident that the existing program can be easily repurposed to expand the technical scope of the project. As we designed and brought up our system, we 
+        maintained detailed documentation of the development process for both hardware and software components.
+      </p>
+      <p class="project">
+        Overall, this project gave us the opportunity to explore the field of motor control in a unique and hands-on way. We were able to learn a lot about the physics 
+        behind motor control systems, as well as the design and implementation process of electrical and microcontroller systems. We applied concepts from microcontrollers, 
+        control systems, and microelectronics to build a robust, transferable system capable of driving any low-power BLDC motor. Beyond fulfilling our technical goals, our motor 
+        controller provided us the wonderful experience of developing our synthesis of digital systems and physics upon the core topics we explored throughout the semester.
+      </p>
+    
+  </main>
+
+</body>
+
+</html>
