@@ -1,0 +1,13 @@
+Conclusion
+=========================
+
+--------------
+
+Through this project, we gained insights into challenges and feasibility of binaural audio localization. We also find the researching process to be very valuable as it has taught us more about DSP, real-time audio streaming, embedded programming, and machine learning in the context of small devices like the RP2040.
+
+Two suprising things were that the data collection process was more tedious than we anticipated and the procedure to setup the inference pipeline on the RP2040 is more challenging than we thought. If we could start from the beginning, choosing the RP2350 would have been a wiser choise as not only does it have a larger memory capacity but it also has a dedicated FPU which would allow for higher DSP accuracy.
+
+We do not fully understand why the accuracy of the prediction decreases after the adjustments made.
+After we modified the model to run on the RP2040 (replacing LeakyReLU with ReLU and removing BatchNormalization and Dropout to accommodate supported operations and memory limitations), the prediction accuracy decreased, but we haven't yet found the exact reason.
+One possible explanation is that these "deployment-specific" changes reduced the model's generalization ability: removing normalization might cause changes in feature scaling between the training and testing phases, and changing the activation function might alter how the network learns the subtle timing and amplitude information crucial for localization. Another possibility is a mismatch between the Keras evaluation path and the TFLite/Pico inference path (e.g., slightly different preprocessing, scaling, or numerical precision), so the input distribution seen by the model during inference is inconsistent with the input distribution seen during training. Finally, the modified model might be more sensitive to noise and subtle recording variations (microphone gain, position, background reflections), so even if it still learns "some" patterns, the error increases when conditions change.
+

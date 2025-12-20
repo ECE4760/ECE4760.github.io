@@ -1,0 +1,23 @@
+High Level Design
+=================
+
+--------------
+
+
+In this project, we focused solely on the auditory sense and did not take sight into account. This is because visual cues could dominate the auditory cues via the Ventriloquist Effect.
+
+The azimuthal angle measures the degree of horizontal movement when the head is turned left or right. The polar angle, on the other hand, measures the vertical movement when the head is tilted up or down.
+
+One of the key features of stereo audio that can be used for sound localization is the interaural time difference (ITD). By measuring the difference in time between the two signals, we can use the distance between the two microphones to calculate the angle, relative to the axis intersecting both microphones, that the sound came from. Given that the sound source is sufficiently further from the measurement than the distance between the microphones, we can very simply calculate the angle from the interaural time difference as shown below
+
+.. image:: calculation.png
+   :width: 1000px
+   :alt: Calculation
+   :align: center
+
+Given that the additional distance is D () and we know the speed of sound, we can calculate the angle from the time difference as: = -1(c (ITD)D). However, this relies on  a small angle assumption that requires that the source is sufficiently far away such that the angle of each ear relative to the sound source is sufficiently close together. 
+
+We chose 44100Hz as the sample rate, as it is a conventional high resolution audio recording frequency. In selecting this recording frequency we had to balance resolution in the data stream necessary to classify audio spatialization against the hardware limitations of the raspberry pi, as we had to exchange data into the SD card via a buffer in real time during audio recording. 
+
+Another, more intuitive explanation is using the Nyquist theorem that states one needs to digitally sample data at twice the desired frequency of the analog signal one hopes to capture. Because human hearing tops off at around 20kHz, we would need to sample at 40kHz to record at least as well as a human. We rounded up to a more standard frequency of 44.1kHz.
+

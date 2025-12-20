@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Program &amp; Hardware Design &#8212; Earie 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+    <link rel="stylesheet" type="text/css" href="_static/basic_mod.css?v=9b2032db" />
+    <script src="_static/documentation_options.js?v=2709fde1"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <script src="_static/js/petite-vue.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Results of the Design" href="results-of-the-design.html" />
+    <link rel="prev" title="High Level Design" href="high-level-design.html" /> 
+  </head><body data-dark_mode_code_blocks="true">
+
+<div id="top_nav">
+    
+
+    <nav>
+        
+            
+        
+
+        <p id="toggle_sidebar">
+            <a href="#" title="Toggle sidebar">|||</a>
+        </p>
+        <h1><a href="index.html" title="Go to homepage">Earie 0.1 documentation</a></h1>
+
+        <a id="mode_toggle" href="#" @click.prevent="handleClick" :title="mode">
+    <template v-if="mode == 'light'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_light"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M67.48,18.073c1.913,-1.912 1.913,-5.018 0,-6.931c-1.912,-1.912 -5.018,-1.912 -6.931,0l-6.798,6.799c-1.912,1.912 -1.912,5.018 0,6.931c1.913,1.912 5.018,1.912 6.931,-0l6.798,-6.799Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.728,61.108c1.912,-1.913 1.912,-5.018 -0,-6.931c-1.913,-1.913 -5.019,-1.913 -6.931,-0l-6.799,6.798c-1.912,1.913 -1.912,5.019 0,6.931c1.913,1.913 5.019,1.913 6.931,0l6.799,-6.798Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.682,54.177c-1.913,-1.913 -5.018,-1.913 -6.931,-0c-1.912,1.913 -1.912,5.018 0,6.931l6.798,6.798c1.913,1.913 5.019,1.913 6.931,0c1.913,-1.912 1.913,-5.018 0,-6.931l-6.798,-6.798Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M4.901,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,-0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M18.929,11.142c-1.912,-1.912 -5.018,-1.912 -6.931,0c-1.912,1.913 -1.912,5.019 0,6.931l6.799,6.799c1.912,1.912 5.018,1.912 6.931,-0c1.912,-1.913 1.912,-5.019 -0,-6.931l-6.799,-6.799Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.108,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c-0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c-0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'dark'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_dark"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.901,2.196 -4.901,4.901c0,2.705 2.197,4.901 4.901,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.662,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.989,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.732,61.103c1.91,-1.91 1.91,-5.011 0,-6.921l-0.009,-0.01c-1.91,-1.91 -5.012,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.909,1.91 5.011,1.91 6.92,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.672,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.52,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l-0,-0.01c-0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.901,2.196 -4.901,4.901c0,2.704 2.197,4.9 4.901,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.73,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 -0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.098,34.623c-2.699,0 -4.891,2.192 -4.891,4.892l-0,0.019c-0,2.699 2.192,4.891 4.891,4.891c2.7,0 4.892,-2.192 4.892,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.892,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'darkest'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_darkest"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><path d="M39.315,23.791c8.684,-0 15.734,7.05 15.734,15.733c0,8.684 -7.05,15.734 -15.734,15.734c-8.683,0 -15.733,-7.05 -15.733,-15.734c-0,-8.683 7.05,-15.733 15.733,-15.733Zm0,4.737c6.069,0 10.997,4.927 10.997,10.996c-0,6.069 -4.928,10.996 -10.997,10.996c-6.068,0 -10.996,-4.927 -10.996,-10.996c0,-6.069 4.928,-10.996 10.996,-10.996Z" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.216,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.9,2.196 -4.9,4.901c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.666,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.99,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.737,61.103c1.909,-1.91 1.909,-5.011 -0,-6.921l-0.01,-0.01c-1.91,-1.91 -5.011,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.91,1.91 5.011,1.91 6.921,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.676,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.524,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l0,-0.01c0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.216,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901c-0,2.704 2.196,4.9 4.9,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.734,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.103,34.623c-2.7,0 -4.892,2.192 -4.892,4.892l-0,0.019c-0,2.699 2.192,4.891 4.892,4.891c2.699,0 4.891,-2.192 4.891,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.891,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+</a>
+
+<script>
+(function() {
+    const LOCAL_STORAGE_KEY = 'piccoloThemeMode'
+
+    var initialMode = localStorage.getItem(LOCAL_STORAGE_KEY)
+
+    if (initialMode) {
+        // Make sure the value in local storage is valid
+        if (['light', 'dark', 'darkest'].indexOf(initialMode) == -1) {
+            initialMode = 'light'
+            localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+        }
+    } else {
+        // Check if the client prefers dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            initialMode = 'dark'
+        } else {
+            initialMode = 'light'
+        }
+        localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+    }
+
+    document.documentElement.dataset.mode = initialMode
+
+    PetiteVue.createApp({
+        'mode': initialMode,
+        handleClick() {
+            let currentMode = this.mode
+
+            if (currentMode == 'light') {
+                this.mode = 'dark'
+            } else if (currentMode == 'dark') {
+                this.mode = 'darkest'
+            } else if (currentMode == 'darkest') {
+                this.mode = 'light'
+            }
+
+            document.documentElement.dataset.mode = this.mode
+            localStorage.setItem(LOCAL_STORAGE_KEY, this.mode)
+
+            console.log(this.mode)
+        }
+    }).mount('#mode_toggle')
+})()
+</script>
+            <p class="mobile_search_link">
+                <a href="search.html" title="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 64" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
+                        <path d="M14.873 40.009c-2.315-3.943-3.642-8.532-3.642-13.429C11.231 11.91 23.141 0 37.811 0s26.58 11.91 26.58 26.58-11.91 26.58-26.58 26.58a26.44 26.44 0 0 1-14.277-4.161L9.739 62.794a3.12 3.12 0 0 1-4.413 0L.913 58.382c-1.217-1.218-1.217-3.196 0-4.413l13.96-13.96zM37.811 8.054c10.225 0 18.526 8.301 18.526 18.526s-8.301 18.526-18.526 18.526-18.526-8.301-18.526-18.526S27.586 8.054 37.811 8.054z" fill="#fff" />
+                    </svg>
+                </a>
+            </p>
+        
+
+        <div class="searchbox_wrapper">
+            
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+    </nav>
+</div>
+
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper"><p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="high-level-design.html">High Level Design</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Program &amp; Hardware Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results-of-the-design.html">Results of the Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conclusion.html">Conclusion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix.html">Appendix</a></li>
+</ul>
+
+        </div>
+      </div>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="program-hardware-design">
+<h1>Program &amp; Hardware Design<a class="headerlink" href="#program-hardware-design" title="Link to this heading">¶</a></h1>
+<section id="dummy-head">
+<h2>Dummy Head<a class="headerlink" href="#dummy-head" title="Link to this heading">¶</a></h2>
+<a class="reference internal image-reference" href="_images/earie.png"><img alt="Earie Setup" class="align-center" src="_images/earie.png" style="width: 1000px;" />
+</a>
+</section>
+<hr class="docutils" />
+<section id="wav-file">
+<h2>WAV File<a class="headerlink" href="#wav-file" title="Link to this heading">¶</a></h2>
+<p>The WAV file format was selected for audio storage primarily due to its robust support and ease of integration within the project workflow. Its advantages include straightforward playback compatibility with standard media players (like Apple Music or Windows Media Player) and seamless integration with analysis tools like Audacity. Most crucially for the project’s development, the WAV format is efficiently handled by Python’s scientific ecosystem, particularly via the scipy.io.wavfile library, which provides a simple and reliable interface for reading audio data directly into NumPy arrays—a format ideal for immediate processing by TensorFlow models.</p>
+<p>For mono audio, samples are arranged in sequential order  (i.e. the first 16 bits is the first sample, the second 16 bits is the second sample, …, the nth 16 bits is the nth sample). For stereo audio, the layout for the samples is the interleaving of the first and second channel’s samples.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>Channel 0’s
+sample 0</p></td>
+<td><p>Channel 1’s
+sample 0</p></td>
+<td><p>Channel 0’s
+sample 1</p></td>
+<td><p>Channel 1’s
+sample 1</p></td>
+<td><p>…</p></td>
+<td><p>Channel 0’s
+sample n</p></td>
+<td><p>Channel 1’s
+sample n</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<hr class="docutils" />
+<section id="microphone-input">
+<h2>Microphone Input<a class="headerlink" href="#microphone-input" title="Link to this heading">¶</a></h2>
+<p>The microphone we used for this project is the Adafruit MAX9814 which has a frequency range of 20 to 20000 Hz. The MAX9814 is an amplifier which is set to 60 dB by default. The Attack/Release ratio was 1:4000 by default and was kept as such. The only 3 pins connected to the RP2040 were the 3.3 V, GND, and OUT.</p>
+</section>
+<hr class="docutils" />
+<section id="adc-reading-for-2-channels">
+<h2>ADC Reading for 2 channels<a class="headerlink" href="#adc-reading-for-2-channels" title="Link to this heading">¶</a></h2>
+<p>To emulate the binaural system, two microphones are required to be read simultaneously for input values. However, the RP2040 only has one ADC unit. Fortunately, it comes with a four channel multiplexer which can be used to simultaneously read multiple GPIO pins at once. GPIO pin 26 (physical pin 31) was mapped to ADC channel 0 and connected to the left ear. GPIO pin 27 (physical pin 32) was mapped to ADC channel 1 and connected to the right ear. A timer interrupt was configured to run every 23 microseconds (us) or 44.1 kHz. This timer interrupt is where the ADC read for each of the channels is triggered. They return unsigned 16-bit integer (uint16_t) values.</p>
+</section>
+<hr class="docutils" />
+<section id="ring-buffer-and-fatfs-file-handling-and-sd-card-write">
+<h2>Ring buffer and  FatFS (file handling) and SD card write<a class="headerlink" href="#ring-buffer-and-fatfs-file-handling-and-sd-card-write" title="Link to this heading">¶</a></h2>
+<p>Two buffers of type uint16_t are used to hold audio samples captured from the ADC 0 and ADC 1. They are both circular buffers which means values are overwritten. Therefore, any processing for the audio samples needs to be done before they are gone.</p>
+<p>For external storage, a 16 Gb SD card and an Adafruit SD card reader were used. The RP2040 was programmed to communicate with the SD card reader via SPI.</p>
+<figure class="align-center" id="id1">
+<a class="reference internal image-reference" href="_images/sd-reader-pins.png"><img alt="SD Card Reader Pin Connection" src="_images/sd-reader-pins.png" style="width: 80%;" />
+</a>
+<figcaption>
+<p><span class="caption-text"><em>microSD Card Reader Pin Connection from ECE4760 Example Library</em></span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Interfacing with the SD card was done in software via the FatFs library. On startup, the SD card is initialized and the filesystem is mounted using FatFS. A new file is opened for each new recording.</p>
+<p>Metadata for each recording includes: sound primitive recorded with, azimuthal angle, and polar angle.</p>
+<p>Ex. dtmf_5_0_corrected.wav</p>
+<p>In the example file name above, dtmf is the sound primitive used, 5 is the indexing of the dummy head’s polar orientation, and 0 is the indexing of the dummy head’s azimuthal orientation. The indexings encoded the angle values and made it more convenient for the data acquisition and classification processes.</p>
+<p>In a dedicated thread, the ring buffer for each channel is popped and written to the opened file in the WAV format described above. Since WAV does not support unsigned 16-bit integer values, the popped data are first converted to signed 16-bit. An index checker was programmed into the ring buffer pop function so as to not write the same value more than once into the file. The file is closed when each test is finished. This is manually done via a serial interface.</p>
+</section>
+<hr class="docutils" />
+<section id="synthesizing-sound-primitives">
+<h2>Synthesizing sound primitives<a class="headerlink" href="#synthesizing-sound-primitives" title="Link to this heading">¶</a></h2>
+<p>Below are sound primitives we synthesized using Audacity. There are nine in total but only five of them are audible through the playback system we set up.</p>
+<figure class="align-center" id="id2">
+<img alt="A Linear Frequency Sweep from 200 to 1400 Hz in 5 Seconds (Audible)" src="_images/sweep0-primitive.png" />
+<figcaption>
+<p><span class="caption-text"><em>A Linear Frequency Sweep from 200 to 1400 Hz in 5 Seconds (Audible)</em></span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id3">
+<img alt="A Linear Frequency Sweep from 200 to 10000 Hz in 1 Second (Audible)" src="_images/sweep1-primitive.png" />
+<figcaption>
+<p><span class="caption-text"><em>A Linear Frequency Sweep from 200 to 10000 Hz in 1 Second (Audible)</em></span><a class="headerlink" href="#id3" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id4">
+<img alt="Pluck (Audible)" src="_images/pluck-primitive.png" />
+<figcaption>
+<p><span class="caption-text"><em>Pluck (Audible)</em></span><a class="headerlink" href="#id4" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id5">
+<img alt="Dual-tone multi-frequency (DTMF) (Audible)" src="_images/dtmf-primitive.png" />
+<figcaption>
+<p><span class="caption-text"><em>Dual-tone multi-frequency (DTMF) (Audible)</em></span><a class="headerlink" href="#id5" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id6">
+<img alt="100 Hz Risset Drum (Not audible)" src="_images/drum-primitive.png" />
+<figcaption>
+<p><span class="caption-text"><em>100 Hz Risset Drum (Not audible)</em></span><a class="headerlink" href="#id6" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id7">
+<img alt="Clap (Not audible)" src="_images/clap-primitive.png" />
+<figcaption>
+<p><span class="caption-text"><em>Clap (Not audible)</em></span><a class="headerlink" href="#id7" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id8">
+<img alt="Square Wave (Not audible)" src="_images/square.png" />
+<figcaption>
+<p><span class="caption-text"><em>Square Wave (Not audible)</em></span><a class="headerlink" href="#id8" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id9">
+<img alt="Snap (Not audible)" src="_images/snap.png" />
+<figcaption>
+<p><span class="caption-text"><em>Snap (Not audible)</em></span><a class="headerlink" href="#id9" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The amplifier used was a Rogue G10, voiced for the guitar’s mid-focused range (250 Hz to 4 kHz). It is possible that the amplifier’s limited frequency range is the reason for why certain sound primitives were produced with low fidelity. The ones that were not audible all have a high degree of transient in the mid frequency range or very sparse frequency distribution.</p>
+<p>All the primitives synthesized were first exported as WAV files. However, to make reading from the SD card easier on the RP2040, all the files were converted into txt files with raw samples using a Python script we wrote.</p>
+</section>
+<hr class="docutils" />
+<section id="audio-output-sd-card-read">
+<h2>Audio output &amp; SD card read<a class="headerlink" href="#audio-output-sd-card-read" title="Link to this heading">¶</a></h2>
+<p>Reading SD card was done to get the audio samples of the sound primitives for playback. Initially, we naively followed the same approach we did for the audio capture which is to have an intermediate data structure (i.e. the ring buffer) to facilitate simultaneous reading and writing data (the adc read and the file writing). This failed and the audio came out of the DAC full with artifacts. We learned that this was because audio was not being read quickly enough from the SD card to do audio playback at the sample rate we set (44.1 kHz). Although recording is input-driven which means samples arrive when hardware generates them, playback is output-driven and samples must be delivered at a clock rate which in our case is 44.1 kHz. In the end, we executed the SD card read and SPI write in chronological order, reading as many samples from the primitives’ wav file as the RP2040 allowed and trigger SPI write once reading was done. The limit we found for the read was about 50000 samples, corresponding to roughly 1.1 second worth of audio time.</p>
+<p>During the process of truncating the 16-bit samples into the 12-bit payload for SPI transfer, we observed that using a regular stereo speaker found in the lab did not produce the sound primitives at a good enough volume even when the knob was turned to max. We then decided to make use of a guitar amplifier and was able to produce a significantly louder sound with good quality.</p>
+<p>The DAC used is a 12-bit MCP4822 DAC, connected via an SPI interface to the RP2040 microcontroller (MCU). For the SPI communication, three connection lines have to be established between the MCU and the DAC. Since SPI is a synchronous communication protocol, the clock has to be shared between the devices. This is done via the SCK line, connecting the MCU GPIO pin 6 to pin 3 of the DAC. Although this setup is a one to one connection, SPI can, in theory, facilitate multi-sender and receiver topology. This is the reason for the CS line which is how the host chooses which external device to communicate with. The MCU GPIO pin 5 is connected to pin 2 (CS) of the DAC. Lastly, for the actual data transfer, the MOSI line is used to exchange serial data between the devices. The MCU GPIO pin 7 (MOSI) is connected to pin 4 of the DAC. The MCU GPIO pins 5, 6, and 7 correspond to the physics pins 7, 9, and 10 of the Pico MCU respectively.
+The other 3 pins that needed to be connected are the Voltage input (VDD), GND, and LDAC. The DAC VDD is supplied with a 3.3V coming from the MCU with GND. The LDAC pin is so that the DAC can buffer new data while the output holds the old value.</p>
+<figure class="align-center" id="id10">
+<img alt="MCU and MCP4822 SPI Connection (Courtesy of Professor V. Hunter Adams)" src="_images/MCU-DAC.png" />
+<figcaption>
+<p><span class="caption-text"><em>MCU and MCP4822 SPI Connection (Courtesy of Professor V. Hunter Adams)</em></span><a class="headerlink" href="#id10" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id11">
+<img alt="MCP4822 Pins (Courtesy of Professor V. Hunter Adams)" src="_images/MCP.png" />
+<figcaption>
+<p><span class="caption-text"><em>MCP4822 Pins (Courtesy of Professor V. Hunter Adams)</em></span><a class="headerlink" href="#id11" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The analog output of the DAC is then accessible from the VOUTA and VOUTB pins of the DAC. A 3.5 mm audio socket which has two pins for analog audio input and one pin for ground. The analog audio input is in the form of a voltage signal. For simplicity, only one channel was used for output in this setup. The audio jack supports aux connection which allows for audio connection with the Amp we used.</p>
+</section>
+<hr class="docutils" />
+<section id="serial-interface-for-program-control-3-5-sentences">
+<h2>Serial Interface for program control (3-5 sentences)<a class="headerlink" href="#serial-interface-for-program-control-3-5-sentences" title="Link to this heading">¶</a></h2>
+<p>To properly control the setup (i.e. start/stop/name the recording and choose the primitive for playback), we dedicated the other core for taking serial input. With the SWD debugger, print statements can also be shown to express the state of the program. We designated three characters ‘p’, ‘d’, and ‘u’ as classifiers. We used ‘p’ to start a new recording. This also triggers additional inputs for choosing the sound primitive encoded in numbers (1 for “sine_16.txt”, 2 for “pluck.txt”, etc.) as well as inputs for the azimuthal and polar indexing the head is currently oriented as. We used ‘d’ to stop the recording and close the files currently opened as well as resetting the necessary variables to zero. The ‘u’ is simply to unmount the SD card when we are ready to remove it from the reader.</p>
+</section>
+<hr class="docutils" />
+<section id="calculating-the-itd-from-collected-data">
+<h2>Calculating the ITD from collected data<a class="headerlink" href="#calculating-the-itd-from-collected-data" title="Link to this heading">¶</a></h2>
+<p>When the ITD was calculated from the data, there was an oscillating pattern with respect to the horizontal axis, but it was reversed. The ITD calculated from a straight-ahead sound source was higher than when the head was shifted 90 degrees. This result suggests that the ITD can be valuable in discerning where a sound came from, however, it could not be used directly in our setup. The convolutional neural net can account for this using the time difference (horizontal shift) of shapes in the spectrogram. One possible reason for this confusion is a small difference in audio recording latency between the left and right channels that shifts the time difference such that they line up when they should differ and vice versa.</p>
+</section>
+<hr class="docutils" />
+<section id="data-pre-processing">
+<h2>Data Pre-processing<a class="headerlink" href="#data-pre-processing" title="Link to this heading">¶</a></h2>
+<p>Before thinking about building the neural network model, we had to determine what kind of input we wanted to feed the model. With the data set as it is, one option is to directly use the audio time series as the input. We broke the audio recordings into 1.1 second chunks and designated each of the chunks as an input to the model. With sample rate being 44100 Hz, each 1.1 second chunk corresponds to 97020  samples for stereo. This large input inspired us to think about ways to make it smaller while still preserving perceptually relevant information. We thought back to Direct Digital Synthesis (DDS) and realized that frequency, controlled by the phase accumulator, determines pitch which is the defining characteristic of a sound while amplitude is nothing but how loud the sound is. We then took a different approach where we applied Fourier transform (FT) on the time series to extract the frequency information of our data.</p>
+<p>Specifically, we applied a short-time Fourier transform (STFT) on our data. STFT breaks the whole signal into smaller windows and applies FT on each of the windows. Below is our configuration for the STFT function used in librosa</p>
+<figure class="align-center" id="id12">
+<img alt="Applying the librosa stft function and calculating the power spectrogram" src="_images/stft.png" />
+<figcaption>
+<p><span class="caption-text"><em>Applying the librosa stft function and calculating the power spectrogram</em></span><a class="headerlink" href="#id12" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The first parameter is the 1.1 second audio chunk for one of our two channels in time series. The second parameter is the size of the FFT window which we set to be 4096. The third parameter is how big of a jump between the start of one window and that of the next window. The fourth is the windowing function which we chose to be “hann.” We set center to False so that every window begins at t * hop_length</p>
+<p>By applying the STFT transformation, the input is now a 2D vector of dimension 2049 by 87 which is 178263 data points. The input is now almost twice as large as the 1.1 second time series in two channels samples. Another issue we realized is that human hearing is actually not linear. In other words, the way we perceive a sound going from 100 Hz to 200 Hz is different from a sound going from 1000 Hz to 1100 Hz. The two pitches at the higher frequency will sound like they are closer together than the ones at the lower frequencies. This is because human’s hearing is logarithmic. Therefore, the linear spectrum alone is not yet sufficient as a perceptually correct input for building our HRTF model. To produce a logarithmic spectrogram, we used the melspectrogram function in librosa which produces a Mel spectrogram. The melspectrogram function takes a power spectrum as an input because it aims to capture the energy distribution across frequency bands. The first step was to convert the STFT spectrum to a power spectrum by taking the absolute value of every data point and square them. The power spectrum is then passed in the librosa melspectrogram function with the sampling rate (44100) and the number of mel bands (32) as parameters. The final Mel spectrogram is of dimension 32 by 87 which has 2784 data points. On top of extracting the Mel spectrogram for each of the channels, we also take the difference between the channels’ spectrograms as it correlates with the Interaural Level Difference (ILD), effectively producing a third spectrogram. The reason for this is because we observed that not only was there a time offset between the two received waveforms when a sound came from a non-midline direction but there was also a difference in sound intensity.  In other words, for each 1.1 seconds audio chunk, there are three 32 by 87 matrices, corresponding to 8352 data points. This final form of input is not only more perceptually accurate but also smaller in dimension as well.</p>
+<figure class="align-center">
+<img alt="mel-spectrogram" src="_images/mel.png" />
+</figure>
+</section>
+<hr class="docutils" />
+<section id="model-architecture-and-training">
+<h2>Model Architecture and Training<a class="headerlink" href="#model-architecture-and-training" title="Link to this heading">¶</a></h2>
+<p>The model architecture we used was references from different examples online such as the TensorFlow blog and the example from pico-tflmicro GitHub repository.</p>
+<p>The input of the model was made to match that of the final mel spectrogram matrix that comprises the spectrograms for each individual channel and their difference. There are 3 main layers to the model as shown in the code below. The output layer returns four values which make up two sine and cosine pairs to give us the polar and azimuthal angles.</p>
+<a class="reference internal image-reference" href="_images/model-before.png"><img alt="Model Before" class="align-center" src="_images/model-before.png" style="width: 1000px;" />
+</a>
+<p>When we tried to load this model on the RP2040 using the pico-tflmicro library provided by Raspberry Pi, we faced two main problems. The first problem was that LeakyReLU is not an operation that the version of pico-tflmicro we were using supports. The second problem was that when we actually were able to compile the model, we got a Panic from the board debugger saying that we ran out of memory. To solve these problems, we replaced the LeakyReLU operation with a regular ReLU which pico-tflmicro does support. We then removed BatchNormalization as it takes up memory during inference and the degree to which it improves convergence was not significant. We also removed the Dropout operation as its task is to prevent overfitting but our dataset was already very diverse. Below is our final model architecture.</p>
+<a class="reference internal image-reference" href="_images/model-after.png"><img alt="Model After" class="align-center" src="_images/model-after.png" style="width: 1000px;" />
+</a>
+</section>
+<hr class="docutils" />
+<section id="running-the-model-on-the-rp2040-using-pico-tflmicro">
+<h2>Running the Model on the RP2040 using pico-tflmicro<a class="headerlink" href="#running-the-model-on-the-rp2040-using-pico-tflmicro" title="Link to this heading">¶</a></h2>
+<p>Once the model was loaded onto the RP2040, our focus shifted to real-time audio capture and processing. We realized that the seamless data-handling provided by Python’s high-level libraries had shielded us from low-level hardware constraints. On the RP2040, we faced a major bottleneck: our training pipeline used float32 precision and 4096-sample FFT windows, but the RP2040’s lack of an FPU made floating-point DSP computationally expensive. Additionally, the CMSIS-DSP library on this hardware is restricted to smaller FFT sizes for efficiency. A move to the RP2350 would have solved these issues with its native FPU and expanded RAM, but due to time constraints, we pivoted to a hybrid architecture where the DSP is performed on a laptop, allowing the RP2040 to focus on inference.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+    
+        <div id="show_right_sidebar">
+            <p><a class="toggle_right_sidebar" href="#"><span class="icon">&lt;</span><span>Page contents</span></a></p>
+        </div>
+
+        <div id="right_sidebar">
+            <p><a class="toggle_right_sidebar" href="#"><span class="icon">&gt;</span><span>Page contents:</span></a></p>
+            <div class="page_toc">
+                <ul>
+<li><a class="reference internal" href="#">Program &amp; Hardware Design</a><ul>
+<li><a class="reference internal" href="#dummy-head">Dummy Head</a></li>
+<li><a class="reference internal" href="#wav-file">WAV File</a></li>
+<li><a class="reference internal" href="#microphone-input">Microphone Input</a></li>
+<li><a class="reference internal" href="#adc-reading-for-2-channels">ADC Reading for 2 channels</a></li>
+<li><a class="reference internal" href="#ring-buffer-and-fatfs-file-handling-and-sd-card-write">Ring buffer and  FatFS (file handling) and SD card write</a></li>
+<li><a class="reference internal" href="#synthesizing-sound-primitives">Synthesizing sound primitives</a></li>
+<li><a class="reference internal" href="#audio-output-sd-card-read">Audio output &amp; SD card read</a></li>
+<li><a class="reference internal" href="#serial-interface-for-program-control-3-5-sentences">Serial Interface for program control (3-5 sentences)</a></li>
+<li><a class="reference internal" href="#calculating-the-itd-from-collected-data">Calculating the ITD from collected data</a></li>
+<li><a class="reference internal" href="#data-pre-processing">Data Pre-processing</a></li>
+<li><a class="reference internal" href="#model-architecture-and-training">Model Architecture and Training</a></li>
+<li><a class="reference internal" href="#running-the-model-on-the-rp2040-using-pico-tflmicro">Running the Model on the RP2040 using pico-tflmicro</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    
+
+      <div class="clearer"></div>
+    </div>
+    <div class="button_nav_wrapper">
+        <div class="button_nav">
+            <div class="left">
+                
+                <a href="high-level-design.html">
+                    <span class="icon">&lt;</span><span>High Level Design</span></a>
+                
+            </div>
+
+            <div class="right">
+                
+                    <a href="results-of-the-design.html"><span>Results of the Design</span><span class="icon">&gt;</span></a>
+                
+            </div>
+        </div>
+    </div>
+
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Zack Nguyen.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+
+<p id="theme_credit">Styled using the <a href="https://github.com/piccolo-orm/piccolo_theme">Piccolo Theme</a></p>
+  </body>
+</html>
