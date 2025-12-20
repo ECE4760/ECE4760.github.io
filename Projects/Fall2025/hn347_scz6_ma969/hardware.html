@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Hardware Design</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+/* Mobile menu */
+.mobile-menu { display: none !important; }
+@media (max-width: 600px) {
+  .mobile-menu { display: block !important; }
+  .header-title { font-size: 24px !important; }
+}
+@media (max-width: 992px) and (min-width: 601px) {
+  .header-title { font-size: 36px !important; }
+}
+
+/* Image Gallery - same height with cropping */
+.gallery-img {
+  width: 100%;
+  height: 350px;
+  object-fit: cover;
+}
+.gallery-item {
+  margin-bottom: 16px;
+}
+
+/* Hardware diagram */
+.hw-diagram {
+  max-width: 80%;
+  height: auto;
+}
+
+/* Mobile: Stack images vertically */
+@media (max-width: 600px) {
+  .gallery-row .w3-third {
+    width: 100% !important;
+  }
+  .gallery-img {
+    height: 250px;
+  }
+  .hw-diagram {
+    max-width: 100%;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar (sit on top) -->
+<div class="w3-top">
+  <div class="w3-bar w3-white w3-wide w3-padding w3-card">
+    <a href="index.html" class="w3-bar-item w3-button">
+      <img src="flappybird.png" alt="Flappy Bird" style="height: 36px; vertical-align: middle;">
+    </a>
+    <!-- Mobile menu button -->
+    <a href="javascript:void(0)" class="w3-bar-item w3-button w3-right mobile-menu" onclick="toggleMobileMenu()">
+      <i class="fa fa-bars"></i>
+    </a>
+    <!-- Float links to the right. Hide them on small screens -->
+    <div class="w3-right w3-hide-small">
+      <a href="high_level_design.html" class="w3-bar-item w3-button">High Level Design</a>
+      <a href="hardware.html" class="w3-bar-item w3-button">Hardware Design</a>
+      <a href="software.html" class="w3-bar-item w3-button">Software Design</a>
+      <a href="results.html" class="w3-bar-item w3-button">Results</a>
+      <a href="conclusions.html" class="w3-bar-item w3-button">Conclusions</a>
+      <a href="appendix.html" class="w3-bar-item w3-button">Appendix</a>
+    </div>
+  </div>
+  <!-- Mobile dropdown menu -->
+  <div id="mobileMenu" class="w3-bar-block w3-white w3-hide w3-card">
+    <a href="high_level_design.html" class="w3-bar-item w3-button">High Level Design</a>
+    <a href="hardware.html" class="w3-bar-item w3-button">Hardware Design</a>
+    <a href="software.html" class="w3-bar-item w3-button">Software Design</a>
+    <a href="results.html" class="w3-bar-item w3-button">Results</a>
+    <a href="conclusions.html" class="w3-bar-item w3-button">Conclusions</a>
+    <a href="appendix.html" class="w3-bar-item w3-button">Appendix</a>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="w3-display-container w3-content w3-wide" style="max-width:1500px;" id="home">
+  <img class="w3-image" src="flappybird_bg.png" alt="Background" width="1500" height="800">
+  <div class="w3-display-middle w3-margin-top w3-center">
+    <h1 class="w3-xxlarge w3-text-white header-title" style="font-size: 72px;"><span class="w3-padding w3-black w3-opacity-min"><b>Hardware Design</b></span></h1>
+  </div>
+</header>
+
+<!-- Main content -->
+<div class="w3-main">
+
+  <!-- Page content -->
+  <div class="w3-content w3-padding" style="max-width:1564px">
+
+    <!-- Hardware Section -->
+    <div class="w3-container w3-padding-32" id="RationaleandSources">
+      <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Hardware</h3>
+      <p style="text-align: justify;">
+        The system is built around a Raspberry Pi Pico (RP2040) mounted on a solderless breadboard and powered over USB. 
+        The RP2040 serves as the central controller for graphics, audio, and user input. All peripherals share a common ground, 
+        and 3.3 V power is distributed from the Pico to the attached sensors and breakout boards. The dual-core architecture of 
+        the RP2040 allows time-critical VGA graphics and game logic to run independently from asynchronous input handling. The button, 
+        microphone, and IMU were each mounted in a custom 3D-printed stand designed in Autodesk Fusion, providing stable positioning
+         and making the different control modes easier to use during gameplay as shown in the images below.
+      </p>
+      
+      <p style="text-align: justify;">
+        Video output is generated as a standard 640×480 VGA signal using the RP2040’s PIO state machines and DMA to meet strict 
+        timing requirements. Horizontal sync, vertical sync, and RGB color signals are driven directly from GPIO pins through a 
+        resistor-ladder digital-to-analog converter. This VGA hardware design and pin-mapping approach are adapted from the Cornell 
+        ECE 4760 RP2040 VGA graphics libraries developed by Bruce Land and Hunter Adams, which provided the baseline timing configuration 
+        and signal generation strategy.
+      </p>
+      
+      <p style="text-align: justify;">
+        Audio output is handled by an external SPI digital-to-analog converter connected to the RP2040 via GPIO pins for data, clock, 
+        and chip select. The DAC output is routed to a 3.5 mm audio jack to support headphones or external speakers. Sound effects are 
+        streamed using DMA for low-latency playback, while background audio is synthesized in software. The DAC wiring and DMA-based audio 
+        pipeline follow the Cornell ECE 4760 RP2040 audio examples by Hunter Adams, with modifications for our specific pin assignments 
+        and game logic.
+      </p>
+      
+      <p style="text-align: justify;">
+        Voice-based control is implemented using an Adafruit MAX9814 microphone amplifier. The module is powered at 3.3 V, and its analog 
+        output is connected to one of the RP2040’s ADC pins. The MAX9814’s built-in automatic gain control allows the system to detect claps 
+        or short vocal bursts reliably without additional analog filtering, enabling microphone-based flapping as an alternative control mode.
+      </p>
+      
+      <p style="text-align: justify;">
+        Motion-based control is provided by an MPU6050 accelerometer and gyroscope connected to the RP2040 over the I²C interface. The IMU 
+        is sampled periodically to measure orientation and acceleration, and a tilt-based metric derived from the accelerometer data is used 
+        to trigger a flap when the controller is rotated past a threshold. Standard MPU6050 initialization and register usage follow common 
+        datasheet examples and reference implementations.
+      </p>
+      
+      <p style="text-align: justify;">
+        Manual input is supported through an Adafruit 60 mm arcade button as well as several smaller tactile buttons. These buttons are 
+        wired as digital inputs to GPIO pins and are used for flapping, mode selection, and menu navigation. Software debouncing is applied 
+        to ensure reliable operation. With the described wiring, pin assignments, and referenced VGA and audio designs, this hardware setup 
+        can be reproduced by another student using the same components and breadboard layout.
+      </p>
+
+      <div class="w3-row-padding w3-padding-16 gallery-row">
+        <div class="w3-third gallery-item">
+          <img src="button stand.png" alt="Button Stand" class="gallery-img">
+          <p class="w3-center"><em>Button Stand</em></p>
+        </div>
+        <div class="w3-third gallery-item">
+          <img src="imu holder.png" alt="IMU Holder" class="gallery-img">
+          <p class="w3-center"><em>IMU Holder</em></p>
+        </div>
+        <div class="w3-third gallery-item">
+          <img src="microphone stand.png" alt="Microphone Stand" class="gallery-img">
+          <p class="w3-center"><em>Microphone Stand</em></p>
+        </div>
+      </div>
+
+      <figure class="w3-center w3-padding-16">
+        <img src="hw_diagram.png" alt="Hardware Diagram" class="hw-diagram">
+        <figcaption class="w3-text-grey w3-margin-top">
+          <em>Hardware Diagram</em>
+        </figcaption>
+      </figure>
+
+
+  </div>
+  <!-- End page content -->
+
+</div>
+<!-- END MAIN -->
+
+<!-- Footer -->
+<footer class="w3-center w3-black w3-padding-16">
+  <p>Helen Ni, Selena Zhang, Matthew Amorocho</p>
+</footer>
+
+<script>
+function toggleMobileMenu() {
+  var x = document.getElementById("mobileMenu");
+  if (x.className.indexOf("w3-show") === -1) {
+    x.className += " w3-show";
+  } else {
+    x.className = x.className.replace(" w3-show", "");
+  }
+}
+</script>
+
+</body>
+</html>

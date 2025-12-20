@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>High Level Design</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- MathJax (moved to head so it loads once) -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    /* Mobile menu */
+    .mobile-menu { display: none !important; }
+    @media (max-width: 600px) {
+      .mobile-menu { display: block !important; }
+      .header-title { font-size: 24px !important; }
+    }
+    @media (max-width: 992px) and (min-width: 601px) {
+      .header-title { font-size: 36px !important; }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- Navbar (sit on top) -->
+<div class="w3-top">
+  <div class="w3-bar w3-white w3-wide w3-padding w3-card">
+    <a href="index.html" class="w3-bar-item w3-button">
+      <img src="flappybird.png" alt="Flappy Bird" style="height: 36px; vertical-align: middle;">
+    </a>
+
+    <!-- Mobile menu button -->
+    <a href="javascript:void(0)" class="w3-bar-item w3-button w3-right mobile-menu" onclick="toggleMobileMenu()">
+      <i class="fa fa-bars"></i>
+    </a>
+
+    <!-- Float links to the right. Hide them on small screens -->
+    <div class="w3-right w3-hide-small">
+      <a href="high_level_design.html" class="w3-bar-item w3-button">High Level Design</a>
+      <a href="hardware.html" class="w3-bar-item w3-button">Hardware Design</a>
+      <a href="software.html" class="w3-bar-item w3-button">Software Design</a>
+      <a href="results.html" class="w3-bar-item w3-button">Results</a>
+      <a href="conclusions.html" class="w3-bar-item w3-button">Conclusions</a>
+      <a href="appendix.html" class="w3-bar-item w3-button">Appendix</a>
+    </div>
+  </div>
+
+  <!-- Mobile dropdown menu -->
+  <div id="mobileMenu" class="w3-bar-block w3-white w3-hide w3-card">
+    <a href="high_level_design.html" class="w3-bar-item w3-button">High Level Design</a>
+    <a href="hardware.html" class="w3-bar-item w3-button">Hardware Design</a>
+    <a href="software.html" class="w3-bar-item w3-button">Software Design</a>
+    <a href="results.html" class="w3-bar-item w3-button">Results</a>
+    <a href="conclusions.html" class="w3-bar-item w3-button">Conclusions</a>
+    <a href="appendix.html" class="w3-bar-item w3-button">Appendix</a>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="w3-display-container w3-content w3-wide" style="max-width:1500px;" id="home">
+  <img class="w3-image" src="flappybird_bg.png" alt="Background" width="1500" height="800">
+  <div class="w3-display-middle w3-margin-top w3-center">
+    <h1 class="w3-xxlarge w3-text-white header-title" style="font-size: 72px;">
+      <span class="w3-padding w3-black w3-opacity-min"><b>High Level Design</b></span>
+    </h1>
+  </div>
+</header>
+
+<!-- Main content -->
+<div class="w3-main">
+
+  <!-- Page content -->
+  <div class="w3-content w3-padding" style="max-width:1564px">
+
+    <!-- Rationale and Sources Section -->
+    <div class="w3-container w3-padding-32" id="RationaleandSources">
+      <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Rationale and Sources</h3>
+      <p style="text-align: justify;">
+        <em>Flappy Bird</em> was chosen because its gameplay is simple yet demanding from a
+        real-time systems perspective. Smooth animation, precise collision detection, and
+        responsive controls require careful timing and efficient memory usage, especially when
+        implemented without dedicated graphics hardware.
+      </p>
+      <p style="text-align: justify;">
+        The project builds on publicly available RP2040 VGA graphics libraries. Several characteristics
+        of our code, like the use of direct digital synthesis or fixed point arithmetic, are adapted versions of the models provided by Bruce Land or Hunter Van Adams on the Cornell ECE 4760 Demo Code.
+        All third-party code and references are explicitly cited in later sections in this website. 
+      </p>
+    </div>
+
+    <!-- Math Background Section -->
+    <div class="w3-container w3-padding-32" id="MathematicalBackground">
+      <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">
+        Mathematical Background
+      </h3>
+
+      <p style="text-align: justify;">
+        This project makes use of mathematics to generate visuals, audio, and provide realistic gameplay dynamics.
+        Explore these applications below:
+      </p>
+
+      <div class="tabs-wrapper">
+
+        <!-- Left vertical buttons -->
+        <div class="tab">
+          <button class="tablinks" onclick="openMathTab(event, 'MotionSim')">
+            Simulating Motion
+          </button>
+          <button class="tablinks" onclick="openMathTab(event, 'SpriteRotation')">
+            Sprite Rotation
+          </button>
+          <button class="tablinks" onclick="openMathTab(event, 'DDS')">
+            Direct Digital Synthesis
+          </button>
+        </div>
+
+        <!-- Right tab content -->
+        <div class="tabcontent-wrapper">
+
+          <div id="MotionSim" class="tabcontent">
+            <h3>Discrete-Time Gravity & Motion Simulation</h3>
+
+            <p style="text-align: justify;">
+              Our bird, Flappy, only flies up and down along a fixed x-coordinate, and the obstacles scroll
+              from right to left at a constant velocity. This allows us to use simple one-dimensional
+              kinematic equations to model Flappy's vertical motion under constant gravity.
+            </p>
+
+            <p>
+              In continuous time, vertical motion under gravity is described by:
+            </p>
+
+            <p style="text-align:center;">
+              <span class="fraction">
+                <span class="numerator"><em>dv(t)</em></span>
+                <span class="denominator"><em>dt</em></span>
+              </span>
+              = <em>g</em>,
+              &nbsp;&nbsp;
+              <span class="fraction">
+                <span class="numerator"><em>dy(t)</em></span>
+                <span class="denominator"><em>dt</em></span>
+              </span>
+              = <em>v(t)</em>
+            </p>
+
+            <p>
+              where <em>g</em> is gravitational acceleration, <em>v(t)</em> is vertical velocity,
+              and <em>y(t)</em> is vertical position.
+            </p>
+
+            <p style="text-align: justify;">
+              Our system operates in discrete time, updating once per video frame. Therefore,
+              the equations become:
+            </p>
+
+            <p style="text-align:center;">
+              <em>v[n + 1]</em> = <em>v[n]</em> + <em>g</em>
+            </p>
+            <p style="text-align:center;">
+              <em>y[n + 1]</em> = <em>y[n]</em> + <em>v[n + 1]</em>
+            </p>
+
+            <p>
+              In our code, gravity is implemented as a fixed-point constant added to the bird’s
+              vertical velocity each frame, and a flap is modeled as an instantaneous negative
+              velocity impulse.
+            </p>
+          </div>
+
+          <div id="SpriteRotation" class="tabcontent">
+            <h3>Sprite Rotation</h3>
+
+            <p style="text-align: justify;">
+              To enhance realism, the bird sprite is rendered with a rotation that reflects its
+              arched trajectory as it flaps up and down. This rotation is rooted in standard two-dimensional
+              coordinate transformation math. If the bird sprite is a collection of pixels in the coordinate frame, each with coordinate (x, y),
+              then a rotation about the origin by angle <em>&theta;</em> is accomplished by:
+            </p>
+
+            <div style="text-align:center;">
+              \[
+                \begin{bmatrix}
+                x' \\
+                y'
+                \end{bmatrix}
+                =
+                \begin{bmatrix}
+                \cos\theta & -\sin\theta \\
+                \sin\theta & \cos\theta
+                \end{bmatrix}
+                \begin{bmatrix}
+                x \\
+                y
+                \end{bmatrix}
+              \]
+            </div>
+
+            <p style="text-align:center;">
+              or
+            </p>
+
+            <p style="text-align:center;">
+              x′ = x cos<em>&theta;</em> − y sin<em>&theta;</em>, y′ = x sin<em>&theta;</em> + y cos<em>&theta;</em>
+            </p>
+
+            <p style="text-align: justify;">
+              The trigonometric values sin<em>&theta;</em> and cos<em>&theta;</em>, as well as degree-to-radian conversions, are computed
+              once per frame and stored as fixed-points, avoiding unncessary repeat calculations. The <code>drawFlappyBirdSpriteRotated</code>
+              function iterates through the pixels in the sprite, decodes the pixel's color and transparency, and finds the position vector of a given
+              point in the sprite from the sprite's center. Using the aforementioned rotation formulas, these vectors are transformed and added
+              to the local coordinates to find the coordinate of the transformed point, which is then drawn.
+            </p>
+
+            <p style="text-align: justify;">
+              To prevent abrupt changes in the bird's orientation, the rotation angle is updated via a smoothing filter (with alpha = 0.15):
+            </p>
+
+            <p style="text-align:center;">
+              <em>&theta;</em><sub>n+1</sub>​ = <em>&theta;</em><sub>n</sub> ​+ α(<em>&theta;</em><sub>target</sub> ​− <em>&theta;</em><sub>n</sub>​)
+            </p>
+
+            <p>
+              This code, contained in <code>update_bird_angle</code> gradually shifts the rotation angle of the bird to <code>target_angle</code>.
+            </p>
+
+            <p>
+              Based on the sign and magnitude of <em>v</em><sub>y</sub>, a target rotation angle is selected:
+            </p>
+
+            <div style="display:flex; justify-content:center; align-items:flex-start; margin-top:10px;">
+
+              <!-- Left side: theta_target = -->
+              <div style="padding-right:8px; font-size:1.1em;">
+                <br>
+                <em>&theta;</em><sub>target</sub> =
+              </div>
+
+              <!-- Curly brace placeholder (kept from your original layout) -->
+              <div style="font-size:5em; line-height:1; padding-right:6px;
+                font-family:'Times New Roman', serif; font-weight:normal;">
+              </div>
+
+              <!-- Cases -->
+              <div style="text-align:left; line-height:1.6;">
+                &minus;15<sup>&deg;</sup>, &nbsp;
+                <em>v</em><sub>y</sub> &lt; &minus;2 &nbsp; (ascending)
+                <br>
+                20<sup>&deg;</sup>, &nbsp;
+                <em>v</em><sub>y</sub> &gt; 2 &nbsp; (falling)
+                <br>
+                0<sup>&deg;</sup>, &nbsp;
+                |<em>v</em><sub>y</sub>| &le; 2 &nbsp; (near neutral)
+              </div>
+            </div>
+          </div>
+
+          <div id="DDS" class="tabcontent">
+            <h3>Direct Digital Synthesis of Background Music</h3>
+            <p style="text-align: justify;">
+              The background music for our game is generated using direct digital synthesis (DDS),
+              which uses a phase accumulator that advances at a rate proportional to the frequency of
+              the musical note being produced. We used ChatGPT to generate a melody, which is stored as the frequencies (Hz)
+              of the eight notes.
+            </p>
+            <p>
+              At each audio sample:
+            </p>
+            <p style="text-align:center">
+              <em>&Phi;</em>[<em>n</em>+1] = <em>&Phi;</em>[<em>n</em>] + &Delta;<em>&Phi;</em>
+            </p>
+            <p>
+              where &Phi; is the accumulator and  &Delta;<em>&Phi;</em> is the phase increment.
+              The output frequency <em>f</em> is determined by
+            </p>
+            <div style="text-align:center; margin-top:8px;">
+              &Delta;<em>&Phi;</em> =
+              <span style="display:inline-block; text-align:center;">
+                <span style="display:block; border-bottom:1px solid black; padding:0 4px;">
+                  <em>f</em>
+                </span>
+                <span style="display:block;">
+                  <em>f</em><sub>s</sub>
+                </span>
+              </span>
+              &middot; 2<sup><em>32</em></sup>
+            </div>
+            <p>
+              where <em>f<sub>s</sub></em> is the sampling frequency.
+            </p>
+            <p style="text-align: justify;">
+              Our program initializes the arpeggio by calculating the appropriate phase increments
+              for each note frequency. The accumulator value is then used to index into a table containing a
+              periodic waveform created with <code>init_bgm_table()</code>. Each table index represents a discrete
+              phase value, obtained by masking the index to an 8-bit phase range (0-255). By accessing these values within
+              an interrupt service routine, we ensure rapid, evenly spaced audio sample generation.
+            </p>
+            <p style="text-align: justify;">
+              To produce smooth sounding notes that fit a lo-fi style background track, our precomputed DDS waveform
+              linearly ramps upward from 0 to 4095, the maximum value the digital-to-analog converter allows, and linearly ramps
+              back down to 0 after.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Math Tabs Styling -->
+    <style>
+      .tabs-wrapper {
+        display: flex;
+        align-items: stretch;
+        border: 1px solid #000;
+        margin-top: 16px;
+      }
+
+      .tab {
+        width: 30%;
+        background-color: #ffffff;
+        border-right: 1px solid #000;
+      }
+
+      .tab button {
+        display: block;
+        width: 100%;
+        padding: 18px 16px;
+        border: none;
+        background: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .tab button:hover {
+        background-color: #eee;
+      }
+
+      .tab button.active {
+        background-color: #ccc;
+      }
+
+      .tabcontent-wrapper {
+        width: 70%;
+      }
+
+      .tabcontent {
+        padding: 16px;
+        background-color: #81c4fa;
+        display: none;
+      }
+
+      /* Fraction styling (clean & reusable) */
+      .fraction {
+        display: inline-grid;
+        grid-template-rows: auto auto;
+        text-align: center;
+        vertical-align: middle;
+      }
+
+      .numerator {
+        border-bottom: 1px solid black;
+        padding: 0 0.25em;
+      }
+
+      .denominator {
+        padding: 0 0.25em;
+      }
+    </style>
+
+    <!-- Math Tabs Script -->
+    <script>
+      function openMathTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+          tabcontent[i].style.display = "none";
+        }
+
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+          tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+      }
+    </script>
+
+    <!-- Logical Structure Section -->
+    <div class="w3-container w3-padding-14" id="LogicalStructure">
+      <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Logical Structure</h3>
+      <p style="text-align: justify;">
+        The system supports three distinct gameplay modes: a physical button, a microphone
+        input for sound-triggered flapping, and an inertial measurement unit (IMU) that allows
+        the player to control the bird by waving the remote. Once in a mode, the game begins once the program
+        receives the first player input, whether thats a press of the arcade button, loud sound, or tilt of the remote.
+        Inputs from all peripherals are processed in protothread_input.
+      </p>
+
+      <p style="text-align: justify;">
+        The system is divided across both RP2040 cores. Core 0 is responsible for VGA graphics
+        generation, game state updates, physics, collision detection, and rendering. Core 1
+        handles asynchronous input sources including the microphone, IMU, and mode-selection
+        buttons. This division allows the graphics pipeline to meet strict frame timing
+        requirements while still responding to real-world inputs.
+      </p>
+
+      <p style="text-align: justify;">
+        VGA output is generated using PIO state machines and DMA transfers to stream pixel data
+        with high precision. Audio output is produced through an external SPI DAC, with sound
+        effects handled via DMA for low-latency playback and background music synthesized using
+        direct digital synthesis (DDS) driven by a hardware timer interrupt.
+      </p>
+
+      <p style="text-align: justify;">
+        Together, these components form a tightly integrated embedded system that demonstrates
+        real-time graphics, audio, sensing, and control on a single microcontroller.
+      </p>
+    </div>
+
+  </div>
+  <!-- End page content -->
+</div>
+<!-- END MAIN -->
+
+<!-- Footer -->
+<footer class="w3-center w3-black w3-padding-16">
+  <p>Helen Ni, Selena Zhang, Matthew Amorocho</p>
+</footer>
+
+<script>
+  // Toggle dropdown function
+  function myFunction(id) {
+    var x = document.getElementById(id);
+    if (x.className.indexOf("w3-show") === -1) {
+      x.className += " w3-show";
+    } else {
+      x.className = x.className.replace(" w3-show", "");
+    }
+  }
+
+  // Toggle mobile menu
+  function toggleMobileMenu() {
+    var x = document.getElementById("mobileMenu");
+    if (x.className.indexOf("w3-show") === -1) {
+      x.className += " w3-show";
+    } else {
+      x.className = x.className.replace(" w3-show", "");
+    }
+  }
+</script>
+
+</body>
+</html>

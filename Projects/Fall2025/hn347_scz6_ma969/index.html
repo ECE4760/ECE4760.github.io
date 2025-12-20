@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Flappy Bird on RP2040</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+/* Video desktop */
+.video-container {
+  text-align: center;
+  margin: 0 auto;
+}
+.video-container iframe {
+  width: 800px;
+  height: 450px;
+}
+/* Smaller video on mobile */
+@media (max-width: 850px) {
+  .video-container iframe {
+    width: 100%;
+    height: 300px;
+  }
+}
+@media (max-width: 500px) {
+  .video-container iframe {
+    width: 100%;
+    height: 200px;
+  }
+}
+/* Mobile menu */
+.mobile-menu {
+  display: none !important;
+}
+@media (max-width: 600px) {
+  .mobile-menu { display: block !important; }
+  .header-title { font-size: 20px !important; }
+}
+@media (max-width: 992px) and (min-width: 601px) {
+  .header-title { font-size: 32px !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar (sit on top) -->
+<div class="w3-top">
+  <div class="w3-bar w3-white w3-wide w3-padding w3-card">
+    <a href="index.html" class="w3-bar-item w3-button">
+      <img src="flappybird.png" alt="Flappy Bird" style="height: 36px; vertical-align: middle;">
+    </a>
+    <!-- Mobile menu button -->
+    <a href="javascript:void(0)" class="w3-bar-item w3-button w3-right mobile-menu" onclick="toggleMobileMenu()">
+      <i class="fa fa-bars"></i>
+    </a>
+    <!-- Float links to the right. Hide them on small screens -->
+    <div class="w3-right w3-hide-small">
+      <a href="high_level_design.html" class="w3-bar-item w3-button">High Level Design</a>
+      <a href="hardware.html" class="w3-bar-item w3-button">Hardware Design</a>
+      <a href="software.html" class="w3-bar-item w3-button">Software Design</a>
+      <a href="results.html" class="w3-bar-item w3-button">Results</a>
+      <a href="conclusions.html" class="w3-bar-item w3-button">Conclusions</a>
+      <a href="appendix.html" class="w3-bar-item w3-button">Appendix</a>
+    </div>
+  </div>
+  <!-- Mobile dropdown menu -->
+  <div id="mobileMenu" class="w3-bar-block w3-white w3-hide w3-card">
+    <a href="high_level_design.html" class="w3-bar-item w3-button">High Level Design</a>
+    <a href="hardware.html" class="w3-bar-item w3-button">Hardware Design</a>
+    <a href="software.html" class="w3-bar-item w3-button">Software Design</a>
+    <a href="results.html" class="w3-bar-item w3-button">Results</a>
+    <a href="conclusions.html" class="w3-bar-item w3-button">Conclusions</a>
+    <a href="appendix.html" class="w3-bar-item w3-button">Appendix</a>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="w3-display-container w3-content w3-wide" style="max-width:1500px;" id="home">
+  <img class="w3-image" src="flappybird_bg.png" alt="Background" width="1500" height="800">
+  <div class="w3-display-middle w3-margin-top w3-center">
+    <h1 class="w3-xxlarge w3-text-white header-title"><span class="w3-padding w3-black w3-opacity-min"><b>Flappy Bird on RP2040</b></span></h1>
+    <p class="w3-text-white" style="font-size: 14px; margin-top: 10px;">
+      <span class="w3-padding w3-black w3-opacity-min" style="white-space: nowrap;">
+        Helen Ni (hn347), Selena Zhang (scz6), Matthew Amorocho (ma969)
+      </span>
+    </p>
+    
+  </div>
+</header>
+
+<!-- Page content -->
+<div class="w3-content w3-padding" style="max-width:1564px">
+
+  <!-- Project Section -->
+  <div class="w3-container w3-padding-32" id="projects">
+    <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Project Demo</h3>
+    <div class="video-container">
+      <iframe 
+        src="https://www.youtube.com/embed/TWBTzghpsnY" 
+        title="Flappy Bird on RP2040 Demo" 
+        frameborder="0" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+        allowfullscreen>
+      </iframe>
+    </div>
+  </div>
+
+
+
+  <!-- Overview Section -->
+  <div class="w3-container w3-padding-32" id="about">
+    <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Overview</h3>
+    <p style="text-align: justify;">This project implements a complete recreation, and expansion, of Dong Nguyen's popular 2013 mobile game, <em>Flappy Bird</em>. The game is structured like the original, including
+        gravity-based motion, scrolling obstacles, hand-drawn sprites, scoring, and sound effects. Our version expands upon this by introducing multi-modal gameplay, letting the player use either a button, their voice, or a handheld remote to generate flaps. Our project was implemented on the RP2040
+        microcontroller, generating a 640×480 VGA video signal entirely in software while simultaneously handling real-time input, physics, optimized collision detection, and audio
+        synthesis. 
+    </p>
+    <p style="text-align: justify;">
+      The motivation for this project was to recreate a game we had enjoyed when younger, while also exploring the limits of what can be achieved on a
+      resource-constrained microcontroller.
+      Generating VGA video, mixing audio, and handling sensor input concurrently presents a high workload for the system, so we met timing constraints by making optimizations like only checking the pipe nearest to the bird for collisions, or using fixed-point arithmetic.
+    </p>
+  </div>
+  
+<!-- End page content -->
+</div>
+
+
+<!-- Footer -->
+<footer class="w3-center w3-black w3-padding-16">
+  <p>Helen Ni, Selena Zhang, Matthew Amorocho</p>
+</footer>
+
+<script>
+function toggleMobileMenu() {
+  var x = document.getElementById("mobileMenu");
+  if (x.className.indexOf("w3-show") === -1) {
+    x.className += " w3-show";
+  } else {
+    x.className = x.className.replace(" w3-show", "");
+  }
+}
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Software Design</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+/* Mobile menu */
+.mobile-menu { display: none !important; }
+@media (max-width: 600px) {
+  .mobile-menu { display: block !important; }
+  .header-title { font-size: 24px !important; }
+}
+@media (max-width: 992px) and (min-width: 601px) {
+  .header-title { font-size: 36px !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar (sit on top) -->
+<div class="w3-top">
+  <div class="w3-bar w3-white w3-wide w3-padding w3-card">
+    <a href="index.html" class="w3-bar-item w3-button">
+      <img src="flappybird.png" alt="Flappy Bird" style="height: 36px; vertical-align: middle;">
+    </a>
+    <!-- Mobile menu button -->
+    <a href="javascript:void(0)" class="w3-bar-item w3-button w3-right mobile-menu" onclick="toggleMobileMenu()">
+      <i class="fa fa-bars"></i>
+    </a>
+    <!-- Float links to the right. Hide them on small screens -->
+    <div class="w3-right w3-hide-small">
+      <a href="high_level_design.html" class="w3-bar-item w3-button">High Level Design</a>
+      <a href="hardware.html" class="w3-bar-item w3-button">Hardware Design</a>
+      <a href="software.html" class="w3-bar-item w3-button">Software Design</a>
+      <a href="results.html" class="w3-bar-item w3-button">Results</a>
+      <a href="conclusions.html" class="w3-bar-item w3-button">Conclusions</a>
+      <a href="appendix.html" class="w3-bar-item w3-button">Appendix</a>
+    </div>
+  </div>
+  <!-- Mobile dropdown menu -->
+  <div id="mobileMenu" class="w3-bar-block w3-white w3-hide w3-card">
+    <a href="high_level_design.html" class="w3-bar-item w3-button">High Level Design</a>
+    <a href="hardware.html" class="w3-bar-item w3-button">Hardware Design</a>
+    <a href="software.html" class="w3-bar-item w3-button">Software Design</a>
+    <a href="results.html" class="w3-bar-item w3-button">Results</a>
+    <a href="conclusions.html" class="w3-bar-item w3-button">Conclusions</a>
+    <a href="appendix.html" class="w3-bar-item w3-button">Appendix</a>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="w3-display-container w3-content w3-wide" style="max-width:1500px;" id="home">
+  <img class="w3-image" src="flappybird_bg.png" alt="Background" width="1500" height="800">
+  <div class="w3-display-middle w3-margin-top w3-center">
+    <h1 class="w3-xxlarge w3-text-white header-title" style="font-size: 72px;"><span class="w3-padding w3-black w3-opacity-min"><b>Software Design</b></span></h1>
+  </div>
+</header>
+
+<!-- Main content -->
+<div class="w3-main">
+
+  <!-- Page content -->
+  <div class="w3-content w3-padding" style="max-width:1564px">
+
+    <!-- Organizing Functionality Across Protothreads Section -->
+    <div class="w3-container w3-padding-32" id="OrganizingFunctionalityAcrossProtothreads" style = "text-align: justify">
+      <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Organizing Functionality Across Protothreads</h3>
+      <p style="text-align: justify;">
+        Our game uses protothreads to allow for multitasking across the RP2040's two cores. 
+        The program executes timing-sensitive graphic output and physics updates on core 0, 
+        while asynchronous input processing occurs on core 1. Our audio synthesis runs outside
+        the protothread scheduler using hardware timer interrupt mechanism and direct memory access (DMA).
+      </p>
+      <div class="w3-bar w3-border-light-grey w3-emerald">
+        <button class="w3-bar-item w3-button" onclick="openCity('protothread_anim')"><code>protothread_anim</code></button>
+        <button class="w3-bar-item w3-button" onclick="openCity('protothread_play_mode')"><code>protothread_play_mode</code></button>
+        <!-- <button class="w3-bar-item w3-button" onclick="openCity('Tokyo')">Tokyo</button> -->
+      </div>
+
+      <div id="protothread_anim" class="city">
+        <h3><code>protothread_anim</code>: Animation, Physics, and Rendering</h3>
+        <p style="text-align: justify;">
+          <code>protothread_anim</code> is responsible for animation,
+          physics updates, collision detection, scoring, and VGA rendering. This 
+          protothread executes on core 0, once per video frame, or about 33 ms per frame. This portion of
+          the program is structured as a frame-by-frame loop with a sequence of stages executing once per frame.
+        </p>
+
+        <button onclick="myFunction('Demo0')" class="w3-button w3-block w3-left-align w3-light-green">
+        <b>Game State Representation</b>
+      </button>
+      <div id="Demo0" class="w3-container w3-hide w3-khaki">
+        <p style="text-align: justify;">
+          The bird's motion and orientation are represented using a small set of fixed point variables: 
+        </p>
+        <ul>
+          <li><code>bird_y</code> (<code>fix15</code>) - The vertical position of the bird, with lower values being higher on the screen.</li>
+          <li><code>bird_x</code> (<code>fix15</code>) - The horizontal position of the bird, which remain constant, simplifying the calculations.</li>
+          <li><code>bird_vy</code> (<code>fix15</code>) - The vertical velocity of the bird.</li>
+          <li><code>bird_angle_deg</code> (<code>fix15</code>) - The rotation angle of the bird, in degrees.</li>
+        </ul>
+        <p style="text-align: justify;">
+          Pipe state is stored using arrays with each index representing a vertical pipe-pair. Each pair has its y position
+          stored in <code>pipet_y[i]</code> and <code>pipeb_y[i]</code> (top and bottom pipe). Additional Boolean arrays like <code>pipe_scored[i]</code> and 
+          <code>pipe_just_reset[i]</code> track scoring state and ensure the pipes scroll smoothly off and into the screen without visual artifacts.  
+        </p>
+      </div>
+
+      <button onclick="myFunction('Demo2')" class="w3-button w3-block w3-left-align w3-lime">
+        <b>Finite State Machine</b>
+      </button>
+      <div id="Demo2" class="w3-container w3-hide w3-khaki">
+        <p style="text-align: justify;">
+          Each frame, gravity is applied to the bird by incrementing <code>bird_vy</code> with a fixed-point gravity constant. The updated velocity is then integrated
+          into the bird’s vertical position by adding <code>bird_vy</code> to <code>bird_y</code>. When a flap input is detected, <code>bird_vy</code> is immediately set to 
+          a fixed negative value, producing an upward impulse that overrides gravity for that frame.
+        </p>
+        <p style="text-align: justify;">
+           This portion of the program is modeled by a finite state machine, controlling motion updates, scoring, input handling, 
+           and screen rendering. 
+        </p>
+        <p style="text-align: justify;">
+            The FSM consists of three states:
+        </p>
+        <strong>STATE_START</strong>
+        <p style="text-align: justify;">
+          This is the initial state the game stays in after launching or resetting. The positions of the bird and pipes are set, and new updates to 
+          physics are suppressed. Rendering is handled by the <code>draw_start_screen()</code> function, which prompts the player to select a gameplay mode.
+          Once the first input trigger is received, the code procedes to <code>STATE_FALL</code>.  
+        </p>
+        <strong>STATE_FALL</strong>
+        <p style="text-align: justify;">
+          This is the active playing state, during which physics is applied via gravity, flap-trigger velocity pulses to the bird,
+          and a constant <code>PIPE_SPEED</code> by which the x-coordinate of the pipes are updated each frame. Each frame, during this state,
+          all update functions and helpers are called: <code>update_pipes()</code>, <code>update()</code>, and <code>update_bird_angle()</code>.
+          Animations are rendered, and the score is updated. If a collision with a pipe or screen boundary is detected, the program transitions to <code>STATE_END</code>.
+        </p>
+        <strong>STATE_END</strong>
+        <p style="text-align: justify;">
+          During this state, updates are halted and rendering is done by the <code>draw_end_screen()</code> function, which displays a "GAME OVER" message along with 
+          the score upon death and the high score. The code transitions back to <code>STATE_START</code>.
+        </p>
+        <figure class="w3-center w3-padding-16">
+          <img src="state_fsm.png" alt="Hardware Diagram" style="max-width: 80%; height: auto;">
+          <figcaption class="w3-text-grey w3-margin-top">
+            <em>State FSM</em>
+          </figcaption>
+        </figure>
+        
+
+      </div>
+        
+        <button onclick="myFunction('Demo1')" class="w3-button w3-block w3-left-align w3-light-green">
+        <b>Initialization</b>
+      </button>
+      <div id="Demo1" class="w3-container w3-hide w3-khaki">
+        <p style="text-align: justify;">
+          When the game begins the pipe state is reset using <code>init_all_pipes</code> and <code>init_pipe_pair(pipe_index)</code>.
+          The former does a full reset of the pipe array at the game's start, calling the latter for each pipe pair, spacing them across the screen
+          evenly. 
+        </p>
+        <p style="text-align: justify;">
+          Within <code>init_pipe_pair</code>, the verical position of the pipe gap is generated using a bounded random number based on <code>SCREEN_HEIGHT</code>
+          and <code>PIPE_GAP_HEIGHT</code>. The gap center, <code>pipe_gap_y[i]</code>, is chosen such that the whole gap is always within screen limits.
+        </p>
+      </div>
+
+
+      <button onclick="myFunction('Demo3')" class="w3-button w3-block w3-left-align w3-green w3-text-black">
+        <b>Nearest Pipe Selection & Collision Detection</b>
+      </button>
+      <div id="Demo3" class="w3-container w3-hide w3-khaki">
+        <p style="text-align: justify;">
+          To reduce the computational cost of collision detection, the code does not test the bird against every pipe on the screen. 
+          Instead, it scans the <code>pipe_x[]</code> array to find the nearest pipe pair in front of the bird, whose right edge is at or 
+          beyond the bird’s fixed x-position and whose horizontal distance from the bird is minimal. Since the bird can only interact with 
+          one pipe pair at a time, this optimization significantly reduces unnecessary comparisons.
+        </p>
+        <p style="text-align: justify;">
+          Collision detection is performed using axis-aligned bounding box overlap tests between the bird and the nearest pipe pair. 
+          For the bird, top, bottom, left, and right boundaries are computed from <code>bird_y</code>, <code>bird_x</code>, and the bird’s width and height constants.
+          For the pipe, the left and right boundaries are derived from <code>pipe_x[i]</code> and <code>PIPE_WIDTH</code>, while the top and bottom of the gap are 
+          computed from <code>pipe_gap_y[i]</code> and <code>PIPE_GAP_HEIGHT</code>.
+        </p>
+        <p style="text-align: justify;">
+          A collision is detected when horizontal overlap exists between the bird and the pipe and the bird’s vertical bounds lie outside the gap region. Separate 
+          checks are performed to detect collisions with the top and bottom of the screen. If any collision condition is met, the game transitions immediately to the end state.
+        </p>
+      </div>
+
+      <button onclick="myFunction('Demo4')" class="w3-button w3-block w3-left-align w3-lime">
+        <b>Scoring Logic</b>
+      </button>
+      <div id="Demo4" class="w3-container w3-hide w3-khaki">
+        <p style="text-align: justify;">
+          Score updates are integrated in the pipe update logic. Scoring is done inside the update() 
+          function during each animation frame, after pipe positions have been updated but before rendering occurs. For each pipe pair, the code computes the right edge 
+          of the pipe using <code>pipe_right_px</code> = <code>fix2int15(pipet_x[i])</code> + <code>PIPE_WIDTH</code> and compares it to the bird’s horizontal position. 
+          If the bird has passed this edge and the pipe has not already been counted (<code>pipe_scored[i] == false</code>), the score is incremented and the flag is set to prevent double scoring.
+        </p>
+        <p style="text-align: justify;">
+          After incrementing the score, the code checks whether the new score exceeds the current <code>high_score</code>, updating it if necessary. A point sound effect is then triggered via <code>sfx_play(SFX_POINT)</code>, 
+          providing immediate audio feedback tied directly to the scoring event. Upon detecting a hit, the current score is copied into <code>last_score_on_death</code>, the high score is updated if needed, and the active score counter 
+          is reset to zero. This separation allows the end screen to display the final score from the previous run without interfering with the next game cycle. Screen rendering is driven entirely by the current value of the global <code>state</code> 
+          variable, and after clearing the frame buffer, the code selects which screen to draw based on this state.
+        </p>
+      </div>
+          
+        </p>
+      </div>
+
+
+      <div id="protothread_play_mode" class="city" style="display:none">
+        <h3><code>protothread_play_mode</code>: Input Handling & Mode FSM</h3>
+        <p><strong>Purpose</strong></p>
+        <p style="text-align: justify;">
+          These modes are navigated via a mode-switching button wired to GPIO 15, which sets 
+          <code>mode_state</code> to one of three modes with the following processes:
+        </p>
+
+        <button onclick="myFunction('Demo5')" class="w3-button w3-block w3-left-align w3-lime">
+          <b>Button Mode</b>
+        </button>
+        <div id="Demo5" class="w3-container w3-hide w3-khaki">
+          <ul>
+            <li>Poll digital arcade button, wired to GPIO 13, every five increments of
+                <code>arcade_counter</code>, establishing ~5ms intervals for debouncing.</li>
+            <li>Debounce the button input by comparing <code>arcade_prev</code> and
+                <code>arcade_now</code> If the previous and current arcade button press values do not match we know a press is complete.</li>
+            <li>Trigger a flap by setting the bird's y-velocity to -7 and trigger DMA
+                to send the flap sound to the DAC.</li>
+          </ul>
+        </div>
+
+        <button onclick="myFunction('Demo6')" class="w3-button w3-block w3-left-align w3-light-green">
+          <b>Microphone Mode</b>
+        </button>
+        <div id="Demo6" class="w3-container w3-hide w3-yellow">
+          <ul>
+            <li>Read 12-bit ADC samples from the microphone on GPIO 26.</li>
+            <li>Maintain a rolling average to establish a baseline noise level.</li>
+            <li>If the difference exceeds <code>MIC_THRESHOLD</code> (3500), trigger a flap.</li>
+          </ul>
+        </div>
+
+        <button onclick="myFunction('Demo7')" class="w3-button w3-block w3-left-align w3-green w3-text-black">
+          <b>IMU Mode</b>
+        </button>
+        <div id="Demo7" class="w3-container w3-hide w3-amber">
+          <ul>
+            <li>The program processes data from the inertial measurement unit every twenty increments of <code>imu_counter</code>, for ~20 ms polling intervals.</li>
+            <li>We use the y and z accelerations to approximate the horizonal acceleration. We store the value as a baseline, and subsequently calculate deviations from this value. </li>
+            <li>If this difference, <code>delta_tilt</code>, surpasses <code>TILT_UP_THRESHOLD</code>, a flap and flap sound effect are triggered.</li>
+          </ul>
+        </div>
+
+        
+
+        
+      </div>
+
+      <style>
+        .city {
+          padding: 16px;
+          background-color: #d9f1ff;  /* light blue */
+          border: 1px solid #99ccee;
+        }
+      </style>
+      <style>
+        .tab-bar {
+          display: flex;           /* Use flex layout */
+        }
+
+        .tab-bar .w3-button {
+          flex: 1;                 /* Each button takes equal width */
+          text-align: center;      /* Center the text */
+        }
+      </style>
+
+      <script>
+        function openCity(cityName) {
+          var i;
+          var x = document.getElementsByClassName("city");
+          for (i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+          }
+          document.getElementById(cityName).style.display = "block";
+        }
+      </script>
+
+      <script>
+      // Toggle dropdown function
+      function myFunction(id) {
+        var x = document.getElementById(id);
+        if (x.className.indexOf("w3-show") === -1) {
+          x.className += " w3-show";
+        } else {
+          x.className = x.className.replace(" w3-show", "");
+        }
+      }
+      </script>
+
+      <script>
+      function toggleMobileMenu() {
+        var x = document.getElementById("mobileMenu");
+        if (x.className.indexOf("w3-show") === -1) {
+          x.className += " w3-show";
+        } else {
+          x.className = x.className.replace(" w3-show", "");
+        }
+      }
+      </script>
+
+      <div class="w3-container w3-padding-32" id="DisplayingandRenderingGameAssets" style = "text-align: justify">
+      <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Displaying and Rendering Game Assets</h3>
+      <strong>Sprites</strong>
+      <p style="text-align: justify;">
+        Visual game assets are stored in <code>assets.h</code> as statically defined lookup tables optimized for fast decoding on the RP2040. 
+        Each sprite is represented as a fixed-size tile composed of 4-bit palette indices, allowing every pixel to reference one of 16 
+        predefined VGA colors. This compact representation significantly reduces memory usage while remaining compatible with the VGA framebuffer
+        format and minimizes the amount of data that must be processed each frame.
+      </p>
+      <p style="text-align: justify;">
+        The sprite artwork was created using a combination of a hand-drawn pipe design and an online-sourced PNG image for the bird. 
+        ChatGPT was used to convert these visual assets into their corresponding C representations by encoding the pixel data and transparency masks into lookup 
+        tables, which we stored in <code>assets.h</code>. The bird and pipes are encoded as two 64-bit values per row, representing the left and right 16-pixel halves of a 32-pixel-wide tile. 
+        A hexadecimal digit corresponds to one pixel’s color index. Transparency is handled using a parallel bitmask array, where each bit 
+        corresponds to a pixel position in the sprite. A mask bit value of 1 indicates transparency (background visible), while 0 indicates an opaque pixel that should be drawn. 
+        During rendering, the program iterates over each pixel in the sprite, decodes the color data, and
+        skips drawing any pixels marked as transparent. This separation of color data and transparency allows the rendering code in
+        <code>flappy_bird.c</code> to avoid unnecessary writes to the VGA buffer, improving performance.
+      </p>
+      <p style="text-align: justify;">
+        One of the main challenges encountered during development was drawing sprites fast enough to avoid visual artifacts such as lag,
+        flickering, or partial updates on the screen. This was especially noticeable for the pipes, which are tall, move continuously, and
+        require many rows to be redrawn every frame. Drawing every pixel individually for large sprites proved too slow and caused visible
+        glitches under certain conditions.
+      </p>
+      
+      <p style="text-align: justify;">
+        To address this, pipes are constructed dynamically using modular tile components rather than stored as full-height sprites. The pipe
+        body and pipe cap are defined as independent 32×16 tiles (<code>PIPE_BODY_TILE</code> and <code>PIPE_CAP_TILE</code>) with fully opaque
+        masks. During gameplay, the pipe’s vertical length is assembled by repeatedly drawing the body tile, followed by a cap tile at the end.
+        The code calculates how many body segments are required based on the pipe gap position and stacks these segments vertically by
+        repeatedly invoking the same drawing logic with updated screen coordinates.
+      </p>
+      
+      <p style="text-align: justify;">
+        An additional rendering issue appeared at the top of the screen, where the top pipes would occasionally glitch or appear partially
+        drawn. This occurred because the VGA framebuffer was being updated while the display was actively scanning those rows. To resolve
+        this, the rendering process was restructured into two passes. First, the top 48 rows of all top pipes are drawn as early as possible
+        in the frame. Once these critical rows are updated, the remainder of each pipe is drawn afterward. By ensuring that the upper portion
+        of the pipes is fully rendered before the display reaches that region, the visible glitches were eliminated.
+      </p>
+      
+      <p style="text-align: justify;">
+        With this two-pass drawing approach and the use of row-based memory copies instead of per-pixel drawing for pipe bodies, the final
+        implementation renders smoothly without noticeable flicker or tearing. These optimizations allow multiple moving pipe pairs and a
+        rotating bird sprite to be drawn each frame while maintaining a stable frame rate and visually clean output.
+      </p>
+
+      <figure class="w3-center w3-padding-16">
+        <img src="flappybirdpipe.png" alt="Pipe Sprite, Drawn on Pixilart" style="max-width: 80%; height: auto;">
+        <figcaption class="w3-text-grey w3-margin-top">
+          <em>Pipe Sprite, Drawn on Pixilart</em>
+        </figcaption>
+      </figure>
+      <p style="text-align: justify;">
+        The bird sprite is defined in <code>assets.h</code> as a set of statically initialized arrays that store the pixel color data and
+        transparency mask for each row of the sprite. The sprite is represented as a 32×16 image, with each row split into two 64-bit values
+        corresponding to the left and right halves of the sprite. During gameplay, the rendering code in <code>flappy_bird.c</code> reads
+        these arrays, decodes the color indices, and draws the visible pixels to the VGA framebuffer. A separate mask array is used to skip
+        transparent pixels, allowing the bird to be drawn cleanly over the background and pipes. This approach keeps sprite data separate
+        from game logic while allowing efficient, frame-by-frame rendering of the bird on screen.
+      </p>
+      
+      <figure class="w3-center w3-padding-16">
+        <img src="flappybird.png" alt="Flappy Bird Sprite, Drawn on Pixilart" style="max-width: 25%; height: auto;">
+        <figcaption class="w3-text-grey w3-margin-top">
+          <em>Flappy Bird Sprite, Downloaded from ClipArtMax</em>
+        </figcaption>
+      </figure>
+      <strong>Sound Effects</strong>
+        <p style="text-align: justify;">
+        Audio assets such as scoring, flapping, and collision sounds are stored separately in files like 
+        <code>hit_sound.c</code>, <code>point_sound.c</code>, and <code>flap_sound.c</code>, each containing raw waveform samples. 
+        An AI-generated Python script from ChatGPT was used to convert standard audio files into a format compatible with the digital-to-analog converter. 
+        The script takes a 16-bit PCM .wav file as input and produces a C header file containing preformatted audio samples ready for playback 
+        on the RP2040. When a sound effect is triggered like when the bird passes through a pipe gap or collides with a pipe, the game logic in 
+        <code>flappy_bird.c</code> initiates a DMA transfer that streams the sound data into the DAC through the SPI interface.
+        </p>
+
+        <p style="text-align: justify;">
+        Using DMA for sound effects offloads audio playback from the CPU, allowing graphics rendering and game physics to remain 
+        responsive even when multiple sounds are triggered during gameplay. Sound effects are also prioritized: important cues 
+        such as scoring and collisions can interrupt lower-priority sounds like flapping, ensuring that critical feedback is 
+        always heard by the player.
+        </p>
+
+        <strong>Background Music</strong>
+        <p style="text-align: justify;">
+        In addition to sound effects, background music plays continuously during gameplay. The music is generated in real time 
+        using a timer interrupt and a simple wavetable-based synthesis approach. Notes change at fixed time intervals to form a 
+        looping melody that runs independently of the main game loop.
+        </p>
+
+        <p style="text-align: justify;">
+        The background music is intentionally quieter than the sound effects so that important gameplay cues remain clear. 
+        Because music playback is handled by interrupts, it does not block rendering or input handling, resulting in smooth 
+        visuals and consistent audio throughout the game.
+        </p>
+
+        <strong>Use of AI</strong>
+        <p style="text-align: justify;">
+          We also used AI tools (ChatGPT) as a development assistant to speed up asset generation and reduce repetitive work. 
+          First, ChatGPT helped us convert hand-drawn and online-sourced sprite images (the bird and pipes) into the C lookup tables 
+          and transparency masks stored in <code>assets.h</code>, which made it much easier to iterate on pixel art without manually 
+          encoding hundreds of hex values by hand. In addition, we used ChatGPT to generate a Python script that converts standard 
+          16-bit PCM <code>.wav</code> files into DAC-usable C arrays and header files for our sound effects, allowing us to quickly
+           try different recordings and keep the audio pipeline consistent with our SPI/DAC format. Importantly, AI was used for 
+           “tooling” and automation rather than core game logic: we still designed and implemented the VGA rendering pipeline, 
+           physics, collision/scoring logic, and concurrency across both RP2040 cores ourselves, and we validated the AI-generated 
+           outputs by testing visual correctness on the VGA display and confirming that audio playback sounded correct and did 
+           not interrupt gameplay.
+        </p>
+        
+
+
+  </div>
+  <!-- End page content -->
+
+</div>
+<!-- END MAIN -->
+
+<!-- Footer -->
+<footer class="w3-center w3-black w3-padding-16">
+  <p>Helen Ni, Selena Zhang, Matthew Amorocho</p>
+</footer>
+
+</body>
+</html>

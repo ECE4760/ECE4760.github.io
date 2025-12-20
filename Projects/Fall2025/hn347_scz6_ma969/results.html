@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Results</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+/* Mobile menu */
+.mobile-menu { display: none !important; }
+@media (max-width: 600px) {
+  .mobile-menu { display: block !important; }
+  .header-title { font-size: 24px !important; }
+}
+@media (max-width: 992px) and (min-width: 601px) {
+  .header-title { font-size: 36px !important; }
+}
+
+/* Image Gallery */
+.gallery-img {
+  width: 100%;
+  height: 350px;
+  object-fit: cover;
+}
+.gallery-item {
+  margin-bottom: 16px;
+}
+.setup-container {
+  display: inline-block;
+  max-width: 450px;
+}
+.setup-img {
+  width: 100%;
+}
+
+/* Mobile: Stack images vertically */
+@media (max-width: 600px) {
+  .gallery-row .w3-third {
+    width: 100% !important;
+  }
+  .gallery-img {
+    height: auto;
+  }
+  .setup-container {
+    max-width: 100%;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar (sit on top) -->
+<div class="w3-top">
+  <div class="w3-bar w3-white w3-wide w3-padding w3-card">
+    <a href="index.html" class="w3-bar-item w3-button">
+      <img src="flappybird.png" alt="Flappy Bird" style="height: 36px; vertical-align: middle;">
+    </a>
+    <!-- Mobile menu button -->
+    <a href="javascript:void(0)" class="w3-bar-item w3-button w3-right mobile-menu" onclick="toggleMobileMenu()">
+      <i class="fa fa-bars"></i>
+    </a>
+    <!-- Float links to the right. Hide them on small screens -->
+    <div class="w3-right w3-hide-small">
+      <a href="high_level_design.html" class="w3-bar-item w3-button">High Level Design</a>
+      <a href="hardware.html" class="w3-bar-item w3-button">Hardware Design</a>
+      <a href="software.html" class="w3-bar-item w3-button">Software Design</a>
+      <a href="results.html" class="w3-bar-item w3-button">Results</a>
+      <a href="conclusions.html" class="w3-bar-item w3-button">Conclusions</a>
+      <a href="appendix.html" class="w3-bar-item w3-button">Appendix</a>
+    </div>
+  </div>
+  <!-- Mobile dropdown menu -->
+  <div id="mobileMenu" class="w3-bar-block w3-white w3-hide w3-card">
+    <a href="high_level_design.html" class="w3-bar-item w3-button">High Level Design</a>
+    <a href="hardware.html" class="w3-bar-item w3-button">Hardware Design</a>
+    <a href="software.html" class="w3-bar-item w3-button">Software Design</a>
+    <a href="results.html" class="w3-bar-item w3-button">Results</a>
+    <a href="conclusions.html" class="w3-bar-item w3-button">Conclusions</a>
+    <a href="appendix.html" class="w3-bar-item w3-button">Appendix</a>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="w3-display-container w3-content w3-wide" style="max-width:1500px;" id="home">
+  <img class="w3-image" src="flappybird_bg.png" alt="Background" width="1500" height="800">
+  <div class="w3-display-middle w3-margin-top w3-center">
+    <h1 class="w3-xxlarge w3-text-white header-title" style="font-size: 72px;"><span class="w3-padding w3-black w3-opacity-min"><b>Results</b></span></h1>
+  </div>
+</header>
+
+<!-- Main content -->
+<div class="w3-main">
+
+  <!-- Page content -->
+  <div class="w3-content w3-padding" style="max-width:1564px">
+
+    <!-- Results Section -->
+    <div class="w3-container w3-padding-32" id="Results">
+      <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Results</h3>
+      <p>
+        The results of our project are best evaluated through direct gameplay on the RP2040 and VGA setup.
+        Many of the most important performance features like responsiveness, smoothness, and usability are inherently
+        qualitative and are immediately apparent when playing the game. Overall, the game behaves as intended:
+        player inputs feel responsive, animation remains stable at a fixed frame rate, collisions and scoring
+        are consistent, and audio feedback is immediate and correct.
+      </p>
+
+      <p>
+        In terms of execution speed and interactivity, the game maintains a fixed frame period 30 FPS. 
+        During game play, weobserved no noticeable hesitation or stalling.
+        Pipe movements, bird physics, collision detection, and scoring all occur smoothly, even while background audio
+        playback and sound effects playback are happening concurrently.
+      </p>
+
+      <p>
+        Concurrency is handled explicitly in the design. Animations and game physics execute on core&nbsp;0,
+        while gameplay input (arcade button, microphone ADC sampling, and IMU tilt detection) runs on core&nbsp;1.
+        This separation prevents sensor reads or button polling from blocking animation. Audio playback is
+        handled separately from the main game code. Background music is generated at a fixed 50&nbsp;kHz
+        sample rate using a timer interrupt, and sound effects are sent to the DAC via DMA. As a result,
+        simultaneous events such as flapping, scoring, and collisions do not interfere with visual performance.
+      </p>
+
+      <p>
+        We checked timing and accuracy by watching and listening to the game while it was running. The VGA display 
+        was stable, with no visible screen tearing or syncing issues. The bird’s motion behaved consistently from 
+        frame to frame, and the background music played at steady, correct pitches. Sound effects also played at the
+         right times and sounded consistent each time they were triggered
+      </p>
+
+      <p>
+        From a usability perspective, the game is intuitive for both developers and new users. The start screen
+        clearly displays the selected control mode and allows users to cycle between button, microphone, and IMU
+        inputs without restarting the system. The game over screen shows the final score, high score, and a message to click the button to play again. 
+        The visual feedback such as the rotating bird sprite, scrolling pipes,
+        and large score display makes gameplay easy to understand. Informal testing by teammates and peers showed
+        that all three control modes were playable. 
+      </p>
+
+      <!-- Image Gallery -->
+      <!-- Row of 3 images -->
+      <div class="w3-row-padding w3-padding-16 gallery-row">
+        <div class="w3-third gallery-item">
+          <img src="start_screen.jpg" alt="Start Screen" class="gallery-img">
+          <p class="w3-center"><em>Start Screen</em></p>
+        </div>
+        <div class="w3-third gallery-item">
+          <img src="gameplay_screen.jpg" alt="Gameplay" class="gallery-img">
+          <p class="w3-center"><em>Gameplay</em></p>
+        </div>
+        <div class="w3-third gallery-item">
+          <img src="game_over_screen.jpg" alt="Game Over" class="gallery-img">
+          <p class="w3-center"><em>Game Over</em></p>
+        </div>
+      </div>
+      <!-- Centered game setup image -->
+      <div class="w3-row-padding w3-center">
+        <div class="setup-container">
+          <img src="game_setup.jpg" alt="Game Setup" class="setup-img">
+          <p class="w3-center">Game Setup</p>
+        </div>
+      </div>
+
+  </div>
+  <!-- End page content -->
+
+</div>
+<!-- END MAIN -->
+
+<!-- Footer -->
+<footer class="w3-center w3-black w3-padding-16">
+  <p>Helen Ni, Selena Zhang, Matthew Amorocho</p>
+</footer>
+
+<script>
+function toggleMobileMenu() {
+  var x = document.getElementById("mobileMenu");
+  if (x.className.indexOf("w3-show") === -1) {
+    x.className += " w3-show";
+  } else {
+    x.className = x.className.replace(" w3-show", "");
+  }
+}
+</script>
+
+</body>
+</html>

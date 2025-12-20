@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Demo Webpage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #606060;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header, footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        main {
+            margin: 20px 0;
+        }
+
+        h1 {
+            color: white;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Ultrasonic 2D Object Mapping and Predictive Tracking System</h1>
+        <h4>By Tyler Tisinger (tt549) and Reilly Potter (rdp78) </h4>
+    </header>
+
+    <main class="container">
+        <h2>Project Introduction</h2>
+        <p>We implemented live object tracking with four ultrasonic sensors fired in sequence
+             to triangulate an object’s position. That positional data was then fed into predictive algorithms 
+             designed to estimate the target’s future location. Without prediction, the system would 
+             constantly lag behind the moving object, so this step was critical for maintaining alignment. 
+             The original plan was to control a laser mounted on a two-axis motor platform. The predicted position 
+             would be compared to the current mount orientation, and the resulting error would be translated into 
+             PWM values to drive an H-bridge for multidirectional motor control. Although the mount was not fabricated 
+             as explained later, all supporting software was developed. In addition to the base prediction algorithm, 
+             a second algorithm was introduced for performance comparison. We incorporated multiple VGA visualizations 
+             to display system state and algorithm behavior, as well as a pattern-mode generator that fed synthetic 
+             circular motion data for benchmarking accuracy and speed. Using serial input, a user can switch between 
+             VGA displays, select algorithm parameters, and change operating modes. Ultimately, the final system 
+             showcases 2D ultrasonic mapping and predictive-tracking algorithms and serves as a functional 
+             program that is ready to integrate with a physical laser-tracking mount in future work.</p>
+        
+        <h2>High Level Design</h2>
+        <section>
+            <h3>Inspiration</h3>
+            <p>This project was loosely inspired by Tyler’s internship experience at the High Energy Laser System Test Facility at White Sands Missile Range. At the range, they are doing cutting-edge testing with laser missile defense systems, and it seemed like a fun idea to replicate an undergraduate-level version of the work they do at the missile range and use the technology available in a lab to achieve the same goal of laser object tracking.</p>
+        </section>
+
+        <section>
+            <h3>Logical Structure</h3>
+            <p>We sequentially triggered each ultrasonic sensor every 25 ms, producing a full four-sensor positional 
+            update every 100 ms. Each sensor’s echo time was captured through its respective GPIO interrupt, and 
+            those four measurements were combined to estimate the object’s center position. Two filtering approaches 
+            were implemented to clean and predict positions: a combined averaging–derivative–EMA method and a Kalman filter.</p>
+            <p>The predicted position was intended to drive a two-axis laser gimbal. Infrared LEDs would determine the current orientation in theta and pitch, which would then be compared to the predicted angles. The positional error would be converted into weighted PWM values for an H-bridge motor driver, enabling bidirectional control of both axes. Although the gimbal hardware was never fabricated, the full prediction and control logic was completed and validated virtually. VGA visualizations and serial user controls were added to observe and compare motion, filter behavior, and tuning parameters in real time. The user interface enables full customization of filter and PWM weighting parameters, control over what data is displayed on the VGA output, and the option to generate synthetic ultrasonic positions for benchmarking and comparison.</p>
+            <p>The full logical structure is showcased in the diagram below</p>
+            <img src="images/high_level_software_diagram.png" alt="High Level Software Hierarchy Diagram">
+        </section>
+
+        <section>
+            <h3>Hardware and Software Tradeoffs</h3>
+            <p>Working with ultrasonic sensors highlighted the challenges of real-world noise, inconsistent reflections, and occasional missed readings. These limitations required us to create strong software filtering and prediction algorithms to stabilize measurements and reduce jitter. The biggest hardware obstacle was printing the laser gimbal. We had created the 3D CAD model and submitted it to the Cornell Rapid Prototyping Lab for printing 5 days out from the final project date, and we never received it. Due to this hardware hiccup, we pivoted to a more software-based final project to emphasize and enhance the software components of our project as opposed to tuning the weighting and the prediction algorithms to make the 3D laser tracking gimbal as precise and quick as possible. The intended 3D-printed gimbal can be seen below:</p>
+	    <img src="images/gimbal_3d.png" alt="Gimbal 3D Model">
+	    <img src="images/gimbal_front.png" alt="Front View of Gimbal">
+            <p>Thus, with a stronger emphasis on software, the project became a platform for demonstrating motion mapping, prediction algorithms, visualization, and motor control logic, all of which were designed so that hardware could be added later with minimal rework. In the end, the system showcased the strengths of algorithmic compensation for noisy sensors and proved that the tracking pipeline could operate effectively even without the physical gimbal, while remaining fully compatible for future integration.</p>
+        
+            <p>The system is composed of several key components:</p>
+            <ul>
+                <li>Ultrasonic sensors for object detection and triangulation</li>
+                <li>Predictive algorithms for tracking and future position estimation</li>
+                <li>VGA visualization tools for system monitoring</li>
+                <li>Pattern-mode generator for benchmarking</li>
+                <li>Serial interface for user interaction and control</li>
+            </ul>
+        </section>
+
+        <h2>Program and Hardware</h2>
+
+        <section>
+            <h3>Obtaining Positional Data</h3>
+            <p>To get positional data from the object in a 2D plane, HC-SR04 ultrasonic sensors were used as pictured below. This particular sensor was chosen as they were already available in the lab and are fairly cheap.</p>
+            <img src="images/hcsr04_image.png" alt="HC-SR04 Ultrasonic Sensor">
+            <p>Ultrasonic distance sensing works by transmitting high-frequency sound waves and measuring the time it takes for those waves to reflect off an object and return to the sensor. The sensing module contains two piezoelectric transducers. One acts as a speaker and the other as a microphone (T and R, respectively, in the photo). When triggered, the transmitting transducer rapidly oscillates at roughly 40 kHz, which produces an ultrasonic burst that travels outward through the air. Because this frequency is well above the range of human hearing, it doesn’t make a noticeable sound but still propagates efficiently enough for short-range measurement (<4m). We decided that to maximize accuracy but also enhance complexity, we would aim for a 2D plane of coverage between 0.75 and 1 square meter. For the final project demo due to space constraints, it ended up being 0.87 square meters which was within our goal range but slightly below our original goal of 1 square meter.</p>
+            <img src="images/ultrasonic_wave_showcase.png" alt="Ultrasonic Sensor Operation Diagram">
+            <p>As the sound wave travels, it eventually encounters a surface, and part of the energy is reflected back toward the sensor. The receiving transducer detects this returning echo by converting the mechanical vibration of the reflected wave back into an electrical signal. The time interval between transmitting the burst and receiving the echo corresponds to the round-trip travel time of the sound wave. Since the speed of sound in air is easily approximated under typical conditions, it is easy to calculate the distance as described later below.</p>
+            <p>This method is useful because it does not require physical contact with the object, and it is useful in any lighting conditions and can be used indoors, unlike optical or GPS sensing. However, as we discovered, accuracy can be greatly influenced by object material and surface orientation, which affect reflection quality and the speed of sound. At a system level, this means precise timing and noise handling are essential, especially when performing real-time measurements or tracking moving objects. We initially wanted to use RFID tracking, but that proved to exceed the $125 budget for the project, as it is vastly more expensive than ultrasonic sensors.</p>
+            <p>Each ultrasonic sensor was triggered sequentially every 25 ms, producing a full positional update from all four sensors every 100 ms. This was done by setting the respective GPIO trigger pin high for 10μs before setting it low. This sends a trigger pulse to the ultrasonic sensor. Immediately after transmission, the sensor raises the echo pin to a high state and keeps it high until the reflected pulse is received. The duration of this high period on the echo pin is directly proportional to the round-trip time of the sound wave. By measuring this pulse width and applying the speed of sound conversion, the distance to the object can be calculated. Using ultrasonic sensors made the positional readings fairly simple since they required only a single trigger pulse and a precise measurement of the echo pulse length to obtain a distance reading. </p>
+            <p>Since we used four ultrasonic sensors, the interface required a total of eight GPIO pins; one trigger and one echo per sensor. In principle, this could have been reduced to as few as five pins by sharing a single echo pin among all sensors. Because only the sensor that receives a trigger pulse will drive its echo line high, a shared echo pin would always correspond to the currently triggered sensor, making dedicated echo lines functionally redundant. However, given that we had sufficient GPIO resources available, we kept our original design with assigning a unique trigger and echo pin to each sensor. </p>
+            <p>The echo pins of the sensors were configured with GPIO interrupts on both rising and falling edges. When the rising edge was detected, the interrupt service routine (ISR) recorded the start time of the pulse using a microsecond-resolution timer. When the falling edge was detected, the ISR recorded the end time and calculated the pulse width as the difference between the two timestamps. This pulse width was then converted into distance using a floating-point multiplication with the speed of sound. We chose to use GPIO interrupts to ensure accurate timing because they would reflect the hardware measurements the best. Since the timings were based on the high/low state of the echo pin on the ultrasonic sensor, the GPIO interrupt has the lowest latency and allowed us to get the most accurate real-time measurements. An additional hardware consideration with our software was staggering the trigger pulses to ensure that only one sensor responded at a time. This was to avoid cross-talk between sensors and also would allow a single ISR to efficiently handle all four sensors.</p>
+            <p>The HC-SR04 ultrasonic sensors we used required a 5 V power supply for operation, but the RP2040 GPIO pins operate at 3.3 V and are not 5 V tolerant. This presented a hardware consideration, as directly connecting the sensor’s echo output to a GPIO pin could potentially damage the microcontroller. To safely interface the sensors, we implemented a simple voltage divider using resistors on the echo lines, which scaled the 5 V output down to a safe 3.3 V level compatible with the RP2040. To calculate the appropriate resistor values for the voltage divider, we used the following equation:</p>
+            
+            <div style="text-align: center;">
+                <img src="images/vout_equation.png" alt="Vout equation" style="width: 40%;">
+            </div>
+
+            <p>Where R1 is the resistor connected between the echo output and the GPIO input, and R2 is the resistor between the GPIO input and ground. We solved the above equation using our voltage values and found the following ratio:</p>
+            <div style="text-align: center;">
+                <img src="images/resistor_ratio_equation.png" style="width: 30%;">
+            </div>
+            <p>Using this ratio, we chose to set R1 to 1kΩ and R2 to 2kΩ. This gave us the following hardware setup for the HC-SR04 ultrasonic sensors:</p>
+            <div style="text-align: center;">
+                <img src="images/hcsr04_pinout.png" style="width: 100%;">
+            </div>
+        
+        </section>
+
+        <section>
+            <h3>Distance Calculation Optimizations</h3>
+            <p>During the software development process, we considered several optimization strategies to minimize the execution time of the distance calculation code inside the ISR. Since this interrupt ran on Core 0, any unnecessary delay directly impacted the threads responsible for generating trigger pulses and handling serial communication. Therefore, ensuring the ISR executed as quickly as possible was critical to keeping the trigger data coming in at roughly 10Hz for best performance.</p>
+
+            <p>We tested multiple arithmetic approaches to compute the distance from the echo pulse width:</p>
+            <ul>
+                <li style="margin-bottom: 10px;"><b>Floating point:</b> From the Digital Galton Board lab, we know floating-point operations are the slowest form of arithmetic on the RP2040. To mitigate this, we precomputed the round-trip speed-of-sound constant (0.343/2.0) and stored it as a variable so that the division only occurred once. This reduced some overhead, but floating-point multiplication is still slow compared to integer math. That said, this method produces the most accurate results since it directly represents the physical speed of sound without approximation.</li>
+                <li style="margin-bottom: 10px;"><b>Integer division and multiplication:</b> Switching to integer arithmetic removed the need for float conversion and reduced execution time. We determined that the ratio 100/5800 closely approximates (0.343/2.0). Based on our previous Digital Galton Board work, we know that integer multiplication is dramatically faster than floating-point multiplication on the RP2040. Although integer division is slower than integer multiplication, it is still faster overall than floating-point operations. This method maintains high accuracy and is more computationally efficient than floating point, making it a strong compromise between speed and precision.</li>
+                <li style="margin-bottom: 10px;"><b>Bit shifting:</b> Bit shifting is the fastest arithmetic approach available in C, as it compiles to extremely quick operations on the RP2040. However, this method has the lowest precision due to large amounts of rounding, resulting in significant approximation error.</li>
+            </ul>
+            <div style="text-align: center;">
+                <img src="images/summary_table_for_distance_calc_optimizations.png">
+            </div>
+
+            <p>Error percentage calculated in the table above using the following formula:</p>
+            <div style="text-align: center; ">
+                <img src="images/error_percent_equation.png" style="width: 50%;">
+            </div>
+            <p>Since timing was only a secondary concern and achieving maximum precision was critical, minimizing error became the primary consideration. Ultimately, we chose to use floating-point arithmetic, as it provided the most accurate results while still allowing the ultrasonic sensors to maintain a high sample rate. This was an example of a compromise between speed and accuracy with our software.</p>
+        </section>
+
+        <section>
+            <h3>Averaging-Derivative-EMA Filter</h3>
+            <p>Now that we have covered how we were getting the positional data from the ultrasonic sensor, let's analyze how we filtered the positional data. The first filter we implemented was an averaging–derivative–EMA. All the following steps will be explained for the x-center coordinate, but the following steps were also applied for the y-center coordinates. The first step in this filter was to maintain an array of the three most recent x-coordinate measurements. To do this, we implemented a sliding array function that placed the newest position at the end of the array and shifted all the previously stored values down. Thus, the oldest position would be shifted out of the array and removed. After updating the positional array with the 3 newest positional values, we took the average of the last 3 samples. This averaging step helped us smooth out high-frequency noise and prevented a single outlier measurement from disproportionately affecting the estimated position. We chose a window size of three because it would still keep the sensor highly responsive while also reducing the impact of noise.</p>
+            <p>The next step was to do velocity estimation. To compute velocity, we used the three most recent position values and applied the more accurate three-point forward derivative approximation rather than a simple two-point derivative. The three-point derivate provides a more stable velocity estimate, especially when measurements are susceptible to noise. The formula is shown below:</p>
+            <div style="text-align: center; ">
+                <img src="images/velocity_ema_equation.png" style="width: 40%;">
+            </div>
+            <p>Where the array indices are from the positional array above, remembering that the most recent values are the highest indices in the array. Because our sampling rate was relatively fixed at dt=100ms, the derivative approximation allowed us to calculate the object’s instantaneous speed without needing additional sensors. </p>
+            <p>Using the current averaged position and the estimated velocity, we predicted the object’s location one time step (100ms) into the future. This forward extrapolation is very simple and works well for objects that are moving consistently, but by only storing the 3 most recent positions, it would still be responsive to rapid changes in movement. This was further tailored by adding an EMA (Exponential Moving Average) calculation at the end. This EMA used the following formula:</p>
+            <div style="text-align: center; ">
+                <img src="images/ema_equation.png" style="width: 100%;">
+            </div>
+            <p>The old and new EMA weights were user-configurable through the serial interface, allowing real-time tuning of how much trust was placed in the most recent measurement versus historical data. Conceptually, the EMA provides a fixed weighting scheme that prioritizes recent samples while still retaining residual influence from older readings. When the old weight is large (e.g., 0.8–0.9), the filter applies strong smoothing, which significantly reduces random noise but slows the reaction to rapid changes in object position. Conversely, when the new-sample weight dominates (e.g., 0.5 or above), the filter reacts quickly to movement at the cost of exposing more jitter in the output. We ultimately selected 0.8 for the old weight and 0.2 for the new weight as a default configuration, which would give us a fairly balanced compromise. In this configuration, it suppresses the ultrasonic jitter we observed during testing while still maintaining sufficient responsiveness to track moderate object motion without lagging.</p>
+        </section>
+
+        <section>
+            <h3>Kalman Filter</h3>
+            <p>We also decided to implement a Kalman filter to compare accuracy and speed to the Averaging–Derivative–EMA filter. We chose to use a standard Kalman filter instead of an Extended Kalman Filter (EKF) or other variants that were demonstrated on the 4760 webpage because our system dynamics were linear and could be modeled with a straightforward state-space representation. The ultrasonic distance measurement process is fairly linear since distance is directly proportional to the measured pulse width, and the system noise is approximately Gaussian for ultrasonic sensors, as there are a lot of small disturbances that contribute to the measurement error. We noticed this because when we placed objects at certain distances or orientations that caused the sensors to read erroneously, the values output were never constant. They fluctuated on the order of tens of cm apart for an object 15cm away. This told us that the errors could be approximated as a Gaussian since it was likely that if we stored all the error values over multiple minutes, it would likely approach a Gaussian distribution.</p>
+            <p>For creating the standard Kalman filter, we used the 4760 website and Wikipedia to understand the algorithm and then worked with ChatGPT to convert it into code. We used GPT because even after reading the Wikipedia article and the 4760 website, it was still a complex algorithm, and we wanted to ensure that we were adapting it properly to fit the state variables we wanted to input. We also used ChatGPT to create linear algebra helper functions to speed up that process and also check the implementation of all the stages of the filter to make sure it was accurate. This whole process allowed us to implement faster, confirm understanding, and ensure the correctness of the more complex filter when compared to the average-derivative-EMA filter.</p>
+            <p>A Kalman filter is a predictive and corrective algorithm that maintains a state estimate of a system and continuously updates this estimate as new measurements are inputted. The state vector for our system is the following array, where x and y are the coordinates of the object center in cm, and vx and vy are the velocities in the x and y directions, respectively:</p>
+            <div style="text-align: center; ">
+                <img src="images/state_equation.png" style="width: 30%;">
+            </div>
+            <p>Then, the filter alternates between prediction and update steps. In the prediction step, we use a constant velocity model to estimate where the object will be at the next timestep. Since we get a full position update from the sensors approximately every 100ms, we set that value to be the time step. </p>
+            <div style="text-align: center; ">
+                <img src="images/x_vector_prediction_equation.png" style="width: 35%;">
+            </div>
+            <p>Where F is the state transition matrix:</p>
+            <div style="text-align: center; ">
+                <img src="images/state_transition_matrix.png" style="width: 30%;">
+            </div>
+            <p>This predicts that the new position is the old position plus velocity times the timestep, while velocity remains unchanged. The filter also updates the covariance matrix P, which represents uncertainty in the estimate:</p>
+            <div style="text-align: center; ">
+                <img src="images/covariance_matrix_equation.png" style="width: 30%;">
+            </div>
+            <p>Q is the process noise matrix, which accounts for uncertainty in the system model, such as how much we trust the constant velocity assumption. Inside this matrix, we have parameters that the user can tune through the serial interface. The first parameter is Q_pos, which is the uncertainty in the position prediction. A smaller Q_pos value strongly trusts the motion model, so the predicted state is smooth but may lag and ignore quick maneuvers by the object. A larger Q_pos value allows for more rapid local deviations, and it follows fast motion better, but it can become susceptible to noise. The second parameter is Q_vel, which is the uncertainty in the velocity. As with position, a larger Q_vel value reacts faster to direction/speed changes, but it lets more noise into the velocity and position. A smaller Q_vel value trusts the model more and makes it smoother but slower to react to rapid changes.</p>
+            <p>The next step is to update the prediction. Once a new measurement comes in from the ultrasonic sensors, the filter corrects its prediction. The first step is to compute the measurement residual (innovation covariance) using the following formula:</p>
+            <div style="text-align: center; ">
+                <img src="images/innovation_covariance_matrix_equation.png" style="width: 30%;">
+            </div>
+            <p>Where z is the measurement vector:</p>
+            <div style="text-align: center; ">
+                <img src="images/z_matrix.png" style="width: 20%;">
+            </div>
+            <p>H is the measurement matrix:</p>
+            <div style="text-align: center; ">
+                <img src="images/h_matrix.png" style="width: 30%;">
+            </div>
+            <p>H basically just extracts position from the state vector. The innovation tells us how far off the prediction was from what was measured. The next step is to compute the innovation covariance with the following formula:</p>
+            <div style="text-align: center; ">
+                <img src="images/s_matrix.png" style="width: 25%;">
+            </div>
+            <p>R is the measurement noise matrix, which represents how much we trust the sensors. Like the process noise matrix Q, the user is also able to adjust the measurement noise matrix R. A smaller R_meas follows the raw position closely, which has less smoothing and more jitter. A larger R_meas will smooth more but react more slowly to real movement. Using the innovation covariance matrix, we then compute the Kalman Gain, which determines how much we adjust our predictions. </p>
+            <div style="text-align: center; ">
+                <img src="images/kalman_gain_equation.png" style="width: 20%;">
+            </div>
+            <p>If the measurement is very reliable compared to our prediction uncertainty, K will be larger, meaning the measurement heavily influences the state update. Next, we update the state estimate using the following equation:</p>
+            <div style="text-align: center; ">
+                <img src="images/state_estimate_update_equation.png" style="width: 30%;">
+            </div>
+            <p>This will change the predicted state towards the measurement with the weighting set by the Kalman Gain and the innovation covariance. The final step is to update the covariance using the following formula:</p>
+            <div style="text-align: center; ">
+                <img src="images/p_k_matrix.png" style="width: 30%;">
+            </div>
+            <p>This will reduce the uncertainty P proportional to how much the measurement corrects the prediction. If the measurement is trusted (low R), the Kalman Gain K is large and the update strongly corrects the prediction. This will result in a shrinking of P since we have good data and are now more confident in the model. If the sensors give noisy readings, the prediction step increases P.</p>
+            <p>In summary, our 2D Kalman filter does the following:</p>
+            <ul>
+                <li style="margin-bottom: 5px;"><b>1.</b> Predicts where the object will be next based on velocity</li>
+                <li style="margin-bottom: 5px;"><b>2.</b> Compares that prediction with the measured ultrasonic positions</li>
+                <li style="margin-bottom: 5px;"><b>3.</b> Corrects the estimate in a weighted way, factoring in measurement and process uncertainty</li>
+                <li style="margin-bottom: 5px;"><b>4.</b> Outputs a smoothed and predictive (x,y) position that we will use for controlling where the laser gimbal points </li>
+            </ul>
+        </section>
+
+        <section>
+            <h3>Coordinate System Conversions</h3>
+            <p>To convert our (x,y) positional outputs to theta measurements that we could compare to the laser gimbal position, we utilized the following methods. For theta, we first converted the x and y measurements to radians by using: </p>
+            <div style="text-align: center; ">
+                <img src="images/atan2.png" style="width: 20%;">
+            </div>
+            <p>We then converted from radians to degrees by multiplying our radians by 180/π. For the pitch, we calculated the change in radians using the x, y, and z:</p>
+            <div style="text-align: center; ">
+                <img src="images/pitch_equation.png" style="width: 50%;">
+            </div>
+            <p>This was also then changed to degrees by multiplying by 180/π. With the predicted positions converted into corresponding theta and pitch values, we could then compare our estimates to the actual gimbal angles. If the computed error value was negative, the corresponding motor would spin clockwise, and if the error was positive, it would spin counterclockwise. This mapping is applied independently to both the theta and pitch axes, allowing the gimbal to correct its position in both directions based on the sign and magnitude of the error.</p>
+        </section>
+
+        <section>
+            <h3>IR Gimbal Position Sensing</h3>
+            <p>Our original plan for determining the gimbal’s real-time position focused on using infrared light sensors rather than a conventional IMU. We wanted to explore an alternative sensing method that was both low-cost and already accessible in the lab, so an infrared-based encoder system was an interesting option. The setup required only an IR LED, an IR phototransistor sensor, and a 3D-printed encoder wheel. The general configuration we wanted to follow is illustrated below:</p>
+            <div style="text-align: center; ">
+                <img src="images/ir_encoder_disk.png" style="width: 70%;">
+            </div>
+            <p>Basically, the system works by shining an infrared LED through a rotating encoder disk and detecting the light on the opposite side with a photoresistor or photodiode. The encoder disk is patterned with alternating transparent and opaque sections. As it rotates with the gimbal, these sections periodically block and allow infrared light to reach the sensor. When a transparent window aligns with the LED, the sensor receives maximum light and the voltage across it changes accordingly. When an opaque section passes in front, the light is blocked and the sensor output drops.</p>
+            <p>By counting these transitions from light to dark and dark to light, we can determine how far the gimbal has rotated. Each pair of transitions corresponds to one slot on the encoder disk, and knowing the total number of slots allows us to compute angular displacement. By starting each program from a known reference position, we can accurately compute the gimbal’s angle throughout operation. To create this reference, we planned to include a distinctly wider encoder segment on the disk. At startup, the motors would drive the gimbal clockwise at a constant speed until the IR phototransistor detects this wider segment. Because this region allows IR light to pass for noticeably longer than any of the standard segments, the resulting voltage level remains steady for a longer duration, which would make it easy to identify as the “home” position.</p>
+            <p>Regarding resolution, we determined that 5-degree increments were sufficient for our performance requirements. Achieving finer precision would have required a much larger encoder disk or significantly narrower segment widths, both of which would introduce manufacturing challenges, especially with our 3D-printed setup. Thus, we determined that 5 degrees struck a practical balance between positional accuracy, mechanical constraints, and ease of fabrication. This would result in 36 slots for IR light to pass through.</p>
+            <p>With both of these new values, we calculated the error in both theta and pitch and sent signals to the motors based on these errors. Using these error values, we converted them directly into PWM values to drive the motors on the laser gimbal.</p>
+        </section>
+
+
+        <section>
+            <h3>PWM Control</h3>
+            <p>We used the PWM peripheral on the RP2040 to control the motors on the laser gimbal. The RP2040 has 8 PWM slices with two channels (A and B). Each slice generates a repeating counter that counts from 0 up to a programmable wrap value. The counter resets when it reaches that wrap value. We chose a PWM wrap value of 5000 and a clock divide value of 25. For a CPU rate of 125 MHz, this gives us a PWM frequency of 1KHz which is reasonable for driving DC motors.</p>
+            <div style="text-align: center; ">
+                <img src="images/duty_cycle_equation.png" style="width: 40%;">
+            </div>
+            <p>The control algorithm computed a numerical error value, which was then multiplied by a weighting factor and mapped to a PWM channel level between 0 and 5000. Because we did not have access to the laser gimbal hardware during development, the weight value served as a tunable placeholder, but is currently able to be adjusted by the user through serial input. In practice, this weight would be selected so that the scaled error produces an appropriate motor response, ensuring that the gimbal reacts proportionally to the magnitude of the error. Additional tuning could be achieved through mechanical gearing (high speed to low speed), enabling finer control over the motor output.</p>
+            <p>A PWM channel value of 5000 corresponds to a 100% duty cycle and therefore maximum motor power. We utilized the on_pwm_wrap() callback function, which is invoked each time the PWM counter reaches its wrap value. This ensures that channel adjustments are applied cleanly at the start of each new cycle, preventing timing conflicts. Since we used two PWM slices, one per motor, the callback also identifies which slice triggered the wrap, allowing us to update only the corresponding motor’s output.</p>
+            <p>To control the direction of the motors, we used an H-bridge as shown below. Each motor had a dedicated H-bridge so that each motor could be independently controlled. At a high level, an H-Bridge is a circuit that enables current to flow through a motor in either direction. By driving one input high while keeping the other low, the motor rotates clockwise, while reversing the inputs rotates the motor counterclockwise. The H-bridge circuit is shown below:</p>
+            <div style="text-align: center; ">
+                <img src="images/h_bridge_circuit.png" style="width: 60%;">
+            </div>
+            <p>This circuit corresponds to the following pinout:</p>
+            <div style="text-align: center; ">
+                <img src="images/h_bridge_pinout.png" style="width: 60%;">
+            </div>
+            <p>In our implementation, each motor was controlled through two PWM inputs corresponding to IA and IB in the H-Bridge diagram. Each motor was assigned its own PWM slice, with the two channels on that slice driving the two inputs. During operation, the control algorithm sets a PWM duty cycle on one channel while keeping the other at 0 to control the motor’s spin direction. The motor wires, labeled OA and OB in the diagram, are connected to the output of the H-Bridge, allowing current to flow through the motor in the correct direction for the desired rotation.</p>
+        </section>
+        
+        <section>
+            <h3>Motor</h3>
+            <p>For our laser gimbal, we used dual-shaft DC motors with a 1:48 gear ratio. These motors were readily available in the lab and proved well-suited for precise positioning. They responded reliably to small changes in PWM signals and could be driven both clockwise and counterclockwise. One motor was assigned to control the theta angle of the laser gimbal, while the second motor controlled the pitch angle, providing accurate two-axis positioning for the system.</p>
+            <div style="text-align: center; ">
+                <img src="images/motors_image.png" style="width: 70%;">
+            </div>
+        </section>
+
+        <section>
+            <h3>VGA Component</h3>
+            <p>We also added a VGA screen component to our project to enhance the user experience. The VGA display has multiple data displays that allow the user to choose what data from the system they want to observe. The protothread_anim function controls the entire VGA display and run on the only thread in core 1 on our microcontroller. Each iteration of the animation loop represents a single frame, and the function carefully tracks timing to maintain a consistent 30 fps frame rate. Additionally, the function waits for the vertical sync (VSYNC) signal to go low before starting the frame. We had some issues with black smears appearing across the screen, and waiting for the VSYNC signal solved those problems.</p>
+            <p>When the system is operating in pattern mode, synthetic object positions are generated rather than relying on actual sensor readings. In this mode, the object moves in a circular path centered in the field, and the angular velocity determines the speed of revolution. From these positions, virtual distances to four sensors are calculated to mimic what ultrasonic distance sensors would measure. These distances are then clamped to ensure they remain within the physical bounds of the field. This is meant to be used in a baselining mode where the user can compare the selected filters’ parameters to a consistent baseline pattern. The user is also able to compare filters directly to each other, along with the baseline, in this mode. The following photo is from an EMA filter prediction with 99% old weighting.</p>
+            <div style="text-align: center; ">
+                <img src="images/baseline_99_old_weight.png" style="width: 70%;">
+            </div>
+            <p>Once either real or synthetic distances are obtained, the function computes the center position of the object in both the x and y directions. This is done by averaging the front and back sensor readings for each axis, producing a reliable estimate of the object’s center. These center positions are converted into pixel coordinates to match the display resolution. The system also pushes these positions into the respective positional arrays for predictive filtering. Both filtered positions are also converted to pixel coordinates for visualization purposes.</p>
+            <p>The function supports multiple drawing modes to provide different levels of information to the user. In grid mode, the object is drawn as a rectangle within a 2D grid representing the field.</p>
+            <div style="text-align: center; ">
+                <img src="images/grid_object_view.png" style="width: 70%;">
+            </div>
+            <p>In prediction mode, the object is drawn along with its predicted positions from both the Kalman and EMA filters, allowing users to visually compare filtered predictions with raw measurements. The following photo shows the object with its boundaries in red, measured center as a red circle, EMA filter predicted center in green, and kalman predicted center in blue. This photo is from the final project demo and shows the object having recently moved so the EMA filter is slightly behind where the measured center is.</p>
+            <div style="text-align: center; ">
+                <img src="images/object_tracking_no_grid.png" style="width: 70%;">
+            </div>
+            <p>In program mode, the object’s center is continuously drawn without erasing previous frames, useful for creating trajectory patterns or long-term tracking visualization. It can also be used as a drawing program to make cool patterns. The following picture is just a straight line showing an object moving from bottom to top over time.</p>
+            <div style="text-align: center; ">
+                <img src="images/drawing_program.png" style="width: 70%;">
+            </div>
+            <p>Finally, in info mode, textual data is displayed on the screen, including raw sensor distances, computed positions, filtered positions, gimbal angles, positional errors, and motor PWM outputs. This mode is particularly helpful for debugging and tuning system performance. More or less infomation is populated depending on what features, filters, and modes are enabled by the user.</p>
+            <div style="text-align: center; ">
+                <img src="images/info_mode.png" style="width: 70%;">
+            </div>
+            <p>Finally, the function manages frame timing to maintain a consistent animation rate. After all computations and drawing operations are complete, the function calculates the remaining time in the frame and yields execution for that period. This ensures that each frame maintains a predictable duration, leading to smooth and consistent visualization. </p>
+        </section>
+
+        
+        <h3>Serial Control</h3>
+        <p>We used the serial input port to control and set variables for various things across our program. The table below summarizes all the user-controlled functions:</p>
+        <section>
+            <h3>Control Reference Guide</h3>
+
+            <h4>Start Measuring</h4>
+            <ul>
+                <li><code>1</code>: Start ultrasonic sensors</li>
+            </ul>
+
+            <h4>VGA Screen Mode Select</h4>
+            <ul>
+                <li style="margin-bottom: 5px;"><code>2</code>: 2D grid view (object rectangle on grid), screen cleared</li>
+                <li style="margin-bottom: 5px;"><code>3</code>: Ball + prediction view (raw rectangle + predicted center)</li>
+                <li style="margin-bottom: 5px;"><code>4</code>: INFO view (raw distances, X/Y, filtered values, errors, PWM, KF values)</li>
+                <li style="margin-bottom: 5px;"><code>5</code>: Drawing mode (draw object center + prediction)</li>
+            </ul>
+
+            <h4>Type of Mode Used</h4>
+            <ul>
+                <li style="margin-bottom: 5px;"><code>7</code>: Use θ/pitch error mode (gimbal angles)</li>
+                <li style="margin-bottom: 5px;"><code>8</code>: Use X/Y error mode (position error in cm)</li>
+            </ul>
+
+            <h4>Drawing Options</h4>
+            <ul>
+                <li style="margin-bottom: 5px;"><code>10</code>: Set drawing color to <span style="color:red;">red</span></li>
+                <li style="margin-bottom: 5px;"><code>11</code>: Set drawing color to white</li>
+                <li style="margin-bottom: 5px;"><code>12</code>: Set drawing color to <span style="color:blue;">blue</span></li>
+                <li style="margin-bottom: 5px;"><code>13</code>: Set drawing color to <span style="color:green;">green</span></li>
+                <li style="margin-bottom: 5px;"><code>14</code>: Set drawing color to <span style="color:black;">black</span></li>
+                <li style="margin-bottom: 5px;"><code>15</code>: Clear the screen once</li>
+            </ul>
+
+            <h4>Kalman Filter Parameters</h4>
+            <ul>
+                <li style="margin-bottom: 5px;">
+                    <code>16</code>: Set <b>q_pos</b> (position noise variance, cm²)
+                    <br>→ Low values = smooth, trusts model more. <br>
+                    → High values = reacts quickly, noisier. <br>
+                    Default: <code>q_pos = 1</code>
+                </li>
+                <li style="margin-bottom: 5px;"> 
+                    <code>17</code>: Set <b>q_vel</b> (velocity noise variance, (cm/s)²)
+                    <br>→ Low = slow changes <br>
+                    → High = fast changes, noisier <br>
+                    Default: <code>q_vel = 10</code>
+                </li>
+                <li style="margin-bottom: 5px;">
+                    <code>18</code>: Set <b>r_meas</b> (measurement noise, cm²)
+                    <br>→ Low = follow raw data closely (noisy) <br>
+                    → High = smooth, slower reaction <br>
+                    Default: <code>r_meas = 25</code>
+                </li>
+            </ul>
+
+            <h4>Filter Toggle Options</h4>
+            <ul>
+                <li style="margin-bottom: 5px;" ><code>19</code>: Toggle Kalman filter on/off</li>
+                <li style="margin-bottom: 5px;"><code>20</code>: Toggle EMA filter on/off</li>
+            </ul>
+
+            <h4>EMA Parameters</h4>
+            <ul>
+                <li style="margin-bottom: 5px;"><code>21</code>: Set EMA old_weight (0.0–0.99), new_weight = 1 – old</li>
+            </ul>
+
+            <h4>Gain Parameters</h4>
+            <ul>
+                <li><code>22</code>: Set theta gain</li>
+                <li><code>23</code>: Set pitch gain</li>
+                <li><code>24</code>: Set EMA motor 1 gain</li>
+                <li><code>25</code>: Set EMA motor 2 gain</li>
+            </ul>
+
+            <h4>Laser Control</h4>
+            <ul>
+                <li><code>26</code>: Toggle laser on/off</li>
+            </ul>
+
+            <h4>Pattern Mode</h4>
+            <ul>
+                <li><code>27</code>: Toggle pattern mode on/off</li>
+            </ul>
+
+            <h4>Motor PWM Control</h4>
+            <ul>
+                <li>Any integer <code>0–5000</code>: Sets motor 1 and motor 2 PWM duty level if ultrasonic sensors are not active</li>
+            </ul>
+
+        </section>
+
+
+        
+        <h2>Results of the Design</h2>
+        <section>
+            <h3>Accuracy Results</h3>
+            <p>We initially expected the accuracy of our system to be evaluated by how quickly and precisely the laser gimbal could physically react to abrupt changes in target position. However, after shifting the project toward a more software-focused implementation, our performance criteria changed as well. The primary metric for accuracy became how well our filtering methods could reconstruct and predict object motion based on noisy ultrasonic data.</p>
+            <p>To establish a baseline, we generated a known circular motion pattern and compared the filter outputs directly against it. The Kalman filter demonstrated excellent performance and it closely tracked the pattern trajectory exactly. It was a great success and proved that we had implemented the Kalman filtering algorithm correctly.</p>
+            <div style="text-align: center; ">
+                <img src="images/baseline_kalman_filter.png" style="width: 70%;">
+            </div>
+            <p>The EMA-based filter, while simpler and computationally lighter, exhibited slightly less accuracy. With the default coefficients of 0.8 for the previous estimate and 0.2 for the new measurement, the EMA output tended to remain slightly inside the true circular path. </p>
+            <div style="text-align: center; ">
+                <img src="images/baseline_deafult_weight.png" style="width: 70%;">
+            </div>
+            <p>When the weighting was shifted to favor the new measurements more heavily, the EMA filter overshot the circular pattern. This picture is from the lab demo so the middle section was demonstrating a different EMA weighting of 99% for the old weight. </p>
+            <div style="text-align: center; ">
+                <img src="images/baseline_high_new_weight.png" style="width: 70%;">
+            </div>
+            <p>Overall, these results demonstrate that the Kalman filter offers superior accuracy for this type of dynamic tracking, particularly when movement is smooth and measurement noise is nontrivial. The EMA filter remains a viable alternative for systems where simplicity and computational speed are prioritized, but for our goals of maximizing precision and predictive capability, the Kalman filter clearly provided the most reliable performance. Perhaps with more tailoring, the EMA filter could keep up, but for now, the Kalman filter reigns supreme for 2D ultrasonic mapping.</p>
+        </section>
+
+        <section>
+            <h3>Speed of Execution Results</h3>
+            <p>As discussed earlier, we considered optimization and execution speed, but our system architecture allowed us to meet timing requirements without aggressively optimizing. The most critical real-time constraint in the project was maintaining the VGA refresh rate. At 30 frames per second, the computational load of our filtering, distance calculations, and control logic was well within the RP2040’s capabilities, and we never failed to meet the frame deadlines during testing. A major reason for this was the decision to isolate the VGA animations on one core (Core 1) while dedicating the other core to ultrasonic sampling, filtering, and motor control. This separation prevented display tasks from competing with sensor processing, ensuring we met timing.</p>
+            <p>We also relied on interrupts to meet key timing milestones. GPIO interrupts were used for the HC-SR04 ECHO rising and falling edges, allowing us to capture time-of-flight measurements accurately with microsecond resolution. Similarly, PWM wrap interrupts enabled us to safely update motor duty cycles at the start of each PWM period, ensuring clean transitions and preventing output glitches. These interrupt-driven approaches offloaded time-critical work from the main loop and ensured responsiveness without requiring complex scheduling.</p>
+            <p>To maintain responsiveness and interactivity, the system used non-blocking serial input, allowing users to enable filters, change parameters, or adjust gimbal control values without halting data acquisition. This design ensured that the core responsible for ultrasonic timing was never stalled by user input.</p>
+            <p>While we evaluated speed–accuracy trade-offs, the overall goal of the software was precision rather than extreme computational efficiency. Given the modest timing constraints and the RP2040’s dual-core architecture, we had the flexibility to implement filtering and prediction algorithms without harming frame timing or sensor sample rate. In the end, we achieved a system that was interactive, accurate, and free of timing issues.</p>
+        </section>
+
+        <section>
+            <h3>Safety Considerations</h3>
+            <p>If the laser gimbal hardware had been fully implemented, the primary safety considerations would have been the laser itself. We purchased a Class 1 laser rated at approximately 0.1 mW, which is considered eye-safe under normal operation. In addition, the objects placed within the 2D tracking plane were intentionally non-reflective to minimize the possibility of reflections, which could redirect the beam unpredictably at unprepared eyeballs. Our intended operating procedure also ensured that the laser would only be turned on when the program is pointed at the tracking surface as an added safety measure.</p>
+            <p>Beyond the laser, there were minimal additional safety concerns. The motors used in the gimbal are low voltage and low torque, not posing a danger. The electronics operate within safe voltages, and all wiring was properly insulated and run through breadboards. Overall, with low-power components and a safe laser class, the system presents very little safety risk.</p>
+        </section>
+        
+
+        <h2>Conclusion</h2>
+        <p>In the end, our project successfully achieved its core goal of creating an accurate 2D mapping system capable of tracking position and applying predictive algorithms to smooth and forecast future motion. Through the integration of ultrasonic sensing, multiple filtering techniques, and real-time VGA visualization, we demonstrated that both our Kalman and EMA filters could reliably estimate object movement, with the Kalman filter proving especially effective. While the original vision included a fully operational laser gimbal for physical pointing and feedback control, this aspect could not be completed due to the delay in receiving the 3D-printed hardware in the 5 days leading up to the final project demo.</p>
+        <p>Despite this setback, we pivoted our focus to further lean into exploring and enhancing our filtering algorithms and the way the user interacts with the software. This shift not only resulted in a highly functional and interactive software-centric final project but also significantly broadened our understanding of filtering algorithms, motor control through H-bridges, and real-time object tracking. We also learned more about different software techniques and interrupts that are important for embedded systems projects in the future. Ultimately, the change in direction allowed us to explore more in depth with the software aspects of filtering and object tracking, and it was still highly technical and fun.</p>
+        <p>Looking into the future, we think it would be important to expand upon this foundation by revisiting the laser gimbal portion, along with potentially integrating higher-resolution sensors. It would also be cool to scale the system into a complete 3D spatial tracking system. With the groundwork laid and the lessons learned, we are confident that this concept has a clear path forward toward a fully realized physical tracking and control system.</p>
+
+        <h2>Appendices</h2>
+        <h3>Appendix A: Permissions</h3>
+        <p>The group approves this report for inclusion on the course website.</p>
+        <p>The group approves the video for inclusion on the course youtube channel.</p>
+
+        <h3>Appendix B: Schematics</h3>
+        <p>Ultrasonic Sensor and HBridge pinouts are described in detail in the report above.</p>
+        <p>Full RP2040 pinout is shown below:</p>
+        <div style="text-align: center; ">
+            <img src="images/rp2040_pinout.png" style="width: 100%;">
+        </div>
+        
+        <h3>Appendix C: Project Breakdown</h3>
+        <ul>
+            <li style="margin-bottom: 10px;"><b>Tyler Tisinger (tt549):</b>
+                <ul>
+                    <li style="margin-bottom: 5px;">Pretty much all the software</li>
+                    <li style="margin-bottom: 5px;">And the testing and debugging</li>
+                </ul>
+            </li>
+
+            <li style="margin-bottom: 5px;"><b>Reilly Potter (rdp78):</b>
+                <ul>
+                    <li style="margin-bottom: 5px;">Did all the hardware</li>
+                    <li style="margin-bottom: 5px;">Designed 3D schematic for laser gimbal</li>
+                    <li style="margin-bottom: 5px;">Dealt with all hardware considerations including gearing, torquing, etc.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>References</h3>
+        <ul>
+            <li style="margin-bottom: 5px;"><a href="https://en.wikipedia.org/wiki/Kalman_filter" target="_blank">Kalman Filter Wikipedia</a></li>
+            <li style="margin-bottom: 5px;"><a href="https://vanhunteradams.com/Estimation/Estimation.html" target="_blank">Kalman Filter 4760 Webpage</a></li>
+            <li style="margin-bottom: 5px;"><a href="https://thepihut.com/blogs/raspberry-pi-tutorials/hc-sr04-ultrasonic-range-sensor-on-the-raspberry-pi?srsltid=AfmBOorG8aPwb5vd6Cdsn_54r35YbJ9w-osTEOa81ln4wtBeSRSKmOJw" target="_blank">Raspberry Pi Reference for Ultrasonic Sensors</a></li>
+            <li style="margin-bottom: 5px;"><a href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf" target="_blank">RP2040 Datasheet</a></li>
+        </ul>
+
+        <h3>Final Project Demo Video</h3>
+        <a href="https://www.youtube.com/watch?v=WmSY0NXBI08" target="_blank">Link to Final Project Demo Video</a>
+
+        <h3>Code</h3>
+        <textarea style="width:100%; height:600px;">
+/**
+ * Hunter Adams (vha3@cornell.edu)
+ *
+ * This demonstration animates two balls bouncing about the screen.
+ * Through a serial interface, the user can change the ball color.
+ * 
+ * PINS LEFT  - 6, 7, 8, 9
+ * 
+ * HARDWARE CONNECTIONS
+ *  MOTOR 1
+ *   - GPIO 2 ---> PWM 1 output
+ *   - GPIO 3 ---> PWM 2 output
+ *  MOTOR 2 
+ *   - GPIO 4 ---> PWM 1 outputc
+ *   - GPIO 5 ---> PWM 2 output
+ *  
+ *  LASER 
+ *   - GPIO 6 ---> LASER control (on/off)
+ * 
+ *  VGA CONNECTIONS 
+ *   - GPIO 16 ---> VGA Hsync
+ *   - GPIO 17 ---> VGA Vsync
+ *   - GPIO 18 ---> VGA Green lo-bit --> 470 ohm resistor --> VGA_Green
+ *   - GPIO 19 ---> VGA Green hi_bit --> 330 ohm resistor --> VGA_Green
+ *   - GPIO 20 ---> 330 ohm resistor ---> VGA-Blue
+ *   - GPIO 21 ---> 330 ohm resistor ---> VGA-Red
+ *   - RP2040 GND ---> VGA-GND
+ * 
+ *  ULTRASONIC SENSOR CONNECTIONS
+ *  SENSOR 1
+ *   - GPIO 26 ---> TRIGGER
+ *   - GPIO 27 ---> ECHO
+ *  SENSOR 2
+ *  - GPIO 11 ---> TRIGGER
+ *  - GPIO 10 ---> ECHO
+ *  SENSOR 3
+ *  - GPIO 13 ---> TRIGGER
+ *  - GPIO 12 ---> ECHO
+ *  SENSOR 4
+ *  - GPIO 15 ---> TRIGGER
+ *  - GPIO 14 ---> ECHO
+ *
+ * RESOURCES USED
+ *  - PIO state machines 0, 1, and 2 on PIO instance 0
+ *  - DMA channels (2, by claim mechanism)
+ *  - 153.6 kBytes of RAM (for pixel color data)
+ *
+ */
+
+
+// Include the VGA grahics library
+#include "vga16_graphics_v2.h"
+// Include standard libraries
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+// Include Pico libraries
+#include "pico/stdlib.h"
+#include "pico/divider.h"
+#include "pico/multicore.h"
+// Include hardware libraries
+#include "hardware/pio.h"
+#include "hardware/dma.h"
+#include "hardware/clocks.h"
+#include "hardware/pll.h"
+#include "hardware/gpio.h"
+#include "hardware/pwm.h"
+#include "hardware/irq.h"
+// Include protothreads
+#include "pt_cornell_rp2040_v1_4.h"
+
+
+// === the fixed point macros ========================================
+typedef signed int fix15 ;
+#define multfix15(a,b) ((fix15)((((signed long long)(a))*((signed long long)(b)))>>15))
+#define float2fix15(a) ((fix15)((a)*32768.0)) // 2^15
+#define fix2float15(a) ((float)(a)/32768.0)
+#define absfix15(a) abs(a)
+#define int2fix15(a) ((fix15)(a << 15))
+#define fix2int15(a) ((int)(a >> 15))
+#define char2fix15(a) (fix15)(((fix15)(a)) << 15)
+#define divfix(a,b) (fix15)(div_s64s64( (((signed long long)(a)) << 15), ((signed long long)(b))))
+
+
+// Wall detection
+#define hitBottom(b) (b>int2fix15(380))
+#define hitTop(b) (b<int2fix15(100))
+#define hitLeft(a) (a<int2fix15(100))
+#define hitRight(a) (a>int2fix15(540))
+
+
+// uS per frame
+#define FRAME_RATE 33000
+
+
+char color = WHITE;
+char color_blue = BLUE ;
+char color_red = RED ;
+char color_green = GREEN ;
+char color_black = BLACK ;
+
+char screentext[100] ;
+
+// draw speed
+int threshold = 10 ;
+
+float speed = 0.0343/2.0;
+
+// PWM HBRIDGE MOTOR CONTROL DEFINES
+
+// PWM wrap value and clock divide value
+// For a CPU rate of 125 MHz, this gives
+// a PWM frequency of 1 kHz.
+#define WRAPVAL 5000
+#define CLKDIV 25.0f
+
+// MOTOR GPIO DEFINES
+#define PWM_OUT_MOTOR_1_1 2  // GPIO 2 channel 1A
+#define PWM_OUT_MOTOR_1_2 3  // GPIO 3 channel 1B
+#define PWM_OUT_MOTOR_2_1 4  // GPIO 4 channel 2A
+#define PWM_OUT_MOTOR_2_2 5  // GPIO 5 channel 2B
+
+// Variable to hold PWM slice number
+uint slice_num_motor_1;
+uint slice_num_motor_2;
+
+// PWM duty cycle
+volatile int motor_control_1 = 0;
+volatile int motor_control_2 = 0;
+volatile int old_motor_control_1 = 0;
+volatile int old_motor_control_2 = 0;
+
+// GPIO pins for ultrasonic sensor
+// GPIO pins for ultrasonic sensor
+#define TRIGGER_PIN_1 26
+#define ECHO_PIN_1 27    
+#define TRIGGER_PIN_2 11
+#define ECHO_PIN_2 10
+#define TRIGGER_PIN_3 13
+#define ECHO_PIN_3  12
+#define TRIGGER_PIN_4 15
+#define ECHO_PIN_4   14
+#define LASER_CONTROL_PIN 6
+
+
+// echo and distance calc vars
+// 1 is from x=0 to front of object
+// 2 is from y=0 to front of object
+// 3 is from x=max to back of object
+// 4 is from y=max to back of object
+volatile uint32_t echo_start_1, echo_end_1;
+volatile uint32_t echo_start_2, echo_end_2;
+volatile uint32_t echo_start_3, echo_end_3;
+volatile uint32_t echo_start_4, echo_end_4;
+float distance_cm_1 = 0.0;
+float distance_cm_2 = 0.0;
+float distance_cm_3 = 0.0;
+float distance_cm_4 = 0.0;
+
+// need to figure out how to set these to correct values at start of sequence
+float curr_laser_theta = 0.0f;
+float curr_laser_pitch = -90.0f;
+volatile bool sensors_enabled = false;
+
+// State Vars for serial input thread
+#define DRAW_2D_GRID 0
+#define DRAW_BALL_PRED 1
+#define DRAW_INFO 2
+#define DRAW_PROGRAM 3
+
+#define THETA_PITCH_ERROR_MODE 0
+#define X_Y_ERROR_MODE 1
+
+#define ERASE 0
+#define DRAW 1
+
+char drawing_mode_color = RED; // Default is red
+int erase_mode = ERASE; // Default is to erase
+int drawing_mode = DRAW_INFO; // Default is grid mode
+int error_mode  = X_Y_ERROR_MODE; // Default is theta pitch error mode
+int clear_screen = 0; // Triggered by serial input
+int draw_pred_overlay = 0;
+int kalman_filter_enabled = 0; // off by default
+int ema_filter_enabled = 1; // on by default
+
+volatile int pattern_mode = 0;  // 0 = real sensor data, 1 = circular pattern
+static float t_pattern = 0.0f;
+
+
+// MAKE ULTRASONIC SENSOR TRIGGERABLE FROM SERIAL ONLY
+void start_ultrasonic_sensors(void) {
+    // Initialize GPIO pins for ultrasonic sensors
+  gpio_init(TRIGGER_PIN_1);
+  gpio_set_dir(TRIGGER_PIN_1, GPIO_OUT);
+  gpio_put(TRIGGER_PIN_1, 0); // Ensure trigger is low initially
+
+
+  gpio_init(ECHO_PIN_1);
+  gpio_set_dir(ECHO_PIN_1, GPIO_IN);
+
+
+  gpio_init(TRIGGER_PIN_2);
+  gpio_set_dir(TRIGGER_PIN_2, GPIO_OUT);
+  gpio_put(TRIGGER_PIN_2, 0); // Ensure trigger is low initially
+
+
+  gpio_init(ECHO_PIN_2);
+  gpio_set_dir(ECHO_PIN_2, GPIO_IN);
+
+
+  gpio_init(TRIGGER_PIN_3);
+  gpio_set_dir(TRIGGER_PIN_3, GPIO_OUT);
+  gpio_put(TRIGGER_PIN_3, 0); // Ensure trigger is low initially
+
+
+  gpio_init(ECHO_PIN_3);
+  gpio_set_dir(ECHO_PIN_3, GPIO_IN);
+
+
+  gpio_init(TRIGGER_PIN_4);
+  gpio_set_dir(TRIGGER_PIN_4, GPIO_OUT);
+  gpio_put(TRIGGER_PIN_4, 0); // Ensure trigger is low initially
+
+
+  gpio_init(ECHO_PIN_4);
+  gpio_set_dir(ECHO_PIN_4, GPIO_IN);
+
+  gpio_init(LASER_CONTROL_PIN);
+  gpio_set_dir(LASER_CONTROL_PIN, GPIO_OUT);
+  gpio_put(LASER_CONTROL_PIN, 0); // Ensure laser is off initially
+
+  curr_laser_pitch = -90;
+  curr_laser_theta = 0;
+  sensors_enabled = true;
+  pwm_set_mask_enabled((1u << slice_num_motor_1) | (1u << slice_num_motor_2));
+}
+
+// Tunable variances (diagonals)
+float q_pos = 1.0f;    // position process noise (cm^2)
+float q_vel = 10.0f;   // velocity process noise ((cm/s)^2)
+float r_meas = 25.0f;  // measurement noise (cm^2)
+float old_weight = 0.8f; // EMA old weight
+float new_weight = 0.2f; // EMA new weight
+
+#define SIDE_LENGTH_M 0.86f
+#define SIDE_LENGTH_CM 86
+const int OBJ_DIAMETER_X_CM = 2;
+
+#define PI 3.14159265358979323846f
+const float H_LASER_CM = 50.0f; // height of laser above plane in cm
+const float x_0 = SIDE_LENGTH_CM / 2;  // laser mount x offset (x_max/2)
+const float y_0 = 0.0f;         // laser mount y offset
+
+#define CW 0
+#define CCW 1
+int spin_dir_1;
+int spin_dir_2;
+
+void xy_to_gimbal_pwm(float x_center_cm, float y_center_cm, float curr_laser_theta, float curr_laser_pitch,
+                        volatile float *theta_error, volatile float *pitch_error) {
+    float dx = x_center_cm - x_0;
+    float dy = y_center_cm - y_0;
+    float dz = -H_LASER_CM;
+
+    // Theta where 0 is x=x_max/2
+    float theta_rad = atan2f(dx, dy);
+    float theta_deg = theta_rad * 180.0f / PI;
+
+    // Pitch (phi)
+    float horiz = sqrtf(dx*dx + dy*dy);
+    float pitch_rad = -PI/2.0f + atan2f(dz, horiz);
+    float pitch_deg = pitch_rad * 180.0f / PI;
+    
+    // map to pwm somehow
+    *theta_error = curr_laser_theta  - theta_deg;
+    if (*theta_error < 0) { // move right (curr0 < target0)
+        spin_dir_1 = CW;
+    } else if (*theta_error > 0) { // move left (curr0 > tar0)
+        spin_dir_1 = CCW;
+    }
+
+    *pitch_error = curr_laser_pitch - pitch_deg;
+    if (*pitch_error < 0) { // move up (currp < tar(p))
+        spin_dir_2 = CW;
+    } else if (*pitch_error > 0) { // move down (currp > tar(p))
+        spin_dir_2 = CCW;
+    }
+}
+
+// ================= Kalman filter for 2D position =================
+
+// State: [x, y, vx, vy]^T  (units: cm, cm/s)
+typedef struct {
+    float x[4];     // state vector
+    float P[4][4];  // covariance matrix
+} KF2D;
+
+// Constants
+#define DT   0.1f   // 100 ms timestep
+
+// State transition F (constant velocity model)
+static const float KF_F[4][4] = {
+    {1, 0, DT, 0},
+    {0, 1, 0,  DT},
+    {0, 0, 1,  0},
+    {0, 0, 0,  1}
+};
+
+// Measurement matrix H (we measure x, y only)
+static const float KF_H[2][4] = {
+    {1, 0, 0, 0},
+    {0, 1, 0, 0}
+};
+
+// Matrices now built from those each time (or updated when changed)
+float KF_Q[4][4];
+float KF_R[2][2];
+
+void kf2d_update_QR_from_scalars(void) {
+    KF_Q[0][0] = q_pos; KF_Q[0][1] = 0;     KF_Q[0][2] = 0;     KF_Q[0][3] = 0;
+    KF_Q[1][0] = 0;     KF_Q[1][1] = q_pos; KF_Q[1][2] = 0;     KF_Q[1][3] = 0;
+    KF_Q[2][0] = 0;     KF_Q[2][1] = 0;     KF_Q[2][2] = q_vel; KF_Q[2][3] = 0;
+    KF_Q[3][0] = 0;     KF_Q[3][1] = 0;     KF_Q[3][2] = 0;     KF_Q[3][3] = q_vel;
+
+    KF_R[0][0] = r_meas; KF_R[0][1] = 0;
+    KF_R[1][0] = 0;      KF_R[1][1] = r_meas;
+}
+
+// Identity 4x4
+static const float KF_I[4][4] = {
+    {1,0,0,0},
+    {0,1,0,0},
+    {0,0,1,0},
+    {0,0,0,1}
+};
+
+// ---------------- Small matrix helpers (4x4, 4x2, 2x4, 2x2) ----------------
+
+static void mat4_copy(float dst[4][4], const float src[4][4]) {
+    for (int i=0;i<4;i++)
+        for (int j=0;j<4;j++)
+            dst[i][j] = src[i][j];
+}
+
+static void mat4_add(float A[4][4], const float B[4][4]) {
+    for (int i=0;i<4;i++)
+        for (int j=0;j<4;j++)
+            A[i][j] += B[i][j];
+}
+
+static void mat4_mul(const float A[4][4], const float B[4][4], float C[4][4]) {
+    for (int i=0;i<4;i++) {
+        for (int j=0;j<4;j++) {
+            float sum = 0.0f;
+            for (int k=0;k<4;k++) sum += A[i][k]*B[k][j];
+            C[i][j] = sum;
+        }
+    }
+}
+
+static void mat4_vec4_mul(const float A[4][4], const float x[4], float y[4]) {
+    for (int i=0;i<4;i++) {
+        float sum = 0.0f;
+        for (int j=0;j<4;j++) sum += A[i][j]*x[j];
+        y[i] = sum;
+    }
+}
+
+static void mat2_add(float A[2][2], const float B[2][2]) {
+    for (int i=0;i<2;i++)
+        for (int j=0;j<2;j++)
+            A[i][j] += B[i][j];
+}
+
+static void mat2_inv(const float A[2][2], float invA[2][2]) {
+    float det = A[0][0]*A[1][1] - A[0][1]*A[1][0];
+    if (det == 0.0f) det = 1e-6f; // avoid div by zero in degenerate case
+    float invDet = 1.0f / det;
+    invA[0][0] =  A[1][1] * invDet;
+    invA[0][1] = -A[0][1] * invDet;
+    invA[1][0] = -A[1][0] * invDet;
+    invA[1][1] =  A[0][0] * invDet;
+}
+
+// C = A (4x4) * B^T (4x2)^T = 4x2 * 2x? -> here: P * H^T gives 4x2
+static void mat4_Ht_mul(const float P[4][4], const float H[2][4], float C[4][2]) {
+    for (int i=0;i<4;i++) {
+        for (int j=0;j<2;j++) {
+            float sum = 0.0f;
+            for (int k=0;k<4;k++) sum += P[i][k] * H[j][k]; // note H is 2x4
+            C[i][j] = sum;
+        }
+    }
+}
+
+// S = H * P * H^T (2x2)
+static void compute_S(const float P[4][4], const float H[2][4], float S[2][2]) {
+    // temp = H * P  (2x4 * 4x4 = 2x4)
+    float temp[2][4];
+    for (int i=0;i<2;i++) {
+        for (int j=0;j<4;j++) {
+            float sum = 0.0f;
+            for (int k=0;k<4;k++) sum += H[i][k] * P[k][j];
+            temp[i][j] = sum;
+        }
+    }
+    // S = temp * H^T (2x4 * 4x2 = 2x2)
+    for (int i=0;i<2;i++) {
+        for (int j=0;j<2;j++) {
+            float sum = 0.0f;
+            for (int k=0;k<4;k++) sum += temp[i][k] * H[j][k];
+            S[i][j] = sum;
+        }
+    }
+}
+
+// K = P * H^T * S^{-1}  (4x2)
+static void compute_K(const float P[4][4], const float H[2][4],
+                      const float S_inv[2][2], float K[4][2]) {
+    float PHt[4][2];
+    mat4_Ht_mul(P, H, PHt);      // 4x2
+    for (int i=0;i<4;i++) {
+        for (int j=0;j<2;j++) {
+            float sum = 0.0f;
+            for (int k=0;k<2;k++) sum += PHt[i][k] * S_inv[k][j];
+            K[i][j] = sum;
+        }
+    }
+}
+
+// P = (I - K*H) * P
+static void update_P(float P[4][4], const float K[4][2], const float H[2][4]) {
+    float KH[4][4];
+    for (int i=0;i<4;i++) {
+        for (int j=0;j<4;j++) {
+            float sum = 0.0f;
+            for (int k=0;k<2;k++) sum += K[i][k] * H[k][j];
+            KH[i][j] = sum;
+        }
+    }
+    float IminusKH[4][4];
+    for (int i=0;i<4;i++) {
+        for (int j=0;j<4;j++) {
+            IminusKH[i][j] = KF_I[i][j] - KH[i][j];
+        }
+    }
+    float newP[4][4];
+    mat4_mul(IminusKH, P, newP);
+    mat4_copy(P, newP);
+}
+
+// Initialize the filter with an initial guess for x,y and large uncertainty.
+void kf2d_init(KF2D *kf, float x0_cm, float y0_cm) {
+    kf->x[0] = x0_cm;
+    kf->x[1] = y0_cm;
+    kf->x[2] = 0.0f;  // initial vx
+    kf->x[3] = 0.0f;  // initial vy
+
+    // Big uncertainty initially since ultrasonic sensors can jump rapidly
+    for (int i=0;i<4;i++) {
+        for (int j=0;j<4;j++) {
+            kf->P[i][j] = 0.0f;
+        }
+    }
+    kf->P[0][0] = 1000.0f; // x
+    kf->P[1][1] = 1000.0f; // y
+    kf->P[2][2] = 1000.0f; // vx
+    kf->P[3][3] = 1000.0f; // vy
+}
+
+// Prediction step: x = F x; P = F P F^T + Q
+void kf2d_predict(KF2D *kf) {
+    // x = F * x
+    float x_new[4];
+    mat4_vec4_mul(KF_F, kf->x, x_new);
+    for (int i=0;i<4;i++) kf->x[i] = x_new[i];
+
+    // P = F * P * F^T + Q
+    float FP[4][4];
+    mat4_mul(KF_F, kf->P, FP);
+
+    // F^T
+    float Ft[4][4];
+    for (int i=0;i<4;i++)
+        for (int j=0;j<4;j++)
+            Ft[i][j] = KF_F[j][i];
+
+    float FPFt[4][4];
+    mat4_mul(FP, Ft, FPFt);
+
+    mat4_copy(kf->P, FPFt);
+    mat4_add(kf->P, KF_Q);
+}
+
+// Update step with a new measurement (x_meas_cm, y_meas_cm)
+void kf2d_update(KF2D *kf, float z_x_cm, float z_y_cm) {
+    float z[2] = { z_x_cm, z_y_cm };
+
+    // Innovation y = z - H*x_pred
+    float Hx[2];
+    for (int i=0;i<2;i++) {
+        float sum = 0.0f;
+        for (int j=0;j<4;j++) sum += KF_H[i][j] * kf->x[j];
+        Hx[i] = sum;
+    }
+    float y[2];
+    y[0] = z[0] - Hx[0];
+    y[1] = z[1] - Hx[1];
+
+    // S = H*P*H^T + R
+    float S[2][2];
+    compute_S(kf->P, KF_H, S);
+    mat2_add(S, KF_R);
+
+    // S_inv
+    float S_inv[2][2];
+    mat2_inv(S, S_inv);
+
+    // K = P*H^T*S_inv
+    float K[4][2];
+    compute_K(kf->P, KF_H, S_inv, K);
+
+    // x = x + K*y
+    float Ky[4];
+    for (int i=0;i<4;i++) {
+        float sum = 0.0f;
+        for (int j=0;j<2;j++) sum += K[i][j] * y[j];
+        Ky[i] = sum;
+    }
+    for (int i=0;i<4;i++) kf->x[i] += Ky[i];
+
+    // P = (I - K*H)*P
+    update_P(kf->P, K, KF_H);
+}
+// ================= End Kalman filter for 2D position =================
+
+#define GRID_LINES 10 // Draw lines for each 0.2m
+#define SCREEN_W 640
+#define SCREEN_H 480
+#define METERS_PER_X SIDE_LENGTH_M // Horizontal coverage (meters)
+#define METERS_PER_Y SIDE_LENGTH_M // Vertical coverage (meters)
+float pixels_per_m_x = SCREEN_W / METERS_PER_X;
+float pixels_per_m_y = SCREEN_H / METERS_PER_Y;
+float grid_spacing_m = METERS_PER_X / GRID_LINES;
+int i;
+char label[10];
+
+void draw_2m_grid() {
+    // Set grid properties:
+   
+    setTextSize(1);
+    setTextColor(color_blue);
+
+
+    // Draw vertical grid lines (X = constant), label at bottom
+    for (i = 0; i <= GRID_LINES; i++) {
+        int x = (int)(i * grid_spacing_m * pixels_per_m_x);
+        drawVLine(x, 0, SCREEN_H, color_blue);
+
+
+        // X-axis label
+        sprintf(label, "%.2fm", i * grid_spacing_m);
+        setCursor(x+2, SCREEN_H-15);
+        writeString(label);
+    }
+
+
+    // Draw horizontal grid lines (Y = constant), label at left
+    for (i = 0; i <= GRID_LINES; i++) {
+        int y = (int)(i * grid_spacing_m * pixels_per_m_y);
+        drawHLine(0, y, SCREEN_W, color_blue);
+
+
+        // Y-axis label
+        sprintf(label, "%.2fm", i * grid_spacing_m);
+        setCursor(2, y+2);
+        writeString(label);
+    }
+
+    // Draw bold axis lines
+    drawVLine(0, 0, SCREEN_H, WHITE);
+    drawHLine(0, 0, SCREEN_W, WHITE);
+}
+
+// IN METERS
+float max_distance_m = SIDE_LENGTH_M;
+int max_distance_cm = (int)(SIDE_LENGTH_M * 100.0f);
+int half_max_distance_cm = (int)(SIDE_LENGTH_M * 50.0f);
+
+// IN PIXELS
+int ball_x_max_px = 640 ;
+int ball_y_max_px = 480 ;
+int ball_radius = 10 ;
+
+/**
+ * Stuff to predict the ball position in 2D based on last 3 measurements
+ * For both X and Y
+ */
+
+// DO FOR X
+int x_array[3] = {0, 0, 0};  // center position history buffer
+
+int calc_x_center_now(void) {
+    int sum = 0;
+    for (int i = 0; i <= 2; i++) {  
+        sum += x_array[i];
+    }
+    return sum / 3;
+}
+// dt is 100ms
+float estimate_x_velocity() {
+    float x_k   = x_array[2];  // newest
+    float x_km1 = x_array[1];  // previous
+    float x_km2 = x_array[0];  // oldest
+    // numerical derivative approximation with more accuracy
+    // three-point backward difference formula (from Taylor series)
+    // more accurate than simple two-point difference
+    float v = (3.0f*x_k - 4.0f*x_km1 + x_km2) / (2.0f * 0.1f); // dt = 0.1s
+    return v;
+}
+
+// rounds to nearest cm
+float predict_x_center() {
+    float x_now = calc_x_center_now();               
+    float v     = estimate_x_velocity();
+    return x_now + v * 0.1f;  // predict 100ms into future
+}
+
+// linked list queue like function
+void push_x_center(int new_center) {
+    // shift old values down
+    for (int i = 0; i < 2; i++) {
+        x_array[i] = x_array[i + 1];
+    }
+    // store newest at the end
+    x_array[2] = new_center;
+}
+
+// NOW DO FOR Y
+int y_array[3] = {0, 0, 0};  // center position history buffer
+
+int calc_y_center_now(void) {
+    int sum = 0;
+    for (int i = 0; i <= 2; i++) {  
+        sum += y_array[i];
+    }
+    return sum / 3;
+}
+// dt is 100ms
+float estimate_y_velocity() {
+    float y_k   = y_array[2];  // newest
+    float y_km1 = y_array[1];  // previous
+    float y_km2 = y_array[0];  // oldest
+    // numerical derivative approximation with more accuracy
+    float v = (3.0f*y_k - 4.0f*y_km1 + y_km2) / (2.0f * 0.1f); // dt = 0.1s
+    return v;
+}
+
+// rounds to nearest cm
+float predict_y_center() {
+    float y_now = calc_y_center_now();               
+    float v     = estimate_y_velocity();
+    return y_now + v * 0.1f;  // predict 100ms into future
+}
+
+// linked list queue like function
+void push_y_center(int new_center) {
+    // shift old values down
+    for (int i = 0; i < 2; i++) {
+        y_array[i] = y_array[i + 1];
+    }
+    // store newest at the end
+    y_array[2] = new_center;
+}
+
+float predicted_x_center = 0.0f;
+float last_good_x_center = 0.0f;
+float filtered_x_center = 0.0f;
+float predicted_y_center = 0.0f;
+float last_good_y_center = 0.0f;
+float filtered_y_center = 0.0f;
+float filtered_x_center_k = 0.0f;
+float filtered_y_center_k = 0.0f;
+
+volatile float theta_error = 0.0f;
+volatile float pitch_error = 0.0f;
+
+int true_x_px = 0;
+int true_y_px = 0;
+
+KF2D kf2d;
+
+static PT_THREAD (protothread_anim(struct pt *pt))
+{
+    PT_BEGIN(pt);
+
+    // Variables for maintaining frame rate
+    static int begin_time ;
+    static int spare_time ;
+
+    while(1) {
+        // Erase previous frame completely
+        begin_time = time_us_32() ;
+
+        // wait for vsync to go low
+        while (gpio_get(VSYNC)) {}
+        if (erase_mode == ERASE || clear_screen == 1) {
+            clearLowFrame(0,0);
+            clear_screen = 0;
+        }
+
+        // delta time in seconds for pattern
+        static uint32_t last_time_us = 0;
+        uint32_t now_us = begin_time;
+        float dt = (last_time_us == 0) ? DT : (now_us - last_time_us) * 1e-6f;
+        if (dt <= 0.0f) dt = DT;
+        last_time_us = now_us;
+
+        // If pattern_mode, override distance_cm_1..4 with synthetic target
+        if (pattern_mode) {
+            // center of field in cm
+            const float x0 = SIDE_LENGTH_CM * 0.5f;
+            const float y0 = SIDE_LENGTH_CM * 0.5f;
+            const float R  = SIDE_LENGTH_CM * 0.3f;   // radius (30% of side)
+            const float w  = 2.0f * 3.14159f / 10.0f; // one revolution every 10 s
+
+            t_pattern += dt;
+
+            float x_obj = x0 + R * cosf(w * t_pattern); // cm
+            float y_obj = y0 + R * sinf(w * t_pattern); // cm
+
+            // Clamp to field just in case
+            if (x_obj < 0) x_obj = 0;
+            if (x_obj > SIDE_LENGTH_CM) x_obj = SIDE_LENGTH_CM;
+            if (y_obj < 0) y_obj = 0;
+            if (y_obj > SIDE_LENGTH_CM) y_obj = SIDE_LENGTH_CM;
+
+            // Synthesize what each sensor would read given that object position
+            // front sensor at x=0, back at x=max, front y at y=0, back y at y=max
+            distance_cm_1 = x_obj;                    // from x=0 to object x
+            distance_cm_3 = SIDE_LENGTH_CM - x_obj;   // from x=max to object x
+            distance_cm_2 = y_obj;                    // from y=0 to object y
+            distance_cm_4 = SIDE_LENGTH_CM - y_obj;   // from y=max to object y
+
+            true_x_px = (int)((x_obj / max_distance_cm) * ball_x_max_px);
+            true_y_px = (int)((y_obj / max_distance_cm) * ball_y_max_px);
+        } 
+
+        float distance_m = distance_cm_1 / 100.0;
+        float distance_m2 = distance_cm_2 / 100.0;
+        float distance_m3 = distance_cm_3 / 100.0;
+        float distance_m4 = distance_cm_4 / 100.0;
+
+        // Clamp distances to max range
+        if (distance_m > max_distance_m) distance_m = max_distance_m;
+        if (distance_m < 0) distance_m = 0;
+
+        if (distance_m2 > max_distance_m) distance_m2 = max_distance_m;
+        if (distance_m2 < 0) distance_m2 = 0;
+
+        if (distance_m3 > max_distance_m) distance_m3 = max_distance_m;
+        if (distance_m3 < 0) distance_m3 = 0;
+
+        if (distance_m4 > max_distance_m) distance_m4 = max_distance_m;
+        if (distance_m4 < 0) distance_m4 = 0;
+
+        // distance_cm_1 is from x=0 to object x, front
+        // distnace_cm_3 is from x=640 to object x, back
+        // distance_cm_2 is from y=0 to object y, front
+        // distance_cm_4 is from y=480 to object y, back
+
+        // Compute ball position as a function of distance
+        float front_x_cm = distance_cm_1;
+        float back_x_cm  = max_distance_cm - distance_cm_3;
+        float distance_x_center = 0.5f * (front_x_cm + back_x_cm);
+        float front_y_cm = distance_cm_2;
+        float back_y_cm = max_distance_cm - distance_cm_4;
+        float distance_y_center = 0.5f * (front_y_cm + back_y_cm);
+
+        // center cm to pixel fraction conversion
+        float fraction_x = distance_x_center / max_distance_cm;
+        float fraction_y = distance_y_center / max_distance_cm;
+
+        // edges cm to pixel fraction conversion
+        float fraction = distance_cm_1 / max_distance_cm;
+        float fraction2 = distance_cm_2 / max_distance_cm;
+        float fraction3 = distance_cm_3 / max_distance_cm;
+        float fraction4 = distance_cm_4 / max_distance_cm;
+
+        // Compute ball position in pixels (max pixels * measurement fraction of max range in cm)
+        int ball_x_front_px = (int)(ball_x_max_px * fraction);
+        int ball_y_front_px = (int)(ball_y_max_px * fraction2); // Horizontal
+        int ball_x_back_px = ball_x_max_px - (int)(ball_x_max_px * fraction3);
+        if (ball_x_back_px < ball_x_front_px) {
+            ball_x_back_px = ball_x_front_px + 1; // Ensure at least 1 pixel width
+        }
+        int ball_y_back_px = ball_y_max_px - (int)(ball_y_max_px * fraction4);
+        if (ball_y_back_px < ball_y_front_px) {
+            ball_y_back_px = ball_y_front_px + 1; // Ensure at least 1 pixel height
+        } 
+
+        // center of 1d position in cm
+        push_x_center(distance_x_center);
+        push_y_center(distance_y_center);
+
+        kf2d_predict(&kf2d);
+        kf2d_update(&kf2d, distance_x_center, distance_y_center);
+        float kf_x_center = filtered_x_center_k; // in cm
+        float kf_y_center = filtered_y_center_k; // in cm
+        int kf_x_center_px = (int)((kf_x_center / max_distance_cm) * ball_x_max_px);
+        int kf_y_center_px = (int)((kf_y_center / max_distance_cm) * ball_y_max_px);
+        int filtered_x_center_px = (int)((filtered_x_center / max_distance_cm) * ball_x_max_px);
+        int filtered_y_center_px = (int)((filtered_y_center / max_distance_cm) * ball_y_max_px);
+
+        // sprintf(pt_serial_out_buffer, "cm_3: %d\n", (int)distance_cm_3);
+        // serial_write;
+
+        // Ok lets create some options for the user to see different things
+        // 1. Draw object on a 2d screen with grid
+
+        if (drawing_mode == DRAW_2D_GRID) {
+            draw_2m_grid();
+            drawRect(ball_x_front_px, ball_y_front_px, ball_x_back_px - ball_x_front_px,
+                     ball_y_back_px - ball_y_front_px, color_red);
+        }
+
+        // 2. No grid but draw object at calculated position and predicted position
+
+        else if (drawing_mode == DRAW_BALL_PRED) {
+            drawRect(ball_x_front_px, ball_y_front_px, ball_x_back_px - ball_x_front_px,
+                     ball_y_back_px - ball_y_front_px, color_red);
+            drawCircle((int)predict_x_center() * ball_x_max_px / max_distance_cm,
+                       (int)predict_y_center() * ball_y_max_px / max_distance_cm,
+                       ball_radius, color_red);
+            if (kalman_filter_enabled) {
+                drawCircle((int)kf_x_center_px, (int)kf_y_center_px, ball_radius, color_blue);
+            }
+            if (ema_filter_enabled) {
+                drawCircle((int)filtered_x_center_px, (int)filtered_y_center_px, ball_radius, color_green);
+            }
+            
+        }
+
+        // 3. No grid but object center is drawn and never erased (drawing program)
+
+        else if (drawing_mode == DRAW_PROGRAM) {
+            if (pattern_mode) {
+                drawCircle((int)true_x_px, (int)true_y_px, 1, color);
+            }
+            if (ema_filter_enabled && draw_pred_overlay) {
+                drawCircle((int)filtered_x_center_px, (int)filtered_y_center_px, 1, drawing_mode_color);
+            }
+            if  (kalman_filter_enabled && draw_pred_overlay) {
+                drawCircle((int)kf_x_center_px, (int)kf_y_center_px, 1, color_green);
+            }
+        }
+
+        // 4. Raw distances in cm displayed on screen (no grid or object)
+
+        else if (drawing_mode == DRAW_INFO) {
+            sprintf(screentext, "D1: %.1fcm D2: %.1fcm D3: %.1fcm D4: %.1fcm",
+                    distance_cm_1, distance_cm_2, distance_cm_3, distance_cm_4);
+            setTextSize(1);
+            setTextColor(WHITE);
+            setCursor(10, 10);
+            writeString(screentext);
+            sprintf(screentext, "X: %.1fcm Y: %.1fcm", distance_x_center, distance_y_center);
+            setCursor(10, 30);
+            writeString(screentext);
+            sprintf(screentext, "Filt X: %.1fcm Filt Y: %.1fcm", filtered_x_center, filtered_y_center);
+            setCursor(10, 50);
+            writeString(screentext);
+            sprintf(screentext, "Curr Theta: %.1f Curr Pitch: %.1f", curr_laser_theta, curr_laser_pitch);
+            setCursor(10, 70);
+            writeString(screentext);
+
+            if (error_mode == THETA_PITCH_ERROR_MODE) { 
+                 sprintf(screentext, "Theta Err: %.1f Pitch Err: %.1f",
+                         theta_error, pitch_error);
+                 setCursor(10, 90);
+                 writeString(screentext);
+            } else if (error_mode == X_Y_ERROR_MODE) {
+                if (kalman_filter_enabled) {
+                    sprintf(screentext, "X error: %.1f Y error: %.1f",
+                            filtered_x_center_k - half_max_distance_cm, filtered_y_center_k - half_max_distance_cm);
+                } else {
+                    sprintf(screentext, "X error: %.1f Y error: %.1f",
+                            filtered_x_center - half_max_distance_cm, filtered_y_center - half_max_distance_cm);
+                }
+                setCursor(10, 110);
+                writeString(screentext);
+            }
+
+            if (kalman_filter_enabled) {
+                sprintf(screentext, "KF X: %.1fcm KF Y: %.1fcm", kf_x_center, kf_y_center);
+                setCursor(10, 130);
+                writeString(screentext);
+            }
+
+            sprintf(screentext, "Motor1 PWM: %d Motor2 PWM: %d", motor_control_1, motor_control_2);
+            setCursor(10, 150);
+            writeString(screentext);
+        }
+
+        // PT_YIELD_usec(100000) ;
+
+        spare_time = FRAME_RATE - (time_us_32() - begin_time) ;
+        if (spare_time > 0) {
+            PT_YIELD_usec(spare_time);
+        }
+    }
+    PT_END(pt);
+}
+
+static int time_elapsed = 0 ;
+char vgatext[20]  ;
+float theta_gain = 200.0f;
+float pitch_gain = 300.0f;
+float gain_1 = 100.0f;
+float gain_2 = 100.0f;
+
+// thread to generate trigger pulse (CORE1)
+static PT_THREAD (pulse_thread1(struct pt *pt)) {
+    // every thread begins with PT_BEGIN(pt);
+    PT_BEGIN(pt);
+    while(1) {
+        // Send a 10us pulse to trigger
+        gpio_put(TRIGGER_PIN_1, 1);
+        PT_YIELD_usec(10);
+        gpio_put(TRIGGER_PIN_1, 0);
+        PT_YIELD_usec(25000);
+
+
+        gpio_put(TRIGGER_PIN_2, 1);
+        PT_YIELD_usec(10);
+        gpio_put(TRIGGER_PIN_2, 0);
+        PT_YIELD_usec(25000);
+
+
+        gpio_put(TRIGGER_PIN_3, 1);
+        PT_YIELD_usec(10);
+        gpio_put(TRIGGER_PIN_3, 0);
+        PT_YIELD_usec(25000);
+
+
+        gpio_put(TRIGGER_PIN_4, 1);
+        PT_YIELD_usec(10);
+        gpio_put(TRIGGER_PIN_4, 0);
+        PT_YIELD_usec(25000);
+
+        if (kalman_filter_enabled) {
+            predicted_x_center = kf2d.x[0];
+            predicted_y_center = kf2d.x[1];
+        } else {
+            predicted_x_center = predict_x_center();
+            predicted_y_center = predict_y_center();
+        } 
+        
+        if (predicted_x_center > 1 && predicted_x_center < SIDE_LENGTH_CM) {
+            last_good_x_center = predicted_x_center;
+        } else {
+            predicted_x_center = last_good_x_center;
+        }
+
+        if (predicted_y_center > 1 && predicted_y_center < SIDE_LENGTH_CM) {
+            last_good_y_center = predicted_y_center;
+        } else {
+            predicted_y_center = last_good_y_center;
+        }
+        
+        // Exponential Moving Average 
+        // prior filterd value has higher weight than new value
+        // good for smoothing with these sometimes wonky values the 
+        // ultrasonic sensors can throw
+
+        if (ema_filter_enabled) {
+            filtered_x_center = old_weight * filtered_x_center + new_weight * predicted_x_center;
+            filtered_y_center = old_weight * filtered_y_center + new_weight * predicted_y_center;
+        } 
+        if (kalman_filter_enabled) {
+            filtered_x_center_k = predicted_x_center;
+            filtered_y_center_k = predicted_y_center;
+        }
+        
+        int motor_input_1 = 0;
+        int motor_input_2 = 0;
+
+        if (error_mode == X_Y_ERROR_MODE) {
+            float x_error;
+            float y_error;
+            if (kalman_filter_enabled) {
+                x_error = filtered_x_center_k - half_max_distance_cm;
+                y_error = filtered_y_center_k - half_max_distance_cm;
+            } else {
+                x_error = filtered_x_center - half_max_distance_cm;
+                y_error = filtered_y_center - half_max_distance_cm;
+            }
+            
+            float error = sqrtf(x_error * x_error + y_error * y_error);
+            int motor_pwm_1 = (int)(gain_1 * error);
+            int motor_pwm_2 = (int)(gain_2 * error);
+            motor_input_1 = motor_pwm_1;
+            motor_input_2 = motor_pwm_2;
+
+            if (x_error < 0) {
+                spin_dir_1 = CCW;
+            } else {
+                spin_dir_1 = CW;
+            }
+
+            if (y_error < 0) {
+                spin_dir_2 = CCW;
+            } else {
+                spin_dir_2 = CW;
+            }
+        } else if (error_mode == THETA_PITCH_ERROR_MODE) {
+            // Calculate gimbal errors, use kalman if enabled
+            if (kalman_filter_enabled) {
+                xy_to_gimbal_pwm(filtered_x_center_k, filtered_y_center_k, curr_laser_theta,
+                                curr_laser_pitch, &theta_error, &pitch_error);
+            } else {
+                xy_to_gimbal_pwm(filtered_x_center, filtered_y_center, curr_laser_theta,
+                                curr_laser_pitch, &theta_error, &pitch_error);
+            }
+        
+            // sprintf(pt_serial_out_buffer, "Theta Error: %d\n", (int)theta_error);
+            // serial_write;
+
+            motor_input_1 = (int)(theta_gain * theta_error);
+            motor_input_2 = (int)(pitch_gain * pitch_error);
+        }
+
+        // Clamp motor inputs to valid range
+        if (motor_input_1 < 0) motor_input_1 = -(motor_input_1);
+        if (motor_input_1 > 5000) motor_input_1 = 5000;
+        if (motor_input_2 < 0) motor_input_2 = -(motor_input_2);
+        if (motor_input_2 > 5000) motor_input_2 = 5000;
+        
+        // Only run motors this way if sensors are enabled
+        if (sensors_enabled) {
+            motor_control_1 = motor_input_1;
+            motor_control_2 = motor_input_2;
+        }
+    }
+    PT_END(pt);
+}
+
+// ==================================================
+// === users serial input thread
+// ==================================================
+static PT_THREAD (protothread_serial(struct pt *pt))
+{
+    PT_BEGIN(pt) ;
+    static int test_in ;
+    static float f_in ;
+    while(1) {
+        sprintf(pt_serial_out_buffer, "input a number (0-5000): ");
+        serial_write ;
+        // spawn a thread to do the non-blocking serial read
+        serial_read ;
+        // convert input string to number
+        sscanf(pt_serial_in_buffer,"%d", &test_in) ;
+        if (test_in > 5000) continue ;
+        else if (test_in < 0) continue ;
+        else if (test_in == 1) {
+            start_ultrasonic_sensors();
+        } else if (test_in == 2) {
+            drawing_mode = DRAW_2D_GRID;
+            erase_mode = ERASE;
+        } else if (test_in == 3) {
+            drawing_mode = DRAW_BALL_PRED;
+            erase_mode = ERASE;
+        } else if (test_in == 4) {
+            drawing_mode = DRAW_INFO;
+            erase_mode = ERASE;
+        } else if (test_in == 5) {
+            drawing_mode = DRAW_PROGRAM;
+            draw_pred_overlay = 1;
+            erase_mode = DRAW;
+            clear_screen = 1;
+        } else if (test_in == 6) {
+            drawing_mode = DRAW_PROGRAM;
+            draw_pred_overlay = 1;
+            erase_mode = DRAW;
+            clear_screen = 1;
+        } else if (test_in == 7) {
+            error_mode = THETA_PITCH_ERROR_MODE;
+        } else if (test_in == 8) {
+            error_mode = X_Y_ERROR_MODE;
+        } else if (test_in == 10) {
+            drawing_mode_color = color_red;
+        } else if (test_in == 11) {
+            drawing_mode_color = color;
+        } else if (test_in == 12) {
+            drawing_mode_color = color_blue;
+        } else if (test_in == 13) {
+            drawing_mode_color = color_green;
+        } else if (test_in == 14) {
+            drawing_mode_color = color_black;
+        } else if (test_in == 15) {
+            clear_screen = 1;
+        } else if (test_in == 16) {
+            sprintf(pt_serial_out_buffer, "Enter q_pos (cm^2): ");
+            serial_write;
+            serial_read;  // read float line
+            if (sscanf(pt_serial_in_buffer, "%f", &f_in) == 1 && f_in > 0.0f) {
+                q_pos = f_in;
+                kf2d_update_QR_from_scalars();
+                sprintf(pt_serial_out_buffer, "q_pos = %.3f\n", q_pos);
+            } else {
+                sprintf(pt_serial_out_buffer, "Invalid q_pos\n");
+            }
+            serial_write;
+
+        } else if (test_in == 17) {
+            sprintf(pt_serial_out_buffer, "Enter q_vel ((cm/s)^2): ");
+            serial_write;
+            serial_read;
+            if (sscanf(pt_serial_in_buffer, "%f", &f_in) == 1 && f_in > 0.0f) {
+                q_vel = f_in;
+                kf2d_update_QR_from_scalars();
+                sprintf(pt_serial_out_buffer, "q_vel = %.3f\n", q_vel);
+            } else {
+                sprintf(pt_serial_out_buffer, "Invalid q_vel\n");
+            }
+            serial_write;
+        } else if (test_in == 18) {
+            sprintf(pt_serial_out_buffer, "Enter r_meas (cm^2): ");
+            serial_write;
+            serial_read;
+            if (sscanf(pt_serial_in_buffer, "%f", &f_in) == 1 && f_in > 0.0f) {
+                r_meas = f_in;
+                kf2d_update_QR_from_scalars();
+                sprintf(pt_serial_out_buffer, "r_meas = %.3f\n", r_meas);
+            } else {
+                sprintf(pt_serial_out_buffer, "Invalid r_meas\n");
+            }
+            serial_write;
+        } else if (test_in == 19) {
+            kalman_filter_enabled = !kalman_filter_enabled;
+            kf2d_update_QR_from_scalars();
+            sprintf(pt_serial_out_buffer, "Kalman filter %s\n", kalman_filter_enabled ? "enabled" : "disabled");
+            serial_write;
+        } else if (test_in == 20) {
+            ema_filter_enabled = !ema_filter_enabled;
+            sprintf(pt_serial_out_buffer, "EMA filter %s\n", ema_filter_enabled ? "enabled" : "disabled");
+            serial_write;
+        } else if (test_in == 21) {
+            sprintf(pt_serial_out_buffer, "Enter old_weight (0.0 - 0.99): ");
+            serial_write;
+            serial_read;
+
+            if (sscanf(pt_serial_in_buffer, "%f", &f_in) == 1 && f_in >= 0.0f) {
+                if (f_in >= 1.0f) f_in = 0.99f;  // cap at < 1 so new_weight > 0
+                old_weight = f_in;
+                new_weight = 1.0f - old_weight;
+
+                sprintf(pt_serial_out_buffer,
+                        "old_weight=%.3f new_weight=%.3f\n",
+                        old_weight, new_weight);
+            } else {
+                sprintf(pt_serial_out_buffer, "Invalid old_weight\n");
+            }
+            serial_write;
+        } else if (test_in == 22) {
+            sprintf(pt_serial_out_buffer, "Enter theta gain (float): ");
+            serial_write;
+            serial_read;
+            if (sscanf(pt_serial_in_buffer, "%f", &f_in) == 1 && f_in >= 0.0f) {
+                theta_gain = f_in;
+                sprintf(pt_serial_out_buffer, "theta_gain=%.3f", theta_gain);
+            } else {
+                sprintf(pt_serial_out_buffer, "Invalid theta_gain\n");
+            }
+            serial_write;
+        } else if (test_in == 23) {
+            sprintf(pt_serial_out_buffer, "Enter pitch gain (float): ");
+            serial_write;
+            serial_read;
+            if (sscanf(pt_serial_in_buffer, "%f", &f_in) == 1 && f_in >= 0.0f) {
+                pitch_gain = f_in;
+                sprintf(pt_serial_out_buffer, "pitch_gain=%.3f", pitch_gain);
+            } else {
+                sprintf(pt_serial_out_buffer, "Invalid pitch_gain\n");
+            }
+            serial_write;
+        } else if (test_in == 24) {
+            sprintf(pt_serial_out_buffer, "Enter ema motor 1 gain (float): ");
+            serial_write;
+            serial_read;
+            if (sscanf(pt_serial_in_buffer, "%f", &f_in) == 1) {
+                gain_1 = f_in;
+                sprintf(pt_serial_out_buffer, "gain_1=%.3f", gain_1);
+            } else {
+                sprintf(pt_serial_out_buffer, "Invalid gain_1\n");
+            }
+            serial_write;
+        } else if (test_in == 25) {
+            sprintf(pt_serial_out_buffer, "Enter ema motor 2 gain (float): ");
+            serial_write;
+            serial_read;
+            if (sscanf(pt_serial_in_buffer, "%f", &f_in) == 1) {
+                gain_2 = f_in;
+                sprintf(pt_serial_out_buffer, "gain_2=%.3f", gain_2);
+            } else {
+                sprintf(pt_serial_out_buffer, "Invalid gain_2\n");
+            }
+            serial_write;
+        } else if (test_in ==  26) {
+            gpio_put(LASER_CONTROL_PIN, !gpio_get(LASER_CONTROL_PIN)) ;
+        } else if (test_in == 27) {
+            pattern_mode = !pattern_mode ;
+            clear_screen = 1 ;
+        } else {
+            motor_control_1 = test_in; 
+            motor_control_2 = test_in;
+        }
+    }
+    PT_END(pt) ;
+}
+
+volatile uint32_t echo_start, echo_end;
+
+
+// Interrupt Service Routine for ECHO_PIN
+void pulse_isr(uint gpio, uint32_t events) {
+    if (gpio == ECHO_PIN_1) {
+        if (events & GPIO_IRQ_EDGE_RISE) {
+            echo_start_1 = time_us_32();
+        }
+        if (events & GPIO_IRQ_EDGE_FALL) {
+            echo_end_1 = time_us_32();
+            uint32_t pulse_width_1 = echo_end_1 - echo_start_1;
+            if (!pattern_mode) {
+                distance_cm_1 = (float)pulse_width_1 * speed;
+            }
+            // distance_cm_1 = (float)((pulse_width_1 * 100) / 5800);
+            // distance_cm_1 = pulse_width_1 >> 6;
+        }
+    } else if (gpio == ECHO_PIN_2) {
+        if (events & GPIO_IRQ_EDGE_RISE) {
+            echo_start_2 = time_us_32();
+        }
+        if (events & GPIO_IRQ_EDGE_FALL) {
+            echo_end_2 = time_us_32();
+            uint32_t pulse_width_2 = echo_end_2 - echo_start_2;
+            if (!pattern_mode) {
+                distance_cm_2 = (float)pulse_width_2 * speed;
+            }
+            // distance_cm_2 = (float)((pulse_width_2 * 100) / 5800);
+            // distance_cm_2 = pulse_width_2 >> 6;
+        }
+    } else if (gpio == ECHO_PIN_3) {
+        if (events & GPIO_IRQ_EDGE_RISE) {
+            echo_start_3 = time_us_32();
+        }
+        if (events & GPIO_IRQ_EDGE_FALL) {
+            echo_end_3 = time_us_32();
+            uint32_t pulse_width_3 = echo_end_3 - echo_start_3;
+            if (!pattern_mode) {
+                distance_cm_3 = (float)pulse_width_3 * speed;
+            }
+            // distance_cm_3 = (float)((pulse_width_3 * 100) / 5800);
+            // distance_cm_3 = pulse_width_3 >> 6;
+        }
+    } else if (gpio == ECHO_PIN_4) {
+        if (events & GPIO_IRQ_EDGE_RISE) {
+            echo_start_4 = time_us_32();
+        }
+        if (events & GPIO_IRQ_EDGE_FALL) {
+            echo_end_4 = time_us_32();
+            uint32_t pulse_width_4 = echo_end_4 - echo_start_4;
+            if (!pattern_mode) {
+                distance_cm_4 = (float)pulse_width_4 * speed;
+            }
+            // distance_cm_4 = (float)((pulse_width_4 * 100) / 5800);
+            // distance_cm_4 = pulse_width_4 >> 6;
+        }
+    }
+}
+
+// so set laser position to like 0.1m and test some parameters to see how much motor should go or not
+// will this be a thread? yes it should be added to the pulse_isr right?
+
+/**
+ * H-BRIDGE LOGIC
+ * INPUT NEEDED FOR BOTH PWM WIDTH AND WHICH CHANNEL IS OFF
+ * HBRIDGE LOGIC, if control is even, channel A is ON, if odd channel B is ON
+ * this is because with hbridge, channel off controls which way motor spins
+ */
+
+// PWM interrupt service routine 
+void on_pwm_wrap() {
+    uint32_t mask = pwm_get_irq_status_mask();
+    // Clear the interrupt flag that brought us here
+    if (mask & (1u << slice_num_motor_1)) {
+        pwm_clear_irq(slice_num_motor_1);
+        // Update duty cycle
+        if (motor_control_1!=old_motor_control_1) {
+            old_motor_control_1 = motor_control_1 ;
+            if (spin_dir_1 == 0) { // CW, channel A is ON
+                pwm_set_chan_level(slice_num_motor_1, PWM_CHAN_A, motor_control_1);
+                pwm_set_chan_level(slice_num_motor_1, PWM_CHAN_B, 0);
+            } else { // CCW, channel B is ON
+                pwm_set_chan_level(slice_num_motor_1, PWM_CHAN_A, 0);
+                pwm_set_chan_level(slice_num_motor_1, PWM_CHAN_B, motor_control_1);
+            }
+        }
+     } 
+     if (mask & (1u << slice_num_motor_2)) {
+        pwm_clear_irq(slice_num_motor_2);
+        // Update duty cycle
+        if (motor_control_2!=old_motor_control_2) {
+            old_motor_control_2 = motor_control_2 ;
+            if (spin_dir_2 == 0) { // CW, channel A is ON
+                pwm_set_chan_level(slice_num_motor_2, PWM_CHAN_A, motor_control_2);
+                pwm_set_chan_level(slice_num_motor_2, PWM_CHAN_B, 0);
+            } else { // CCW, channel B is ON
+                pwm_set_chan_level(slice_num_motor_2, PWM_CHAN_A, 0);
+                pwm_set_chan_level(slice_num_motor_2, PWM_CHAN_B, motor_control_2);
+            }
+            // pwm_set_chan_level(slice_num_motor_2, PWM_CHAN_A, motor_control_2);
+            // pwm_set_chan_level(slice_num_motor_2, PWM_CHAN_B, 0);
+        }
+    }
+}
+
+// ========================================
+// === core 1 main -- started in main below
+// ========================================
+void core1_main(){
+  // Add animation thread
+  pt_add_thread(protothread_anim);
+  // Start the scheduler
+  pt_schedule_start ;
+
+}
+
+// ========================================
+// === main
+// ========================================
+// USE ONLY C-sdk library
+int main(){
+  set_sys_clock_khz(150000, true) ;
+  // initialize stio
+  stdio_init_all() ;
+
+
+  // initialize VGA
+  initVGA() ;
+
+  ////////////////////////////////////////////////////////////////////////
+  ///////////////////////// PWM CONFIGURATION ////////////////////////////
+  ////////////////////////////////////////////////////////////////////////
+  // Tell GPIO PWM_OUT that it is allocated to the PWM
+  gpio_set_function(PWM_OUT_MOTOR_1_1, GPIO_FUNC_PWM);
+  gpio_set_function(PWM_OUT_MOTOR_1_2, GPIO_FUNC_PWM);
+  gpio_set_function(PWM_OUT_MOTOR_2_1, GPIO_FUNC_PWM);
+  gpio_set_function(PWM_OUT_MOTOR_2_2, GPIO_FUNC_PWM);
+
+  //Find out which PWM slice ic connected to which GPIO
+  slice_num_motor_1 = pwm_gpio_to_slice_num(PWM_OUT_MOTOR_1_1);
+  slice_num_motor_2 = pwm_gpio_to_slice_num(PWM_OUT_MOTOR_2_1);
+
+
+  // Mask our slice's IRQ output into the PWM block's single interrupt line,
+  // and register our interrupt handler
+  pwm_clear_irq(slice_num_motor_1);
+  pwm_clear_irq(slice_num_motor_2);
+
+  pwm_set_irq_enabled(slice_num_motor_1, true);
+  pwm_set_irq_enabled(slice_num_motor_2, true);
+
+  irq_set_exclusive_handler(PWM_IRQ_WRAP, on_pwm_wrap);
+  irq_set_enabled(PWM_IRQ_WRAP, true);
+  
+  // This section configures the period of the PWM signals
+  pwm_set_wrap(slice_num_motor_1, WRAPVAL);
+  pwm_set_wrap(slice_num_motor_2, WRAPVAL);
+
+  pwm_set_clkdiv(slice_num_motor_1, CLKDIV);
+  pwm_set_clkdiv(slice_num_motor_2, CLKDIV);
+
+  // This sets duty cycle for the PWM signals (start off)
+  pwm_set_chan_level(slice_num_motor_1, PWM_CHAN_A, 0);
+  pwm_set_chan_level(slice_num_motor_1, PWM_CHAN_B, 0);
+  pwm_set_chan_level(slice_num_motor_2, PWM_CHAN_A, 0);
+  pwm_set_chan_level(slice_num_motor_2, PWM_CHAN_B, 0);
+
+  // Start the channel
+//   pwm_set_mask_enabled((1u << slice_num_motor_1) |
+//     (1u << slice_num_motor_2));
+
+  // Set up interrupt on ECHO_PIN for both rising and falling edges
+  gpio_set_irq_enabled_with_callback(ECHO_PIN_1, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &pulse_isr);
+  gpio_set_irq_enabled_with_callback(ECHO_PIN_2, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &pulse_isr);
+  gpio_set_irq_enabled_with_callback(ECHO_PIN_3, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &pulse_isr);
+  gpio_set_irq_enabled_with_callback(ECHO_PIN_4, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &pulse_isr);
+
+
+//   start_ultrasonic_sensors();
+  kf2d_init(&kf2d, SIDE_LENGTH_CM/2.0f, SIDE_LENGTH_CM/2.0f);
+
+  gpio_init(25);
+  gpio_set_dir(25, GPIO_OUT);
+
+
+  // start core 1
+  multicore_reset_core1();
+  multicore_launch_core1(&core1_main);
+
+
+  // add threads
+  pt_add_thread(protothread_serial);
+  pt_add_thread(pulse_thread1);
+
+
+  // start scheduler
+  pt_schedule_start ;
+}
+        </textarea>
+    </main>
+
+    <footer>
+        <p>Fall 2025 ECE4760 Final Project Webpage tt549 rdp78 </p>
+    </footer>
+
+</body>
+</html>
