@@ -1,0 +1,2410 @@
+<!DOCTYPE HTML>
+<!--
+	Stellar by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>ECE4760 Final Project</title>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, user-scalable=no"
+		/>
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+
+		<script>
+			window.MathJax = { tex: { inlineMath: [["\\(","\\)"], ["$", "$"]] } };
+		</script>
+		<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+	</head>
+
+	<body class="is-preload">
+		<!-- Wrapper -->
+		<div id="wrapper">
+			<!-- Header -->
+			<header id="header" class="alt">
+				<h1>Self-Balancing Robot</h1>
+				<p>
+					Stephen Barlett, Jamayne Gyimah-Danquah, Md Shad<br />
+					HTML Template by <a href="https://twitter.com/ajlkn">@ajlkn</a> for
+					<a href="https://html5up.net">HTML5 UP</a>.
+				</p>
+			</header>
+
+			<!-- Nav -->
+			<nav id="nav">
+				<ul>
+					<li><a href="#intro" class="active">Introduction</a></li>
+					<li><a href="#hld">High Level Design</a></li>
+					<li><a href="#hwdesign">Hardware Design</a></li>
+					<li><a href="#swdesign">Program Design</a></li>
+					<li><a href="#gesturecontrolhw">Gesture Hardware</a></li>
+					<li><a href="#gesturecontrolsw">Gesture Software</a></li>
+					<li><a href="#results">Results</a></li>
+					<li><a href="#conclusions">Conclusions</a></li>
+					<li><a href="#appendixa">Appendix A</a></li>
+					<li><a href="#appendixb">Appendix B</a></li>
+				</ul>
+			</nav>
+
+			<!-- Main -->
+			<div id="main">
+				<!-- Introduction -->
+				<section id="intro" class="main">
+					<div class="spotlight">
+						<div class="content">
+							<header class="major">
+								<h2>Introduction</h2>
+							</header>
+
+							<!-- Left-aligned intro text -->
+							<div class="intro-text">
+								<p>
+									For our ECE 4760 final project, we built a two-wheeled self-balancing robot that can keep itself
+									upright using real-time feedback control. At its core, the robot behaves like an inverted
+									pendulum, so when it starts to tip, it senses the motion and drives its wheels to bring itself back
+									into balance.
+								</p>
+
+								<p>
+									This project was a chance for us to bring together many of the ideas we learned throughout
+									ECE 4760 and apply them to a real, physical system. A lot of our design was inspired by
+									earlier labs and lecture material, especially the old inverted pendulum examples discussed
+									in class and on the course website, as well as Lab 3, where we used PID control to stabilize
+									a one-dimensional helicopter. Those exercises gave us intuition for how feedback control
+									behaves in practice and directly shaped how we approached this project.
+								</p>
+
+								<p>
+									The robot is controlled by a Raspberry Pi Pico W running a PID controller on the RP2040
+									microcontroller. Using data from an onboard IMU, the controller continuously estimates the
+									robot’s tilt angle and how fast that angle is changing. We combine accelerometer and gyroscope
+									measurements using a complementary filter, another technique we learned in class, to get a
+									stable and responsive angle estimate. Based on this information, the controller computes motor
+									commands at a high rate to keep the robot balanced.
+								</p>
+
+								<p>
+									We also wanted the robot to be interactive rather than just balancing in place. To do this, we
+									built a web-based interface hosted directly on the Pico W, which lets us monitor the robot and
+									adjust parameters in real time. On top of that, we added gesture-based control so a user can
+									influence the robot’s motion to move forward or backwards in regards to the tilt of a device.
+								</p>
+
+								<p>
+									Throughout the project, we went through several design iterations. Decisions about robot height,
+									weight distribution, motor placement, and chassis layout all had noticeable effects on control
+									performance, and testing often forced us to revisit earlier choices. The final robot reflects
+									this iterative process and captures what we think ECE 4760 is really about: combining theory,
+									hardware, and software to build something that actually works in the real world.
+								</p>
+							</div>
+
+							<ul class="actions">
+								<li>
+									<a href="https://youtu.be/V_mZqi3zYsA" class="button">Demo Video</a>
+								</li>
+							</ul>
+						</div>
+
+						<span class="image">
+							<img src="images/cartoon-bot.png" alt="cartoon-bot" />
+						</span>
+					</div>
+				</section>
+
+				<section id="hld" class="main">
+					<div class="spotlight">
+						<div class="content">
+							<header class="major">
+								<h2>High Level Design</h2>
+							</header>
+
+							<p>
+								Our high-level design process began with creating a full 3-D CAD model in Onshape. As a team,
+								we wanted to fully think through the mechanical structure of the robot before building anything
+								physically. Modeling the robot in CAD allowed us to reason about dimensions, material choices,
+								weight distribution, and how all of the subsystems would fit together. This step helped us catch
+								several potential issues early, particularly related to motor placement, center of mass, and
+								wiring, before committing to fabrication.
+							</p>
+
+							<p>
+								Rather than treating the CAD model as a static drawing, we used it as an iterative design tool.
+								As our understanding of the physics and control requirements improved, we repeatedly revisited
+								the model and adjusted the design to better align with our goals for stability, symmetry, and
+								ease of assembly.
+							</p>
+
+							<figure style="text-align: center;">
+								<img
+									src="images/robotassembly.png"
+									alt="robot-assembly"
+									style="max-width: 50%; height: auto;"
+								/>
+								<figcaption>Initial full CAD assembly showing overall robot structure.</figcaption>
+							</figure>
+
+							<ul class="actions">
+								<li>
+									<a
+										href="https://cad.onshape.com/documents/d4ea7420d6f71259f6b142d5/w/6c7774b5557b06e9d49a10a8/e/8654f4ecfb2beb2b67ef4a9b?renderMode=0&uiState=6945dca5a52915c73c799366"
+										class="button"
+										target="_blank"
+										rel="noreferrer"
+									>
+										View Full CAD Model (Onshape)
+									</a>
+								</li>
+							</ul>
+
+							<h3>Motor Torque and Weight Constraints</h3>
+
+							<p>
+								One of the first constraints we considered was whether our motors could realistically support
+								the weight of the robot while still providing enough torque for balance corrections. We selected
+								48:1 DC gear motors rated at a maximum output torque of 0.078 N·m and paired them with wheels
+								of radius 5 cm (0.05 m).
+							</p>
+
+							<p>
+								To understand what this meant in practice, we related motor torque to the force applied at the
+								wheel–ground interface using the standard torque relationship:
+							</p>
+
+							<figure style="text-align: center;">
+								<p>\( \tau = F r \)</p>
+								<p>\( F = \frac{\tau}{r} \)</p>
+								<p>\( F_{\text{motor}} = \frac{0.078}{0.05} = 1.56 \text{ N} \)</p>
+								<figcaption>Figure 1: Torque-to-force relationship at the wheel.</figcaption>
+							</figure>
+
+							<p>Since our robot uses two motors, the total available horizontal force is approximately:</p>
+
+							<figure style="text-align: center;">
+								<p>\( F_{\text{total}} = 2 \times 1.56 = 3.12 \text{ N} \)</p>
+								<figcaption>Figure 2: Combined force from both motors.</figcaption>
+							</figure>
+
+							<p>
+								The completed robot had a total mass of approximately 3 lb (1.36 kg), corresponding to a
+								gravitational force of:
+							</p>
+
+							<figure style="text-align: center;">
+								<p>\( F_g = mg = (1.36)(9.81) \approx 13.3 \text{ N} \)</p>
+								<figcaption>Figure 3: Gravitational force acting on the robot.</figcaption>
+							</figure>
+
+							<p>
+								At first glance, this might suggest that the motors are insufficient; however, a self-balancing
+								robot does not require the motors to lift the robot vertically. Instead, the motors generate
+								horizontal acceleration of the wheels to correct angular deviations of the inverted pendulum
+								system. Only a fraction of the robot’s weight contributes to the required corrective torque at
+								small tilt angles.
+							</p>
+
+							<p>
+								This understanding guided our design decisions and gave us confidence that, with appropriate
+								height selection and PID control, our motors would be capable of stabilizing a 3 lb robot. This
+								was ultimately confirmed through experimental testing.
+							</p>
+							<h3>Logical System Structure</h3>
+
+							<p>
+							  From a system-level perspective, the robot is organized as a closed-loop feedback system. Sensor
+							  data from the IMU is continuously sampled and filtered to estimate the robot’s orientation. This
+							  estimate is passed to the PID controller, which computes a corrective control signal. That signal
+							  is then translated into PWM commands that drive the motors, completing the feedback loop.
+							</p>
+							
+							<p>
+							  This logical structure influenced both the hardware and software design. Mechanically, we aimed
+							  to create a symmetric, predictable platform so that the control assumptions would hold. In
+							  software, we prioritized deterministic timing and consistent sampling rates to ensure stable
+							  controller behavior.
+							</p>
+							<h3>Effect of Robot Height on Stability</h3>
+
+							<p>
+								With motor limitations in mind, we spent significant time discussing how tall the robot should
+								be. Height plays a major role in the dynamics of a self-balancing robot because it determines
+								the location of the center of mass.
+							</p>
+
+							<p>
+								If the robot is too tall, the center of mass is higher, which increases the gravitational torque
+								during tilt and demands larger corrective torques from the motors. If the robot is too short,
+								the center of mass lies close to the wheel axle, reducing the gravitational restoring torque and
+								making the system more sensitive to noise, disturbances, and control latency.
+							</p>
+
+							<p>
+								We ultimately chose a moderate height that struck a balance between these two extremes. This
+								provided a measurable tilt response for the controller while remaining within the torque
+								capabilities of our motors.
+							</p>
+
+							<h3>CAD Iterations and Motor Orientation</h3>
+
+							<p>
+								During CAD development, we explored several motor mounting configurations. One issue we noticed
+								early was that the motor shafts were slightly offset within the motor housings rather than being
+								centered.
+							</p>
+
+							<p>
+								One idea we considered was mounting the motors horizontally but in opposite orientations so that
+								the shaft offsets would cancel each other out. While this approach was theoretically sound, it
+								added mechanical complexity and made precise alignment more difficult.
+							</p>
+
+							<p>
+								We ultimately decided to mount the motors vertically, which ensured symmetry about the center
+								of the robot and simplified both the mechanical assembly and mass distribution. This decision
+								required us to revise our initial CAD design, but it resulted in a cleaner and more predictable
+								structure.
+							</p>
+
+							<h3>Chassis Design and Fabrication</h3>
+
+							<p>
+								For the overall chassis, we chose to use clear acrylic (plexiglass). The final mechanical
+								assembly consists of three main acrylic plates forming the body of the robot, six acrylic
+								interconnect pieces used to attach the motors, four M5 threaded rods, twenty-four M5 nuts,
+								and plastic adhesive for rigid bonding.
+							</p>
+
+							<p>
+								Clear acrylic was chosen primarily because it allowed us to easily see internal components
+								during assembly and testing. This was especially useful during debugging, as we frequently
+								needed to inspect wiring, motor drivers, and power connections without disassembling the robot.
+								Additionally, acrylic can be precisely fabricated using a laser cutter, allowing us to quickly
+								iterate on our design.
+							</p>
+
+							<p>
+								DXF files exported from our Onshape CAD model were submitted to the Rapid Prototyping Lab for
+								laser cutting. The design intentionally includes slits and openings in the three main plates
+								to allow wires from the motor circuit, IMU, and battery pack to pass cleanly between layers.
+							</p>
+
+							<figure style="text-align: center;">
+								<img
+									src="images/mainframefirst.png"
+									alt="main-frame"
+									style="max-width: 50%; height: auto;"
+								/>
+								<figcaption>Main frame DXF used to mount motors and wheels.</figcaption>
+							</figure>
+
+							<figure style="text-align: center;">
+								<img
+									src="images/mainframetwo.png"
+									alt="support-frame"
+									style="max-width: 50%; height: auto;"
+								/>
+								<figcaption>Supporting frame DXF for motor driver circuit, IMU, and battery pack.</figcaption>
+							</figure>
+
+							<figure style="text-align: center;">
+								<img
+									src="images/connectorcadfinals.png"
+									alt="connector"
+									style="max-width: 50%; height: auto;"
+								/>
+								<figcaption>Connector pieces used to attach motors to the main chassis.</figcaption>
+							</figure>
+
+							<h3>Mechanical Adjustments for Tuning and Testing</h3>
+
+							<p>
+								As we started tuning the PID controller, it became clear very quickly that the robot was going to
+								fall a lot before it worked well. To avoid damaging the chassis or electronics during these early
+								tests, we added protective foam around the edges of the robot. This gave the robot a softer
+								landing when it fell and let us safely experiment with more aggressive PID gains without worrying
+								about breaking anything.
+							</p>
+
+							<figure style="text-align: center;">
+								<img src="images/foam.png" alt="foam" style="max-width: 75%; height: auto;" />
+								<figcaption>Foam To Protect Robot on Falls.</figcaption>
+							</figure>
+
+							<p>
+								We also spent time experimenting with where to place the heavier components on the robot.
+								The battery pack, which is one of the heaviest parts, was mounted on the top level, while the IMU
+								and motor driver circuit were placed on the middle level. Putting more weight higher up increased
+								the height of the center of mass, which made the robot’s tilting motion more noticeable and easier
+								for the controller to react to during balancing.
+							</p>
+
+							<figure style="text-align: center;">
+								<img
+									src="images/adjustments.png"
+									alt="adjustments"
+									style="max-width: 75%; height: auto;"
+								/>
+								<figcaption>Placement of Hardware Components.</figcaption>
+							</figure>
+
+							<p>
+								In practice, mounting everything perfectly centered was harder than we expected. Small offsets
+								from wiring, connectors, and mounting holes caused slight imbalances that showed up during
+								testing. Even small asymmetries in weight distribution had a noticeable effect on how the robot
+								behaved.
+							</p>
+
+							<p>
+								To correct this, we made a series of small mechanical adjustments by adding extra M5 nuts and
+								threaded rods to the top level of the robot. Although this slightly increased the overall weight,
+								our main goal was to counteract existing weight offsets rather than add mass unnecessarily. By
+								placing these additions strategically, we were able to better center the robot’s mass and improve
+								balance consistency.
+							</p>
+
+							<figure style="text-align: center;">
+								<img
+									src="images/balancingcomponents.png"
+									alt="balancingcomponents"
+									style="max-width: 75%; height: auto;"
+								/>
+								<figcaption>Added Weight for Balance.</figcaption>
+							</figure>
+
+							<p>
+								These adjustments reinforced how closely the mechanical design and control performance are
+								connected. Many of the improvements we saw during tuning came not just from changing PID gains,
+								but from making small, deliberate changes to the physical structure of the robot.
+							</p>
+						</div>
+					</div>
+				</section>
+
+				<!-- Hardware Design -->
+				<section id="hwdesign" class="main">
+					<h2>Hardware Design</h2>
+
+					<p>
+						<figure style="text-align: center;">
+							<img
+								src="images/full-solderboard.jpg"
+								alt="hardware-diagram"
+								style="max-width: 100%; height: auto;"
+							/>
+							<figcaption>Figure : Full solderboard assembly showing all components</figcaption>
+						</figure>
+
+						Our robot's circuit is built onto one solderboard - containing our motor circuit and Pico-W controller.
+						The above figure shows the final breadboard with labels indicating wires to off-board components (motors,
+						imu, etc.). Below is a listing of connections made from the Pico-W to the rest of the circuit, as well as
+						a circuit diagram for the motor drivers.
+					</p>
+
+					<figure style="text-align: center;">
+						<div
+							style="
+								border: 1px solid #ddd;
+								padding: 0.5em;
+								border-radius: 0.5em;
+								background-color: #f9f9f9;
+								text-align: left;
+							"
+						>
+							<ul>
+								<li>Pin 3: 6 Volt COM</li>
+								<li>Pin 6: 4N35-0 1 (Anode)</li>
+								<li>Pin 7: 4N35-1 1 (Anode)</li>
+								<li>Pin 11: MPU-6050 SDA</li>
+								<li>Pin 12: MPU-6050 SCL</li>
+								<li>Pin 36: MPU-6050 3.3V</li>
+								<li>Pin 39: 5V (through diode)</li>
+							</ul>
+						</div>
+						<figcaption>Figure : Pico-W Connection Listing</figcaption>
+					</figure>
+
+					<figure style="text-align: center;">
+						<img src="images/final-circuit.png" alt="hardware-diagram" style="max-width: 100%; height: auto;" />
+						<figcaption>Figure #: Motor driver/H-Bridge circuit adapted for two motors.</figcaption>
+					</figure>
+
+					<p>
+						Our motor circuit was adapted from the
+						<a href="https://vanhunteradams.com/Pico/ReactionWheel/HBridgeCircuit.html">Inverted Pendulum Lab</a>
+						that has been offered in previous semesters of ECE4760 with Hunter Adams. Our changes include adding a
+						second H-Bridge to drive our second motor.
+						<br />
+						We have two PWM channels coming from the Pico-W (discussed in software design) that are optically isolated
+						from our noisy motor circuit using two 4N35 optocouplers. One PWM signal drives input A of both L9110
+						H-Bridges, and the other drives input B. The L9110s that we chose were convenient because they included
+						hardware safeguards that prevent shorting power to ground in the case that both inputs are high - although
+						our software ensures that this never happens (discussed later). When we enable PWM0, the H-Bridge allows
+						IA through - sending current through our motors from IA to IB. When we enable PWM1, the H-Bridge allows IB
+						through, sending current through our motors from IB to IA. This enables forward and backwards movement,
+						essential for keeping our bi-ped standing up.
+						<br />
+						Concerning power - our entire robot runs off one 6V 4-AA battery pack. Our motors are rated for 12V, but
+						they recieved enough power from this pack to keep our robot upright. Running these motors at half power also
+						allowed the batteries to last longer (lower current draw, around 550 mA including the Pico-W). To power the
+						Pico-W we use one 1N diode for a small voltage drop to around 5.5V, which was safe for powering it via the
+						VSYS pin. This diode also protected the Pico-W from trying to source current to the motors running off the
+						same battery pack.
+					</p>
+				</section>
+
+				<!-- Software Design -->
+				<section id="swdesign" class="main">
+					<h2>Software Design</h2>
+
+					<p>
+						The onboard software of this robot is comprised of two parallel threads of execution (using both cores on
+						the Pico-W), as well as several
+						<a href="https://people.ece.cornell.edu/land/courses/ece4760/PIC32/index_Protothreads.html"
+							>"protothreads"</a
+						>
+						responsible for scheduling various tasks on each core. Below is a general overview of the responsibilities
+						of each core, as well as a listing and description of each thread running on that core. Note that our TCP
+						server was adapted from a project originally by Professor Bruce Land for the RP2350 which is documented
+						<a href="https://people.ece.cornell.edu/land/courses/ece4760/pi_pico/wifi_ap_web_server/index_access_pt_rp2350.html"
+							>here.</a
+						>
+						Our changes include developing two new web pages to display, and recieving HTTP requests from a Pico-W
+						client.
+					</p>
+
+					<figure style="text-align: center;">
+						<div
+							style="
+								border: 1px solid #ddd;
+								padding: 0.5em;
+								border-radius: 0.5em;
+								background-color: #f9f9f9;
+								text-align: left;
+							"
+						>
+							Core 0: Handles networking and debugging information.
+							<ul>
+								<li>
+									DHCP Server (non-protothread): Initializes a DHCP server listening on Core 0 for any incoming
+									DHCP requests and responding appropriately.
+								</li>
+								<li>
+									DNS Server (non-protothread): Initializes a DNS server listening on Core 0 for handling DNS
+									traffic to our mini-server.
+								</li>
+								<li>
+									TCP Server (non-protothread): Initializes a TCP server listening on Core 0 for handling HTTP
+									GET requests and sending replies.
+								</li>
+								<li>
+									Serial Protothread: Thread handling printing debug information to the serial output, used
+									extensively during development.
+								</li>
+							</ul>
+
+							Core 1: Handles high-precision, high-bandwidth PID calculations.
+							<ul>
+								<li>
+									PID ISR: runs whenever our PWM channels wrap ( approximately every 0.83ms ) reading sensors
+									and computing our error function.
+								</li>
+							</ul>
+						</div>
+						<figcaption>Figure : Onboard Software Listing</figcaption>
+					</figure>
+
+					<h3>PID Control</h3>
+
+					<p>
+						PID control is the heart of every self balancing robot. Core 1 of our onboard Pico handles the PID. Our
+						ISR triggers at a target speed of 1.2kHz, giving us enough time to detect and respond to the angle changes
+						of the robot. Our <code>on_pwm_wrap</code> function reads raw data from our accelerometer and gyroscope,
+						approximates the devices actual angle via a
+						<a href="https://vanhunteradams.com/Pico/ReactionWheel/Complementary_Filters.html">complementary filter</a>
+						(discussed later), then executes the <code>pid_step</code> function that handles error computation and
+						control response. Our PID function runs at a constant rate, aligned with our angle sampling and PWM wrap.
+						We use hardware interrupts to ensure that our controller executes at a consistent rate, since the integral
+						and derivative components depend on a fixed time constant τ.
+					</p>
+
+					<figure style="text-align: center;">
+						<p>
+							\( C = \mathrm{clamp}\!\left((K_p \cdot e) + (K_i \cdot \Sigma e) + (K_d \cdot \Delta e),\ \min,\ \max\right) \)
+						</p>
+						<figcaption>Figure : PID Control (C) general equation.</figcaption>
+					</figure>
+
+					<p>
+						On every loop iteration, we compute the error, update our accumulated error, and sample the gyroscope for
+						∆θ. We then compute our control output according to the above equation.
+						<br />
+						One of the most crucial parts of our PID implementation is a symmetric range for our control value around
+						0. This allows our controller to produce positive and negative control values, which we can interpret as
+						forwards/backwards drive based on the sign of the value. This logic is handled in <code>pid_step</code>
+						function. This symmetric range introduced some "friction" at duty cycles in the range of roughly (-1000,
+						1000) that were too small to actually spin our motors. This caused increased wind-up time and slower
+						responses overall. We overcame this by applying a +1000 unit offset to our duty cycle as we set the PWM
+						Channel output, then capping the PID at our maximum duty cycle minus 1000 (in our case, 4000). This clamps
+						our duty cycle outside of this range, significantly increasing reaction speeds.
+						<br />
+						Another obstacle that we encountered with our dual-motor setup was differences in the reaction properties
+						of our motors when rotating them forwards versus backwards. We found that one direction was considerably
+						less reactive, causing our robot to favor falling towards that side even when optimally tuned. We resolved
+						this issue by running a secondary P,I, and D calculation with smaller gains that could be used to offset the
+						output duty cycle for the less favorable direction. This worked well, and resulted in us achieving the
+						stability demonstrated in our demo video.
+					</p>
+
+					<h3>Complementary Filter</h3>
+
+					<p>
+						We utilize a complementary filter to estimate the robot's orientation using both acelerometer and
+						gyroscope data. The gyroscope produces a clean signal that measures the rate of change in orientation but
+						accumulates drift over time. The accelerometer measures the absolute orientation relative to Earth’s
+						gravity but introduces substantial high-frequency noise. To combine the strengths of both sensors, we
+						high-pass filter the gyroscope data (removing long-term drift) and low-pass filter the accelerometer data
+						(removing high-frequency noise). The resulting estimate provides both accuracy and responsiveness. This is
+						implemented by weighting the gyroscope estimate heavily (0.999) and the accelerometer estimate lightly
+						(0.001):
+					</p>
+
+					<figure style="text-align: center;">
+						<p>
+							\( \theta_{\text{filtered}} =
+							0.999\,(\theta_{\text{prev}} + \Delta\theta_{\text{gyro}})
+							+ 0.001\,(\theta_{\text{accel}}) \)
+						</p>
+						<figcaption>Figure: Complementary Filter general equation.</figcaption>
+					</figure>
+
+					<p>The below block diagram illustrates the actual filtering process, including all inputs and outputs to the filter.</p>
+
+					<figure style="text-align: center;">
+						<img
+							src="images/complementary_filter.png"
+							alt="complementary-filter"
+							style="max-width: 100%; height: auto;"
+						/>
+						<figcaption>
+							Figure: Block diagram for the complementary filter implemented by our program. From
+							<a href="https://vanhunteradams.com/Pico/ReactionWheel/Complementary_Filters.html"
+								>Adams, Complementary Filters</a
+							>
+						</figcaption>
+					</figure>
+				</section>
+
+				<!-- Gesture Control Hardware -->
+				<section id="gesturecontrolhw" class="main">
+					<h2>Gesture Hardware Configuration</h2>
+
+					<p>
+						The gesture input device is implemented on a breadboard using a <strong>Raspberry Pi Pico W</strong> and an
+						<strong>MPU6050 Inertial Measurement Unit (IMU)</strong>. The Pico W serves as both the sensing and
+						processing unit, while the MPU6050 provides 3-axis accelerometer and gyroscope measurements for gesture
+						recognition.
+					</p>
+
+					<p>
+						The IMU is interfaced to the Pico W using the I<sup>2</sup>C protocol operating at 3.3&nbsp;V logic levels.
+						Power and signal connections are made directly between the Pico W and the MPU6050 breakout board.
+					</p>
+
+					<h3>Electrical Connections</h3>
+
+					<table class="hardware-table">
+						<thead>
+							<tr>
+								<th>MPU6050 Pin</th>
+								<th>Pico W Pin</th>
+								<th>Description</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>VCC</td>
+								<td>3.3&nbsp;V</td>
+								<td>Power supply for IMU (3.3&nbsp;V logic)</td>
+							</tr>
+							<tr>
+								<td>GND</td>
+								<td>GND</td>
+								<td>Common electrical ground</td>
+							</tr>
+							<tr>
+								<td>SCL</td>
+								<td>GPIO&nbsp;9 (I<sup>2</sup>C SCL)</td>
+								<td>I<sup>2</sup>C clock line</td>
+							</tr>
+							<tr>
+								<td>SDA</td>
+								<td>GPIO&nbsp;8 (I<sup>2</sup>C SDA)</td>
+								<td>I<sup>2</sup>C data line</td>
+							</tr>
+						</tbody>
+					</table>
+
+					<h3>Physical Layout</h3>
+					<p>
+						The Pico W and MPU6050 are mounted on a solderless breadboard to allow rapid prototyping and iterative
+						development. Short jumper wires are used for the I<sup>2</sup>C lines to minimize noise and signal integrity
+						issues. The shared ground reference ensures stable sensor measurements and reliable communication.
+					</p>
+
+					<p>
+						This hardware configuration allows the Pico W to continuously acquire inertial measurements, perform
+						on-board sensor fusion, and transmit gesture commands wirelessly without the need for external processing
+						hardware.
+					</p>
+
+					<figure style="text-align: center;">
+						<img
+							src="images/gesture_control.png"
+							alt="Raspberry Pi Pico W connected to MPU6050 IMU on a breadboard using I2C"
+							style="max-width: 70%; height: auto;"
+						/>
+						<figcaption>
+							Figure 1: Breadboard-based gesture hardware consisting of a Raspberry Pi Pico W interfaced with an MPU6050
+							IMU over I<sup>2</sup>C.
+						</figcaption>
+					</figure>
+				</section>
+
+				<!-- Gesture Control Software -->
+				<section id="gesturecontrolsw" class="main">
+					<h2>Gesture Control Software</h2>
+
+					<p>
+						This system implements a <strong>client-side inertial gesture interface</strong> on a Raspberry Pi Pico W.
+						The Pico W acquires raw inertial measurements from an MPU6050 IMU via I2C, performs fixed-point sensor fusion
+						to estimate orientation, discretizes the estimated state into gesture events, and transmits those events to a
+						remote server using HTTP over Wi-Fi. The Pico W acts exclusively as a <strong>network client</strong>,
+						initiating all communication.
+					</p>
+
+					<p>
+						The signal path can be summarized as:
+						<br />
+						<code>IMU → Fixed-Point Sensor Fusion → Gesture State Machine → HTTP Client</code>
+					</p>
+
+					<hr />
+
+					<section id="data-acquisition">
+						<h2>IMU Data Acquisition Layer</h2>
+
+						<h3>Hardware Interface and Configuration</h3>
+						<p>
+							The MPU6050 is interfaced over I2C using the RP2040’s hardware I2C controller. During initialization,
+							the device is configured as follows:
+						</p>
+						<ul>
+							<li>Power management disabled (device wake-up)</li>
+							<li>Accelerometer full-scale range: &plusmn;2 g</li>
+							<li>Gyroscope full-scale range: &plusmn;250 deg/s</li>
+							<li>Sample rate divider configured for 1 kHz internal sampling</li>
+						</ul>
+						<p>
+							All configuration writes are performed using blocking I2C transactions to ensure deterministic sensor state
+							before data acquisition begins.
+						</p>
+
+						<h3>1.2 Raw Measurement Acquisition</h3>
+						<p>Accelerometer and gyroscope data are read from the MPU6050 using register auto-increment:</p>
+						<ul>
+							<li>Accelerometer: registers <code>0x3B–0x40</code></li>
+							<li>Gyroscope: registers <code>0x43–0x48</code></li>
+						</ul>
+						<p>
+							Each axis measurement is reconstructed from two consecutive 8-bit registers into a signed 16-bit value.
+							The data is then converted into <strong>Q15 fixed-point format</strong>, allowing subsequent signal processing
+							to be performed without floating-point hardware and improving real-time determinism.
+						</p>
+						<p>
+							The raw measurement vectors are represented as:
+							<br />
+							<code>a = [a<sub>x</sub>, a<sub>y</sub>, a<sub>z</sub>], &nbsp; ω = [ω<sub>x</sub>, ω<sub>y</sub>, ω<sub>z</sub>]</code>
+						</p>
+					</section>
+
+					<hr />
+
+					<section id="sensor-fusion">
+						<h2>Sensor Fusion and Orientation Estimation</h2>
+
+						<h3>Accelerometer-Based Tilt Estimation</h3>
+						<p>The instantaneous tilt angle is derived from accelerometer measurements using the Y–Z plane:</p>
+						<p><code>θ<sub>acc</sub> = atan2(-a<sub>y</sub>, -a<sub>z</sub>)</code></p>
+						<p>
+							This angle provides an absolute reference to gravity but is subject to high-frequency noise and transient linear acceleration.
+						</p>
+
+						<h3>Gyroscope Integration</h3>
+						<p>Gyroscope data provides angular velocity around the X-axis. Incremental angular displacement is computed as:</p>
+						<p><code>Δθ<sub>gyro</sub> = ω<sub>x</sub> · Δt</code></p>
+						<p>
+							where <code>Δt</code> is assumed constant and approximately 1 ms. This integration provides smooth short-term motion tracking
+							but accumulates bias-induced drift over time.
+						</p>
+
+						<h3>Complementary Filter Implementation</h3>
+						<p>
+							To combine the strengths of both sensors, a <strong>first-order complementary filter</strong> is implemented in fixed-point arithmetic:
+						</p>
+						<p>
+							<code>
+								θ<sub>k</sub> = α(θ<sub>k-1</sub> − Δθ<sub>gyro</sub>) + (1 − α)θ<sub>acc</sub>
+							</code>
+						</p>
+						<ul>
+							<li><code>α = 0.999</code></li>
+							<li><code>θ<sub>k</sub></code> is the filtered orientation estimate</li>
+						</ul>
+						<p>
+							The filter effectively acts as a high-pass filter on gyroscope data and a low-pass filter on accelerometer data.
+							To prevent instability and large transients, the filtered angle is saturated to:
+						</p>
+						<p><code>θ<sub>k</sub> ∈ [−5°, +5°]</code></p>
+						<p>This filtered output (<code>complementary_angle</code>) represents the system’s internal orientation state.</p>
+					</section>
+
+					<hr />
+
+					<section id="gesture-detection">
+						<h2>Gesture Detection and State Quantization</h2>
+
+						<h3>Continuous-to-Discrete State Mapping</h3>
+						<p>Gesture detection maps the continuous orientation estimate into a discrete state:</p>
+						<table class="gesture-table">
+							<thead>
+								<tr>
+									<th>Condition</th>
+									<th>Gesture</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>θ &gt; 0</td>
+									<td>FORWARD</td>
+								</tr>
+								<tr>
+									<td>θ &lt; 0</td>
+									<td>BACKWARD</td>
+								</tr>
+								<tr>
+									<td>θ = 0</td>
+									<td>NONE</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<p>This reduces a continuous sensor signal into a finite command alphabet suitable for network transmission and downstream control.</p>
+
+						<h3>3.2 Edge-Triggered Gesture Emission</h3>
+						<p>
+							To prevent command flooding and oscillatory behavior, gesture transmission is edge-triggered. The system maintains the last
+							transmitted gesture and emits a new command only when a state transition occurs:
+						</p>
+						<p><code>G<sub>k</sub> ≠ G<sub>k-1</sub></code></p>
+						<p>This makes gesture output event-driven, improving robustness under noisy sensor conditions.</p>
+					</section>
+
+					<hr />
+
+					<section id="wireless-communication">
+						<h2>Wireless Communication Subsystem</h2>
+
+						<h3>Network Role and Initialization</h3>
+						<p>
+							The Pico W operates in <strong>station (STA) mode</strong>, connecting to an external access point using WPA2 authentication.
+							The CYW43 networking stack is initialized at startup, and all subsequent communication occurs through a single TCP/IP context.
+						</p>
+						<p>The Pico W does not listen for inbound connections and does not host a server; it functions solely as a client.</p>
+
+						<h3>HTTP-Based Gesture Transport</h3>
+						<p>
+							Gesture events are transmitted to a remote server using synchronous HTTP GET requests. Each request encodes the gesture state
+							in the URL query string:
+						</p>
+						<ul>
+							<li><code>GET /msg?msg=FORWARD</code></li>
+							<li><code>GET /msg?msg=BACKWARD</code></li>
+						</ul>
+						<p>
+							The HTTP client blocks until a response is received or the server closes the connection. Successful transmission is inferred
+							from standard HTTP client return codes. This design prioritizes simplicity and debuggability over latency and bandwidth efficiency.
+						</p>
+					</section>
+
+					<hr />
+
+					<section id="execution-model">
+						<h2>Execution Model and Timing</h2>
+						<p>The system runs in a single-threaded polling loop at approximately 10 Hz. Each loop iteration performs:</p>
+						<ol>
+							<li>Blocking I2C read of IMU data</li>
+							<li>Fixed-point sensor fusion update</li>
+							<li>Gesture classification</li>
+							<li>Conditional HTTP request transmission</li>
+							<li>Fixed delay (<code>sleep_ms(100)</code>)</li>
+						</ol>
+						<p>
+							This sequential model ensures deterministic ordering but introduces latency bounded by the loop period and network transaction duration.
+						</p>
+					</section>
+
+					<hr />
+
+					<section id="constraints-extensions">
+						<h2>Design Constraints and Extensions</h2>
+
+						<h3>Current Constraints</h3>
+						<ul>
+							<li>Fixed <code>Δt</code> assumption for gyroscope integration</li>
+							<li>Polling-based IMU acquisition despite interrupt configuration</li>
+							<li>Binary gesture classification without hysteresis/dead zone</li>
+							<li>Relatively high-latency HTTP transport</li>
+						</ul>
+
+						<h3>Potential Extensions</h3>
+						<ul>
+							<li>Interrupt-driven IMU sampling</li>
+							<li>Adaptive complementary filter gain</li>
+							<li>Hysteresis/dead-zone gesture thresholds</li>
+							<li>Non-blocking or UDP-based communication</li>
+							<li>Extension to multi-axis and compound gestures</li>
+						</ul>
+					</section>
+
+				</section>
+
+				<!-- Results -->
+				<section id="results" class="main">
+					<h2>Results</h2>
+					<p>
+						Our efforts culminated in a very consistent machine capable of keeping itself upright for more than 15 minutes. We are confident that our robot would remain stable for the duration of its battery life if given the chance.
+						Our wireless tuning and control interface is robust, and made the somewhat monotonous process of tuning a PID controlled robot much easier. This embedded server implementation enabled us to meet one of our original goals - 
+						making the robot fully untethered. The final product is capable of moving freely around its space (to the extend that its single axis of movement allows). Our gesture control mechanism is also satisfying, producing
+						the "segway"-like motion we set out to implement in our original project proposal. The robot was capable of recovering from slight pushes 
+						relatively quickly, although it's resilience did not quite live up to our goals for this short project. 
+					</p>
+
+					<p>
+						There are several areas that we planned on improving the robot if we had the time. We list them here for completeness, and for the reference of others.
+
+						<ul>
+							<li> 
+								Turning: By introducing two additional PWM channels to our complete circuit, we could have had split control of the motors, allowing us to slow one side down to turn in that direction. We already observed this behavior
+								caused by the motors we used not responding identically to the output signal. </li>
+							<li>
+								Better Motors: The motors we used were capable of holding the robot up, but they lacked torque in situations where it was crucial (such as being shoved). By the time we realized this, there was not enough time left to 
+								order newer motors. With some more torquey motors, we believe the robot would have been more stable. 
+							</li>
+							<li>
+								Better Networking: Our onboard server has the tendency (in our experience) to occasionally crash or become unresponsive, requiring a power cycle to come back online. We propose that this could be resolved with a failsafe in software
+								that checks server status and tries to restart automatically. We also note that these networking issues may have been caused by the very "noisy" environment in which the robot was tested, and may not be a problem in
+								more normal locations.
+							</li>
+						</ul>
+					</p>
+				</section>
+
+				<!-- Conclusions -->
+				<<section id="conclusion" class="main">
+  <header class="major">
+    <h2>Conclusion</h2>
+  </header>
+
+  <p>
+    This project successfully met our primary goal of designing and implementing a
+    two-wheeled self-balancing robot capable of maintaining upright stability using
+    real-time feedback control. The final system demonstrated stable balancing behavior
+    under nominal conditions, supported forward and backward motion through gesture-based
+    input, and allowed real-time parameter tuning through an onboard web interface.
+    Overall, the robot’s behavior aligned closely with our expectations based on the
+    inverted pendulum model and prior laboratory experience, particularly in terms of
+    responsiveness, controllability, and sensitivity to mechanical design choices.
+  </p>
+
+  <p>
+    That said, the project also revealed several areas where our expectations required
+    adjustment. In practice, the robot’s performance was far more sensitive to mechanical
+    asymmetries, sensor noise, and actuator nonlinearities than idealized models suggested.
+    Differences in motor response between forward and backward rotation, small offsets in
+    mass distribution, and latency introduced by network interactions all had measurable
+    effects on stability. While these challenges were ultimately mitigated through
+    secondary PID compensation, mechanical rebalancing, and gesture command timeouts, a
+    future iteration of this project would benefit from more precise mechanical
+    fabrication, matched motors, and an explicit treatment of actuator dead zones during
+    the initial design phase rather than retrofitting solutions later.
+  </p>
+
+  <p>
+    From a software perspective, our use of a complementary filter and high-frequency,
+    interrupt-driven PID control met expectations and proved robust under real-world
+    conditions. However, the fixed-step assumption used for gyroscope integration and the
+    polling-based IMU acquisition represent simplifications that could be improved. In a
+    future design, we would likely implement interrupt-driven sensor sampling and a more
+    adaptive sensor fusion approach to further improve accuracy and reduce latency.
+    Additionally, replacing blocking HTTP requests with a non-blocking or lower-latency
+    communication protocol could improve responsiveness for gesture-based control.
+  </p>
+
+  <h3>Conformance to Standards and Best Practices</h3>
+
+  <p>
+    Our design conforms to standard embedded systems and electrical engineering practices
+    emphasized in ECE 4760. All circuitry operated within specified voltage and current
+    limits for the Raspberry Pi Pico W and peripheral components. The MPU6050 IMU was
+    interfaced using standard I<sup>2</sup>C communication at 3.3&nbsp;V logic levels, and
+    proper grounding practices were followed to ensure signal integrity. Motor driver
+    isolation using optocouplers reduced noise coupling between the high-current motor
+    domain and sensitive control electronics, aligning with best practices for mixed-signal
+    embedded systems.
+  </p>
+
+  <p>
+    From a software standpoint, we adhered to real-time design principles by using hardware
+    interrupts for time-critical PID execution and separating networking and control tasks
+    across the RP2040’s dual cores. This architectural separation helped ensure deterministic
+    control timing despite the presence of networking and user-interface code.
+  </p>
+
+  <h3>Intellectual Property Considerations</h3>
+
+  <p>
+    This project made use of prior work and publicly available resources in a transparent
+    and ethical manner. Portions of the networking infrastructure were adapted from example
+    code and prior projects developed by Professor Bruce Land and course staff for ECE 4760
+    and related platforms. These materials are intended for educational use and are
+    effectively in the public domain for course projects. Conceptual inspiration was also
+    drawn from inverted pendulum examples discussed in lectures, course notes, and earlier
+    laboratory exercises.
+  </p>
+
+  <p>
+    No proprietary or closed-source code was used, and no non-disclosure agreements were
+    required to obtain hardware components or documentation. All hardware components,
+    including the Raspberry Pi Pico W, MPU6050 IMU, and motor drivers, are commercially
+    available with publicly documented interfaces. We did not reverse-engineer any
+    protected designs, nor did we encounter patent or trademark restrictions relevant to
+    this project.
+  </p>
+
+  <p>
+    While self-balancing robots and gesture-based control systems are well-established
+    concepts, this project does not pursue novel mechanisms or algorithms that would
+    clearly warrant patent protection. Instead, its value lies in the integration and
+    application of known techniques in an educational context. As such, no patent
+    opportunities were identified or pursued.
+  </p>
+
+  <h3>Broader Perspective and Real-World Applications</h3>
+
+  <p>
+    Beyond the technical implementation, this project encapsulated the broader educational
+    goals of ECE 4760. The course emphasized that microcontrollers are not merely programming
+    targets, but central components in larger cyber-physical systems that span disciplines.
+    Through this project, we gained a deeper appreciation for how electrical engineering
+    interacts with mechanics, control theory, human–computer interaction, and networking.
+  </p>
+
+  <p>
+    Gesture-controlled self-balancing systems have clear real-world relevance, with
+    applications in personal mobility devices, assistive robotics, autonomous platforms,
+    camera stabilization systems, and human–machine interfaces. The principles explored
+    here—sensor fusion, real-time control, and intuitive user input—are foundational to
+    modern robotics and embedded systems.
+  </p>
+
+  <p>
+    In conclusion, this project represents a culmination of the technical, conceptual, and
+    practical lessons of ECE 4760. It challenged us to move beyond theory, confront
+    real-world imperfections, and iteratively refine a system until it worked reliably.
+    The experience has significantly shaped how we approach embedded systems design and
+    strengthened our perspective on engineering as an interdisciplinary and deeply
+    integrative discipline.
+  </p>
+</section>
+
+
+				<!-- Results -->
+				<section id="appendixa" class="main">
+					<h2>Appendix A: Permissions</h2>
+					<p>The group approves this report for inclusion on the course website.</p>
+					<p>The group approves the video for inclusion on the course youtube channel.</p>
+
+				</section>
+
+				<!-- Appendix -->
+				<section id="appendixb" class="main">
+					<h2>Appendix B</h2>
+					
+					<h3>Contributions </h3>
+					<ul>
+						<li>Stephen Barlett: Implemented most of the onboard software, including the PID controller and web interface. Also implemented the full onboard circuit on a breadboard, and then the final product on a solderboard. Finally, tuned the robot to its final state. </li>
+						<li>Jamayne Gyimah-Danquah: Worked on the hardware design and the code for the Gesture Control feature of the project </li>
+						<li>Md Shad: Focused on the mechanical side of the project and the overall physical design of the robot. He designed the robot’s CAD model and used it to think through the chassis layout, motor placement, and weight distribution before anything was built. Md also handled the fabrication process by preparing the parts for laser cutting and assembling the main frame and body of the robot from the acrylic components. Along the way, he worked through the physics behind the self-balancing system, including center-of-mass considerations, motor torque limits, and inverted pendulum behavior. This helped shape the high-level design and ensured the final mechanical structure worked well with the control system.</li>
+					</ul>
+
+					<h3>References</h3>
+					<ul>
+						<li><a href="https://www.elecrow.com/download/datasheet-l9110.pdf?srsltid=AfmBOopdcSaGghM8zC7y5DjugZEqe_6r532nZW8oLeD3WBe6coQXfo2W">L9110 H-Bridge</a></li>
+						<li><a href="https://www.onsemi.com/download/data-sheet/pdf/4n35-d.pdf">4N35 Optocoupler</a></li>
+						<li><a href="https://people.ece.cornell.edu/land/courses/ece4760/pi_pico/wifi_ap_web_server/index_access_pt_rp2350.html">Bruce Land's Pico Access Point</a></li>
+					</ul>
+
+					<h3> AI Acknowlegement </h3>
+					<p>Throughout the project, we used AI tools as a support resource for analysis, debugging, and documentation rather than as a replacement for our own design work. AI assistance was frequently used to help reason through bugs in our code, interpret compiler and runtime errors, and understand unexpected behavior in complex sections involving interrupts, networking, and real-time control, which significantly sped up the debugging process. We also relied on AI when working with the Pico W’s Wi Fi subsystem, using it to better understand how access point configuration choices such as channel selection, IP addressing, and network setup affected connection stability and reliability. This helped us experiment with and refine our network configuration to achieve more consistent connectivity between devices. In addition, AI was used to help format and organize the project website, including adjusting image placement, improving layout consistency, and refining captions and text for readability. All core system design, control logic, hardware integration, and final implementation decisions were ultimately developed, tested, and validated by our team.</p>
+
+					<h3> Vendors </h3>
+					<ul>
+						<li> Amazon: Plexiglass, structural metal rods. </li>
+						<li> Lab supplies: Motors, H-bridges, Optocouplers, solderboard, wheels.</li>
+					</ul>
+					<h3> Code </h3>
+
+					<details class="code-dropdown">
+						<summary class="code-summary">
+							<span class="code-left">
+								<span class="code-chevron" aria-hidden="true"></span>
+								<span class="code-title">gesture.c</span>
+							</span>
+							<span class="code-hint"></span>
+						</summary>
+
+						<pre class="code-block"><code class="language-c">#include &lt;math.h&gt;
+#include "gesture.h"
+
+const char* gesture_name(gesture_t g) {
+    switch (g) {
+        case GESTURE_FORWARD:  return "FORWARD";
+        case GESTURE_BACKWARD: return "BACKWARD";
+        case GESTURE_LEFT:     return "LEFT";
+        case GESTURE_RIGHT:    return "RIGHT";
+        case GESTURE_NONE:
+        default:               return "NONE";
+    }
+}
+
+gesture_t detect_gesture(float ax, float ay, float az_ignored) {
+    const float THRESH_FB = 0.25f;
+
+    float abs_ax = fabsf(ax);
+    float abs_ay = fabsf(ay);
+
+    if (abs_ay &gt; THRESH_FB &amp;&amp; abs_ay &gt;= abs_ax) {
+        return (ay &gt; 0) ? GESTURE_FORWARD : GESTURE_BACKWARD;
+    } else {
+        return GESTURE_NONE;
+    }
+}</code></pre>
+					</details>
+
+					<details class="code-dropdown">
+						<summary class="code-summary">
+							<span class="code-left">
+								<span class="code-chevron" aria-hidden="true"></span>
+								<span class="code-title">imu_filter.c</span>
+							</span>
+							<span class="code-hint"></span>
+						</summary>
+
+						<pre class="code-block"><code class="language-c">#include &lt;math.h&gt;
+// imu_filter.c
+#include &lt;math.h&gt;
+#include &quot;imu_filter.h&quot;
+#include &quot;mpu6050.h&quot;
+
+// Raw IMU measurements (15.16 fixed-point, accel in g, gyro in deg/s)
+fix15 acceleration[3], gyro[3];
+
+// Filter state
+fix15 accel_angle, gyro_angle_delta;
+fix15 complementary_angle;
+fix15 filter_acc_z, filter_acc_y;
+
+// These are defined in some common file in your project, e.g. globals.c
+// fix15 oneeightyoverpi = float2fix15(180.0f / 3.14159265358979f);
+// fix15 zeropt001       = float2fix15(0.001f);
+// fix15 zeropt999       = float2fix15(0.999f);
+
+void imu_filter_init(void)
+{
+    // Make sure MPU is already reset/configured before calling this
+    mpu6050_read_raw(acceleration, gyro);
+
+    filter_acc_y        = acceleration[1];
+    filter_acc_z        = acceleration[2];
+    accel_angle         = 0;
+    gyro_angle_delta    = 0;
+    complementary_angle = 0;
+}
+
+static void complementary_filter(void)
+{
+    // Low-pass filter Y and Z acceleration (simple IIR with &gt;&gt;4 ~ 1/16)
+    filter_acc_y = filter_acc_y + ((acceleration[1] - filter_acc_y) &gt;&gt; 4);
+    filter_acc_z = filter_acc_z + ((acceleration[2] - filter_acc_z) &gt;&gt; 4);
+
+    // Accelerometer angle (atan2 in radians -&gt; degrees)
+    accel_angle = multfix15(
+        float2fix15(atan2(-filter_acc_y, filter_acc_z)),
+        oneeightyoverpi
+    );
+
+    // Gyro angle increment (gyro[0] in deg/s * dt ≈ 0.001 s)
+    gyro_angle_delta = multfix15(gyro[0], zeropt001);
+
+    // Complementary filter
+    complementary_angle =
+        multfix15(complementary_angle - gyro_angle_delta, zeropt999) +
+        multfix15(accel_angle, zeropt001);
+}
+
+void imu_update_and_filter(void)
+{
+    
+    mpu6050_read_raw(acceleration, gyro);
+
+    complementary_filter();
+}
+</code></pre>
+					</details>
+
+					<details class="code-dropdown">
+						<summary class="code-summary">
+							<span class="code-left">
+								<span class="code-chevron" aria-hidden="true"></span>
+								<span class="code-title">pid_controller.c</span>
+							</span>
+							<span class="code-hint"></span>
+						</summary>
+
+<pre class="code-block"><code class="language-c">
+/**
+ * V. Hunter Adams (vha3@cornell.edu)
+ * 
+ * This demonstration utilizes the MPU6050.
+ * It gathers raw accelerometer/gyro measurements, scales
+ * them, and plots them to the VGA display. The top plot
+ * shows gyro measurements, bottom plot shows accelerometer
+ * measurements.
+ * 
+ * HARDWARE CONNECTIONS
+ *  - GPIO 16 ---&gt; VGA Hsync
+ *  - GPIO 17 ---&gt; VGA Vsync
+ *  - GPIO 18 ---&gt; 470 ohm resistor ---&gt; VGA Green
+ *  - GPIO 19 ---&gt; 330 ohm resistor ---&gt; VGA Green
+ *  - GPIO 20 ---&gt; 330 ohm resistor ---&gt; VGA Blue
+ *  - GPIO 21 ---&gt; 330 ohm resistor ---&gt; VGA Red
+ *  - RP2040 GND ---&gt; VGA GND
+ *  - GPIO 8 ---&gt; MPU6050 SDA
+ *  - GPIO 9 ---&gt; MPU6050 SCL
+ *  - 3.3v ---&gt; MPU6050 VCC
+ *  - RP2040 GND ---&gt; MPU6050 GND
+ *  - GPIO 14 ---&gt; H-Bridge Forward
+ *  - GPIO 15 ---&gt; H-Bridge Backward
+ * 
+ * 
+ * 
+ */
+
+
+// Include standard libraries
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;math.h&gt;
+#include &lt;string.h&gt;
+// Include PICO libraries
+#include &quot;pico/stdlib.h&quot;
+#include &quot;pico/multicore.h&quot;
+// Include hardware libraries
+#include &quot;hardware/pwm.h&quot;
+#include &quot;hardware/dma.h&quot;
+#include &quot;hardware/irq.h&quot;
+#include &quot;hardware/adc.h&quot;
+#include &quot;hardware/pio.h&quot;
+#include &quot;hardware/i2c.h&quot;
+#include &quot;hardware/clocks.h&quot;
+// Include custom libraries
+#include &quot;vga16_graphics_v2.h&quot;
+#include &quot;mpu6050.h&quot;
+#include &quot;pt_cornell_rp2040_v1_4.h&quot;
+#include &quot;dhcpserver/dhcpserver.h&quot;
+#include &quot;dnsserver/dnsserver.h&quot;
+
+#include &quot;hardware/sync.h&quot;
+#include &quot;hardware/uart.h&quot;
+//#include &quot;hardware/rtc.h&quot;
+#include &quot;hardware/adc.h&quot;
+#include &quot;pico/util/datetime.h&quot;
+
+#include &quot;pico/cyw43_arch.h&quot;
+#include &quot;pico/stdlib.h&quot;
+
+//#include &quot;lwip/dns.h&quot;
+#include &quot;lwip/pbuf.h&quot;
+#include &quot;lwip/tcp.h&quot;
+#include &lt;time.h&gt;
+
+// SERVER CODE
+
+int access_led_state ;
+//int temp_sensor ; // turning on the temp_sensor kills the network!
+// user state variables
+int user_number ;
+int test_field ;
+// gpio2 % intensity
+int test2_field = 25 ;
+int color, new_color = true ;
+float temp ;
+
+// =======================================
+// access point setup
+// copied from pico_examples git
+// html was modified and expanded
+// =======================================
+// add a &#x27;printf&#x27; to the line below to dump
+// internal state info  e.g.:
+// #define DEBUG_printf  printf
+#define DEBUG_printf
+#define ANGLE_printf printf
+//
+#include &quot;dhcpserver/dhcpserver.h&quot;
+#include &quot;dnsserver/dnsserver.h&quot;
+//
+#define TCP_PORT 80
+#define POLL_TIME_S 5
+#define HTTP_GET &quot;GET&quot;
+#define HTTP_RESPONSE_HEADERS &quot;HTTP/1.1 %d OK\nContent-Length: %d\nContent-Type: text/html;\
+                               charset=utf-8\nConnection: close\n\n&quot;
+// the html. format specs represent server state to be resolved at send time
+// this is one part I changed and expanded from the demo code
+// the one-line javascript is hacked slightly from
+// https://stackoverflow.com/questions/74320571/inserting-oninput-to-an-input-field
+// and allows the numerical value of the slider to change as yuo move the slider
+#define CONTROL_TEST1_BODY \
+    &quot;&lt;html&gt;&lt;body&gt;&lt;b&gt;PID Tuning - Onboard Pico-W&lt;/b&gt;\
+    &lt;p&gt;Onboard Led is %s\
+    \
+    &lt;form&gt;\
+    \
+    &lt;label for=\&quot;motoren\&quot;&gt;Enable Motors:&lt;/label&gt;\
+    &lt;select name=\&quot;led\&quot; id=\&quot;motoren\&quot; size=\&quot;2\&quot;  onchange=\&quot;submit();\&quot;&gt;\
+    &lt;option value=\&quot;0\&quot; %s&gt;Motor Off&lt;/option&gt;\
+    &lt;option value=\&quot;1\&quot; %s&gt;Motor On &lt;/option&gt;\
+    &lt;/select&gt;\
+    \
+    &lt;svg width=\&quot;20\&quot; height=\&quot;20\&quot;&gt;\
+    &lt;circle cx=\&quot;10\&quot; cy=\&quot;10\&quot; r=\&quot;10\&quot; stroke=\&quot;green\&quot; stroke-width=\&quot;1\&quot; fill=%s /&gt;\
+    &lt;/svg&gt;&lt;p&gt;\
+    &lt;label for=\&quot;kp\&quot;&gt; K_P :&lt;/label&gt;\
+    &lt;input type=\&quot;number\&quot; step=\&quot;0.01\&quot; id=\&quot;kp\&quot; name=\&quot;kp\&quot; value=%.2f min=\&quot;0\&quot; max=\&quot;999\&quot;&gt;\
+    &lt;input type=\&quot;submit\&quot;&gt; &lt;br&gt;\
+    &lt;label for=\&quot;ki\&quot;&gt; K_I :&lt;/label&gt;\
+    &lt;input type=\&quot;number\&quot; step=\&quot;0.01\&quot; id=\&quot;ki\&quot; name=\&quot;ki\&quot; value=%.2f min=\&quot;0\&quot; max=\&quot;999\&quot;&gt;\
+    &lt;input type=\&quot;submit\&quot;&gt; &lt;br&gt;\
+    &lt;label for=\&quot;kd\&quot;&gt; K_D :&lt;/label&gt;\
+    &lt;input type=\&quot;number\&quot; step=\&quot;0.01\&quot; id=\&quot;kd\&quot; name=\&quot;kd\&quot; value=%.2f min=\&quot;0\&quot; max=\&quot;999\&quot;&gt;\
+    &lt;input type=\&quot;submit\&quot;&gt; &lt;br&gt;\
+    &lt;label for=\&quot;spoint\&quot;&gt; Absolute SP: :&lt;/label&gt;\
+    &lt;input type=\&quot;number\&quot; step=\&quot;0.01\&quot; id=\&quot;spoint\&quot; name=\&quot;spoint\&quot; value=%.2f min=\&quot;-20\&quot; max=\&quot;20\&quot;&gt;\
+    &lt;input type=\&quot;submit\&quot;&gt; &lt;br&gt;\
+    Proportional:&lt;b&gt;&lt;font color=\&quot;RED\&quot;&gt; %f &lt;/font&gt;&lt;/b&gt; &lt;br&gt;\
+    Integral:&lt;b&gt;&lt;font color=\&quot;RED\&quot;&gt; %f &lt;/font&gt;&lt;/b&gt; &lt;br&gt; \
+    Derivative:&lt;b&gt;&lt;font color=\&quot;RED\&quot;&gt; %f &lt;/font&gt;&lt;/b&gt; &lt;br&gt;\
+    Absolute SP:&lt;b&gt;&lt;font color=\&quot;RED\&quot;&gt; %f &lt;/font&gt;&lt;/b&gt; &lt;br&gt;\
+    &lt;p&gt;\
+    &lt;/form&gt;\
+    &lt;p&gt;&lt;a href=http://192.168.4.1/control_test2&gt; Control Panel &lt;/a&gt;\
+    &lt;/body&gt;&lt;/html&gt;&quot;
+
+// this page uses javascript submit() method so a button is not necessary
+// it also tests &lt;svg&gt; graphics to draw a dynamic LED icon
+// &lt;label for=\&quot;led_control1\&quot;&gt;led on/off:&lt;/label&gt;&lt;br&gt;\
+ //   &lt;input type=\&quot;text\&quot; id=\&quot;led_control1\&quot; name=\&quot;led\&quot; value=%d&gt;&lt;br&gt;\
+
+
+#define CONTROL_TEST2_BODY \
+    &quot;&lt;html&gt;&lt;body&gt;&lt;b&gt;Control Panel -- Onboard Pico-W&lt;/b&gt;\
+    &lt;form&gt;\
+        &lt;button type=\&quot;submit\&quot; name=\&quot;offset\&quot; value=\&quot;-1\&quot;&gt; BACKWARD &lt;/button&gt;\
+        &lt;button type=\&quot;submit\&quot; name=\&quot;offset\&quot; value=\&quot;0\&quot;&gt; RST &lt;/button&gt;\
+        &lt;button type=\&quot;submit\&quot; name=\&quot;offset\&quot; value=\&quot;1\&quot;&gt; FORWARD &lt;/button&gt; &lt;br&gt;\
+        Current SP: %f &lt;br&gt;\
+        Relative SP: %f &lt;br&gt;\
+    &lt;/form&gt;\
+    &lt;p&gt;&lt;a href=http://192.168.4.1/control_test1&gt; PID Tuning.&lt;/a&gt;\
+    &lt;/body&gt;&lt;/html&gt;&quot;
+
+// the names in these parse templates have to match the names
+// in the &lt;form&gt; above: used to find data in the &#x27;query string&#x27;
+// part of the URL requested by the browser
+// &lt;p&gt;&lt;input type=\&quot;submit\&quot;&gt;\
+
+#define BASE_DESIRED_SP float2fix15(2.70f)
+
+// PID Controller
+struct PID
+{
+    fix15 Kp; // Kristaps Porzingus
+    fix15 Ki; // Kyrie Irving
+    fix15 Kd; // kevin durant Easymoneysniper (our favorite player and PID term)
+    fix15 prev_err;
+    fix15 integral;
+    fix15 max_integral;
+    int max;
+    int min;
+};
+
+// Initial PID paramters
+struct PID pid = {float2fix15(150.0), float2fix15(100.0), float2fix15(25.0), 0, 0, int2fix15(5000), 4000, -4000};
+volatile bool motor_enabled = true;     // motor off when holding button
+
+fix15 desired_angle;
+ 
+fix15 err;
+
+
+volatile int target_speed_cmd = 0;
+
+volatile int cmd_timeout_ticks = 0;
+#define CMD_TIMEOUT_TICKS 300
+
+#define MAX_GESTURE_ANGLE_DEG 5.0f
+
+volatile fix15 gesture_angle_offset = 0;
+
+
+#define LED_PARAM &quot;led=%d&quot;
+#define TEST_FMT  &quot;test=%d&quot;
+#define TEST2_FMT &quot;test2=%d&quot;
+#define COLOR_PARAM &quot;color=%d&quot;
+
+#define KP_PARAM &quot;kp=%f&quot;
+#define KI_PARAM &quot;ki=%f&quot;
+#define KD_PARAM &quot;kd=%f&quot;
+#define SP_PARAM &quot;spoint=%f&quot;
+
+#define OFFSET_PARAM &quot;offset=%d&quot;
+
+// web page names
+#define CONTROL_TEST1 &quot;/control_test1&quot;
+#define CONTROL_TEST2 &quot;/control_test2&quot;
+
+//NEW CODE BEGINS
+#define MSG_PAGE &quot;/msg&quot;
+#define MSG_PARAM &quot;msg=%127s&quot;
+
+static char last_msg[128] = {0};
+
+//NEW CODE ENDS
+
+//#define NEW_PAGE &quot;/newpage&quot;
+// The LED is on cy243 gpio 0 NOT the rp2040
+#define LED_GPIO 0
+// the redirect using the IP adddress specified in MAIN
+#define HTTP_RESPONSE_REDIRECT &quot;HTTP/1.1 302 Redirect\nLocation: http://%s&quot; CONTROL_TEST1 &quot;\n\n&quot;
+
+// ===========================
+// connect state structures
+// ===========================
+typedef struct TCP_SERVER_T_ {
+    struct tcp_pcb *server_pcb;
+    bool complete;
+    ip_addr_t gw;
+    async_context_t *context;
+} TCP_SERVER_T;
+
+typedef struct TCP_CONNECT_STATE_T_ {
+    struct tcp_pcb *pcb;
+    int sent_len;
+    char headers[512]; //128
+    char result[2048]; // 256
+    int header_len;
+    int result_len;
+    ip_addr_t *gw;
+} TCP_CONNECT_STATE_T;
+
+// =====================================
+// called at end of &#x27;tcp_server_sent&#x27;
+// and several times in &#x27;tcp_server_recv&#x27;
+// and other places that open a conneciton
+static err_t tcp_close_client_connection(TCP_CONNECT_STATE_T *con_state, struct tcp_pcb *client_pcb, err_t close_err) {
+    if (client_pcb) {
+        assert(con_state &amp;&amp; con_state-&gt;pcb == client_pcb);
+        tcp_arg(client_pcb, NULL);
+        tcp_poll(client_pcb, NULL, 0);
+        tcp_sent(client_pcb, NULL);
+        tcp_recv(client_pcb, NULL);
+        tcp_err(client_pcb, NULL);
+        err_t err = tcp_close(client_pcb);
+        if (err != ERR_OK) {
+            DEBUG_printf(&quot;close failed %d, calling abort\n&quot;, err);
+            tcp_abort(client_pcb);
+            close_err = ERR_ABRT;
+        }
+        if (con_state) {
+            free(con_state);
+        }
+    }
+    return close_err;
+}
+
+// =======================================
+// not called in this pgm, since code never exits
+/*
+static void tcp_server_close(TCP_SERVER_T *state) {
+    if (state-&gt;server_pcb) {
+        tcp_arg(state-&gt;server_pcb, NULL);
+        tcp_close(state-&gt;server_pcb);
+        state-&gt;server_pcb = NULL;
+    }
+}
+*/
+
+// ========================================
+//
+static err_t tcp_server_sent(void *arg, struct tcp_pcb *pcb, u16_t len) {
+    TCP_CONNECT_STATE_T *con_state = (TCP_CONNECT_STATE_T*)arg;
+    DEBUG_printf(&quot;tcp_server_sent %u\n&quot;, len);
+    con_state-&gt;sent_len += len;
+    if (con_state-&gt;sent_len &gt;= con_state-&gt;header_len + con_state-&gt;result_len) {
+        DEBUG_printf(&quot;all done\n&quot;);
+        return tcp_close_client_connection(con_state, pcb, ERR_OK);
+    }
+    return ERR_OK;
+}
+
+float new_desired = 0.0f;
+int motor_state = 0;
+float K_p = 0;
+float K_i = 0;
+float K_d = 0;
+
+int change_offset = 0;
+
+// ========================================
+// This routine actially parses the GET response to figure out what
+// the browwer user asked for on the web page.
+// This is another part I chnaged from the example
+// to support more general parsing of several data items
+static int test_server_content(const char *request, const char *params, char *result, size_t max_result_len) {
+    int len = 0;
+    // three data items sent in this example, but could be many more
+    static char  param1[16], param2[16], param3[16], param4[16], param5[16], param6[16], param7[16];
+    static char* token ;
+
+    // is it the ledtest page?
+    if (strncmp(request, CONTROL_TEST1, sizeof(CONTROL_TEST1) - 1) == 0) {
+        
+        // Get the curent state of the led
+        // not used here, except as backup if web form fails
+        //bool value;
+        //cyw43_gpio_get(&amp;cyw43_state, LED_GPIO, &amp;value);
+        //int led_state = value;
+
+        // See what data the user asked for: 
+        // the params string is trimmed by the receive funciton below to have
+        // only user-supplied data
+        // general data format is 
+        // http://192.168.4.1/ledtest?name1=value1&amp;name2=data2&amp;name3=data3 and etc
+        // by the time the string gets here, the trimmed version is
+        // name1=value1&amp;name2=data2&amp;name3=data3
+        if (params) {
+            // parse the params using &#x27;&amp;&#x27; delimeter
+            token = strtok((char*)params, &quot;&amp; &quot;);
+            strcpy(param1, token) ;
+            token = strtok(NULL, &quot;&amp;  &quot;);
+            strcpy(param2, token) ;
+            token = strtok(NULL, &quot;&amp;  &quot;);
+            strcpy(param3, token) ;
+            token = strtok(NULL, &quot;&amp;  &quot;);
+            strcpy(param4, token) ;
+            token = strtok(NULL, &quot;&amp;  &quot;);
+            strcpy(param5, token) ;
+
+
+            // now get the actual numbers
+            sscanf(param1, LED_PARAM, &amp;motor_enabled);
+            // force to binary value and set LED state
+            motor_enabled = motor_enabled &gt; 0 ;
+            cyw43_gpio_set(&amp;cyw43_state, 0, motor_enabled);
+            // set global to signal graphics thread
+            
+            // the second and third parameter begining is delimited by an &#x27;&amp;&#x27;
+            // these tell the graphics thread what numbers to draw
+            sscanf(param2, KP_PARAM, &amp;K_p);
+            sscanf(param3, KI_PARAM, &amp;K_i);
+            sscanf(param4, KD_PARAM, &amp;K_d);
+            sscanf(param5, SP_PARAM, &amp;new_desired);
+
+            pid.Kp = float2fix15(K_p);
+            pid.Ki = float2fix15(K_i);
+            pid.Kd = float2fix15(K_d);
+            desired_angle = float2fix15(new_desired);
+
+
+        }
+        
+        // Generate result web page using the above data
+        // by filling in the format fields in the http string.  
+        // test2_field occcurs twice: once for the slider position
+        // and once to update the numwerical value interactively.   
+        len = snprintf(result, max_result_len, CONTROL_TEST1_BODY, motor_enabled? &quot;ON&quot;:&quot;OFF&quot;, 
+               motor_enabled? &quot; &quot;:&quot;selected&quot;, motor_enabled? &quot;selected&quot;:&quot; &quot;,
+               motor_enabled? &quot;LawnGreen&quot;:&quot;black&quot;,
+               fix2float15(pid.Kp), fix2float15(pid.Ki), fix2float15(pid.Kd), fix2float15(desired_angle), 
+               fix2float15(pid.Kp), fix2float15(pid.Ki), fix2float15(pid.Kd), fix2float15(desired_angle));
+    }
+    // is it the new page
+    // if so parse and build the page
+
+    else if (strncmp(request, CONTROL_TEST2, sizeof(CONTROL_TEST2) - 1) == 0) {
+        if (params) {
+            // parse the params using &#x27;&amp;&#x27; delimeter
+            token = strtok((char*)params, &quot;&amp; &quot;);
+            strcpy(param1, token) ;
+            // now get the actual numbers
+            sscanf(param1, OFFSET_PARAM , &amp;change_offset);
+            // signal new color
+            
+            if (change_offset &gt; 0)
+            {
+                desired_angle = (desired_angle &gt; (BASE_DESIRED_SP + int2fix15(3))) ? desired_angle : desired_angle + int2fix15(1);
+            }
+            else if (change_offset &lt; 0)
+            {
+                desired_angle = (desired_angle &lt; (BASE_DESIRED_SP - int2fix15(3))) ? desired_angle : desired_angle - int2fix15(1);
+            }
+            else if (change_offset == 0)
+            {
+                desired_angle = BASE_DESIRED_SP;
+            }
+        }
+
+        // construct the approximate 24 bit color from the 4 bit input &#x27;color&#x27;
+        int longcolor = 0x000000 ; 
+        //  OR in the bits of each color 1-bit red, 1-bit blue, 2-bits green
+        int red_part = (color &amp; 0b1000)? 0xff0000 : 0 ;
+        int green_part = (color &amp; 0b0011)? 0x003f00 | ((color&amp; 0b0011)&lt;&lt;14) : 0 ;
+        int blue_part = (color &amp; 0b0100)? 0x0000ff : 0 ;
+        longcolor = red_part | green_part | blue_part ;
+        // build the page
+        len = snprintf(result, max_result_len, CONTROL_TEST2_BODY, \
+                        fix2float15(desired_angle), fix2float15(desired_angle - BASE_DESIRED_SP));
+    }
+    
+
+    else if (strncmp(request, MSG_PAGE, sizeof(MSG_PAGE) - 1) == 0) {
+        // e.g. /msg?msg=FORWARD  or  /msg?msg=BACKWARD  or  /msg?msg=STOP
+
+        char msg_buf[128] = {0};
+
+        if (params) {
+            // very simple parsing: expect &quot;msg=&lt;TEXT&gt;&quot;
+            sscanf(params, MSG_PARAM, msg_buf);
+        }
+
+        // Store and print the received message
+        strncpy(last_msg, msg_buf, sizeof(last_msg) - 1);
+        last_msg[sizeof(last_msg) - 1] = &#x27;\0&#x27;;
+
+        printf(&quot;Received message from client: &#x27;%s&#x27;\n&quot;, last_msg);
+
+        int recognized = 0;
+
+        if (strcmp(last_msg, &quot;FORWARD&quot;) == 0) {
+            target_speed_cmd = +1;
+            recognized = 1;
+        }
+        else if (strcmp(last_msg, &quot;BACKWARD&quot;) == 0) {
+            target_speed_cmd = -1;
+            recognized = 1;
+        }
+        else if (strcmp(last_msg, &quot;STOP&quot;) == 0) {
+            target_speed_cmd = 0;
+            recognized = 1;
+        }
+
+        if (recognized) {
+            // Reset timeout counter whenever we get a valid command
+            cmd_timeout_ticks = 0;
+
+            // Map command to an extra tilt angle
+            float angle_deg = 0.0f;
+            if (target_speed_cmd &gt; 0)       angle_deg =  MAX_GESTURE_ANGLE_DEG;
+            else if (target_speed_cmd &lt; 0)  angle_deg = -MAX_GESTURE_ANGLE_DEG;
+            else                             angle_deg =  0.0f;
+
+            gesture_angle_offset = float2fix15(angle_deg);
+        }
+
+        // Tiny response to keep the HTTP client happy
+        len = snprintf(result, max_result_len,
+                       &quot;OK %s&quot;, last_msg);
+    }
+    return len;
+}
+
+// ========================================
+// receives brwoser url request, parses out the query string
+// to send to the funciton just above, does some error checking
+// then sends the html back to the browser
+err_t tcp_server_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err) {
+    TCP_CONNECT_STATE_T *con_state = (TCP_CONNECT_STATE_T*)arg;
+    if (!p) {
+        DEBUG_printf(&quot;connection closed\n&quot;);
+        return tcp_close_client_connection(con_state, pcb, ERR_OK);
+    }
+    assert(con_state &amp;&amp; con_state-&gt;pcb == pcb);
+    if (p-&gt;tot_len &gt; 0) {
+        DEBUG_printf(&quot;tcp_server_recv %d err %d\n&quot;, p-&gt;tot_len, err);
+#if 0
+        for (struct pbuf *q = p; q != NULL; q = q-&gt;next) {
+            DEBUG_printf(&quot;in: %.*s\n&quot;, q-&gt;len, q-&gt;payload);
+        }
+#endif
+        // Copy the request into the buffer
+        pbuf_copy_partial(p, con_state-&gt;headers, p-&gt;tot_len &gt; sizeof(con_state-&gt;headers) - 1 ? sizeof(con_state-&gt;headers) - 1 : p-&gt;tot_len, 0);
+
+        // Handle GET request
+        if (strncmp(HTTP_GET, con_state-&gt;headers, sizeof(HTTP_GET) - 1) == 0) {
+            char *request = con_state-&gt;headers + sizeof(HTTP_GET); // + space
+            char *result = con_state-&gt;result ;  
+            // find the params start in the request (indicated by &#x27;?&#x27;)         
+            char *params = strchr(request, &#x27;?&#x27;);
+            // find the param end (i think) and force a null
+            if (params) {
+                if (*params) {
+                    char *space = strchr(request, &#x27; &#x27;);
+                    *params++ = 0;
+                    if (space) {
+                        *space = 0;
+                    }
+                } else {
+                    params = NULL;
+                }
+            }
+
+            // Generate content html
+            con_state-&gt;result_len = test_server_content(request, params, con_state-&gt;result, sizeof(con_state-&gt;result));
+            DEBUG_printf(&quot;Request: %s?%s\n&quot;, request, params);
+            DEBUG_printf(&quot;Result: %d\n&quot;, con_state-&gt;result_len);
+
+            // Check we had enough buffer space
+            if (con_state-&gt;result_len &gt; sizeof(con_state-&gt;result) - 1) {
+                DEBUG_printf(&quot;Too much result data %d\n&quot;, con_state-&gt;result_len);
+                return tcp_close_client_connection(con_state, pcb, ERR_CLSD);
+            }
+
+            // Generate web page header
+            if (con_state-&gt;result_len &gt; 0) {
+                con_state-&gt;header_len = snprintf(con_state-&gt;headers, sizeof(con_state-&gt;headers), HTTP_RESPONSE_HEADERS,
+                    200, con_state-&gt;result_len);
+                if (con_state-&gt;header_len &gt; sizeof(con_state-&gt;headers) - 1) {
+                    DEBUG_printf(&quot;Too much header data %d\n&quot;, con_state-&gt;header_len);
+                    return tcp_close_client_connection(con_state, pcb, ERR_CLSD);
+                }
+            } else {
+                // Send redirect
+                con_state-&gt;header_len = snprintf(con_state-&gt;headers, sizeof(con_state-&gt;headers), HTTP_RESPONSE_REDIRECT,
+                    ipaddr_ntoa(con_state-&gt;gw));
+                DEBUG_printf(&quot;Sending redirect %s&quot;, con_state-&gt;headers);
+            }
+
+            // Send the headers to the client
+            con_state-&gt;sent_len = 0;
+            err_t err = tcp_write(pcb, con_state-&gt;headers, con_state-&gt;header_len, 0);
+            if (err != ERR_OK) {
+                DEBUG_printf(&quot;failed to write header data %d\n&quot;, err);
+                return tcp_close_client_connection(con_state, pcb, err);
+            }
+
+            // Send the body to the client
+            if (con_state-&gt;result_len) {
+                err = tcp_write(pcb, con_state-&gt;result, con_state-&gt;result_len, 0);
+                if (err != ERR_OK) {
+                    DEBUG_printf(&quot;failed to write result data %d\n&quot;, err);
+                    return tcp_close_client_connection(con_state, pcb, err);
+                }
+            }
+        }
+        tcp_recved(pcb, p-&gt;tot_len);
+    }
+    pbuf_free(p);
+    return ERR_OK;
+}
+
+// ========================================
+//
+static err_t tcp_server_poll(void *arg, struct tcp_pcb *pcb) {
+    TCP_CONNECT_STATE_T *con_state = (TCP_CONNECT_STATE_T*)arg;
+    DEBUG_printf(&quot;tcp_server_poll_fn\n&quot;);
+    return tcp_close_client_connection(con_state, pcb, ERR_OK); // Just disconnect clent?
+}
+
+// ========================================
+//
+static void tcp_server_err(void *arg, err_t err) {
+    TCP_CONNECT_STATE_T *con_state = (TCP_CONNECT_STATE_T*)arg;
+    if (err != ERR_ABRT) {
+        DEBUG_printf(&quot;tcp_client_err_fn %d\n&quot;, err);
+        tcp_close_client_connection(con_state, con_state-&gt;pcb, err);
+    }
+}
+
+// ========================================
+//
+static err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err) {
+    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+    if (err != ERR_OK || client_pcb == NULL) {
+        DEBUG_printf(&quot;failure in accept\n&quot;);
+        return ERR_VAL;
+    }
+    DEBUG_printf(&quot;client connected\n&quot;);
+
+    // Create the state for the connection
+    TCP_CONNECT_STATE_T *con_state = calloc(1, sizeof(TCP_CONNECT_STATE_T));
+    if (!con_state) {
+        DEBUG_printf(&quot;failed to allocate connect state\n&quot;);
+        return ERR_MEM;
+    }
+    con_state-&gt;pcb = client_pcb; // for checking
+    con_state-&gt;gw = &amp;state-&gt;gw;
+
+    // setup connection to client
+    tcp_arg(client_pcb, con_state);
+    tcp_sent(client_pcb, tcp_server_sent);
+    tcp_recv(client_pcb, tcp_server_recv);
+    tcp_poll(client_pcb, tcp_server_poll, POLL_TIME_S * 2);
+    tcp_err(client_pcb, tcp_server_err);
+
+    return ERR_OK;
+}
+
+// =======================================
+// called from MAIN to start tcp server
+// =======================================
+static bool tcp_server_open(void *arg, const char *ap_name) {
+    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+    DEBUG_printf(&quot;starting server on port %d\n&quot;, TCP_PORT);
+
+    struct tcp_pcb *pcb = tcp_new_ip_type(IPADDR_TYPE_ANY);
+    if (!pcb) {
+        DEBUG_printf(&quot;failed to create pcb\n&quot;);
+        return false;
+    }
+
+    err_t err = tcp_bind(pcb, IP_ANY_TYPE, TCP_PORT);
+    if (err) {
+        DEBUG_printf(&quot;failed to bind to port %d\n&quot;,TCP_PORT);
+        return false;
+    }
+
+    state-&gt;server_pcb = tcp_listen_with_backlog(pcb, 1);
+    if (!state-&gt;server_pcb) {
+        DEBUG_printf(&quot;failed to listen\n&quot;);
+        if (pcb) {
+            tcp_close(pcb);
+        }
+        return false;
+    }
+
+    tcp_arg(state-&gt;server_pcb, state);
+    tcp_accept(state-&gt;server_pcb, tcp_server_accept);
+
+    printf(&quot;Try connecting to &#x27;%s&#x27; with password &#x27;password&#x27;\n&quot;, ap_name);
+    return true;
+}
+//=========================================
+// never truning off wifi in my code
+/*
+// This &quot;worker&quot; function is called to safely perform work when instructed by key_pressed_func
+void key_pressed_worker_func(async_context_t *context, async_when_pending_worker_t *worker) {
+    //&gt;&gt;&gt;&gt;assert(worker-&gt;user_data);
+    printf(&quot;Disabling wifi\n&quot;);
+    cyw43_arch_disable_ap_mode();
+    //&gt;&gt;&gt;&gt;((TCP_SERVER_T*)(worker-&gt;user_data))-&gt;complete = true;
+}
+*/
+
+/*
+static async_when_pending_worker_t key_pressed_worker = {
+        .do_work = key_pressed_worker_func
+};
+*/
+void key_pressed_func(void *param) {
+    assert(param);
+    int key = getchar_timeout_us(0); // get any pending key press but don&#x27;t wait
+    if (key == &#x27;d&#x27; || key == &#x27;D&#x27;) {
+        // We are probably in irq context so call wifi in a &quot;worker&quot;
+       //&gt;&gt;&gt;&gt; async_context_set_work_pending(((TCP_SERVER_T*)param)-&gt;context, &amp;key_pressed_worker);
+    }
+}
+
+// ==================================================
+// access thread protothread
+// ==================================================
+static PT_THREAD (protothread_access(struct pt *pt)){
+    PT_BEGIN(pt);
+    
+    //if (!state)
+     //   return;
+    while(true) {
+        
+        //
+        
+        PT_YIELD_usec(100000);
+    }   
+
+    PT_END(pt);
+}
+
+// ==================================================
+// gpio2 intensity  
+// this is really just a test of multitasking
+// compatability with LWIP
+// ==================================================
+static PT_THREAD (protothread_toggle_gpio6(struct pt *pt))
+{
+    PT_BEGIN(pt);
+    //
+     // data structure for interval timer
+     PT_INTERVAL_INIT() ;
+     // set up LED gpio 2
+     gpio_init(6) ;	
+     gpio_set_dir(6, GPIO_OUT) ;
+     gpio_put(6, true);
+
+
+      while(1) {
+        // cheesy PWM
+        PT_YIELD_INTERVAL(10000) ;
+        //
+        gpio_put(6, true);
+        // intensity % range 0-99 works
+        PT_YIELD_usec(test2_field*100);
+        gpio_put(6, false);
+        // NEVER exit while
+      } // END WHILE(1)
+    PT_END(pt);
+} // blink thread
+
+
+// END SERVER CODE
+
+// PID CODE
+
+#define HB_FWD_PIN 14
+#define HB_BCK_PIN 15
+
+// Arrays in which raw measurements will be stored
+fix15 acceleration[3], gyro[3];
+fix15 accel_angle, gyro_angle_delta;
+fix15 complementary_angle;
+fix15 filter_acc_z, filter_acc_y;
+
+// character array
+char screentext[40];
+
+// draw speed
+int threshold = 50 ;
+
+// Some macros for max/min/abs
+#define min(a,b) ((a&lt;b) ? a:b)
+#define max(a,b) ((a&lt;b) ? b:a)
+#define abs(a) ((a&gt;0) ? a:-a)
+
+
+// semaphore
+static struct pt_sem vga_semaphore ;
+
+
+// Some paramters for PWM
+#define WRAPVAL 5000
+#define CLKDIV 25.0
+#define PWM_OUT_F 4
+#define PWM_OUT_B 5
+
+#define PI float2fix15(3.14159265358979)
+
+uint slice_num;
+
+// BUTTON
+#define BUTTON_PIN 15  
+#define DEBOUNCE_SAMPLES 4
+
+static struct pt_sem sequence_semaphore;
+volatile bool sequence_running = false; // ignore re-triggers while running
+
+// helper for degrees → fix15
+static inline fix15 deg15(float deg) { return float2fix15(deg); }
+
+// PWM duty cycle
+volatile int control ;
+volatile int old_control ;
+fix15 control_pix;
+
+// Combines gyro and accel data to allow stabl angle estimation
+void complementary_filter()
+{
+    filter_acc_y = filter_acc_y + ((acceleration[1] - filter_acc_y)&gt;&gt;4); 
+    filter_acc_z = filter_acc_z + ((acceleration[2] - filter_acc_z)&gt;&gt;4); 
+
+    // accel_angle = multfix15(divfix(acceleration[0], acceleration[1]), oneeightyoverpi);
+    accel_angle = multfix15(float2fix15(atan2(-filter_acc_y, filter_acc_z) ), oneeightyoverpi);
+    gyro_angle_delta = multfix15(gyro[0], zeropt001) ;
+    
+    complementary_angle = multfix15(complementary_angle - gyro_angle_delta, zeropt999) + multfix15(accel_angle, zeropt001);
+}
+
+
+fix15 secondary_kp = float2fix15(100.0);
+
+// Perform one PID step
+// Perform one PID step
+void pid_step()
+{
+    // Use base desired angle plus gesture-driven offset
+    fix15 effective_desired = desired_angle + gesture_angle_offset;
+
+    // PID error
+    err = (effective_desired - complementary_angle);
+
+    // Integral with clamping and non-negativity
+    pid.integral = (pid.integral + err) &lt; pid.max_integral ?
+                   (pid.integral + err) : pid.max_integral; // clamp integral
+    pid.integral = pid.integral &gt; 0 ? pid.integral : 0;
+    pid.prev_err = err;
+
+    // Derivative term from gyro
+    fix15 derivative_term = multfix15(gyro[0], pid.Kd);
+
+    int temp_control = fix2int15(
+        multfix15(err,        pid.Kp) +
+        multfix15(pid.integral, pid.Ki) +
+        derivative_term
+    );
+
+    int kp_offset = multfix15(secondary_kp, err);
+
+    // Clamp overall control
+    if (temp_control &gt; pid.max) {
+        control = pid.max;
+    }
+    else if (temp_control &lt; pid.min) {
+        control = pid.min;
+    }
+    else {
+        control = temp_control;
+    }
+
+    // Safety: disable motor if requested
+    if (!motor_enabled) control = 0;
+
+    // Only touch PWM when control actually changes
+    if (control != old_control) {
+
+        old_control = control;
+
+        if (control &lt; 0) {
+            pwm_set_chan_level(slice_num, PWM_CHAN_A, 0);
+            pwm_set_chan_level(slice_num, PWM_CHAN_B, abs(control) + 1000 + kp_offset);
+        }
+        else {
+            pwm_set_chan_level(slice_num, PWM_CHAN_B, 0);
+            pwm_set_chan_level(slice_num, PWM_CHAN_A, abs(control) + 1000);
+        }
+    }
+}
+
+
+// Reads IMU, updates filter and PID, then signals VGA
+// Interrupt service routine
+void on_pwm_wrap() {
+
+    // Clear the interrupt flag that brought us here
+    pwm_clear_irq(pwm_gpio_to_slice_num(5));
+
+    // === Gesture command timeout ===
+    // This ISR runs at ~1 kHz with the current PWM settings.
+    // If we haven&#x27;t seen a FORWARD/BACKWARD/STOP in CMD_TIMEOUT_TICKS calls,
+    // force the robot to STOP (no extra tilt).
+    if (cmd_timeout_ticks &lt; CMD_TIMEOUT_TICKS + 1) {
+        cmd_timeout_ticks++;
+    }
+    if (cmd_timeout_ticks &gt; CMD_TIMEOUT_TICKS) {
+        target_speed_cmd = 0;
+        gesture_angle_offset = 0;
+    }
+
+    // Read the IMU
+    mpu6050_read_raw(acceleration, gyro);
+
+    // Update complementary filter
+    complementary_filter();
+
+    // Run PID with (desired_angle + gesture_angle_offset)
+    pid_step();
+
+    // Signal VGA to draw
+    PT_SEM_SIGNAL(pt, &amp;vga_semaphore);
+}
+
+
+// Plots angles and control signals on the VGA display 
+// Thread that draws to VGA display
+static PT_THREAD (protothread_vga(struct pt *pt))
+{
+    // Indicate start of thread
+    PT_BEGIN(pt) ;
+
+    // We will start drawing at column 81
+    static int xcoord = 81 ;
+    
+    // Rescale the measurements for display
+    static float OldRange = 180. ; // (+/- 90)
+    static float NewRange = 150. ; // (looks nice on VGA)
+    static float OldMin = -90. ;
+    static float OldMax = 90. ;
+
+    // Control rate of drawing
+    static int throttle ;
+
+    // Draw the static aspects of the display
+    setTextSize(1) ;
+    setTextColor(WHITE);
+
+    // Draw bottom plot
+    drawHLine(75, 430, 5, CYAN) ;
+    drawHLine(75, 355, 5, CYAN) ;
+    drawHLine(75, 280, 5, CYAN) ;
+    drawVLine(80, 280, 150, CYAN) ;
+    sprintf(screentext, &quot;+1400&quot;) ;
+    setCursor(50, 350) ;
+    writeString(screentext) ;
+    sprintf(screentext, &quot;+2800&quot;) ;
+    setCursor(50, 280) ;
+    writeString(screentext) ;
+    sprintf(screentext, &quot;0&quot;) ;
+    setCursor(50, 425) ;
+    writeString(screentext) ;
+
+    // Draw top plot
+    drawHLine(75, 230, 5, CYAN) ;
+    drawHLine(75, 155, 5, CYAN) ;
+    drawHLine(75, 80, 5, CYAN) ;
+    drawHLine(75, 180, 5, CYAN) ;
+    drawHLine(75, 130, 5, CYAN) ;
+    drawVLine(80, 80, 150, CYAN) ;
+
+    // Prints the angles
+    sprintf(screentext, &quot;0&quot;) ;
+    setCursor(50, 150) ;
+    writeString(screentext) ;
+
+    sprintf(screentext, &quot;+30&quot;) ;
+    setCursor(50, 125) ;
+    writeString(screentext) ;
+
+    sprintf(screentext, &quot;-30&quot;) ;
+    setCursor(50, 175) ;
+    writeString(screentext) ;
+
+    sprintf(screentext, &quot;+90&quot;) ;
+    setCursor(45, 75) ;
+    writeString(screentext) ;
+
+    sprintf(screentext, &quot;-90&quot;) ;
+    setCursor(45, 225) ;
+    writeString(screentext) ;
+
+    while (true) {
+        // Wait on semaphore
+        PT_SEM_WAIT(pt, &amp;vga_semaphore);
+        // Increment drawspeed controller
+        throttle += 1 ;
+        // If the controller has exceeded a threshold, draw
+        if (throttle &gt;= threshold) { 
+            // Zero drawspeed controller
+            throttle = 0 ;
+
+            // Erase a column
+            drawVLine(xcoord, 0, 480, BLACK) ;
+
+            // Draw bottom plot (multiply by 120 to scale from +/-2 to +/-250)
+            // drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[0])*120.0)-OldMin)/OldRange)), WHITE) ;
+            // drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[1])*120.0)-OldMin)/OldRange)), RED) ;
+            // drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[2])*120.0)-OldMin)/OldRange)), GREEN) ;
+            
+            control_pix = control_pix + ((int2fix15(control) - control_pix) &gt;&gt; 5);
+            drawPixel(xcoord, 505 - (int)(NewRange*((float)((fix2float15(control_pix) / 15.55)-OldMin)/OldRange)), GREEN) ;
+
+            // Draw top plot
+            // drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(gyro[0]))-OldMin)/OldRange)), WHITE) ;
+            // drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(gyro[1]))-OldMin)/OldRange)), RED) ;
+            drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(desired_angle)) - OldMin)/OldRange)), GREEN) ;
+            drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(complementary_angle))-OldMin)/OldRange)), BLUE) ;
+
+            // Update horizontal cursor
+            if (xcoord &lt; 609) {
+                xcoord += 1 ;
+            }
+            else {
+                xcoord = 81 ;
+            }
+            fillRect(10, 445, 620, 30, BLACK);
+            setCursor(10, 460);
+            setTextColor(WHITE);
+            sprintf(screentext, &quot;PID: Kp=%5.1f Ki=%5.2f Kd=%5.1f&quot;,
+            fix2float15(pid.Kp), fix2float15(pid.Ki), fix2float15(pid.Kd));
+            writeString(screentext);
+        }
+    }
+    // Indicate end of thread
+    PT_END(pt);
+}
+
+// User input thread. User can change draw speed
+static PT_THREAD (protothread_serial(struct pt *pt))
+{
+    PT_BEGIN(pt) ;
+    static char classifier = 0;
+    static int test_in ;
+    static float float_in ;
+    while(1) {
+
+        printf(&quot;Complementary Angle: %f \n&quot;, fix2float15(complementary_angle));
+        printf(&quot;error: %f \n&quot;, fix2float15(desired_angle - complementary_angle));
+        // printf(&quot;control: %d \n&quot;, (control));
+
+        // ################## BEGIN AI-GENERATED CODE ##################
+        // printf(&quot;enter p/i/d/a: &quot;);
+        // serial_read;
+        // sscanf(pt_serial_in_buffer, &quot;%c&quot;, &amp;classifier);
+
+    //     if (classifier == &#x27;p&#x27;) {
+    //         sprintf(pt_serial_out_buffer, &quot;Set Kp: &quot;);
+    //         serial_write;
+    //         serial_read;
+    //         sscanf(pt_serial_in_buffer, &quot;%f&quot;, &amp;float_in);
+    //         pid.Kp = float2fix15(float_in);
+
+    //     }
+    //     // ################### END AI-GENERATED CODE ###################
+    //     // adjust Ki term in serial
+    //     else if (classifier == &#x27;i&#x27;) {
+    //         sprintf(pt_serial_out_buffer, &quot;Set Ki: &quot;);
+    //         serial_write;
+    //         serial_read;
+    //         sscanf(pt_serial_in_buffer, &quot;%f&quot;, &amp;float_in);
+    //         pid.Ki = float2fix15(float_in);
+
+    //     }
+    //     // adjust Kd term in serial
+    //     else if (classifier == &#x27;d&#x27;) {
+    //         sprintf(pt_serial_out_buffer, &quot;Set Kd: &quot;);
+    //         serial_write;
+    //         serial_read;
+    //         sscanf(pt_serial_in_buffer, &quot;%f&quot;, &amp;float_in);
+    //         pid.Kd = float2fix15(float_in);
+    //     }
+    //     // adjust desired_angle term in serial
+    //     else if (classifier == &#x27;a&#x27;) {
+    //         sprintf(pt_serial_out_buffer, &quot;Set Desired Angle: &quot;);
+    //         serial_write;
+    //         serial_read;
+    //         sscanf(pt_serial_in_buffer, &quot;%f&quot;, &amp;float_in);
+    //         desired_angle = float2fix15(float_in);
+    //     }
+    }
+
+    PT_END(pt) ;
+}
+
+// Entry point for core 1
+void core1_entry() {
+     DEBUG_printf(&quot;CORE 1 ENTRY&quot;);
+     ////////////////////////////////////////////////////////////////////////
+    ///////////////////////// I2C CONFIGURATION ////////////////////////////
+    i2c_init(I2C_CHAN, I2C_BAUD_RATE) ;
+    gpio_set_function(SDA_PIN, GPIO_FUNC_I2C) ;
+    gpio_set_function(SCL_PIN, GPIO_FUNC_I2C) ;
+
+    // Pullup resistors on breakout board, don&#x27;t need to turn on internals
+    // gpio_pull_up(SDA_PIN) ;
+    // gpio_pull_up(SCL_PIN) ;
+
+    // MPU6050 initialization
+    mpu6050_reset();
+    mpu6050_read_raw(acceleration, gyro);
+
+    ////////////////////////////////////////////////////////////////////////
+    ///////////////////////// PWM CONFIGURATION ////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+
+    // Tell GPIO PWM_OUT that it is allocated to the PWM
+    gpio_set_function(PWM_OUT_F, GPIO_FUNC_PWM);
+    gpio_set_function(PWM_OUT_B, GPIO_FUNC_PWM);
+
+    // Find out which PWM slice is connected to GPIO 5 (it&#x27;s slice 2, same for 4)
+    slice_num = pwm_gpio_to_slice_num(PWM_OUT_F);
+
+    // Mask our slice&#x27;s IRQ output into the PWM block&#x27;s single interrupt line,
+    // and register our interrupt handler
+    pwm_clear_irq(slice_num);
+    pwm_set_irq_enabled(slice_num, true);
+    irq_set_exclusive_handler(PWM_IRQ_WRAP, on_pwm_wrap);
+    irq_set_enabled(PWM_IRQ_WRAP, true);
+
+    // This section configures the period of the PWM signals
+    pwm_set_wrap(slice_num, WRAPVAL) ;
+    pwm_set_clkdiv(slice_num, CLKDIV) ;
+
+    // This sets duty cycle
+    pwm_set_chan_level(slice_num, PWM_CHAN_B, 0);
+    pwm_set_chan_level(slice_num, PWM_CHAN_A, 0);
+
+
+    // Start the channel
+    pwm_set_mask_enabled((1u &lt;&lt; slice_num));
+
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////// H-BRIDGE CONFIGURATION //////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    
+    gpio_set_dir(HB_FWD_PIN, GPIO_OUT);
+    gpio_set_dir(HB_BCK_PIN, GPIO_OUT);
+
+    desired_angle = float2fix15(2.85f);
+
+    // start core 1
+    gpio_put(HB_FWD_PIN, true);
+
+    pt_schedule_start ;
+
+}
+
+
+int main() {
+
+    // semaphores
+    PT_SEM_INIT(&amp;vga_semaphore, 0);
+    PT_SEM_INIT(&amp;sequence_semaphore, 0);
+
+    // Overclock
+    set_sys_clock_khz(150000, true) ;
+
+    // Initialize stdio
+    stdio_init_all();
+
+    // Initialize VGA
+    initVGA() ;
+
+    DEBUG_printf(&quot;STARTING UP...&quot;);
+
+        // =====================================
+    // turn on ADC (move to thread)
+    // adc_init();
+    // adc_set_temp_sensor_enabled(true);
+    // adc_select_input(4);
+
+    //========================================
+    // network init
+    // start the cyw43 in access point mode
+    // start the DHCP server
+    // start the DNS server
+    // start the TCP server
+    // =======================================
+    TCP_SERVER_T *state = calloc(1, sizeof(TCP_SERVER_T));
+    if (!state) {
+        DEBUG_printf(&quot;failed to allocate state\n&quot;);
+        return 1;
+    }
+    DEBUG_printf(&quot;After state check&quot;);
+
+    if (cyw43_arch_init()) {
+        DEBUG_printf(&quot;failed to initialise\n&quot;);
+        return 1;
+    }
+    DEBUG_printf(&quot;After cyw43_arch_init&quot;);
+
+    // Get notified if the user presses a key
+    state-&gt;context = cyw43_arch_async_context();
+    //&gt;&gt;&gt;&gt; key_pressed_worker.user_data = state;
+    //&gt;&gt;&gt;&gt;async_context_add_when_pending_worker(cyw43_arch_async_context(), &amp;key_pressed_worker);
+    stdio_set_chars_available_callback(key_pressed_func, state);
+
+    // access point SSID and PASSWORD
+    // WPA2 authorization
+    const char *ap_name = &quot;jamayne&#x27;s wifi&quot;;
+#if 1
+    const char *password = &quot;password&quot;;
+#else
+    const char *password = NULL;
+#endif
+
+    cyw43_arch_enable_ap_mode(ap_name, password, CYW43_AUTH_WPA2_AES_PSK);
+
+    // &#x27;state&#x27; is a pointer to type TCP_SERVER_T 
+    ip4_addr_t mask;
+    IP4_ADDR(ip_2_ip4(&amp;state-&gt;gw), 192, 168, 4, 1);
+    IP4_ADDR(ip_2_ip4(&amp;mask), 255, 255, 255, 0);
+
+    // Start the dhcp server
+    // and set picoW IP address from &#x27;state&#x27; structure
+    // set &#x27;mask&#x27; as defined above
+    dhcp_server_t dhcp_server;
+    dhcp_server_init(&amp;dhcp_server, &amp;state-&gt;gw, &amp;mask);
+
+    // Start the dns server
+    // and set picoW IP address from &#x27;state&#x27; structure
+    dns_server_t dns_server;
+    dns_server_init(&amp;dns_server, &amp;state-&gt;gw);
+
+    DEBUG_printf(&quot;Trying to open tcp server&quot;);
+    if (!tcp_server_open(state, ap_name)) {
+        DEBUG_printf(&quot;failed to open server\n&quot;);
+        return 1;
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    ///////////////////////////// ROCK AND ROLL ////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    // start core 1 
+    multicore_reset_core1();
+    multicore_launch_core1(core1_entry);
+
+    pt_add_thread(protothread_toggle_gpio6) ;
+    pt_add_thread(protothread_serial) ;
+
+    pt_schedule_start ;
+
+    dns_server_deinit(&amp;dns_server);
+    dhcp_server_deinit(&amp;dhcp_server);
+    cyw43_arch_deinit();
+
+}
+</code></pre>
+			</details>
+				</section>
+			</div>
+		</div>
+
+		<!-- Scripts -->
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+	</body>
+</html>
+
