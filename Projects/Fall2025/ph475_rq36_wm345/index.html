@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bebe: Emotive Bipedal Robot</title>
+
+    <!-- MathJax for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Three.js Import Map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #1a1a1a;
+            --accent-color: #000000;
+            --code-bg: #f4f4f4;
+            --border-style: 2px solid #000;
+            --link-color: #0000EE;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Console', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        strong,
+        b {
+            color: #E53935;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+        }
+
+        /* Terminal/Report Header Styles */
+        header {
+            border-bottom: var(--border-style);
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #E53935;
+        }
+
+        .subtitle {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #E53935;
+        }
+
+        /* Page Wrapper for Sidebar Layout */
+        .page-wrapper {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        /* Navigation - Vertical Sidebar */
+        nav {
+            width: 180px;
+            flex-shrink: 0;
+            margin-top: 0;
+            padding: 20px 0;
+            border: none;
+            /* Removed dashed borders */
+            border-right: 1px dashed #000;
+            /* Vertical separator */
+            text-align: left;
+            position: sticky;
+            top: 20px;
+            /* Sticky sidebar */
+        }
+
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        nav ul li {
+            display: block;
+            margin: 0;
+        }
+
+        nav a {
+            color: #E53935;
+            text-decoration: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: block;
+            padding: 5px 0;
+        }
+
+        nav a:hover {
+            text-decoration: none;
+            background-color: #000;
+            color: #fff;
+            padding-left: 10px;
+            /* Slide effect */
+            transition: all 0.2s ease;
+        }
+
+        /* Main Content Area */
+        main {
+            flex-grow: 1;
+            min-width: 0;
+            /* Prevent flex overflow */
+        }
+
+        /* Section Styling */
+        section {
+            margin-bottom: 60px;
+        }
+
+        h2 {
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+            margin-top: 40px;
+            text-transform: uppercase;
+            color: #E53935;
+        }
+
+        h3 {
+            font-weight: bold;
+            margin-top: 30px;
+            text-decoration: underline;
+            color: #E53935;
+        }
+
+        h4 {
+            font-weight: bold;
+            margin-top: 30px;
+            color: #E53935;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        /* Lists */
+        ul {
+            list-style-type: square;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid #ccc;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+
+        code {
+            background-color: var(--code-bg);
+            padding: 2px 4px;
+            font-size: 0.9em;
+        }
+
+        /* Images */
+        figure {
+            margin: 30px 0;
+            text-align: center;
+            border: 1px solid #000;
+            padding: 10px;
+            background: #fff;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        figcaption {
+            margin-top: 10px;
+            font-style: italic;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #E53935;
+        }
+
+        .title-card {
+            margin: 20px 0;
+        }
+
+        .title-card img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Special Block for Sound Bite */
+        .sound-bite {
+            font-size: 1.25rem;
+            font-weight: bold;
+            padding: 20px;
+            border: 2px dashed #000;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        /* Footer */
+        footer {
+            border-top: var(--border-style);
+            padding-top: 20px;
+            margin-top: 60px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        /* Links */
+        a {
+            color: var(--text-color);
+            text-decoration: underline;
+        }
+
+        a:hover {
+            background-color: #eee;
+        }
+
+        /* Appendices */
+        .appendix-box {
+            border: 1px solid #000;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        /* 3D Container */
+        #model-container {
+            width: 100%;
+            max-width: 500px;
+            /* Constrain width for portrait aspect ratio */
+            height: 600px;
+            /* Increase height to fit robot better */
+            /* Border removed as requested */
+            background-color: #fff;
+            margin: 20px auto;
+            /* Center horizontally */
+            position: relative;
+        }
+
+        #loading-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: monospace;
+            display: none;
+            /* Hidden by default, shown by JS */
+        }
+
+        .row-container {
+            display: flex;
+            gap: 20px;
+            /* Space between images */
+            justify-content: center;
+            /* Center the row on the page */
+            align-items: flex-start;
+            /* Align tops of images */
+        }
+
+        /* 2. Style the figure elements to share space equally */
+        .row-container figure {
+            margin: 0;
+            /* Remove default browser margins */
+            flex: 1;
+            /* Each figure takes up equal width */
+        }
+
+        /* 3. Ensure images are responsive so they don't overflow */
+        .row-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            /* Removes tiny space below images */
+        }
+
+        /* Video Container Styling */
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            border: 2px solid #000;
+            /* Matches your theme's borders */
+            background-color: #000;
+            margin: 30px 0;
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Mobile Responsive Styles */
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+                letter-spacing: 1px;
+            }
+
+            .subtitle {
+                font-size: 1.3rem;
+            }
+
+            .page-wrapper {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            nav {
+                width: 100%;
+                position: relative;
+                top: 0;
+                border-right: none;
+                border-bottom: 1px dashed #000;
+                padding-bottom: 20px;
+                margin-bottom: 20px;
+            }
+
+            nav ul {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            nav a {
+                padding: 5px 10px;
+                font-size: 0.9rem;
+            }
+
+            nav a:hover {
+                padding-left: 10px;
+            }
+
+            #model-container {
+                height: 400px;
+                max-width: 100%;
+            }
+
+            .row-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .row-container figure {
+                flex: none;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.2rem;
+            }
+
+            h4 {
+                font-size: 1.1rem;
+            }
+
+            .sound-bite {
+                font-size: 1rem;
+                padding: 15px;
+            }
+
+            pre {
+                font-size: 0.8rem;
+                padding: 10px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            code {
+                font-size: 0.85em;
+            }
+
+            p {
+                text-align: left;
+            }
+
+            video {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+            }
+
+            nav a {
+                font-size: 0.85rem;
+            }
+
+            #model-container {
+                height: 300px;
+            }
+
+            h2 {
+                font-size: 1.3rem;
+            }
+
+            h3 {
+                font-size: 1.1rem;
+            }
+
+            h4 {
+                font-size: 1rem;
+            }
+
+            .sound-bite {
+                font-size: 0.9rem;
+                padding: 12px;
+            }
+
+            pre {
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="page-wrapper">
+            <nav>
+                <ul>
+                    <li><a href="#intro">Intro</a></li>
+                    <li><a href="#demo">Demo</a></li>
+                    <li><a href="#highlevel">High Level</a></li>
+                    <li><a href="#hardware">Hardware</a></li>
+                    <li><a href="#software">Software</a></li>
+                    <li><a href="#results">Results</a></li>
+                    <li><a href="#appendices">Appendices</a></li>
+                    <li><a href="#ai-statement">AI Statement</a></li>
+                </ul>
+            </nav>
+
+            <main>
+                <header>
+                    <!-- <h1>Bebe: An Emotive Bipedal Robot</h1> -->
+
+                    <div class="title-card">
+                        <img src="bebelogo.png" alt="BEBE: An Emotive Bipedal Robot">
+                    </div>
+                    <div class="subtitle">ECE 4760 Final Project</div>
+                    <p style="text-align: center;">Peter He (ph475), Ronald Qu (rq36), Wang Mak (wm345)</p>
+                </header>
+
+                <!-- PROJECT INTRODUCTION -->
+                <section id="intro">
+                    <h2>1. Project Introduction</h2>
+
+                    <div class="sound-bite">
+                        "Bebe is a bipedal robot that walks (shuffles), displays random emotions, and responds to human
+                        motion using an IMU-based control wand."
+                    </div>
+
+
+
+                    <h3>Summary</h3>
+                    <p>In this project, we designed and built Bebe, a two-legged bipedal robot controlled by a Raspberry
+                        Pi Pico W. Each leg uses three servo motors at the hip, knee, and ankle, driven with PWM to
+                        coordinate stepping, posture, and balance. Bebe also displays simple emotional expressions
+                        through animated eyes, providing clear visual feedback during operation.</p>
+
+                    <!-- 3D Model Section -->
+                    <div id="model-container">
+                        <div id="loading-text">Loading 3D Model...</div>
+                    </div>
+                    <p
+                        style="text-align: center; font-size: 0.8rem; font-style: italic; font-weight: bold; color: #E53935;">
+                        Interactive 3D View: Drag to rotate.
+                    </p>
+                    <p>Movement commands are generated using a separate handheld wand built around another Pico and an
+                        IMU. By tilting the wand, the user can intuitively control Bebe's direction and motion without
+                        relying on buttons or complex interfaces. The goal of this project was to explore intuitive
+                        human-robot interaction while addressing the challenges of coordinated bipedal movement using a
+                        resource-constrained embedded system.</p>
+
+                    <div class="row-container">
+
+                        <figure>
+                            <img src="bebe1.png" alt="Photo of Bebe Robot">
+                        </figure>
+
+                        <figure>
+                            <img src="bebe3.png" alt="Photo of Bebe Robot">
+                        </figure>
+
+                        <figure>
+                            <img src="bebe2.png" alt="Photo of Bebe Robot">
+                        </figure>
+
+                    </div>
+                </section>
+
+                <section id="demo">
+                    <h2>Demo Video</h2>
+
+                    <div class="video-wrapper">
+                        <iframe src="https://www.youtube.com/embed/vSiIo-Cqozk?si=QE8X1dIwerPHW8-h"
+                            title="Bebe Robot Demo" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+
+                    <figcaption style="text-align: center;">Video demonstration of the Bipedal Robot taken by Prof.
+                        Hunter Adams</figcaption>
+                </section>
+
+                <!-- HIGH LEVEL DESIGN -->
+                <section id="highlevel">
+                    <h2>2. High Level Design</h2>
+
+                    <h3>Rationale and Sources of Project Idea</h3>
+                    <p>Bebe was motivated by a simple question: can we make bipedal motion feel intuitive rather than
+                        programmed? Most small robots rely on buttons, joysticks, or pre-scripted sequences. While
+                        effective, those interfaces separate the user from the robot's motion. We wanted control to feel
+                        physical and immediate, closer to how people naturally communicate movement.</p>
+                    <p>The project draws inspiration from Star Wars, hobby biped robots, motion-controlled toys, and
+                        research platforms that use inertial sensing for human input. In particular, gesture-controlled
+                        robots and balance-driven walking systems influenced our approach. We focused on coordinated
+                        joint motion driven by clear intent from the user. This allowed us to study bipedal kinematics, PWM based servo control, and wireless communication within a realistic embedded systems scope.</p>
+                    
+                    <p>Our design choices were informed by concepts from embedded control, kinematics, and sensor fusion introduced in coursework and public resources. The goal was not to replicate a research grade humanoid, but to build a reliable, expressive system that demonstrates coordinated motion, real time control, and clean system organization.</p>
+
+                    <h3>Background Information</h3>
+                    
+                    <h4>PWM</h4>
+                    <p>Bebe's motion is driven by standard positional servo motors controlled using PWM. Each servo expects a fixed frequency signal (50 Hz), where the pulse width determines the desired angle. In this system, each servo receives a signal at a fixed frequency of 50 Hz, meaning the signal repeats every 20 ms. The servo does not respond to the overall duty cycle, but instead reads the width of the high pulse within each cycle. Different pulse widths correspond to different target angles, with shorter pulses corresponding to the smaller angles and longer pulses to larger angles. Internally, the servo compares the desired position from the PWM signal to its current position and drives its motor until the two match. Using a fixed, stable PWM signal allows Bebe to achieve consistent joint motion across all servos.</p>
+
+                    <figure>
+                        <img src="pwm.png" alt="PWM Oscilloscope Trace">
+                        <figcaption>PWM Signal Oscilloscope Trace</figcaption>
+                    </figure>
+                    
+                    <p>This relationship allows joint angles to be mapped linearly to PWM duty cycles. Each leg contains three joints: hip, knee, and ankle, so coordinated motion is achieved by commanding consistent angle trajectories across these joints.</p>
+
+                    <h4>IMU Orientation Calculations</h4>
+                    <p>The control wand uses an inertial measurement unit (IMU) to estimate its orientation in space. The IMU provides two primary sources of data: a three axis accelerometer and a three axis gyroscope. Each sensor measures a different physical quantity, and each has different strengths and weaknesses.</p>
+                    
+                    <p>The accelerometer measures linear acceleration along the x, y, and z axes. When the wand is stationary or moving slowly, the dominant acceleration it senses is gravity. This allows the accelerometer to be used as an absolute reference for tilt. The measured values are first converted from raw sensor units into acceleration in units of g. From these values, tilt angles can be computed using basic trigonometry.</p>
+                    
+                    <p>For example, pitch and roll can be estimated as:</p>
+                    
+                    <p>Roll is computed using the ratio of lateral acceleration to vertical acceleration:</p>
+                    $$ \text{roll} = \text{atan2}(a_y, a_z) $$
+
+                    <p>Pitch is computed using the forward acceleration and the magnitude of the other two axes:</p>
+                    $$ \text{pitch} = \text{atan2}(-a_x, \sqrt{a_y^{2} + a_z^{2}}) $$
+
+                    <p>These equations assume gravity is the primary acceleration acting on the sensor. As a result, accelerometer based angles are stable in the long term but become noisy when the wand is moving or experiencing vibrations. The gyroscope measures angular velocity around each axis, typically in degrees per second or radians per second. These values describe how fast the wand is rotating, not its absolute orientation. To estimate orientation from the gyroscope, the angular velocity is integrated over time:</p>
+                    
+                    $$ \text{angle}(t) = \text{angle}(t-1) + \omega \cdot \Delta t $$
+                    
+                    <p>where $\omega$ is the measured angular rate and $\Delta t$ is the time between samples. Gyroscope based angles respond quickly and smoothly to motion, but small measurement errors accumulate over time, causing drift.</p>
+                    
+                    <p>To take advantage of both sensors, the system combines accelerometer and gyroscope estimates using a complementary filter. The idea is to trust the gyroscope for short term motion and trust the accelerometer for long term stability.</p>
+                    
+                    <p>For each axis, the filtered angle is computed as:</p>
+                    
+                    $$ \text{filtered_angle} = \alpha \cdot (\text{previous_angle} + \text{gyro_rate} \cdot \Delta t) + (1 - \alpha) \cdot \text{accel_angle} $$
+                    
+                    <p>The constant $\alpha$ is chosen close to 1, typically around 0.95 to 0.99. This weighting ensures that fast, smooth motion comes from the gyroscope, while slow drift is corrected by the accelerometer.</p>
+                    
+                    <p>In our system, $\theta$ and $\phi$ are used to convert the wand's continuous orientation into simple, intentional movement commands. $\theta$ represents the horizontal direction of motion, such as forward, backward, left, or right. It is computed from the filtered roll and pitch angles by projecting the wand's tilt onto the horizontal plane and taking the angle of that projection. In practice, this is done using an atan2 operation, which produces a stable directional angle across all quadrants.</p>
+                    
+                    <p>$\phi$ represents the magnitude of the tilt, independent of direction, and is computed as the overall tilt angle from vertical. This value is obtained from the magnitude of the pitch and roll components. $\phi$ acts as an activation threshold rather than a direction command. When $\phi$ remains below a chosen limit, the robot stays idle. Once $\phi$ exceeds that threshold, motion is enabled and the robot moves in the direction specified by $\theta$. This separation allows small unintentional movements of the wand to be ignored, while larger, deliberate gestures result in clear and predictable robot motion.</p>
+                    
+                    <p>By using this approach, the wand provides intuitive, low latency control without requiring complex sensor fusion algorithms. The math is simple enough to run reliably on a microcontroller while still producing stable and responsive orientation estimates.</p>
+                    
+                    <h4>Wi-Fi Communication Between Wand and Robot</h4>
+                    <p>Bebe and the control wand communicate over Wi-Fi using a shared hotspot. Both Pico W boards connect to the same wireless access point, which provides a common local network for data exchange. This setup avoids the need for direct pairing or custom radio protocols and keeps communication simple and reliable.</p>
+                    
+                    <p>The control wand acts as the command source. After connecting to the hotspot, it periodically sends motion data packets containing the computed control values derived from the IMU, including direction and activation state. These packets are transmitted using lightweight UDP messages, which minimizes latency and avoids the overhead of connection management.</p>
+                    
+                    <p>On the robot side, Bebe listens on a predefined port for incoming packets. When a packet is received, the robot parses the data and updates its internal motion state. This state is then consumed by the motion control logic, which updates servo targets accordingly. Because UDP is non blocking and connectionless, the robot can continue running its control loop even if packets are briefly delayed or dropped. Newer packets simply overwrite older commands, ensuring that Bebe always responds to the most recent user input.</p>
+                    
+                    <p>This communication model provides fast, responsive control while keeping the software architecture straightforward. It also cleanly separates sensing and decision making on the wand from actuation on the robot.</p>
+
+                    <figure>
+                        <!-- Placeholder for uploaded image -->
+                        <img src="pico_diagram.png" alt="pico_diagram">
+                        <figcaption>How the Pico Ws communicate with each other</figcaption>
+                    </figure>
+
+                    <h3>Logical Structure</h3>
+                    <p>The system is divided into two cooperating devices: the robot body and the control wand.</p>
+                    
+                    <p>The control wand continuously reads IMU data, computes orientation, and translates that orientation into motion commands. These commands are transmitted wirelessly to the robot via wifi.</p>
+                    
+                    <p>On the robot side, incoming commands update a shared control state. A central control loop interprets this state and updates servo targets accordingly on Core 0. Servo outputs are generated using PWM hardware on the Pico W, ensuring consistent timing without blocking the main loop.</p>
+                    
+                    <p>Visual feedback is handled independently through the eye display system on Core 1. Expressions are updated based on a pre-programmed sequence, but can also be programmed to be random or dependent on the robot's current motion or state, such as idle, moving, or turning. This separation allows motion control and expression to run concurrently without interfering with each other.</p>
+
+                    <figure>
+                        <!-- Placeholder for uploaded image -->
+                        <img src="block_diagram.png" alt="System Block Diagram">
+                        <figcaption>Logical Structure and Block Diagram</figcaption>
+                    </figure>
+
+                    <h3>Hardware/Software Tradeoffs</h3>
+                    <p>A major tradeoff was avoiding closed-loop balance control. Without force sensors, Bebe relies on
+                        static stability and tuned joint angles. This reduced complexity but limited agility. We also
+                        chose servos over DC motors with encoders to simplify position control at the cost of torque
+                        efficiency. In software, we prioritized deterministic timing (predefined poses) over real-time
+                        inverse kinematics to ensure stability on the microcontroller.</p>
+
+                    <h3>Intellectual Property Considerations</h3>
+                    <p>Bebe uses standard hobbyist techniques (PWM servos, IMU sensing) and does not infringe on
+                        proprietary walking algorithms. No copyrighted assets were used. All libraries (MAX72XX, Wi-Fi
+                        drivers) are open source.</p>
+                </section>
+
+                <!-- PROGRAM/HARDWARE DESIGN -->
+                <section id="hardware">
+                    <h2>3. Program/Hardware Design</h2>
+
+                    <h3>Hardware Design</h3>
+                    
+                    <h4>Mechanical Design</h4>
+                    <p>Bebe's mechanical structure was designed using CAD software to ensure proper joint placement, weight distribution, and structural integrity. The robot's frame supports six servo motors positioned at the hip, knee, and ankle joints of each leg, allowing for coordinated bipedal motion. The design prioritizes stability and balance while maintaining a compact form factor suitable for the Pico W controller and power systems. Disney droids were used as inspiration for the design. We also sued Fusion, our CAD software of choice's center of gravity tool to check stability.</p>
+                    <p>All of the robot's components were 3D printed using PLA filament and assembled together using screws and hot glue.</p>
+
+                    <figure>
+                        <img src="robot_wireframe.png" alt="CAD Wireframe of Robot Design">
+                        <figcaption>Mechanical CAD Wireframe</figcaption>
+                    </figure>
+
+                    <h4>Aesthetics</h4>
+                    <p>All of Bebe's components were 3D printed using PLA filament, allowing for precise fabrication of the joint structures and body frame. The 3D printing process enabled rapid iteration during the design phase, making it easy to test different joints and refine the robot's form factor.</p>
+                    
+                    <p>The visual design of Bebe draws inspiration from Disney droids, particularly the weathered and characterful appearance seen in Star Wars films, as well as the distinctive art styles found in video games. </p>
+                    <p>The weathering process was designed to make Bebe feel like a functional, used robot rather than a prototype. </p>
+
+                    <h4>Electrical Hardware</h4>
+
+                    <figure>
+                        <img src="circuit1.png" alt="Robot Circuit">
+                        <figcaption>Circuit for the Robot</figcaption>
+                    </figure>
+
+                    <figure>
+                        <img src="wandcircuit.png" alt="wandcircuit">
+                        <figcaption>Circuit for the Wand</figcaption>
+                    </figure>
+
+                    <p>Bebe's electrical hardware is organized around two main subsystems: actuation and interaction. The system is built to provide reliable servo control, electrical isolation for safety, and clear visual feedback, all while staying within the limits of the Pico W.</p>
+                    
+                    <p><strong>Microcontroller</strong></p>
+                    <p>The robot is controlled by a Raspberry Pi Pico W, which serves as the central controller for motion, communication, and display. The Pico W was chosen for its built-in Wi-Fi, multiple hardware PWM channels, and sufficient GPIO to support servo control and external peripherals.</p>
+
+                    <p><strong>Servo Motors and Actuation - MG996R Servos</strong></p>
+                    <p>Bebe uses six positional servo motors in total, three on each leg, corresponding to the hip, knee, and ankle joints. These servos are driven using PWM signals generated by the Pico W. Each servo receives a fixed-frequency control signal, with pulse width determining the commanded joint angle.</p>
+                    
+                    <p>To protect the microcontroller and improve signal reliability, opto-isolators (4N35) are used between the Pico W GPIO pins and the servo control lines. The opto-isolators electrically separate the low-power logic side from the higher-current servo side, preventing voltage spikes and electrical noise generated by the motors from feeding back into the microcontroller. This isolation proved especially important during rapid joint movement, where current draw and noise are highest.</p>
+                    
+                    <p>The servos are powered from an external supply capable of delivering sufficient current for simultaneous motion. Grounds are carefully managed so that the logic and power domains remain stable while still allowing correct signal referencing through the opto-isolators.</p>
+
+                    <figure>
+                        <img src="servo-opto.png" alt="Servos and Opto-Isolators">
+                        <figcaption>Servos and Opto-Isolators used</figcaption>
+                    </figure>
+
+                    <p><strong>IMU Sensor - MPU6050</strong></p>
+                    <p>The control wand includes an inertial measurement unit used to capture user motion. The IMU contains a three-axis accelerometer and three-axis gyroscope, allowing measurement of linear acceleration and angular velocity. These signals are read by a separate Pico and processed to estimate orientation and motion intent. The resulting control values are transmitted wirelessly to the robot, keeping sensing and actuation physically and electrically decoupled.</p>
+
+                    <figure>
+                        <img src="mpu6050.png" alt="MPU6050">
+                        <figcaption>MPU6050 used</figcaption>
+                    </figure>
+
+                    <p><strong>Robot Eyes Display</strong></p>
+                    <p>Bebe displays emotional expressions using two MAX7219-based LED dot matrix display modules. For driving the LED matrix, we used the MD_MAX72XX library by MajicDesigns (available on GitHub). Each module drives an 8x8 LED matrix, allowing the robot to render simple eye shapes and animations. The displays are controlled using a serial interface, which minimizes the number of required GPIO pins.</p>
+                    
+                    <p>The MAX7219 handles LED multiplexing and current regulation internally, reducing software complexity and ensuring consistent brightness across the display. Using two separate matrices allows independent control of each eye, making expressions more readable and expressive during motion.</p>
+
+                    <figure>
+                        <img src="MAX7219.png" alt="MAX7219">
+                        <figcaption>MAX7219 used</figcaption>
+                    </figure>
+
+                    <p><strong>Power Considerations</strong></p>
+                    <p>Power for the servo motors and logic circuitry is supplied separately to prevent brownouts and unintended resets. The Pico W and display modules operate at logic-level voltages, while the servos draw higher current from the external supply. This separation, combined with optical isolation, improves system stability and protects sensitive components during dynamic movement.</p>
+
+                    <h3>Software Design</h3>
+                    <p>Bebe's software is split across two Raspberry Pi Pico W boards that work together: the robot controller and the control wand. Each board runs a focused, single responsibility program. The wand handles sensing and intent. The robot handles motion, expression, and actuation. This separation keeps timing predictable and makes debugging far easier.</p>
+                    
+                    <p>At a high level, the wand reads IMU data, converts orientation into motion commands, and transmits them over Wi-Fi. The robot listens for those commands, updates a shared motion state, and drives servos and eye animations accordingly.</p>
+                    
+                    <h4>Robot Controller Software</h4>
+                    <p>The robot-side software runs on the Pico W mounted on Bebe's body. Its main responsibilities are:</p>
+                    <ul>
+                        <li>Receiving motion commands over Wi-Fi</li>
+                        <li>Generating PWM signals for six servos</li>
+                        <li>Updating eye expressions independently of motion</li>
+                    </ul>
+                    
+                    <p><strong>Motion State and Control Loop</strong></p>
+                    <p>Incoming commands update a shared motion state that represents the robot's current intent, such as forward motion, turning, or idle. The control loop continuously reads this state and selects predefined joint angle targets for the hip, knee, and ankle servos on each leg.</p>
+                    
+                    <p>Rather than computing inverse kinematics in real time, the system uses predefined poses and transitions. This makes motion deterministic and avoids instability from noisy inputs. Each walking step is implemented as a sequence of stable poses that shift the robot's center of mass gradually.</p>
+                    
+                    <p>The control loop structure is simple:</p>
+                    <ol>
+                        <li>Read latest motion command</li>
+                        <li>Select target pose or transition</li>
+                        <li>Increment servos toward target angles</li>
+                        <li>Repeat at a fixed update rate</li>
+                    </ol>
+                    
+                    <p>This approach prioritizes stability over speed, which is critical for a small biped without balance sensors.</p>
+                    
+                    <p><strong>PWM Servo Control</strong></p>
+                    <p>PWM signals for Bebe's servos are generated using the RP2040's hardware PWM peripheral to ensure precise timing. The system clock is divided to produce a 1 MHz PWM clock, giving 1 µs resolution for pulse width control. The PWM wrap value is set to 20,000, resulting in a 20 ms period (50 Hz) that matches the servo requirements. With this configuration, the PWM channel level directly corresponds to the pulse width in microseconds, allowing servo positions to be specified easily. Pulse widths are constrained to a safe operating range based on the servo datasheet to prevent mechanical overextension, and updates to the PWM output are synchronized with the PWM interrupt and only applied when the desired value changes.</p>
+                    
+                    <p>Although PWM timing is generated by the microcontroller, the servos are powered using an external 7 V battery, as the RP2040's 3.3 V supply was insufficient to drive the servos reliably. This configuration improved signal reliability and prevented erratic behavior during operation.</p>
+                    
+                    <p>Each servo was calibrated to determine its true midpoint and usable range. Each joint was tested by sweeping pulse widths and observing the resulting angles to identify the pulse width corresponding to a true 90-degree bend. These calibrated midpoint values were then used as reference positions for all joint motions.</p>
+
+                    <p>We also initially had some jitter in the servo control, but we were able to fix it by implementing smooth servo control. Eg. moving the servo through discrete steps rather than directly to the desired angle.</p>
+                    
+                    <p>Coordinated leg motion is achieved by commanding relative offsets from these midpoint values. Forward motion begins by lifting a thigh through an increase in the hip joint pulse width while simultaneously rotating the ankle downward to clear the ground. To maintain stability during this phase, the opposing leg bends at the knee and ankle to support the robot's weight. While the lifted leg remains elevated, the previously bent leg is then moved forward. The lifted leg is subsequently returned to its midpoint position and placed back on the ground, after which both legs are returned to balanced positions. By sequencing these joint motions across both legs, Bebe achieves stable and repeatable walking behavior using simple open-loop PWM-based position control.</p>
+                    
+                    <p><strong>Eye Expressions and Animation</strong></p>
+                    <p>Bebe's visual expressions are rendered using two MAX7219 driven LED matrix modules, one for each eye. Each module controls an 8×8 LED grid and handles all low level LED multiplexing and current regulation internally. This offloads timing critical display work from the Pico W and allows the main processor to focus on motion control and communication.</p>
+                    
+                    <p>The robot uses the MD_MAX72XX library to communicate with the MAX7219 over a simple serial interface. This library abstracts the register level details of the driver chip and provides direct control over individual LEDs and display buffers. As a result, updating an eye frame is reduced to writing a small set of bytes rather than manually managing row and column scanning.</p>
+                    
+                    <p>Eye behavior is implemented as a lightweight animation system built on top of this library. Each animation consists of a sequence of frames, where each frame encodes both the visual state of the eyes and how long that state should be displayed. A single frame is represented by the following structure:</p>
+                    
+                    <pre>
+typedef struct {
+    uint8_t eyeData[2];
+    uint16_t timeFrame;
+    bool flip;
+} animFrame_t;
+</pre>
+                    
+                    <p>The eyeData field stores bitmap information for the left and right eye, allowing asymmetric expressions such as winks or glances. The timeFrame field specifies how long the frame should remain visible in milliseconds, which makes animation timing explicit and easy to adjust. The optional flip flag allows the same bitmap data to be reused for mirrored expressions without duplicating assets in memory.</p>
+                    
+                    <p>Animation sequences are stored as arrays of these frame structures. A simple sequence might alternate between two frames to simulate blinking, while more expressive sequences combine multiple frames with different durations to create emotions such as curiosity, surprise, or alertness. The animation engine advances through frames using a non blocking timing check, ensuring that display updates never stall the main control loop.</p>
+                    
+                    <figure>
+                        <img src="eye_animation.png" alt="Heart Animation Example">
+                        <figcaption>Heart Animation Example Sequence</figcaption>
+                    </figure>
+
+                    <p>In the current implementation, the robot cycles through predefined animation sequences regardless of motion. This choice keeps the system predictable and avoids unintended coupling between motion and expression during debugging. However, the animation system is designed to be state driven. Because each frame sequence is selected through a simple index or pointer, it can easily be mapped to higher level robot states. For example, an idle state could trigger slow blinking, walking could use focused forward looking eyes, and turning could bias one eye to suggest direction.</p>
+                    
+                    <p>Display updates are intentionally lightweight. Updating the LED matrices involves sending a small number of bytes over the serial interface, and the MAX7219 handles refresh internally. As a result, eye animations run concurrently with servo motion without affecting PWM timing or network responsiveness. Even during continuous walking, expression updates remain smooth and consistent.</p>
+                    
+                    <p>This separation of expression from motion reinforces the robot's behavior at a human perceptual level. Motion communicates intent through physical action, while the eyes provide continuous visual feedback that makes the robot feel more expressive and alive. Just as importantly, the software architecture keeps these two systems independent, making the overall system easier to extend and reason about.</p>
+                    
+                    <h4>Control Wand Software</h4>
+                    <p>The control wand runs on a separate Raspberry Pi Pico W and serves as the sole source of user intent. Its role is to interpret natural hand motion and convert it into simple, reliable motion commands.</p>
+                    
+                    <p><strong>IMU Sampling and Orientation Estimation</strong></p>
+                    <p>The wand continuously samples an MPU6050 inertial measurement unit at a fixed update rate. The IMU provides raw accelerometer and gyroscope readings along three axes. These raw values are first converted into physical units using scale factors defined by the sensor configuration. Accelerometer readings are converted to units of g, and gyroscope readings are converted to angular velocity in degrees per second or radians per second.</p>
+                    
+                    <p>Neither sensor alone is sufficient for stable orientation estimation. Accelerometer based angles are absolute and drift free, but they are noisy and unreliable during motion. Gyroscope based angles respond smoothly and accurately to rotation, but small measurement errors accumulate over time and lead to drift. To combine the strengths of both, the wand uses a complementary filter.</p>
+                    
+                    <p>At each update step, the filtered orientation angle is computed as:</p>
+                    
+                    $$ \text{angle} = \alpha \cdot (\text{previous_angle} + \text{gyro_rate} \cdot \Delta t) + (1 - \alpha) \cdot \text{accel_angle} $$
+                    
+                    <p>The gyroscope term predicts how the angle has changed since the last sample, while the accelerometer term slowly corrects long term drift. The weighting constant $\alpha$ is chosen close to 1, so short term motion is dominated by the gyroscope while long term stability comes from the accelerometer. This filter is simple enough to run reliably on a microcontroller while still producing smooth, stable orientation estimates.</p>
+                    
+                    <p>Filtered roll and pitch angles are maintained continuously and updated at a constant rate. These angles form the foundation for all user input to the robot.</p>
+                    
+                    <p><strong>Command Extraction and Intent Mapping</strong></p>
+                    <p>Rather than sending raw angles to the robot, the wand converts orientation into two higher level control parameters: $\theta$ and $\phi$. This abstraction simplifies communication and makes robot behavior easier to tune.</p>
+                    
+                    <p>$\theta$ represents the intended direction of motion in the horizontal plane. It is computed by projecting the filtered roll and pitch angles onto that plane and using an atan2 operation to calculate the resulting angle. Using atan2 ensures that the direction remains continuous and unambiguous across all quadrants, avoiding discontinuities that would otherwise occur at angle boundaries.</p>
+                    
+                    <p>$\phi$ represents the magnitude of the tilt, independent of direction. It is computed from the combined magnitude of the roll and pitch angles and serves as an activation signal rather than a directional command. Small values of $\phi$ indicate that the wand is nearly upright, while larger values indicate deliberate user input.</p>
+                    
+                    <p>This separation of direction and activation is critical for usability. When $\phi$ remains below a predefined threshold, the wand sends an idle or stop command. This prevents unintended robot movement caused by small hand tremors or noise in the sensor readings. Once $\phi$ exceeds the threshold, motion is enabled and $\theta$ determines whether the robot moves forward, backward, or turns.</p>
+                    
+                    <p>By reducing continuous orientation data into discrete, intentional commands, the wand provides intuitive control while shielding the robot from sensor noise and ambiguous inputs.</p>
+                    
+                    <p><strong>Wi-Fi Communication and Command Transmission</strong></p>
+                    <p>After connecting to a shared Wi-Fi hotspot, the wand periodically transmits motion commands to the robot using UDP packets. Each packet contains the current command values derived from $\theta$ and $\phi$, along with any required state flags. Packets are sent at a fixed rate, ensuring low latency and predictable updates.</p>
+                    
+                    <p>UDP was chosen over connection oriented protocols because it introduces minimal overhead and does not block the system waiting for acknowledgments. The wand simply transmits the most recent command, regardless of whether the previous packet was received.</p>
+                    
+                    <p>On the robot side, a UDP listener waits on a predefined port for incoming packets. When a packet arrives, its contents are parsed immediately and used to update the robot's shared motion state. Because new packets overwrite older values, the robot always responds to the latest user input. Temporary packet loss does not degrade behavior, as the next packet arrives shortly after.</p>
+                    
+                    <p>This communication model is fast, non blocking, and resilient. It allows the wand to operate independently of the robot's control loop while still maintaining responsive, real time control. Most importantly, it keeps the overall system simple. Sensing, interpretation, and actuation are cleanly separated, which makes the behavior easier to understand, debug, and extend.</p>
+                    
+                    <h4>Concurrency and Timing</h4>
+                    <p>The system relies on separation rather than preemption to manage concurrency. On the robot:</p>
+                    <ul>
+                        <li>Hardware PWM handles servo timing</li>
+                        <li>Eye animations run independently of motion logic</li>
+                        <li>Networking does not block the control loop</li>
+                    </ul>
+                    
+                    <p>On the wand:</p>
+                    <ul>
+                        <li>IMU sampling runs at a fixed interval</li>
+                        <li>Orientation estimation and packet transmission are lightweight</li>
+                    </ul>
+                    
+                    <p>This structure avoids complex scheduling while still allowing sensing, communication, motion, and expression to operate concurrently and reliably.</p>
+                </section>
+
+                <!-- RESULTS -->
+                <section id="results">
+                    <h2>4. Results of the Design</h2>
+
+                    <h3>Overall Performance</h3>
+                    <p>Overall, Bebe performed reliably and consistently during testing, demonstrating responsive behavior with low perceived latency between wand input and motion execution. Walking motions were executed smoothly without noticeable hesitation, jitter, or unexpected stalls, and the robot maintained a stable posture during controlled testing. Control logic, servo actuation, and visual output operated concurrently, allowing servo motion, eye animation, and communication to run in parallel without visible timing conflicts. PWM timing remained stable at 50 Hz, producing repeatable joint trajectories across all legs, indicating accurate pulse-width generation and effective servo calibration. Safety was enforced through software limits that constrained PWM pulse widths and through motion sequencing that avoided abrupt joint movements. During the demonstration using a battery pack to power the microcontroller, the additional and unaccounted-for weight altered the robot's weight distribution, making it more prone to tipping. While the robot was not able to walk consistently under these conditions, it was still able to produce the intended joint motions, highlighting that the logic and servo control functioned as designed. This behavior revealed a limitation related to mass distribution and stability that could be addressed in future iterations.</p>
+
+                    <video src="bebe.mov" alt="Bebe Walking" controls></video>
+
+                    <h3>Test Data, Scope Traces, and Waveforms</h3>
+                    <p>Oscilloscope measurements were used extensively during development to verify correct signal generation, particularly for PWM based servo control. Each servo control line was probed to confirm both frequency and pulse width.</p>
+                    
+                    <p>The PWM signals driving the servos operated at 50 Hz, as required by standard positional servos. Scope traces confirmed a stable 20 ms period with pulse widths varying between approximately 1.0 ms and 2.0 ms, corresponding to joint angles from 0 to 180 degrees. These measurements matched the expected mapping used in software and confirmed that the Pico W's hardware PWM was configured correctly.</p>
+
+                    <p>Wi-Fi communication was tested by monitoring packet reception rates and observing robot response. Commands sent from the wand resulted in visible servo motion within a fraction of a second. Even when packets were intentionally dropped or delayed, the robot continued operating using the most recent valid command, demonstrating tolerance to transient communication issues.</p>
+                    
+                    <p>In software, motion commands were bounded to prevent servos from exceeding safe mechanical limits. Joint angles were clamped to ranges that had been physically tested and verified not to cause binding or excessive torque.</p>
+                    
+                    <p>The control wand design also contributed to safety. By requiring a minimum tilt magnitude before motion was enabled, the robot remained idle unless the user made a deliberate gesture. Loss of communication naturally resulted in the robot holding its last safe pose rather than entering an uncontrolled state.</p>
+
+                    <h3>Safety Enforcement</h3>
+                    <ul>
+                        <li><strong>Software Limits:</strong> Joint angles were clamped in software to prevent
+                            mechanical binding.</li>
+                        <li><strong>Dead Man's Switch:</strong> The wand requires a minimum tilt ($\phi$) to activate.
+                            If the user drops the wand or holds it level, the robot stops immediately.</li>
+                        <li><strong>Electrical Isolation:</strong> Optocouplers protected the logic hardware from power
+                            surges.</li>
+                    </ul>
+
+                    <h3>Usability and Human Interaction</h3>
+                    <p>From a user perspective, Bebe was easy to control and intuitive to operate. Using the wand felt more natural than buttons or joysticks, especially for directional control. Users were able to understand how to move the robot within seconds, without instruction beyond a brief demonstration.</p>
+                    
+                    <p>Other users who interacted with the system reported that the robot's behavior was predictable and responsive. The combination of physical motion and expressive eyes made it clear when the robot was active, idle, or responding to input. This visual feedback helped users build confidence in the robot's behavior.</p>
+                    
+                    <p>The separation between direction and activation made the interface forgiving. Users could reposition their hands or relax their grip without accidentally triggering motion. Overall, the system felt interactive rather than mechanical, which aligned well with the original project goals.</p>
+                </section>
+
+                <!-- CONCLUSIONS -->
+                <section id="conclusion">
+                    <h2>5. Conclusions</h2>
+                    <p>Overall, the results of the design largely met our expectations. Bebe was able to execute the intended joint motions reliably and demonstrated stable behavior during controlled testing. The open-loop PWM-based control strategy proved sufficient for producing coordinated walking motions, validating the servo calibration and joint motion timing. However, testing with additional onboard mass revealed sensitivity to weight distribution, which increased the likelihood of tipping during walking. In future iterations, this limitation could be addressed through improved mass placement, structural redesign, or by adding additional degrees of freedom at the feet to allow more active balance control during stance and transition phases.</p>
+
+                    <p>The design conforms to applicable electrical and signaling standards for servo control, including the use of a 50 Hz PWM control signal and pulse-width limits specified by the servo datasheet. Electrical safety was maintained by respecting voltage and current requirements and by enforcing software limits to prevent mechanical overextension. All components were operated within their recommended operating conditions.</p>
+
+                    <p>From an intellectual property perspective, the project did not involve reverse engineering of proprietary designs or the use of confidential information. The base implementation relied primarily on instructor-provided demonstration code for the coursework and reference materials used for the robot eye animations, the MD_MAX72XX library by MajicDesigns (available on GitHub). All other aspects of the design and control logic were developed independently without consulting or reusing other teams’ designs. No public-domain code was used, no non-disclosure agreements were required, and no patent or trademark conflicts were identified. The current implementation does not present any apparent patent opportunities.</p>
+                </section>
+
+                <!-- APPENDICES -->
+                <section id="appendices">
+                    <h2>Appendices</h2>
+
+                    <div class="appendix-box">
+                        <h3>Appendix A: Permissions</h3>
+                        <p>The group approves this report for inclusion on the course website.</p>
+                        <p>The group approves the video for inclusion on the course youtube channel.</p>
+                    </div>
+
+                    <div class="appendix-box">
+                        <h3>Appendix B: Code</h3>
+                        <ul>
+                            <li><a href="wand_code.zip">Download Wand Code (ZIP)</a></li>
+                            <li><a href="robot_code.zip">Download Robot Code (ZIP)</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="appendix-box">
+                        <h3>Appendix C: Schematics</h3>
+                        <p>Please refer to the Hardware section above for circuit details regarding the Servo
+                            connections (4N35 Optocouplers) and MAX7219 pinouts.</p>
+                    </div>
+
+                    <div class="appendix-box">
+                        <h3>Appendix D: Work Distribution</h3>
+                        <ul>
+                            <li><strong>Peter:</strong> Mechanical design (CAD), Electrical design, Integration
+                                hell, Walk code.
+                            </li>
+
+                            <li><strong>Ronald:</strong> Wand IMU logic, WIFI logic, Emotions.
+                            </li>
+
+                            <li><strong>Wang:</strong> Walk cycle, Balance code, Servo PWM code.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="appendix-box">
+                        <h3>References</h3>
+                        <ul>
+                            <li><a href="https://datasheets.raspberrypi.com/picow/pico-w-datasheet.pdf">Raspberry Pi
+                                    Pico W Datasheet</a></li>
+                            <li><a href="https://github.com/MajicDesigns/MD_MAX72XX/tree/main">MD_MAX72XX Library</a>
+                            </li>
+                            <li><a
+                                    href="https://circuitdigest.com/microcontroller-projects/interfacing-max7219-led-dot-matrix-display-with-arduino">MAX7219
+                                    Interface Guide</a></li>
+                            <li><a href="https://www.handsontec.com/dataspecs/motor_fan/MG996R.pdf">MG996R Servo
+                                    Datasheet</a></li>
+                            <li><a href="https://github.com/georgerobotics/cyw43-driver/tree/c1075d4bc440422cf2b2fd12c64a1f53f77660ee">cyw43-driver</a></li>
+                            <li><a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master/WiFi/UDP">Hunter Adams RP2040 Demos - UDP</a></li>
+                            <li><a href="https://github.com/vha3/Hunter-Adams-RP2040-Demos/tree/master/PWM">Hunter Adams RP2040 Demos - PWM</a></li>
+                            <li><a href="https://threejs.org/docs/">Three.js Documentation</a></li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- AI STATEMENT -->
+                <section id="ai-statement">
+                    <h2>AI Statement</h2>
+                    <p>We used ChatGPT for some help with website styling, but most of the website code was written ourselves.</p>
+                </section>
+
+                <footer>
+                    <p>&copy; 2025 ECE 4760 Final Project. Cornell University.</p>
+                </footer>
+
+            </main> <!-- End Main -->
+        </div> <!-- End Page Wrapper -->
+
+    </div>
+
+    <!-- Three.js Script -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+        import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Configuration
+        const container = document.getElementById('model-container');
+        const loadingText = document.getElementById('loading-text');
+        const objPath = 'bebe_model.obj'; // YOUR OBJ FILE
+        const mtlPath = 'bebe_model.mtl'; // YOUR MTL FILE
+
+        // Scene Setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff); // Pure white background
+
+        // Camera Setup
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(50, 50, 50);
+
+        // Renderer Setup
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.outputColorSpace = THREE.SRGBColorSpace; // Better color accuracy
+        container.appendChild(renderer.domElement);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enablePan = false; // DISABLE PANNING to keep robot in frame
+        controls.enableZoom = false; // DISABLE ZOOM to keep fixed perspective
+
+        // --- Realistic Lighting Setup ---
+
+        // 1. Ambient Light (Soft general illumination)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambientLight);
+
+        // 2. Key Light (Main directional light, creates shadows/depth)
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        keyLight.position.set(10, 20, 10);
+        scene.add(keyLight);
+
+        // 3. Fill Light (Softer light from opposite side to fill dark shadows)
+        const fillLight = new THREE.DirectionalLight(0xeef0ff, 0.8); // Slightly bluish
+        fillLight.position.set(-10, 10, 10);
+        scene.add(fillLight);
+
+        // 4. Back/Rim Light (Highlights edges from behind)
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        backLight.position.set(0, 10, -20);
+        scene.add(backLight);
+
+        // Load Model (MTL first, then OBJ)
+        loadingText.style.display = 'block';
+
+        const mtlLoader = new MTLLoader();
+
+        mtlLoader.load(
+            mtlPath,
+            (materials) => {
+                materials.preload();
+
+                const objLoader = new OBJLoader();
+                objLoader.setMaterials(materials);
+
+                objLoader.load(
+                    objPath,
+                    (object) => {
+                        loadingText.style.display = 'none';
+
+                        // Center the object
+                        const box = new THREE.Box3().setFromObject(object);
+                        const center = box.getCenter(new THREE.Vector3());
+
+                        // Reset position to center of scene
+                        object.position.x += (object.position.x - center.x);
+                        object.position.y += (object.position.y - center.y);
+                        object.position.z += (object.position.z - center.z);
+
+                        scene.add(object);
+
+                        // Auto-fit camera
+                        const size = box.getSize(new THREE.Vector3()).length();
+
+                        // Set zoom limits based on object size
+                        controls.maxDistance = size * 4;
+                        controls.minDistance = size * 0.5;
+
+                        camera.near = size / 100;
+                        camera.far = size * 100;
+                        camera.updateProjectionMatrix();
+
+                        camera.position.copy(center);
+                        camera.position.x += size / 1.3; // Zoomed out slightly (was size / 1.5)
+                        camera.position.y += size / 2.0;
+                        camera.position.z += size / 1.3; // Zoomed out slightly (was size / 1.5)
+                        camera.lookAt(center);
+                    },
+                    (xhr) => {
+                        // Progress
+                        if (xhr.lengthComputable) {
+                            const percentComplete = xhr.loaded / xhr.total * 100;
+                            loadingText.textContent = `Loading: ${Math.round(percentComplete)}%`;
+                        }
+                    },
+                    (error) => {
+                        console.error('Error loading OBJ:', error);
+                        loadingText.textContent = "Error: 'bebe_model.obj' not found.";
+                        loadingText.style.color = "red";
+                    }
+                );
+            },
+            (xhr) => {
+                // MTL Progress
+            },
+            (error) => {
+                console.error('Error loading MTL:', error);
+                loadingText.textContent = "Error: 'bebe_model.mtl' not found.";
+                loadingText.style.color = "red";
+            }
+        );
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle Resize
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            if (container) {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
