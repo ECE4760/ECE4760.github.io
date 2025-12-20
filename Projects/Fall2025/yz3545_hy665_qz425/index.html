@@ -1,0 +1,1139 @@
+        <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Real-Time Text-to-Speech on RP2040</title>
+    <link rel="stylesheet" href="starter-template.css">
+    <link rel="stylesheet" href="modern-sidebar.css">
+    <link rel="stylesheet" href="https.cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="icon" href="pics/icon.jpg" type="image/jpeg">
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">Real-Time Text-to-Speech on RP2040</div>
+        <div class="sidebar-search">
+            <input type="text" id="sidebar-search-input" placeholder="Search docs">
+        </div>
+        <div id="search-results"></div>
+        <nav class="sidebar-menu">
+            <ul>
+                <li class="active" data-section="high-level">Home</li>
+                <li data-section="system-implementation" class="has-submenu">System & Implementation
+                    <ul class="submenu" style="display:none">
+                        <li data-section="program-design">Program Design</li>
+                        <li data-section="tts-algorithm">TTS Algorithm</li>
+                        <li data-section="audio-output">Audio Output</li>
+                        <li data-section="challenges">Challenges</li>
+                    </ul>
+                </li>
+                <li data-section="hardware-design">Hardware Design</li>
+                <li data-section="conclusions-outlook">Conclusions</li>
+                <li data-section="appendices">Appendices</li>
+            </ul>
+        </nav>
+    </div>
+    <button id="sidebar-toggle" aria-label="Toggle sidebar" style="position:fixed;top:44px;left:0px;z-index:2001;background:#222b36;border:none;padding:8px 10px;border-radius:6px;cursor:pointer;color:#fff;font-size:1.5em;box-shadow:0 2px 8px rgba(0,0,0,0.08);user-select:none;">
+        <span style="display:inline-block;width:1.6em;height:1em;vertical-align:middle;">
+            <svg width="1.6em" height="1em" viewBox="0 0 32 12" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="6" cy="6" r="2.5" fill="white"/>
+                <circle cx="16" cy="6" r="2.5" fill="white"/>
+                <circle cx="26" cy="6" r="2.5" fill="white"/>
+            </svg>
+        </span>
+        <script>
+        // --- Draggable sidebar toggle button ---
+        (function() {
+            var btn = document.getElementById('sidebar-toggle');
+            var isDragging = false, startX, startY, origX, origY;
+            btn.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                var rect = btn.getBoundingClientRect();
+                origX = rect.left;
+                origY = rect.top;
+                document.body.style.userSelect = 'none';
+            });
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                var dx = e.clientX - startX;
+                var dy = e.clientY - startY;
+                var newLeft = origX + dx;
+                var newTop = origY + dy;
+                // Clamp to window
+                newLeft = Math.max(0, Math.min(window.innerWidth - btn.offsetWidth, newLeft));
+                newTop = Math.max(0, Math.min(window.innerHeight - btn.offsetHeight, newTop));
+                btn.style.left = newLeft + 'px';
+                btn.style.top = newTop + 'px';
+            });
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+                document.body.style.userSelect = '';
+            });
+            // Touch support
+            btn.addEventListener('touchstart', function(e) {
+                if (e.touches.length !== 1) return;
+                isDragging = true;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                var rect = btn.getBoundingClientRect();
+                origX = rect.left;
+                origY = rect.top;
+            });
+            document.addEventListener('touchmove', function(e) {
+                if (!isDragging || e.touches.length !== 1) return;
+                var dx = e.touches[0].clientX - startX;
+                var dy = e.touches[0].clientY - startY;
+                var newLeft = origX + dx;
+                var newTop = origY + dy;
+                newLeft = Math.max(0, Math.min(window.innerWidth - btn.offsetWidth, newLeft));
+                newTop = Math.max(0, Math.min(window.innerHeight - btn.offsetHeight, newTop));
+                btn.style.left = newLeft + 'px';
+                btn.style.top = newTop + 'px';
+            });
+            document.addEventListener('touchend', function() {
+                isDragging = false;
+            });
+        })();
+        // --- End draggable ---
+        </script>
+
+    </button>
+     
+    <div class="main-content" id="main-content">
+        <div id="section-high-level" class="section-content">
+            <section>
+                <h1>Real-Time Text-to-Speech on RP2040</h1>
+                <p><b>ECE 4760 Final Project, Fall 2025</b></p>
+                <p><b>Team:</b> Yayun Zhao (yz3545), Qingyin Zhong (qz425), Hongming Yang (hy665)</p>
+                <div style="margin: 1.5em 0; text-align: center;">
+                    <iframe width="560" height="315" src="https://www.youtube.com/embed/l-Kj-9ZnBKY" title="Project Demo Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+                <p><b>Project Summary:</b> This project demonstrates a <b>real-time text-to-speech (TTS)</b> system running entirely on the <b>RP2040</b> microcontroller. The system converts input text into intelligible speech audio with low latency, leveraging dual-core parallelism and efficient embedded audio processing. The design is tailored for resource-constrained environments, making it ideal for embedded, IoT, and audio applications.</p>
+                <ul>
+                    <li>End-to-end TTS: text input → speech output</li>
+                    <li>Dual-core (RP2040) real-time audio synthesis</li>
+                    <li>Multiple voice profiles, adjustable pitch, speed, and timbre</li>
+                    <li>SD card dictionary and phoneme storage</li>
+                    <li>Hardware-accelerated DAC output via SPI (MCP4822)</li>
+                </ul>
+                <p><i>What you'll learn:</i> How to architect and optimize a real-time TTS pipeline on embedded hardware, and the trade-offs between algorithmic complexity, memory, and audio quality.</p>
+
+            </section>
+            <section>
+                <h2>System Overview</h2>
+                <ul>
+                    <li><b>Input:</b> ASCII text (via serial or SD card)</li>
+                    <li><b>Processing:</b> Text parsing → phoneme mapping → audio synthesis</li>
+                    <li><b>Output:</b> Real-time audio via DAC (SPI to MCP4822), speaker</li>
+                </ul>
+                <p>The system supports two main implementation pathways, each with distinct trade-offs in latency, memory, and audio quality. <br>[System Block Diagram Placeholder]</p>
+                <p><i>What you'll learn:</i> The overall data flow and hardware-software co-design for embedded TTS.</p>
+
+            </section>
+            <section>
+                <h2 id="pathways-comparison">Implementation Pathways Comparison</h2>
+                <table style="width:100%;border-collapse:collapse;margin-bottom:1em;">
+                    <thead>
+                        <tr style="background:#f0f0f0;">
+                            <th style="padding:8px;border:1px solid #ccc;">Pathway</th>
+                            <th style="padding:8px;border:1px solid #ccc;">Method</th>
+                            <th style="padding:8px;border:1px solid #ccc;">Pros</th>
+                            <th style="padding:8px;border:1px solid #ccc;">Cons</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding:8px;border:1px solid #ccc;"><b>A: Real-Time Synthesis</b></td>
+                            <td style="padding:8px;border:1px solid #ccc;">
+                                <ul>
+                                    <li><b>Core Usage:</b> Dual-Core</li>
+                                    <li><b>Vowels:</b> Synthesized via Formant synthesis (F1/F2/F3 adjustments).</li>
+                                    <li><b>Consonants:</b> Approximated with random white noise (e.g., S, T, K, F, Sh).</li>
+                                    <li><b>Voiced Consonants:</b> Simplified synthesis using a source-filter model.</li>
+                                </ul>
+                            </td>
+                            <td style="padding:8px;border:1px solid #ccc;">
+                                <ul>
+                                    <li>No PCM storage needed (only dictionary).</li>
+                                    <li>Minimal storage footprint.</li>
+                                    <li>Fully editable.</li>
+                                </ul>
+                            </td>
+                            <td style="padding:8px;border:1px solid #ccc;">
+                                <ul>
+                                    <li>Poorest audio quality, sounds robotic.</li>
+                                    <li>Rough consonant sounds.</li>
+                                    <li>High computational load.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px;border:1px solid #ccc;"><b>B: Hybrid Synthesis</b></td>
+                            <td style="padding:8px;border:1px solid #ccc;">
+                                <ul>
+                                    <li><b>Core Usage:</b> Single-Core + Interrupt</li>
+                                    <li><b>Vowels:</b> Real-time Formant synthesis (tunable timbre).</li>
+                                    <li><b>Consonants/Voiced:</b> Read pre-generated PCM from SD card.</li>
+                                    <li><b>Splicing:</b> Vowel loudness is reduced for smooth transitions.</li>
+                                </ul>
+                            </td>
+                            <td style="padding:8px;border:1px solid #ccc;">
+                                <ul>
+                                    <li>Very low latency (small read volume).</li>
+                                    <li>Better audio quality than Pathway A.</li>
+                                    <li>Retains timbre adjustment capability.</li>
+                                </ul>
+                            </td>
+                            <td style="padding:8px;border:1px solid #ccc;">
+                                <ul>
+                                    <li>Vowels can still sound slightly robotic.</li>
+                                    <li>Requires SD card file management.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px;border:1px solid #ccc;"><b>C: Sample-Based TTS</b></td>
+                            <td style="padding:8px;border:1px solid #ccc;">
+                                <ul>
+                                    <li><b>Core Usage:</b> Single-Core + Interrupt</li>
+                                    <li>All phonemes are pre-generated as 16-bit mono PCM files on SD card.</li>
+                                    <li><b>"Sentence Preloading":</b> Analyzes text to pre-load only necessary phonemes, ensuring no playback delay.</li>
+                                </ul>
+                            </td>
+                            <td style="padding:8px;border:1px solid #ccc;">
+                                <ul>
+                                    <li>Best audio quality, sounds natural.</li>
+                                    <li>Smooth splicing.</li>
+                                </ul>
+                            </td>
+                            <td style="padding:8px;border:1px solid #ccc;">
+                                <ul>
+                                    <li>Large storage requirement.</li>
+                                    <li>Cannot pre-buffer all phonemes.</li>
+                                    <li>Requires complex preloading logic.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><b>Key takeaway:</b> Pathway A is ideal for extreme resource constraints. Pathway B offers a good balance of quality and performance. Pathway C provides the best audio quality at the cost of storage and complexity.</p>
+            </section>
+        </div>
+        <div id="section-program-design" class="section-content" style="display:none">
+            <section>
+                <h1 id="program-design">Program Design</h1>
+                <p>The software is modular, with clear separation between <b>text parsing</b>, <b>phoneme conversion</b>, <b>prosody generation</b>, and <b>audio synthesis</b>. Each module is optimized for real-time performance and minimal memory usage.</p>
+                <ul>
+                    <li><b>Text Parser:</b> Tokenizes input, handles punctuation and case.</li>
+                    <li><b>Phoneme Mapper:</b> Looks up or generates phoneme sequences for each word.</li>
+                    <li><b>Prosody Engine:</b> Assigns pitch, duration, and stress to each phoneme.</li>
+                    <li><b>Audio Synthesizer:</b> Generates or streams PCM data for output.</li>
+                </ul>
+                <p><i>What you'll learn:</i> How to structure a TTS pipeline for embedded systems, and the importance of modularity for debugging and extension.</p>
+            </section>
+            <section>
+                <h2 id="architecture-data-flow">Architecture & Data Flow</h2>
+                <p>The system leverages the <b>RP2040's dual-core</b> architecture for parallel processing:</p>
+                <ul>
+                    <li><b>Core 0:</b> Handles text parsing, phoneme mapping, and SD card I/O.</li>
+                    <li><b>Core 1:</b> Manages real-time audio synthesis and DAC output.</li>
+                </ul>
+                <p>Data is exchanged via a <b>ring buffer </b> to ensure smooth, uninterrupted audio playback. The <b>DAC (MCP4822)</b> is driven via <b>SPI</b> at a recommended <b>sampling rate</b> of 16–22 kHz, with a buffer size of 256–512 samples for optimal latency and stability.</p>
+                <div style="margin:1em 0;">[Architecture Diagram Placeholder]</div>
+                <p><i>What you'll learn:</i> How to exploit hardware parallelism and buffer management for real-time audio on microcontrollers.</p>
+            </section>
+            <section>
+                <h2 id="implementation-details">Implementation Details</h2>
+                <h4 style="margin-top:1.5em;color:#2a6ebb">Pathway A: Dual-Core Architecture</h4>
+                <ul>
+                    <li>In <code>offline_tts.c</code>, the <code>main()</code> function calls <code>multicore_launch_core1(core1_entry);</code>, which starts the second core (core1) and runs the <code>core1_entry</code> function.</li>
+                    <li>The project links the <code>pico_multicore</code> library (see <code>CMakeLists.txt</code>), the official RP2040 SDK for multicore programming.</li>
+                    <li>The header <code>pt_cornell_rp2040_v1_4.h</code> defines FIFO macros (e.g., <code>PT_FIFO_WRITE</code>, <code>PT_FIFO_READ</code>) for inter-core communication, and provides two scheduler structs: <code>pt_sched</code> (core0) and <code>pt_sched1</code> (core1), enabling separate task scheduling for each core.</li>
+                </ul>
+                <b>Division of Labor:</b>
+                <ul>
+                    <li><b>Core 0 (Primary):</b>
+                        <ul>
+                            <li>Handles all system initialization (hardware, SD card, SPI, GPIO, LED, etc.).</li>
+                            <li>Runs the main loop, which is mainly a heartbeat LED blink (no user input or synthesis).</li>
+                            <li>Manages audio output: a timer interrupt (<code>audio_timer_cb</code>) continuously reads from the audio buffer and sends data to the DAC via SPI, also controlling the audio status LED.</li>
+                            <li>Responsible for all hardware management.</li>
+                        </ul>
+                    </li>
+                    <li><b>Core 1 (Secondary):</b>
+                        <ul>
+                            <li>Runs <code>core1_entry</code>, which loops to monitor serial input (e.g., '1', '2', '3') for switching voice styles (male, female, child).</li>
+                            <li>Updates <code>current_voice</code> and prints status when a new style is selected.</li>
+                            <li>After switching, calls <code>synthesize_demo_word()</code> to generate a demo audio segment (calls a series of <code>synthesize_formant_phoneme_fixed</code>).</li>
+                            <li>Handles all speech synthesis and audio data generation, writing samples to the buffer.</li>
+                        </ul>
+                    </li>
+                    <li><b>Inter-core Collaboration:</b>
+                        <ul>
+                            <li>Global variables and the spinlock <code>audio_lock</code> protect the audio buffer for safe dual-core access.</li>
+                            <li>Core 0 focuses on audio output and hardware, ensuring smooth playback.</li>
+                            <li>Core 1 focuses on user interaction and speech data generation, offloading computation from the primary core and improving responsiveness.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <h4 style="margin-top:1.5em;color:#2a6ebb">Pathways B & C: Single-Core + Interrupt Model</h4>
+                <ul>
+                    <li>Both pathways use a single core with a cooperative protothread (<code>protothread_console</code>) for user command handling and synthesis.</li>
+                    <li>When the user sends a command like <code>say &lt;word&gt;</code> via UART, the synthesis is performed synchronously in the protothread.</li>
+                </ul>
+                <b>Function Call Chain:</b>
+                <ul>
+                    <li><code>synthesize_speech(const char *text)</code> is called in the protothread, parsing the input, looking up the dictionary, and converting text to a phoneme sequence.</li>
+                    <li>For each phoneme of type <code>PHONEME_FORMANT</code> (vowel), <code>synthesize_formant_vowel_espeak(phoneme_t *ph)</code> is called:
+                        <ul>
+                            <li>Generates a sawtooth source signal.</li>
+                            <li>Applies low-pass filtering.</li>
+                            <li>Passes through three fixed-point IIR resonators (F1/F2/F3).</li>
+                            <li>Applies envelope and DC blocking.</li>
+                            <li>Writes each sample to the audio ring buffer using <code>audio_buffer_write_safe(uint16_t sample)</code>, which uses atomic operations for safety.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <b>Audio Playback:</b>
+                <ul>
+                    <li>Playback is not handled in the thread. Instead, a hardware timer interrupt (<code>audio_timer_cb</code>) at 22,050 Hz reads samples from the buffer and sends them to the DAC via SPI.</li>
+                </ul>
+                <b>Summary:</b>
+                <ul>
+                    <li>Vowel synthesis is a synchronous, blocking operation performed entirely in the user command thread, with the resulting samples written to the buffer.</li>
+                    <li>Real-time audio output is guaranteed by the interrupt-driven playback, ensuring deterministic synthesis and uninterrupted audio even during computation.</li>
+                </ul>
+                <div style="margin:1em 0; text-align:center;">
+                    <img src="pics/flow of SD card.png" alt="Pathway C Thread and Interrupt Flow" style="width:100%;max-width:600px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.1);">
+                    <div style="font-size:0.98em;color:#555;margin-top:0.5em;">Thread and interrupt flow diagram for Pathway C: The main thread handles synthesis and SD card reading, while a hardware timer interrupt ensures real-time audio output to the DAC. This separation allows uninterrupted playback even during SD card access or synthesis computation.</div>
+                </div>
+            </section>
+            <section>
+                <h2 id="hello-demo-flow">End-to-End "hello" Demo Flow</h2>
+                <ol>
+                    <li>User inputs <b>"hello"</b> via serial or SD card.</li>
+                    <li>Text parser splits into phonemes: <code>h</code>, <code>e</code>, <code>l</code>, <code>o</code>.</li>
+                    <li>Phoneme mapper finds or generates PCM for each phoneme.</li>
+                    <li>Vowels are synthesized; consonants are loaded from SD card.</li>
+                    <li>PCM data is buffered and streamed to DAC in real time.</li>
+                    <li>Speaker outputs the word "hello" with selected voice profile, pitch, and speed.</li>
+                </ol>
+                
+
+
+            </section>
+        </div>
+        <div id="section-hardware-design" class="section-content" style="display:none">
+            <section>
+                <h1>Hardware Design</h1>
+                <p>This section details the hardware architecture and key configurations of the real-time text-to-speech system running on the RP2040 microcontroller. Below is an overview diagram illustrating the main components.</p>
+                <div style="margin:1em 0; text-align:center;">
+                    <img src="pics/hardware.png" alt="Hardware Design Overview" style="width:100%;max-width:600px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.1);">
+                    <div style="font-size:0.98em;color:#555;margin-top:0.5em;">Hardware overview of the RP2040 TTS system, showing key connections and components.</div>
+                </div>
+                
+                <h2>A. Libraries and Runtime Environment</h2>
+                <ul>
+                    <li>Pico SDK</li>
+                    <li>Cornell PT library</li>
+                    <li>SD card stub</li>
+                    <li>Formant interface</li>
+                </ul>
+
+                <h2>B. Audio System Configuration</h2>
+                <ul>
+                    <li>Sample rate: 22050 Hz (enough, better for real time)</li>
+                    <li>Ring buffer: 4096 samples</li>
+                    <li>Sample format: 12-bit DAC value stored in uint16_t</li>
+                    <li>Playback timing: $\approx$ 22.2 kHz timer interrupt, close to the target 22.05 kHz.</li>
+                </ul>
+
+                <h2>C. Hardware Pins and SPI / DAC Interface</h2>
+                <ul>
+                    <li>The system uses SPI port zero running at twenty megahertz.</li>
+                    <li>Pin assignments: SCK, MOSI, MISO, CS, LDAC, LED.</li>
+                </ul>
+                <ol>
+                    <li><b>SD Card Module (SPI1 Bus)</b><br>
+                        <ul>
+                            <li>microSD Vin (5 volt) --> VBUS on PICO (pin 40)</li>
+                            <li>microSD GND --> PICO gnd</li>
+                            <li>microSD CLK --> gpio 10 SPI1_SCK</li>
+                            <li>microSD DI --> gpio 11 SPI1_TX</li>
+                            <li>microSD DO--> gpio 12 SPI1_RX</li>
+                            <li>microSD CS --> gpio 13 software chip select</li>
+                        </ul>
+                    </li>
+                    <li style="margin-top:1em;"><b>MCP4822 DAC (SPI0 Bus)</b><br>
+                        <table style="border-collapse:collapse;margin-bottom:1em;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="padding:8px 32px;border:1px solid #ccc;">Pico GPIO</th>
+                                    <th style="padding:8px 32px;border:1px solid #ccc;">Function</th>
+                                    <th style="padding:8px 32px;border:1px solid #ccc;">DAC Pin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">GPIO 5</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">CS</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">Chip Select</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">GPIO 6</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">SCK</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">Clock</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">GPIO 7</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">MOSI</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">Data</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">GPIO 8</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">LDAC</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">Latch/Ground</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </li>
+                    <li style="margin-top:1em;"><b>Status Indicator Lights</b><br>
+                        <table style="border-collapse:collapse;margin-bottom:1em;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="padding:8px 32px;border:1px solid #ccc;">Pico GPIO</th>
+                                    <th style="padding:8px 32px;border:1px solid #ccc;">Function</th>
+                                    <th style="padding:8px 32px;border:1px solid #ccc;">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">GPIO 25</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">LED</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">On-board LED</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </li>
+                    <li style="margin-top:1em;"><b>Power and Ground</b><br>
+                        <table style="border-collapse:collapse;margin-bottom:1em;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="padding:8px 32px;border:1px solid #ccc;">Pico GPIO</th>
+                                    <th style="padding:8px 32px;border:1px solid #ccc;">Function</th>
+                                    <th style="padding:8px 32px;border:1px solid #ccc;">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">5V/3.3V</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">Power</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">DAC/SD card power supply</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">GND</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">Ground</td>
+                                    <td style="padding:8px 32px;border:1px solid #ccc;">DAC/SD card ground</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </li>
+                </ol>
+            </section>
+        </div>
+
+        <div id="section-audio-output" class="section-content" style="display:none">
+            <section>
+                <h2>Buffer and DAC Output Design</h2>
+                <ol>
+                    <li><b>Buffer Design</b><br>
+                        <b>Ring Buffer Size:</b><br>
+                        The RP2040 has 264 KB of internal SRAM. The audio buffer must be allocated without impacting other tasks.<br>
+                        <div style="background:#eaf4fb;border:1.5px solid #b3d1ea;border-radius:7px;padding:10px 18px;margin:10px 0 10px 0;display:inline-block;font-family:monospace;font-size:1.13em;line-height:1.5;">
+                            16 KB &divide; 2 bytes/sample = 8192 samples
+                        </div>
+                        At a 16 kHz sample rate, this buffer stores about 0.5 seconds of audio, enough to absorb synthesis/output jitter.<br>
+                        <b>Double Buffering Strategy:</b><br>
+                        A producer-consumer model is used: Core1 fills the buffer, Core0 outputs via DMA, avoiding blocking.<br>
+                        <b>Buffer Management:</b>
+                        <ul>
+                            <li>Ring queue with atomic pointer updates to prevent dual-core contention.</li>
+                            <li>Buffer state monitoring (low watermark alert) to prevent underrun.</li>
+                        </ul>
+                    </li>
+                    <li style="margin-top:1em;"><b>DAC Configuration Details</b><br>
+                        <b>Device:</b> MCP4822 (12-bit dual-channel DAC, SPI interface).<br>
+                        <b>Output Parameters:</b>
+                        <ul>
+                            <li>Resolution: 12-bit, output range 0~4.096 V</li>
+                            <li>Sample rate: 16 kHz (up to 22.05 kHz, SPI bandwidth permitting)</li>
+                            <li>SPI clock: at least 8 MHz to ensure data transfer per sample period</li>
+                        </ul>
+                        <b>DMA Configuration:</b>
+                        <ul>
+                            <li>RP2040 DMA channels push buffer data directly to SPI FIFO, reducing CPU load</li>
+                            <li>DMA trigger: timer interrupt (PWM or PIO), ensuring precise sample intervals</li>
+                        </ul>
+                    </li>
+                    <li style="margin-top:1em;"><b>Input/Output Pathways</b><br>
+                        <b>Input:</b><br>
+                        <div style="background:linear-gradient(90deg,#eaf4fb 60%,#d2e9fa 100%);border:2.2px solid #5ba3d7;border-radius:10px;padding:14px 18px;margin:12px 0 12px 0;display:block;font-family:'Segoe UI',monospace;font-size:1.13em;line-height:1.7;font-weight:500;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(90,160,220,0.08);">
+                            USB Serial (text) &rarr; eSpeak NG (phoneme sequence) &rarr; Parameter lookup &rarr; Core1 waveform synthesis &rarr; Write to ring buffer
+                        </div>
+                        <b>Output:</b><br>
+                        <div style="background:linear-gradient(90deg,#eaf4fb 60%,#d2e9fa 100%);border:2.2px solid #5ba3d7;border-radius:10px;padding:14px 18px;margin:12px 0 12px 0;display:block;font-family:'Segoe UI',monospace;font-size:1.13em;line-height:1.7;font-weight:500;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(90,160,220,0.08);">
+                            Core0 buffer monitor &rarr; DMA to SPI &rarr; MCP4822 DAC output &rarr; External low-pass filter &rarr; Speaker
+                        </div>
+                        <b>Latency Control:</b><br>
+                        Buffer size and DMA batch transfer strategy ensure total latency &lt; 50 ms.
+                    </li>
+                    <li style="margin-top:1em;">
+                        <div style="text-align:center;margin:1.5em 0;">
+                            <img src="pics/flow.png" alt="System Data Flow Diagram" style="max-width:80%;border:2px solid #b3d1ea;border-radius:10px;box-shadow:0 2px 8px rgba(90,160,220,0.08);">
+                            <div style="color:#555;font-size:1.05em;margin-top:0.7em;">
+                                </b> System Data Flow Diagram.
+                            </div>
+                        </div>
+                    </li>
+                </ol>
+            </section>
+        </div>
+        <div id="section-challenges" class="section-content" style="display:none">
+            <section>
+                <h1>Challenges</h1>
+                <ul>
+                    <li><b>Vowel Synthesis Parameter Tuning</b><br>
+                        The filter (formant) and synthesis parameters (such as fundamental frequency, formant frequencies, bandwidth, etc.) require constant tuning. Although we referenced parameters from eSpeak, direct adoption did not yield ideal results due to differences in synthesis algorithm implementation. All phoneme parameters had to be repeatedly adjusted and optimized specifically for our algorithm to achieve more natural speech quality.
+                    </li>
+                    <li style="margin-top:1em;"><b>Limitations of Integer Arithmetic</b><br>
+                        To match the int16 DAC output, the entire synthesis pipeline uses int types for intermediate values. This improves efficiency and compatibility, but also limits computational precision and flexibility. With more resources and time, it would be beneficial to use float for intermediate calculations, then shift and clip to int16 at the output stage, improving audio quality and algorithm performance.
+                    </li>
+                    <li style="margin-top:1em;"><b>Buffering and SD Card Access Latency</b><br>
+                        The limited RAM of the RP2040 restricts the size of the audio buffer. Without proper preloading and caching mechanisms, SD card file access can introduce tens of milliseconds or more of perceptible latency, affecting speech fluency. Since our project stores and accesses files by phoneme, each must be read in real time. Buffering strategy and buffer design are therefore critical. The prefetch and buffering scheme must be carefully designed based on the actual buffer size to meet the requirements of real-time speech synthesis.
+                    </li>
+                </ul>
+            </section>
+        </div>
+
+        <div id="section-conclusions-outlook" class="section-content" style="display:none">
+            <h1>Conclusions & Outlook</h1>
+            <p>
+                This project was inspired by the birdsong synthesis experiment in the ECE 5730 course. We are delighted to have explored human TTS synthesis at Cornell, the birthplace of the electronic synthesizer. The design of three different pathways not only demonstrates the diversity of embedded speech synthesis, but also provides practical technical solutions for a variety of application scenarios.
+            </p>
+            <ul>
+                <li><b>Pathway A: Real-Time Synthesis</b><br>
+                    Suitable for extremely resource-constrained scenarios where audio quality is not critical, such as low-cost voice prompts, toys, and educational devices. This approach requires minimal storage, offers high flexibility, and is fully open-source and portable. In the future, as MCU performance improves and algorithms are optimized, there is potential to further enhance audio quality and naturalness, and to expand advanced features such as multilingual, emotional, and timbre variation.
+                </li>
+                <li><b>Pathway B: Hybrid Synthesis</b><br>
+                    Achieves the best balance between audio quality, flexibility, and resource usage, making it suitable for most embedded speech synthesis needs. Future improvements could include optimizing vowel synthesis algorithms, improving some consonant synthesis, exploring multicore task division, and developing smarter SD card management to further enhance naturalness and system performance.
+                </li>
+                <li><b>Pathway C: Sample-Based TTS</b><br>
+                    Suitable for applications requiring the highest audio quality and ample storage, such as high-quality voice broadcasting, navigation, and smart speakers. As storage costs decrease and AI technology advances, sample-based methods will become more accessible. With automatic splicing and emotional synthesis algorithms, even more natural and expressive speech output can be achieved.
+                </li>
+            </ul>
+            <p>
+                Looking ahead, embedded TTS systems are expected to continue improving in naturalness, intelligence, and application breadth through advanced algorithms, machine learning-driven prosody and pronunciation modeling, and deep integration with IoT and smart devices. We hope this project can serve as a reference and inspiration for learning and innovation in embedded audio and speech synthesis.
+            </p>
+        </div>
+        
+        <div id="section-appendices" class="section-content" style="display:none">
+            <section>
+                <h1 id="appendices-main">Appendices</h1>
+                <h4 id="code-download">A. Code Download</h4>
+                <ul>
+                    <li><b>Pathway A (Real-Time Synthesis):</b> <a href="code/tts_syn.zip" download>Download Code (tts_syn.zip)</a></li>
+                    <li><b>Pathway B (Hybrid Synthesis):</b> <a href="code/syn+sd.zip" download>Download Code (syn+sd.zip)</a></li>
+                    <li><b>Pathway C (Sample-Based TTS):</b> <a href="code/tts_sd.zip" download>Download Code (tts_sd.zip)</a></li>
+                </ul>
+                <p style="font-size: 0.9em; color: #555;"><i>Note: Each code package includes the "tts_data" folder, which should be placed on the SD card.</i></p>
+                <h4 id="team-tasks">B. Team Member Contributions</h4>
+                <ul style="margin-bottom:1.5em;">
+                    <li><b>Yayun Zhao</b>: Buffer and synthesis algorithm research; contributed to Pathway A implementation.<br>
+                        <img src="pics/yayun.jpg" alt="Yayun Zhao" style="width:120px;height:120px;border-radius:10px;border:1.5px solid #b3d1ea;margin:8px 0;object-fit:cover;" onerror="this.style.display='none';"><br>
+              
+                    </li>
+                    <li><b>Qingyin Zhong</b>: SD card system setup, pitch algorithm research; contributed to Pathways B and C implementation.<br>
+                        <img src="pics/qingyin.jpg" alt="Qingyin Zhong" style="width:120px;height:120px;border-radius:10px;border:1.5px solid #b3d1ea;margin:8px 0;object-fit:cover;" onerror="this.style.display='none';"><br>
+          
+                    </li>
+                    <li><b>Hongming Yang</b>: Audio file construction, hardware setup; contributed to Pathways B and C implementation.<br>
+                        <img src="pics/hongming.jpg" alt="Hongming Yang" style="width:120px;height:120px;border-radius:10px;border:1.5px solid #b3d1ea;margin:8px 0;object-fit:cover;" onerror="this.style.display='none';"><br>
+        
+                    </li>
+                </ul>
+                <p style="margin-bottom:0.5em;font-size:0.98em;color:#555;">Project presentation and report were completed collaboratively by all three members. (Order does not indicate ranking.)</p>
+                <p style="font-weight:500;color:#2a6ebb;">The group approves this report for inclusion on the course website.</p>
+                <h4 id="references">C. References</h4>
+                <ul>
+                    <li><a href="https://ece4760.github.io/" target="_blank" rel="noopener noreferrer">ECE 4760/5730 Course Website</a></li>
+                    <li><a href="https://people.ece.cornell.edu/land/courses/ece4760/pi_pico/sd_card_reader_pico2/index_sd_card.html" target="_blank" rel="noopener noreferrer">ECE4760 microSD Card Reader Guide</a></li>
+                    <li><a href="https://github.com/espeak-ng/espeak-ng" target="_blank" rel="noopener noreferrer">eSpeak NG - Synthesis & Phoneme Reference</a></li>
+                    <li><a href="https://elm-chan.org/fsw/ff/" target="_blank" rel="noopener noreferrer">FatFs - Generic FAT Filesystem Module</a></li>
+                    <li><a href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf" target="_blank" rel="noopener noreferrer">RP2040 Datasheet</a></li>
+                </ul>
+            </section>
+        </div>
+        <div id="section-tts-algorithm" class="section-content" style="display:none">
+            <h1 id="tts-algorithm-details">TTS Algorithm</h1>
+            
+            <ol>
+                <li><b>Glottal Excitation Model</b><br>
+                    The vocal folds are modeled as a sawtooth waveform:<br>
+                    <div style="background:#eaf4fb;border:1.5px solid #b3d1ea;border-radius:7px;padding:10px 18px;margin:10px 0 10px 0;display:inline-block;font-family:monospace;font-size:1.18em;line-height:1.5;">
+                        s_exc[n] = A × saw(2π f₀ n / fₛ + φ)
+                    </div><br>
+                    <span style="color:#444; font-size:0.98em;">Project implementation: The sawtooth waveform is generated using a fixed-point phase accumulator: <code>raw_source = (global_phase &gt;&gt; 20) - 2048;</code> The phase is incremented by a value proportional to the desired pitch. Integer math is used for efficiency.</span>
+                </li>
+                <li style="margin-top:1em;"><b>Noise Model for Unvoiced Consonants</b><br>
+                    Unvoiced consonants (e.g., /s/, /t/, /k/, /f/, /ʃ/) are modeled as white noise:<br>
+                    <div style="background:#eaf4fb;border:1.5px solid #b3d1ea;border-radius:7px;padding:10px 18px;margin:10px 0 10px 0;display:inline-block;font-family:monospace;font-size:1.18em;line-height:1.5;">
+                        s_noise[n] ~ U(-A, A)
+                    </div><br>
+                    <span style="color:#444; font-size:0.98em;">Project implementation: Unvoiced consonants are synthesized using a fast pseudo-random number generator: <code>raw_source = fast_rand();</code> The output is scaled to the appropriate amplitude.</span>
+                </li>
+                <li style="margin-top:1em;"><b>Formant Resonators (Second-Order IIR Filters)</b><br>
+                    Each formant (F1, F2, F3) is implemented as a second-order resonator:<br>
+                    <div style="background:#eaf4fb;border:1.5px solid #b3d1ea;border-radius:7px;padding:10px 18px;margin:10px 0 10px 0;display:inline-block;font-family:monospace;font-size:1.18em;line-height:1.5;">
+                        y[n] = a₀ x[n] + a₁ y[n-1] + a₂ y[n-2]
+                    </div><br>
+                    <span style="color:#444; font-size:0.98em;">Project implementation: Each formant (F1, F2, F3) is implemented as a second-order IIR filter in fixed-point arithmetic. The coefficients are precomputed for each voice profile and sample rate. The code uses integer math for all filter operations.</span>
+                </li>
+                <li style="margin-top:1em;"><b>Source Smoothing (Low-Pass Filtering)</b><br>
+                    A first-order IIR low-pass filter smooths the excitation signal:<br>
+                    <div style="background:#eaf4fb;border:1.5px solid #b3d1ea;border-radius:7px;padding:10px 18px;margin:10px 0 10px 0;display:inline-block;font-family:monospace;font-size:1.18em;line-height:1.5;">
+                        s_sm[n] = α × s_sm[n-1] + (1-α) × s_exc[n]
+                    </div><br>
+                    <span style="color:#444; font-size:0.98em;">Project implementation: A first-order IIR low-pass filter is applied to the excitation: <code>global_last_source = (global_last_source * coeff + raw_source * (32768-coeff)) &gt;&gt; 15;</code> The smoothing coefficient is tunable for each voice profile.</span>
+                </li>
+                <li style="margin-top:1em;"><b>Amplitude Envelope (Attack / Release)</b><br>
+                    A linear attack–sustain–release envelope is used to prevent clicks and produce natural onset/offset of speech sounds:<br>
+                    <div style="background:#eaf4fb;border:1.5px solid #b3d1ea;border-radius:7px;padding:10px 18px;margin:10px 0 10px 0;display:inline-block;font-family:monospace;font-size:1.18em;line-height:1.5;">
+                        s_env[n] = s[n] × e[n]
+                    </div>
+                    , where <span style="font-family:monospace;">e[n]</span> is the envelope (attack, sustain, release).<br>
+                    <span style="color:#444; font-size:0.98em;">Project implementation: A linear attack–sustain–release envelope is applied to each phoneme to prevent clicks and produce natural transitions. The envelope is implemented as a ramp-up, hold, and ramp-down in integer math.</span>
+                </li>
+                <li style="margin-top:1em;"><b>DC Blocking Filter</b><br>
+                    A one-pole high-pass (DC-blocking) filter stabilizes the signal:<br>
+                    <div style="background:#eaf4fb;border:1.5px solid #b3d1ea;border-radius:7px;padding:10px 18px;margin:10px 0 10px 0;display:inline-block;font-family:monospace;font-size:1.18em;line-height:1.5;">
+                        y[n] = x[n] - x[n-1] + R × y[n-1]
+                    </div><br>
+                    <span style="color:#444; font-size:0.98em;">Project implementation: A one-pole high-pass (DC-blocking) filter is used: <code>dc_y_prev = (output - dc_x_prev + (dc_y_prev * 32700 &gt;&gt; 15));</code> This prevents baseline drift and avoids DAC saturation.</span>
+                </li>
+                <li style="margin-top:1em;"><b>Overall Synthesis Model</b><br>
+                    The complete speech synthesis process is:<br>
+                    <div style="background:#eaf4fb;border:1.5px solid #b3d1ea;border-radius:7px;padding:10px 18px;margin:10px 0 10px 0;display:inline-block;font-family:monospace;font-size:1.18em;line-height:1.5;">
+                        Output = DCBlock(Envelope(Formant(LPF(Excitation))))
+                    </div><br>
+                    <span style="color:#444; font-size:0.98em;">Project implementation:<br>
+                        <div style="background:linear-gradient(90deg,#eaf4fb 60%,#d2e9fa 100%);border:2.2px solid #5ba3d7;border-radius:10px;padding:16px 22px;margin:18px 0 18px 0;display:block;font-family:'Segoe UI',monospace;font-size:1.22em;line-height:1.7;font-weight:500;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(90,160,220,0.08);text-align:center;">
+                            <span style="display:inline-block;background:#fff;border-radius:6px;padding:4px 14px 4px 14px;margin:0 6px 0 0;border:1.2px solid #b3d1ea;box-shadow:0 1px 3px rgba(90,160,220,0.04);">Excitation</span>
+                            <span style="font-size:1.3em;color:#5ba3d7;vertical-align:middle;">&#8594;</span>
+                            <span style="display:inline-block;background:#fff;border-radius:6px;padding:4px 14px 4px 14px;margin:0 6px;border:1.2px solid #b3d1ea;box-shadow:0 1px 3px rgba(90,160,220,0.04);">Low-pass smoothing</span>
+                            <span style="font-size:1.3em;color:#5ba3d7;vertical-align:middle;">&#8594;</span>
+                            <span style="display:inline-block;background:#fff;border-radius:6px;padding:4px 14px 4px 14px;margin:0 6px;border:1.2px solid #b3d1ea;box-shadow:0 1px 3px rgba(90,160,220,0.04);">3-stage formant filtering</span>
+                            <span style="font-size:1.3em;color:#5ba3d7;vertical-align:middle;">&#8594;</span>
+                            <span style="display:inline-block;background:#fff;border-radius:6px;padding:4px 14px 4px 14px;margin:0 6px;border:1.2px solid #b3d1ea;box-shadow:0 1px 3px rgba(90,160,220,0.04);">Envelope</span>
+                            <span style="font-size:1.3em;color:#5ba3d7;vertical-align:middle;">&#8594;</span>
+                            <span style="display:inline-block;background:#fff;border-radius:6px;padding:4px 14px 4px 14px;margin:0 6px;border:1.2px solid #b3d1ea;box-shadow:0 1px 3px rgba(90,160,220,0.04);">DC blocking</span>
+                            <span style="font-size:1.3em;color:#5ba3d7;vertical-align:middle;">&#8594;</span>
+                            <span style="display:inline-block;background:#fff;border-radius:6px;padding:4px 14px 4px 14px;margin:0 6px;border:1.2px solid #b3d1ea;box-shadow:0 1px 3px rgba(90,160,220,0.04);">Audio buffer</span>
+                            <span style="font-size:1.3em;color:#5ba3d7;vertical-align:middle;">&#8594;</span>
+                            <span style="display:inline-block;background:#fff;border-radius:6px;padding:4px 14px 4px 14px;margin:0 0 0 0;border:1.2px solid #b3d1ea;box-shadow:0 1px 3px rgba(90,160,220,0.04);">DAC output</span>
+                        </div>
+                        All processing is performed in fixed-point math. The system supports multiple voice profiles by adjusting formant parameters and excitation type.<br><br>
+                        <b>Voice Profile Characteristics:</b>
+                        <ul>
+                            <li><b>Deep Male:</b> Sawtooth waveform, no pitch offset, stronger jitter, moderate low-pass smoothing.</li>
+                            <li><b>Soft Female:</b> Hybrid waveform (mix of sawtooth and triangle), higher pitch, smaller jitter (cleaner tone), strong low-pass smoothing with extra smoothing stage, formants scaled up for brighter resonance.</li>
+                            <li><b>Cute Child:</b> Triangle pulse-like source, highest pitch, no jitter, lighter low-pass smoothing, formants scaled up more.</li>
+                        </ul>
+                            At runtime, the voice profile can be switched via serial input (profiles 1, 2, 3). After switching, the system immediately plays a demo sentence using the new voice.
+                    </span>
+                </li>
+            </ol>
+        </div>
+        <footer style="margin-top:40px; color:#888; font-size:0.95em;">
+            <hr>
+            <div>&copy; ECE 5730 Final Project, Fall 2025. Yayun Zhao (yz3545), Qingyin Zhong (qz425), Hongming Yang (hy665).</div>
+        </footer>
+        <div id="comments-section" style="margin:2.5em 0 2em 0;padding:1.5em 1.2em;background:#f8fafc;border:2px solid #b3d1ea;border-radius:10px;">
+                <h2 style="font-size:1.25em;color:#2a6ebb;margin-bottom:1em;">Q&A Section</h2>
+                <div class="comment-box-section" style="margin:1.5em 0 0.5em 0;padding:1em 1.2em;background:#f8fafc;border:1.5px solid #b3d1ea;border-radius:8px;">
+                    <input type="text" class="commenter-name-input" placeholder="Your Name" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #b3d1ea;font-size:1em;margin-bottom:0.8em;">
+                    <textarea class="comment-input" rows="2" placeholder="Leave your comment or suggestion here..." style="width:100%;resize:vertical;padding:8px 10px;border-radius:6px;border:1px solid #b3d1ea;font-size:1em;"></textarea>
+                    <div style="margin-top:0.5em;text-align:right;">
+                        <button class="comment-cancel-btn" style="margin-right:8px;padding:5px 16px;border-radius:5px;border:1px solid #bbb;background:#f3f3f3;color:#444;cursor:pointer;">Cancel</button>
+                        <button class="comment-submit-btn" style="padding:5px 16px;border-radius:5px;border:1px solid #2a6ebb;background:#2a6ebb;color:#fff;cursor:pointer;">Submit</button>
+                    </div>
+                </div>
+                <div id="comments-list"></div>
+            </div>
+    <script>
+        // --- Comments logic ---
+        // Simple localStorage implementation, can be extended to GitHub API
+        const commentBoxes = document.querySelectorAll('.comment-box-section');
+        const commentsSection = document.getElementById('comments-section');
+        const commentsList = document.getElementById('comments-list');
+        let comments = JSON.parse(localStorage.getItem('tts_comments') || '[]');
+
+        function renderComments() {
+            commentsList.innerHTML = '';
+            comments.forEach((c, idx) => {
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.style = 'margin-bottom:1.2em;padding:1em 1.2em;background:#fff;border-radius:7px;border:1px solid #dbeafe;box-shadow:0 1px 4px rgba(90,160,220,0.04);';
+                div.innerHTML = `
+                    <div style='font-size:1.08em;color:#222;'>
+                        ${c.text}
+                    </div>
+                    <div style='margin-top:0.5em;font-size:0.97em;color:#888;'>
+                        ${c.name ? 'By: ' + c.name + ' ' : ''} ${c.section ? 'From: ' + c.section : ''} 
+                        <span style='float:right;'>
+                            <a href='#' class='reply-link' data-idx='${idx}' style='color:#2a6ebb;text-decoration:underline;cursor:pointer;margin-right:10px;'>Reply</a>
+                            <a href='#' class='delete-link' data-idx='${idx}' style='color:#d9534f;text-decoration:underline;cursor:pointer;'>Delete</a>
+                        </span>
+                    </div>`;
+                // Replies
+                if (c.replies && c.replies.length > 0) {
+                    const replyDiv = document.createElement('div');
+                    replyDiv.style = 'margin-top:0.7em;margin-left:1.5em;';
+                    c.replies.forEach((r, ridx) => {
+                        const rdiv = document.createElement('div');
+                        rdiv.style = 'background:#f3f8ff;border-radius:6px;padding:0.6em 1em;margin-bottom:0.5em;border:1px solid #e0e7ef;';
+                        rdiv.innerHTML = `<span style='color:#2a6ebb;font-weight:500;'>Reply:</span> ${r}`;
+                        replyDiv.appendChild(rdiv);
+                    });
+                    div.appendChild(replyDiv);
+                }
+                // Reply input
+                div.addEventListener('click', function(e) {
+                    if(e.target.classList.contains('reply-link')) {
+                        e.preventDefault();
+                        let replyBox = div.querySelector('.reply-box');
+                        if(replyBox) { replyBox.remove(); return; }
+                        replyBox = document.createElement('div');
+                        replyBox.className = 'reply-box';
+                        replyBox.style = 'margin-top:0.7em;';
+                        replyBox.innerHTML = `<textarea rows='2' style='width:90%;border-radius:5px;padding:6px 8px;resize:vertical;'></textarea><button style='margin-left:8px;padding:4px 14px;border-radius:5px;background:#2a6ebb;color:#fff;border:1px solid #2a6ebb;cursor:pointer;'>Submit Reply</button>`;
+                        div.appendChild(replyBox);
+                        replyBox.querySelector('button').onclick = function() {
+                            const val = replyBox.querySelector('textarea').value.trim();
+                            if(val) {
+                                if(!comments[idx].replies) comments[idx].replies = [];
+                                comments[idx].replies.push(val);
+                                localStorage.setItem('tts_comments', JSON.stringify(comments));
+                                renderComments();
+                            }
+                        };
+                    } else if (e.target.classList.contains('delete-link')) {
+                        e.preventDefault();
+                        const commentIdx = parseInt(e.target.dataset.idx);
+                        if (confirm('Are you sure you want to delete this comment?')) {
+                            comments.splice(commentIdx, 1);
+                            localStorage.setItem('tts_comments', JSON.stringify(comments));
+                            renderComments();
+                        }
+                    }
+                });
+                commentsList.appendChild(div);
+            });
+        }
+        renderComments();
+
+        commentBoxes.forEach(box => {
+            const nameInput = box.querySelector('.commenter-name-input');
+            const input = box.querySelector('.comment-input');
+            const cancelBtn = box.querySelector('.comment-cancel-btn');
+            const submitBtn = box.querySelector('.comment-submit-btn');
+            cancelBtn.onclick = () => { input.value = ''; nameInput.value = ''; };
+            submitBtn.onclick = () => {
+                const val = input.value.trim();
+                const nameVal = nameInput.value.trim();
+                if(val) {
+                    // Get section title
+                    let section = box.closest('.section-content');
+                    let title = section ? section.querySelector('h1,h2') : null;
+                    let sectionTitle = title ? title.innerText : '';
+                    comments.push({text: val, name: nameVal, section: sectionTitle, replies: []});
+                    localStorage.setItem('tts_comments', JSON.stringify(comments));
+                    input.value = '';
+                    nameInput.value = '';
+                    renderComments();
+                }
+            };
+        });
+        // --- End comments logic ---
+        // Sidebar navigation logic with submenu toggle and highlight
+        document.querySelectorAll('.sidebar-menu li[data-section]').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                // If has submenu, toggle it, but do NOT change right content
+                if(item.classList.contains('has-submenu')) {
+                    var submenu = item.querySelector('.submenu');
+                    var isOpen = submenu && submenu.style.display !== 'none' && submenu.style.display !== '' ? true : false;
+                    if(isOpen) {
+                        // Collapse submenu and remove highlight
+                        submenu.style.display = 'none';
+                        item.classList.remove('active');
+                    } else {
+                        // Hide all submenus
+                        document.querySelectorAll('.sidebar-menu .submenu').forEach(function(sub) {
+                            sub.style.display = 'none';
+                        });
+                        // Remove active from all main items
+                        document.querySelectorAll('.sidebar-menu li[data-section]').forEach(function(li) {
+                            if(!li.closest('.submenu')) li.classList.remove('active');
+                        });
+                        // Open submenu and highlight
+                        submenu.style.display = '';
+                        item.classList.add('active');
+                    }
+                    // Do NOT change right content for main menu with submenu
+                } else {
+                    // Remove active from all
+                    document.querySelectorAll('.sidebar-menu li').forEach(function(li) {
+                        li.classList.remove('active');
+                    });
+                    // Hide all submenus
+                    document.querySelectorAll('.sidebar-menu .submenu').forEach(function(sub) {
+                        sub.style.display = 'none';
+                    });
+                    // Add active to this
+                    item.classList.add('active');
+                    // Hide all content
+                    document.querySelectorAll('.section-content').forEach(function(sec) {
+                        sec.style.display = 'none';
+                    });
+                    // Show the right section
+                    var sectionId = 'section-' + item.getAttribute('data-section');
+                    var section = document.getElementById(sectionId);
+                    if(section) section.style.display = '';
+                }
+            });
+        });
+        // Submenu click propagation and highlight
+        document.querySelectorAll('.submenu li[data-section]').forEach(function(subitem) {
+            subitem.addEventListener('click', function(e) {
+                e.stopPropagation();
+                // Remove highlight from all submenu items
+                document.querySelectorAll('.submenu li[data-section]').forEach(function(li) {
+                    li.classList.remove('submenu-active');
+                });
+                // Remove active from all main items except parent
+                var parentLi = subitem.closest('.has-submenu');
+                document.querySelectorAll('.sidebar-menu li[data-section]').forEach(function(li) {
+                    if(li !== parentLi && !li.closest('.submenu')) li.classList.remove('active');
+                });
+                // Highlight this submenu
+                subitem.classList.add('submenu-active');
+                // Keep parent highlighted and submenu open
+                if(parentLi) {
+                    parentLi.classList.add('active');
+                    var submenu = parentLi.querySelector('.submenu');
+                    if(submenu) submenu.style.display = '';
+                }
+                // Hide all content
+                document.querySelectorAll('.section-content').forEach(function(sec) {
+                    sec.style.display = 'none';
+                });
+                var sectionId = 'section-' + subitem.getAttribute('data-section');
+                var section = document.getElementById(sectionId);
+                if(section) section.style.display = '';
+            });
+        });
+        // Sidebar toggle logic
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
+            var sidebar = document.getElementById('sidebar');
+            var main = document.getElementById('main-content');
+            var body = document.body;
+            body.classList.toggle('sidebar-hidden');
+            if(body.classList.contains('sidebar-hidden')) {
+                sidebar.style.transform = 'translateX(-100%)';
+            } else {
+                sidebar.style.transform = '';
+            }
+        });
+
+        // --- New In-Page Search Logic ---
+        const searchInput = document.getElementById('sidebar-search-input');
+        const resultsContainer = document.getElementById('search-results');
+        const mainContent = document.getElementById('main-content');
+        let searchIndex = [];
+
+        function buildSearchIndex() {
+            const contentSections = mainContent.querySelectorAll('h1, h2, h4, p, li');
+            contentSections.forEach(el => {
+                const text = el.innerText.trim();
+                if (text) {
+                    const headingElement = el.closest('h1, h2, h4') || el.closest('.section-content').querySelector('h1, h2, h4');
+                    const id = headingElement ? headingElement.id : el.closest('.section-content').id;
+                    searchIndex.push({
+                        id: id,
+                        text: text.toLowerCase(),
+                        element: el
+                    });
+                }
+            });
+        }
+
+        function performSearch(query) {
+            resultsContainer.innerHTML = '';
+            if (query.length < 2) {
+                return;
+            }
+
+            const lowerCaseQuery = query.toLowerCase();
+            const results = searchIndex.filter(item => item.text.includes(lowerCaseQuery));
+            
+            const uniqueResults = [...new Map(results.map(item => [item.id, item])).values()];
+
+            uniqueResults.slice(0, 10).forEach(item => {
+                const resultItem = document.createElement('div');
+                resultItem.classList.add('search-result-item');
+                
+                const link = document.createElement('a');
+                link.href = `#${item.id}`;
+
+                const titleEl = document.getElementById(item.id);
+                const title = titleEl ? titleEl.innerText : 'Section';
+
+                const snippetIndex = item.text.indexOf(lowerCaseQuery);
+                const start = Math.max(0, snippetIndex - 30);
+                const end = Math.min(item.text.length, snippetIndex + lowerCaseQuery.length + 30);
+                let snippetText = (start > 0 ? '...' : '') + item.text.substring(start, end) + (end < item.text.length ? '...' : '');
+
+                snippetText = snippetText.replace(new RegExp(lowerCaseQuery, 'gi'), (match) => `<mark>${match}</mark>`);
+
+                link.innerHTML = `
+                    <div class="search-result-title">${title}</div>
+                    <div class="search-result-snippet">${snippetText}</div>
+                `;
+                
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Show the correct section content
+                    const sectionContainer = titleEl.closest('.section-content');
+                    if(sectionContainer) {
+                        document.querySelectorAll('.section-content').forEach(sec => sec.style.display = 'none');
+                        sectionContainer.style.display = '';
+                    }
+                    // Scroll to the element
+                    document.getElementById(item.id).scrollIntoView({ behavior: 'smooth' });
+                    resultsContainer.innerHTML = '';
+                    searchInput.value = '';
+                });
+
+                resultItem.appendChild(link);
+                resultsContainer.appendChild(resultItem);
+            });
+        }
+
+        searchInput.addEventListener('input', () => {
+            performSearch(searchInput.value);
+        });
+        
+        // Build the index once the page is loaded
+        window.addEventListener('load', buildSearchIndex);
+        // --- End of New Search Logic ---
+
+        // Search filter for sidebar
+        /* This old logic is now replaced by the in-page search
+        document.getElementById('sidebar-search-input').addEventListener('input', function() {
+            var val = this.value.toLowerCase();
+            document.querySelectorAll('.sidebar-menu li[data-section]').forEach(function(item) {
+                var text = item.textContent.toLowerCase();
+                item.style.display = text.indexOf(val) !== -1 ? '' : 'none';
+            });
+        });
+        */
+    </script>
+    <script>
+        // Sidebar navigation logic with submenu toggle and highlight
+        document.querySelectorAll('.sidebar-menu li[data-section]').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                // If has submenu, toggle it, but do NOT change right content
+                if(item.classList.contains('has-submenu')) {
+                    var submenu = item.querySelector('.submenu');
+                    var isOpen = submenu && submenu.style.display !== 'none' && submenu.style.display !== '' ? true : false;
+                    if(isOpen) {
+                        // Collapse submenu and remove highlight
+                        submenu.style.display = 'none';
+                        item.classList.remove('active');
+                    } else {
+                        // Hide all submenus
+                        document.querySelectorAll('.sidebar-menu .submenu').forEach(function(sub) {
+                            sub.style.display = 'none';
+                        });
+                        // Remove active from all main items
+                        document.querySelectorAll('.sidebar-menu li[data-section]').forEach(function(li) {
+                            if(!li.closest('.submenu')) li.classList.remove('active');
+                        });
+                        // Open submenu and highlight
+                        submenu.style.display = '';
+                        item.classList.add('active');
+                    }
+                    // Do NOT change right content for main menu with submenu
+                } else {
+                    // Remove active from all
+                    document.querySelectorAll('.sidebar-menu li').forEach(function(li) {
+                        li.classList.remove('active');
+                    });
+                    // Hide all submenus
+                    document.querySelectorAll('.sidebar-menu .submenu').forEach(function(sub) {
+                        sub.style.display = 'none';
+                    });
+                    // Add active to this
+                    item.classList.add('active');
+                    // Hide all content
+                    document.querySelectorAll('.section-content').forEach(function(sec) {
+                        sec.style.display = 'none';
+                    });
+                    // Show the right section
+                    var sectionId = 'section-' + item.getAttribute('data-section');
+                    var section = document.getElementById(sectionId);
+                    if(section) section.style.display = '';
+                }
+            });
+        });
+        // Submenu click propagation and highlight
+        document.querySelectorAll('.submenu li[data-section]').forEach(function(subitem) {
+            subitem.addEventListener('click', function(e) {
+                e.stopPropagation();
+                // Remove highlight from all submenu items
+                document.querySelectorAll('.submenu li[data-section]').forEach(function(li) {
+                    li.classList.remove('submenu-active');
+                });
+                // Remove active from all main items except parent
+                var parentLi = subitem.closest('.has-submenu');
+                document.querySelectorAll('.sidebar-menu li[data-section]').forEach(function(li) {
+                    if(li !== parentLi && !li.closest('.submenu')) li.classList.remove('active');
+                });
+                // Highlight this submenu
+                subitem.classList.add('submenu-active');
+                // Keep parent highlighted and submenu open
+                if(parentLi) {
+                    parentLi.classList.add('active');
+                    var submenu = parentLi.querySelector('.submenu');
+                    if(submenu) submenu.style.display = '';
+                }
+                // Hide all content
+                document.querySelectorAll('.section-content').forEach(function(sec) {
+                    sec.style.display = 'none';
+                });
+                var sectionId = 'section-' + subitem.getAttribute('data-section');
+                var section = document.getElementById(sectionId);
+                if(section) section.style.display = '';
+            });
+        });
+        // Sidebar toggle logic
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
+            var sidebar = document.getElementById('sidebar');
+            var main = document.getElementById('main-content');
+            var body = document.body;
+            body.classList.toggle('sidebar-hidden');
+            if(body.classList.contains('sidebar-hidden')) {
+                sidebar.style.transform = 'translateX(-100%)';
+            } else {
+                sidebar.style.transform = '';
+            }
+        });
+
+        // --- New In-Page Search Logic ---
+        const searchInput = document.getElementById('sidebar-search-input');
+        const resultsContainer = document.getElementById('search-results');
+        const mainContent = document.getElementById('main-content');
+        let searchIndex = [];
+
+        function buildSearchIndex() {
+            const contentSections = mainContent.querySelectorAll('h1, h2, h4, p, li');
+            contentSections.forEach(el => {
+                const text = el.innerText.trim();
+                if (text) {
+                    const headingElement = el.closest('h1, h2, h4') || el.closest('.section-content').querySelector('h1, h2, h4');
+                    const id = headingElement ? headingElement.id : el.closest('.section-content').id;
+                    searchIndex.push({
+                        id: id,
+                        text: text.toLowerCase(),
+                        element: el
+                    });
+                }
+            });
+        }
+
+        function performSearch(query) {
+            resultsContainer.innerHTML = '';
+            if (query.length < 2) {
+                return;
+            }
+
+            const lowerCaseQuery = query.toLowerCase();
+            const results = searchIndex.filter(item => item.text.includes(lowerCaseQuery));
+            
+            const uniqueResults = [...new Map(results.map(item => [item.id, item])).values()];
+
+            uniqueResults.slice(0, 10).forEach(item => {
+                const resultItem = document.createElement('div');
+                resultItem.classList.add('search-result-item');
+                
+                const link = document.createElement('a');
+                link.href = `#${item.id}`;
+
+                const titleEl = document.getElementById(item.id);
+                const title = titleEl ? titleEl.innerText : 'Section';
+
+                const snippetIndex = item.text.indexOf(lowerCaseQuery);
+                const start = Math.max(0, snippetIndex - 30);
+                const end = Math.min(item.text.length, snippetIndex + lowerCaseQuery.length + 30);
+                let snippetText = (start > 0 ? '...' : '') + item.text.substring(start, end) + (end < item.text.length ? '...' : '');
+
+                snippetText = snippetText.replace(new RegExp(lowerCaseQuery, 'gi'), (match) => `<mark>${match}</mark>`);
+
+                link.innerHTML = `
+                    <div class="search-result-title">${title}</div>
+                    <div class="search-result-snippet">${snippetText}</div>
+                `;
+                
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Show the correct section content
+                    const sectionContainer = titleEl.closest('.section-content');
+                    if(sectionContainer) {
+                        document.querySelectorAll('.section-content').forEach(sec => sec.style.display = 'none');
+                        sectionContainer.style.display = '';
+                    }
+                    // Scroll to the element
+                    document.getElementById(item.id).scrollIntoView({ behavior: 'smooth' });
+                    resultsContainer.innerHTML = '';
+                    searchInput.value = '';
+                });
+
+                resultItem.appendChild(link);
+                resultsContainer.appendChild(resultItem);
+            });
+        }
+
+        searchInput.addEventListener('input', () => {
+            performSearch(searchInput.value);
+        });
+        
+        // Build the index once the page is loaded
+        window.addEventListener('load', buildSearchIndex);
+        // --- End of New Search Logic ---
+
+        // Search filter for sidebar
+        /* This old logic is now replaced by the in-page search
+        document.getElementById('sidebar-search-input').addEventListener('input', function() {
+            var val = this.value.toLowerCase();
+            document.querySelectorAll('.sidebar-menu li[data-section]').forEach(function(item) {
+                var text = item.textContent.toLowerCase();
+                item.style.display = text.indexOf(val) !== -1 ? '' : 'none';
+            });
+        });
+        */
+    </script>
+</body>
+</html>
