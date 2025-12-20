@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+    <head>
+
+
+
+<title>drivers</title>
+
+
+ <link rel="stylesheet" href="./style.css">
+ <link href="https://fonts.googleapis.com/css2?family=Honk&family=Orbitron:wght@400..900&family=Press+Start+2P&family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+
+</head>
+<div class="topnav">
+  <a href="main.html">Introduction</a>
+  <a class="active" href="design.html">Design</a>
+  <a href="results.html">Results</a>
+  <a href="conclusions.html">Conclusions</a>
+  <a href="appendix.html">Appendix</a>
+</div>
+
+
+<body theme="auto">
+<div class="w">
+<header>
+
+</header>
+<main class="page-content" aria-label="Content">
+                
+
+<p><a href="design.html">go back</a>/drivers</p>
+<h1>drivers</h1>
+
+
+
+<p>A focus in our design was modularity, and making it easy for users to modify their firmware. As such, we decided to implement hardware support as abstracted 'drivers'. They abstract hardware to a configuration data structure, and functions to initialise / start the required hardware. They are designed to set up an interrupt that queues their necessary data / handler when an input occurs.</p>
+<p>Each driver schedules a function to run, which accepts data in a set, pre-determined format. The overall <code>struct</code> definition is shown below; and the information about each driver will describe device-specific variations.</p>
+<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#b48ead;">union __attribute__</span><span>((packed)) event_id{
+</span><span>  uint32_t raw; </span><span style="color:#65737e;">// alternate representation: raw value containing all of below.
+</span><span>  </span><span style="color:#b48ead;">struct</span><span>{
+</span><span>    uint8_t source; </span><span style="color:#65737e;">// which driver generated it
+</span><span>    uint8_t pin; </span><span style="color:#65737e;">// which pin it is associated with
+</span><span>    uint16_t misc; </span><span style="color:#65737e;">// up to the driver to define own functionality
+</span><span>  };
+</span><span>};
+</span><span>
+</span><span style="color:#b48ead;">struct </span><span>driver_event_t{
+</span><span>  </span><span style="color:#b48ead;">union</span><span> event_id id; </span><span style="color:#65737e;">// identifier for this event
+</span><span>  uint32_t data; </span><span style="color:#65737e;">// data for this event
+</span><span>};
+</span></code></pre>
+<p><code>event_id</code> is a packed 32-bit word containing identification information about the event, while <code>data</code> is device-specific. See <a href="https://codeberg.org/mercure_67/ece4760-final/src/branch/main/drivers/driver.h">the source code</a> for the representations for sensor and encoder events.</p>
+<p>We considered several approaches to the problem of passing data from an IRQ to the 'main' scheduling context. Reserving a bit of memory for each driver to write into was considered, but we thought this would limit the generality, and potentially lead to complications with sharing global variables. 'Dynamic' allocation was deemed costly and potentially unsafe.</p>
+<p>In listing out the data each driver was required to handle, we ultimately decided that a 32-bit identifier and a word of extra space was actually enough for most drivers to pass the necessary information to their handlers. This uses only two words in total, and is allocated in a slab of memory owned by the scheduler (discussed in a separate section).</p>
+<h2 id="button-driver">button driver:</h2>
+<p>The button driver, as with the other drivers which use GPIO interrupts, use a 'raw' handler.</p>
+<p>The RP2040's GPIO block only provides one interrupt for all pins. It is therefore the responsibility of software to scan through the configured pins and determine which one caused what interrupt.</p>
+<p>The SDK's 'standard' GPIO handler scans and acknowledges inputs for the developer, providing the capability to specify a callback in-between. However, this callback is used to process all GPIOs. While we could add a series of branches within this callback to determine the appropriate handler to call for the appropriate GPIO, instead we use the 'raw handler' functionality.</p>
+<p>The 'raw handlers' exist in a vector table of functions to call after the initial interrupt is received. When the <code>IO_IRQ_BANK0</code> IRQ is triggered, each interrupt handler entry in the vector table is called in order of priority (see <a href="https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_gpio/gpio.c#L218">the raw handler implementation</a>).</p>
+<p>This enables a separate handler for each 'type' of GPIO event. The handler for each type will handle its interrupts according to its own specified behaviour, leaving the rest for the other raw handlers. Essentially, using raw handlers does the table lookup for the function to call 'for us', by scanning through the raw handlers.</p>
+<p>Since we need to look up each pin's associated hardware configuration anyway, this actually reduces overhead for us. Dependent on the driver, we can search through our hardware configuration, determine if the current configuration <code>struct</code> refers to a currently active interrupt, and then handle it based on the information in that struct; rather than looking up only the pin number first, calling another function, and then loading the configuration.</p>
+<p>The button driver references the array of configured buttons in this fashion. It also internally keeps a list of activation times and a bitfield containing the last event sent based on the pin.</p>
+<p>The activation times are set based on the microsecond timer whenever an edge occurs. If another edge occurs within the user-specified debounce duration of that activation time, it is rejected. Otherwise, the activation time is updated, and the interrupt edge is interpreted. Depending on if the configuration specifies rising or falling edges as the initial trigger, a button press / release event is prepared accordingly. Additionally, the driver requires that any previous press corresponds to a release, which is determined based on the bitfield. This allows recover from triggers which are overly aggressively debounced; which might cause a release event to be missed. This explicitly inserts it.</p>
+<p>We originally wanted to add the feature to temporarily mask button inputs, but this was cut for time.</p>
+<p>The button driver uses the <code>driver_event_t</code> data field to indicate the length of the press.</p>
+<h3 id="behaviour-summary">behaviour summary</h3>
+<ul>
+<li>at startup, the GPIO buttons are all switched to use the same raw handler</li>
+<li>when any of them interrupt, they will fire the raw handler</li>
+<li>the raw handler determines which GPIO interrupted and the event</li>
+<li>it will then look up the button entry from the button table</li>
+<li>depending on the event, it will either update the button state. or, if the timing has been exceeded, add an event based on the entry in the button table</li>
+</ul>
+<h2 id="sensor-driver">sensor driver</h2>
+<p>The PixArt PMW3389 sensor we used has limited documentation. While the manufacturer datasheet provides a register map and basic electrical information, there does not appear to be publicly-available documentation about its programming interface.</p>
+<p>A similar model, the PMW3360, however, has a datasheet with these details, including bus parameters and operation modes. Though its register map did not perfectly align, it still helped immensely.</p>
+<p>We also referenced other driver implementations for PixArt sensors. A full list is at the bottom of this section, but the QMK implementation was the most reliably correct. It was also the most helpful in understanding the basic functionality of the sensor.</p>
+<p>The sensor uses an SPI bus, with a few extra signal pins. Other than a discrete reset line (which we did not use, as it was not wired on our breakout board), the sensor provides an active-low 'MOTION' pin to interrupt a processor when it has data to read. If this pin's value is disregarded, the sensor can also be polled for data by reading its status register across SPI.</p>
+<p>While not implemented on our breakout board, we soldered a wire to the MOTION pin to use it, which complements our overall interrupt-based architecture.</p>
+<p>Due to timing requirements on the sensor's chip select (namely, certain delays required before / after lowering the pin) specified in the datasheet as <code>t_NCS-SCLK / t_SCLK-NCS</code> respectively, we did not mux the CS pin to the SPI peripheral, and manually controlled it as a GPIO pin. This allowed us to satisfy these timing requirements.</p>
+<p>The sensor has a burst read functionality. After writing the burst read register, the sensor returns a set of data in one batch. This can be used instead of individual writes / reads. However, it does naturally take an extended period of time. Upon receiving an interrupt from the MOTION pin, the sensor's burst read is queued for handling in non-ISR context. While this technically 'increases' the latency between an input and when it is sent to the computer, the penalty is negligible. Also, performing 'complicated' operations in ISR context is generally frowned upon. After the burst read is complete, the user's specified handler is queued and is handed a <code>driver_event_t</code> containing the sensor data. The <code>driver_event_t</code>'s data field contains the two signed 16-bit integers representing the delta X and Y values packed into a 32-bit word.</p>
+<p>The motion pin's interrupt is also temporarily disabled after being handled, with a queued event to re-enable it 1ms later. This is to allow other events to be processed in case the sensor is overly interrupt-happy, and prevent it from consuming all CPU time.</p>
+<p>The bus is managed by the SPI peripheral, which has FIFOs for input and output data, not the core, so interrupts during SPI read / write should not result in data loss. Further, while the PMW3389 specifies some timing recommendations, they are generally minimums. So long as the timescale is short, delayed sending of an address (for example) should not lead to a bus error.</p>
+<p>After connecting the sensor and ironing out some initial driver bugs, we were still confronted with strange readings from the sensor. Upon closer examination, we discovered that this was the result of two ways that the default SPI settings for the Pico's peripheral deviate from what is expected. The sensor requires both the clock polarity and clock phase to be set to non-default values, as it operates with clock high by default and with transmission starting one cycle after the first clock. Upon properly configuring the SPI bus, the sensor worked well.</p>
+<p>In testing, attempting to set the CPI (counts per inch) register of the sensor, a user-configurable part of its measurement fidelity, appeared not to cause error. However, because of a lack of time spent testing it, we did not fully integrate it as a feature. The comments in the QMK firmware mention a risk of overflowing the sensor's internal registers if the CPI is set too high, which we didn't want to attempt to handle with limited time.</p>
+<p>The PMW3389 driver currently uses blocking SPI commands, which is somewhat inefficient and could lead to adverse effects if a transmission is interrupted. While complex in its own right, using the DMA to service the SPI peripheral would free the CPU from this inefficient and potentially progress-impeding task.</p>
+<p>The documentation and other implementations we reference hint at additional configuration for the sensor, including 'rest' times and the potential to upload custom firmware. However, due to the lack of documentation of these features, especially the function of opaquely-named registers such as "CONFIG5"; and the lack of an official firmware image that provided a benefit over the stock one, we opted not to support these at the moment.</p>
+<h3 id="behaviour-summary-1">behaviour summary</h3>
+<ul>
+<li>at startup, the motion pin is configured to interrupt, and the other GPIO are set up for SPI.</li>
+<li>when the motion pin interrupts, the interrupt is temporarily disabled, and a burst read is queued.</li>
+<li>the user-defined handler is queued after the data is read out.</li>
+<li>in case the sensor is interrupt-happy, the interrupt is re-enabled after 1ms to allow for other tasks to occur</li>
+</ul>
+<h3 id="pixart-driver-implementations-referenced">PixArt driver implementations referenced</h3>
+<ul>
+<li><a href="https://github.com/qmk/qmk_firmware/blob/master/drivers/sensors/pmw33xx_common.h">the QMK implementation</a></li>
+<li><a href="https://github.com/teamspatzenhirn/pmw3389_zephyr_driver/tree/zephyr">https://github.com/teamspatzenhirn/pmw3389_zephyr_driver/tree/zephyr</a></li>
+<li><a href="https://github.com/epem/Gaming-Mouse/blob/main/3360_Mouse_pico.ino">https://github.com/epem/Gaming-Mouse/blob/main/3360_Mouse_pico.ino</a></li>
+<li><a href="https://github.com/inorichi/zmk-pmw3610-driver/blob/main/src/pmw3610.c">https://github.com/inorichi/zmk-pmw3610-driver/blob/main/src/pmw3610.c</a></li>
+<li><a href="https://github.com/dkao/Kensington_Expert_Mouse_PMW3389_Arduino/blob/master/PMW3389DM-Mouse/PMW3389DM-Mouse.ino">https://github.com/dkao/Kensington_Expert_Mouse_PMW3389_Arduino/blob/master/PMW3389DM-Mouse/PMW3389DM-Mouse.ino</a></li>
+<li><a href="https://github.com/Ghost-Girls/PMW3360-3389-PAW3395_STM32-CH32-APM32/blob/main/Code/Src/main.c">https://github.com/Ghost-Girls/PMW3360-3389-PAW3395_STM32-CH32-APM32/blob/main/Code/Src/main.c</a></li>
+<li><a href="https://esp32.com/viewtopic.php?t=38430">a helpful forum post about the SPI interface</a></li>
+</ul>
+<h3 id="datasheets">datasheets</h3>
+<ul>
+<li><a href="https://www.alldatasheet.com/datasheet-pdf/pdf/1179020/PIXART/PMW3389DM.html">PMW3389</a></li>
+<li><a href="https://www.alldatasheet.com/datasheet-pdf/pdf/899001/PIXART/PMW3360.html">PMW3360</a></li>
+</ul>
+<h2 id="encoder-driver">encoder driver:</h2>
+<p>For our encoder driver, we again referenced existing resources. We came across some examples which used the PIO coprocessors as a input decoding state machine, but decided not to use these. The ones we saw often took up a large number of PIO instructions, and made no guarantees about debouncing input. Since our encoder has a very high quoted settling / chattering duration for its signals, this was not acceptable.</p>
+<p>Instead, we adapted an existing state machine based approach. Based on the current state of the encoder pins, the state machine encodes 'acceptable' next states for the pins. If the next state is not valid, it is rejected.</p>
+<p>The example which gave us this inspiration uses a large (though ultimately only a few words of memory) table to encode all possible transitions and their outcome states. We instead only encode acceptable transitions, and additionally keep counters for how many ticks have been counted. We also implement a simple time-based debouncing scheme --- transitions which occur too soon after a previous one are rejected; and attempted to use the slow slew rate to filter out some of the jittering.</p>
+<p>Upon further investigation, the detent settling duration (i.e. the duration between when the first pin changes and when the next pin may complete its change) is marked in the datasheet as 'not guaranteed'. This means that, at the time the processor is interrupted and reads the pin values, the values may not have settled. So, even with the debouncing approach we implement, our code may not generate the correct readings. However, for different encoder models which provide guarantees for detent settling time, it should work fine.</p>
+<p>The <code>driver_event_t</code> generated by this driver uses the data field to hold the delta scroll amount as a signed 16-bit integer, plus a 16-bit padding field.</p>
+<h3 id="behaviour-summary-2">behaviour summary</h3>
+<ul>
+<li>at startup, the pins of the encoder are configured to interrupt on edges.</li>
+<li>when an interrupt occurs, the state of the pins is read out and compared against the state machine table.</li>
+<li>if the new state is a valid predecessor / successor of the current state, the new state replaces the old and a 'tick' in the associated direction is made.</li>
+<li>interrupts record their trigger times. later interrupts are only processed if they happen after a certain debouncing period from the last event.</li>
+<li>if the number of ticks meets a user-defined threshold, an encoder event is sent.</li>
+</ul>
+<h3 id="sources-datasheet">sources &amp; datasheet</h3>
+<ul>
+<li><a href="https://github.com/GitJer/Rotary_encoder/">A PIO-based one</a></li>
+<li><a href="https://github.com/DavidAntliff/esp32-rotary-encoder/tree/master">The state machine table-based one</a></li>
+<li><a href="https://tech.alpsalpine.com/e/products/detail/EC10E1260502/#ancBase">encoder datasheet</a></li>
+</ul>
+<h2 id="joystick-driver">joystick driver:</h2>
+<p>We provide the option to use an analogue joystick as an input, which necessitated reading its data through the ADC. Instead of setting a global timer interrupt to trigger reads, we instead used the neat control capabilities of the ADC to let it handle more of the work. This fits better with the spirit of our design, which is to delegate work to the hardware and avoid brute-force approaches like 'waking to poll'.</p>
+<p>These are the auto-interrupt functionality, based on the depth of its FIFO, and the round-robin reading option. The ADC reads information into a FIFO, which can either be explicitly pushed / popped or trigger DMA transfers. It can also be configured to trigger an interrupt when a certain number of elements have been inserted, which is the option we used.</p>
+<p>The round-robin reading option is a workaround for the Pico's single ADC channel. It programs the ADC to scan through its possible sources and read a sample from each in order, pushing the results to the FIFO, essentially multiplexing its input. While the rate of reading data from an individual pin is lowered by this 'strobing', it is more than enough for our purposes.</p>
+<p>We use the ADC's clock divider to reduce the ADC sample rate to a configurable amount --- in our case, 1000Hz. It calculates a factor based on system clock. Calculating the factor based on the "ADC clock Hz" caused problems for us --- most likely because it refers to the current <em>setting</em> of the peripheral, not the clock <em>supplied</em>.</p>
+<p>The joystick's two axes are each essentially a variable resistor, with the voltage on each increasing / decreasing as the position changes. This implies a 'centre' voltage from which these changes should be measured, which is measured by the ADC as some 12-bit number, and which must be subtracted from the reading to obtain a 'delta' from the centre. We determined these centre voltages through trial-and-error, testing which numbers led the initial zeroed position to cause the least movement.</p>
+<p>ADC measurements are first reduced to 9 bits through right shifting, reflective of the effective bits of precision of the ADC. The lower three bits are most likely noise, and are thus discarded.</p>
+<p>Then, checked arithmetic is used to low-pass the resulting measurement, using a factor of 1/32. Finally, the output is divided by 16, to reduce the 'speed' associated with certain motions.</p>
+<p>The <code>driver_event_t</code> produced by this driver uses the same format as that of the mouse sensor.</p>
+<p>We leave further transformation of the joystick input to the user.</p>
+<h3 id="behaviour-summary-3">behaviour summary</h3>
+<ul>
+<li>at startup, two pins are configured to act as ADC inputs. these are connected to the axes of the joystick.</li>
+<li>the ADC is configured to read these pins round-robin into its FIFO at a user-specified rate, after which it will interrupt.</li>
+<li>the interrupt filters the readings, shrinks them, and hands a <code>driver_event_t</code> containing mouse data to the handler.</li>
+</ul>
+<h3 id="sources">sources</h3>
+<ul>
+<li><a href="https://forums.raspberrypi.com/viewtopic.php?t=348495">helpful forum post about configuring the ADC interrupt</a></li>
+<li><a href="https://datasheet4u.com/datasheets/Joy-IT/KY-023/1402034">joystick datasheet</a></li>
+</ul>
+
+
+            </main>
+            <footer>
+                
+<p class="taxonomies">
+
+</p>
+
+                
+            </footer>
+        </div>
+    </body>
+</html>
+        

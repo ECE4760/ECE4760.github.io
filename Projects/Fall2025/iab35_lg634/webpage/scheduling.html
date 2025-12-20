@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>scheduling</title>
+
+<meta name="title" content="scheduling">
+ <link rel="stylesheet" href="./style.css">
+ <link href="https://fonts.googleapis.com/css2?family=Honk&family=Orbitron:wght@400..900&family=Press+Start+2P&family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+
+
+</head>
+<div class="topnav">
+  <a href="main.html">Introduction</a>
+  <a class="active" href="design.html">Design</a>
+  <a href="results.html">Results</a>
+  <a href="conclusions.html">Conclusions</a>
+  <a href="appendix.html">Appendix</a>
+</div>
+
+
+<body theme="auto">
+<div class="w">
+<header>
+    
+
+</header>
+
+<main class="page-content" aria-label="Content">
+<p><a href="design.html">go back</a>/scheduling</p>
+<h1>scheduling</h1>
+
+
+
+
+<p>We employ a scheduler to defer tasks from interrupt context. Doing so allows ISRs to be kept short. Further, if the tasks are deferred in order of interrupt processing, they retain the order of the inputs that produced them. Handling events in-interrupt runs the risk of an interrupt being interrupted due to priority, and for a chronologically earlier event to end up being finished later because it was preempted.</p>
+<p>This model also allows for potential power and scheduling optimisation. Queuing allows the core to be run on-demand (if there are elements in the queue) and kept dormant otherwise, while avoiding the inefficiency of starting and stopping the processor for every event handled -- in cases where multiple events occur in succession, they can be handled together. Further, by queuing events, they can be consolidated before being sent across USB, potentially reducing computation. See the diagrams below for an example.</p>
+<p><img src="images/sw_sched_bad.png" alt="a bad schedule" />
+<br>
+<em>a bad schedule. closely clustered events end up creating a bunch of activity</em>.</p>
+<p><img src="images/sw_sched_good.png" alt="a good schedule" />
+<br>
+<em>a good schedule. by queueing USB handling, it is able to consolidate IRQs in the queueing time.</em></p>
+<p>It is also substantially simpler and more robust than handling all events in-interrupt, or chaining into timers to defer work. Because the area of resource contention is only adding elements to the queue, not the USB interface or several fragmented segments of memory, managing the pseudo-concurrency afforded by interrupts is much easier.</p>
+<p>These conclusions were reached after a lot of thought, including how work was supposed to be deferred (only passing data to a central dispatch function, or for each driver to schedule its own explicit task), whether or not to worry about preemption, etc.</p>
+<p>We eventually decided upon non-preemptive deferred interrupt handling, with each driver scheduling a distinct function rather than handing its data off to a central dispatcher. This reduces overhead looking up the appropriate function to handle data --- the driver knows this when the interrupt is triggered, and queues the right function to be run. Non-preemption eliminated many data safety worries, especially important given the frequency of interrupts we intend to be dealing with.</p>
+<p>We considered several existing options to implement scheduling:</p>
+<ul>
+<li>Protothreads was what we used in class, and could have been sufficient, but does not naturally lend itself to a 'queue-based' approach. The desired behaviour is to queue an event every time an interrupt occurs. Since Protothreads does not have in-built mutex, this could have been a challenge. In addition, Protothreads appears to be designed around continually-recurring events, with a subjectively somewhat awkward interface for defining 'one-shot' events.</li>
+<li>An off-the-shelf real-time operating system (Zephyr, FreeRTOS) could be an option, but come with a substantial amount of complexity, which we wanted to avoid. We don't <em>need</em> a particularly complex scheduler. Both also could impact performance --- Zephyr in particular apparently has poor ISR service times.</li>
+<li>The Pico Async contexts <em>appear</em> to solve these issues, but do not. The polling version is out of the question, as it is explicitly polling, which we wanted to avoid. Documentation of this part of the API is relatively light. Otherwise, none of the included implementations are IRQ safe, and potentially require manual mutual exclusion to manage the event queue. The 'threadsafe' version already uses mutex internally for thread safety, and adding another layer would be computationally burdensome.</li>
+</ul>
+<p>While the structure of the Pico Async contexts do technically permit a user implementation, we decide to forgo this route and rely on an external library, <code>equeue</code> (<a href="https://github.com/geky/equeue/">link</a>). This library is by the author of the LittleFS project, a simple file system for embedded systems that we encountered while doing research. The library provides an event queue which is crucially <em>both</em> IRQ and thread safe.</p>
+<p>We used the <code>pico_sync</code> module of the Pico SDK to provide platform-dependent functionality for <code>equeue</code>, as below:</p>
+<ul>
+<li>Mutex on memory and the task list are enforced with two mutexes. Using the <code>critical_section</code> type, these are implemented by disabling interrupts and setting a hardware spinlock.</li>
+<li>The queue is notified of events using a <code>pico_sync</code> semaphore, which are also implemented using hardware spinlocks on the Pico.</li>
+<li>The queue uses a timer for scheduling time-based tasks. This is implemented using the microsecond-precision timer, divided down to milliseconds.</li>
+</ul>
+<p>The millisecond granularity is not strictly required by the library, but is implicit in function names. In the future, directly using the microsecond timer / reducing the timer scaling could improve scheduling performance by reducing the delay between events.</p>
+<p>Disabling interrupts should not prevent inputs from being processed, as they are not <em>cleared</em>. Pending interrupts remain after interrupts are re-enabled.</p>
+<p>This library is generally non-preemptive (barring the option to 'cancel' a task which has not been started, which we did not use). Interrupts only touch the mutex-protected equeue.</p>
+<p>These properties allow memory and shared hardware resources to be lock-free, resulting in simpler, faster, and safer code.</p>
+<p><code>equeue</code> dynamically allocates a slab of memory at startup which can be used by child 'processes'. The library provides functions to 'allocate' and 'free' memory in this space, which return pointers in the slab, and do minimal bookkeeping to 'free' old memory. All functions which consume memory in the mouse runtime use this memory pool. Since TinyUSB does not dynamically allocate memory at runtime either, all runtime memory usage by the firmware is statically allocated. Static allocation affords a measure of safety to the system, but also improves performance by removing unpredictable delays caused by dynamic allocation. The <code>equeue</code> allocator is small / simple enough (a <code>for</code> loop plus some branches) to mostly be predictable.</p>
+<p>The scheduler lends itself well to further work in power optimisation. Even with the constraints of TinyUSB's polled <code>tud_task</code>, the code can be modified to let the cores sleep when waiting for a task. Modifications to USB handling could further increase these sleep periods.</p>
+
+
+            </main>
+            <footer>
+                
+<p class="taxonomies">
+
+</p>
+
+                
+            </footer>
+        </div>
+    </body>
+</html>
+        

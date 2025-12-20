@@ -1,0 +1,174 @@
+# Environment variables
+env:
+  global:
+    - CFLAGS=-Werror
+
+# CI jobs
+jobs:
+  include:
+    # Test stage
+    - stage: test
+      env:
+        - STAGE=test
+        - NAME=test
+      script:
+        # Strict compilation of library only (tests use gcc features)
+        - make CFLAGS+=-pedantic
+        # Run tests
+        - make test
+        # Find code size with smallest configuration
+        - make clean size OBJ=equeue.o | tee sizes
+
+        # Update status with code size, compare with master if possible
+        - |
+          if [ "$TRAVIS_TEST_RESULT" -eq 0 ]
+          then
+              CURR=$(tail -n1 sizes | awk '{print $1}')
+              PREV=$(curl -u "$GEKY_BOT_STATUSES" https://api.github.com/repos/$TRAVIS_REPO_SLUG/status/master \
+                  | jq -re "select(.sha != \"$TRAVIS_COMMIT\")
+                      | .statuses[] | select(.context == \"$STAGE/$NAME\").description
+                      | capture(\"code size is (?<size>[0-9]+)\").size" \
+                  || echo 0)
+
+              STATUS="Passed, code size is ${CURR}B"
+              if [ "$PREV" -ne 0 ]
+              then
+                  STATUS="$STATUS ($(python -c "print '%+.2f' % (100*($CURR-$PREV)/$PREV.0)")%)"
+              fi
+          fi
+
+    # Runtime profiling stage
+    - stage: test
+      env:
+        - STAGE=test
+        - NAME=prof
+      script:
+        # Relative profiling against master
+        - if ( git clone https://github.com/geky/equeue master &&
+                make -s -C master prof | tee master/runtime ) ;
+          then
+            cat master/runtime | make prof | tee runtime ;
+          else
+            make prof | tee runtime ;
+          fi
+
+        # Update status with profile results, compare with master if possible
+        - |
+          if [ "$TRAVIS_TEST_RESULT" -eq 0 ]
+          then
+            CURR=$(grep -o '[0-9]\+ cycles' runtime | \
+                awk '{sum += $1} END {print sum}')
+            PREV=$(curl -u "$GEKY_BOT_STATUSES" https://api.github.com/repos/$TRAVIS_REPO_SLUG/status/master \
+                | jq -re "select(.sha != \"$TRAVIS_COMMIT\")
+                    | .statuses[] | select(.context == \"$STAGE/$NAME\").description
+                    | capture(\"runtime is (?<runtime>[0-9]+)\").runtime" \
+                || echo 0)
+
+            STATUS="Passed, runtime is ${CURR} cycles"
+            if [ "$PREV" -ne 0 ]
+            then
+                STATUS="$STATUS ($(python -c "print '%+.2f' % (100*($CURR-$PREV)/$PREV.0)")%)"
+            fi
+          fi
+
+    # Deploy stage for updating versions and tags
+    - stage: deploy
+      env:
+        - STAGE=deploy
+        - NAME=deploy
+      script:
+        - |
+          bash << 'SCRIPT'
+          set -ev
+          # Find version defined in equeue.h
+          EQUEUE_VERSION=$(grep -ox '#define EQUEUE_VERSION .*' equeue.h \
+              | cut -d ' ' -f3)
+          EQUEUE_VERSION_MAJOR=$((0xffff & ($EQUEUE_VERSION >> 16)))
+          EQUEUE_VERSION_MINOR=$((0xffff & ($EQUEUE_VERSION >>  0)))
+          # Grab latest patch from repo tags, default to 0, needs finagling
+          # to get past GitHub's pagination API
+          PREV_URL=https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs/tags/v$EQUEUE_VERSION_MAJOR.$EQUEUE_VERSION_MINOR.
+          PREV_URL=$(curl -u "$GEKY_BOT_RELEASES" "$PREV_URL" -I \
+              | sed -n '/^Link/{s/.*<\(.*\)>; rel="last"/\1/;p;q0};$q1' \
+              || echo $PREV_URL)
+          EQUEUE_VERSION_PATCH=$(curl -u "$GEKY_BOT_RELEASES" "$PREV_URL" \
+              | jq 'map(.ref | match("\\bv.*\\..*\\.(.*)$";"g")
+                  .captures[].string | tonumber) | max + 1' \
+              || echo 0)
+          # We have our new version
+          EQUEUE_VERSION="v$EQUEUE_VERSION_MAJOR.$EQUEUE_VERSION_MINOR.$EQUEUE_VERSION_PATCH"
+          echo "VERSION $EQUEUE_VERSION"
+          # Check that we're the most recent commit
+          CURRENT_COMMIT=$(curl -f -u "$GEKY_BOT_RELEASES" \
+              https://api.github.com/repos/$TRAVIS_REPO_SLUG/commits/master \
+              | jq -re '.sha')
+          [ "$TRAVIS_COMMIT" == "$CURRENT_COMMIT" ] || exit 0
+          # Create major branch (vN)
+          git branch v$EQUEUE_VERSION_MAJOR HEAD
+          git push https://$GEKY_BOT_RELEASES@github.com/$TRAVIS_REPO_SLUG.git \
+              v$EQUEUE_VERSION_MAJOR
+          # Create patch version tag (vN.N.N)
+          curl -f -u "$GEKY_BOT_RELEASES" -X POST \
+              https://api.github.com/repos/$TRAVIS_REPO_SLUG/git/refs \
+              -d "{
+                  \"ref\": \"refs/tags/$EQUEUE_VERSION\",
+                  \"sha\": \"$TRAVIS_COMMIT\"
+              }"
+          # Build release notes
+          PREV=$(git tag --sort=-v:refname -l "v*" | head -1)
+          if [ ! -z "$PREV" ]
+          then
+              echo "PREV $PREV"
+              CHANGES=$(git log --oneline $PREV.. --grep='^Merge' --invert-grep)
+              printf "CHANGES\n%s\n\n" "$CHANGES"
+          fi
+          # Create the release
+          curl -f -u "$GEKY_BOT_RELEASES" -X POST \
+              https://api.github.com/repos/$TRAVIS_REPO_SLUG/releases \
+              -d "{
+                  \"tag_name\": \"$EQUEUE_VERSION\",
+                  \"name\": \"${EQUEUE_VERSION%.0}\",
+                  \"draft\": $(jq -R 'endswith(".0")' <<< "$EQUEUE_VERSION"),
+                  \"body\": $(jq -sR '.' <<< "$CHANGES")
+              }" #"
+          SCRIPT
+
+# Manage statuses
+before_install:
+  - |
+    curl -u "$GEKY_BOT_STATUSES" -X POST \
+        https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
+        -d "{
+            \"context\": \"$STAGE/$NAME\",
+            \"state\": \"pending\",
+            \"description\": \"${STATUS:-In progress}\",
+            \"target_url\": \"https://travis-ci.org/$TRAVIS_REPO_SLUG/jobs/$TRAVIS_JOB_ID\"
+        }"
+
+after_failure:
+  - |
+    curl -u "$GEKY_BOT_STATUSES" -X POST \
+        https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
+        -d "{
+            \"context\": \"$STAGE/$NAME\",
+            \"state\": \"failure\",
+            \"description\": \"${STATUS:-Failed}\",
+            \"target_url\": \"https://travis-ci.org/$TRAVIS_REPO_SLUG/jobs/$TRAVIS_JOB_ID\"
+        }"
+
+after_success:
+  - |
+    curl -u "$GEKY_BOT_STATUSES" -X POST \
+        https://api.github.com/repos/$TRAVIS_REPO_SLUG/statuses/${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT} \
+        -d "{
+            \"context\": \"$STAGE/$NAME\",
+            \"state\": \"success\",
+            \"description\": \"${STATUS:-Passed}\",
+            \"target_url\": \"https://travis-ci.org/$TRAVIS_REPO_SLUG/jobs/$TRAVIS_JOB_ID\"
+        }"
+
+# Job control
+stages:
+  - name: test
+  - name: deploy
+    if: branch = master AND type = push
