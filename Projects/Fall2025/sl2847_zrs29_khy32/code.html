@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PicoChess - Source Code</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      background: #252526;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #3c3c3c;
+    }
+
+    .header h1 {
+      font-size: 1.2em;
+      font-weight: 500;
+      color: #cccccc;
+    }
+
+    .header a {
+      color: #569cd6;
+      text-decoration: none;
+      padding: 8px 16px;
+      border: 1px solid #569cd6;
+      border-radius: 4px;
+      font-size: 0.9em;
+      transition: all 0.2s;
+    }
+
+    .header a:hover {
+      background: #569cd6;
+      color: #1e1e1e;
+    }
+
+    /* Main container */
+    .container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* File explorer */
+    .explorer {
+      width: 250px;
+      background: #252526;
+      border-right: 1px solid #3c3c3c;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .explorer-header {
+      padding: 12px 16px;
+      font-size: 0.75em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #bbbbbb;
+      background: #2d2d2d;
+      border-bottom: 1px solid #3c3c3c;
+    }
+
+    .file-list {
+      list-style: none;
+    }
+
+    .file-item {
+      padding: 8px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9em;
+      color: #cccccc;
+      transition: background 0.1s;
+    }
+
+    .file-item:hover {
+      background: #2a2d2e;
+    }
+
+    .file-item.active {
+      background: #37373d;
+      color: #ffffff;
+    }
+
+    .file-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8em;
+    }
+
+    .file-icon.c-file { color: #519aba; }
+    .file-icon.h-file { color: #a074c4; }
+    .file-icon.other-file { color: #8a8a8a; }
+
+    /* Code viewer */
+    .code-viewer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .file-tabs {
+      background: #2d2d2d;
+      padding: 0 8px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #3c3c3c;
+      min-height: 35px;
+    }
+
+    .file-tab {
+      padding: 8px 16px;
+      font-size: 0.85em;
+      color: #969696;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .file-tab.active {
+      color: #ffffff;
+      background: #1e1e1e;
+      border-top: 1px solid #569cd6;
+    }
+
+    .code-container {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .code-content {
+      display: flex;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100%;
+      width: 100%;
+      padding: 16px 0;
+    }
+
+    .line-numbers {
+      text-align: right;
+      padding: 0 12px 0 0;
+      color: #858585;
+      user-select: none;
+      border-right: 1px solid #3c3c3c;
+      min-width: 50px;
+      flex-shrink: 0;
+      position: sticky;
+      left: 0;
+      background: #1e1e1e;
+    }
+
+    .line-numbers span {
+      display: block;
+      height: 1.5em;
+    }
+
+    .code-text {
+      flex: 1;
+      padding: 0 16px;
+      white-space: pre;
+    }
+
+    .code-text span {
+      display: inline;
+      margin: 0;
+      padding: 0;
+      line-height: inherit;
+    }
+
+    /* Syntax highlighting for C (VS Code style) */
+    .keyword { color: #c586c0; }          /* purple - if, while, for, return */
+    .type { color: #569cd6; }             /* dark blue - int, char, void */
+    .string { color: #ce9178; }           /* orange */
+    .comment { color: #6a9955; }          /* green */
+    .number { color: #b5cea8; }           /* light green */
+    .preprocessor { color: #c586c0; }     /* purple */
+    .function { color: #dcdcaa; }         /* yellow */
+    .operator { color: #ffffff; }         /* white */
+    .constant { color: #4fc1ff; }         /* cyan */
+    .variable { color: #9cdcfe; }         /* light blue */
+
+    /* Loading state */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #858585;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #858585;
+    }
+
+    .empty-state p {
+      margin-top: 16px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .explorer {
+        width: 200px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .explorer {
+        width: 100%;
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 1px solid #3c3c3c;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>PicoChess Source Code</h1>
+    <a href="index.html">← Back to Report</a>
+  </div>
+
+  <div class="container">
+    <div class="explorer">
+      <div class="explorer-header">Files</div>
+      <ul class="file-list" id="fileList">
+        <li class="loading">Loading files...</li>
+      </ul>
+    </div>
+
+    <div class="code-viewer">
+      <div class="file-tabs" id="fileTabs">
+        <span class="file-tab active" id="currentTab">Select a file</span>
+      </div>
+      <div class="code-container">
+        <div class="empty-state" id="codeContent">
+          <p>Select a file from the explorer to view its contents</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // C syntax highlighting using token-based approach
+    function highlightC(code) {
+      // Normalize line endings to \n only
+      code = code.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      
+      const tokens = [];
+      let i = 0;
+      
+      while (i < code.length) {
+        // Multi-line comment
+        if (code[i] === '/' && code[i + 1] === '*') {
+          const end = code.indexOf('*/', i + 2);
+          const endPos = end === -1 ? code.length : end + 2;
+          tokens.push({ type: 'comment', text: code.slice(i, endPos) });
+          i = endPos;
+          continue;
+        }
+        
+        // Single-line comment
+        if (code[i] === '/' && code[i + 1] === '/') {
+          const end = code.indexOf('\n', i);
+          const endPos = end === -1 ? code.length : end;
+          tokens.push({ type: 'comment', text: code.slice(i, endPos) });
+          i = endPos;
+          continue;
+        }
+        
+        // String
+        if (code[i] === '"') {
+          let j = i + 1;
+          while (j < code.length && (code[j] !== '"' || code[j - 1] === '\\')) j++;
+          tokens.push({ type: 'string', text: code.slice(i, j + 1) });
+          i = j + 1;
+          continue;
+        }
+        
+        // Character literal
+        if (code[i] === "'") {
+          let j = i + 1;
+          while (j < code.length && (code[j] !== "'" || code[j - 1] === '\\')) j++;
+          tokens.push({ type: 'string', text: code.slice(i, j + 1) });
+          i = j + 1;
+          continue;
+        }
+        
+        // Preprocessor
+        if (code[i] === '#' && (i === 0 || code[i - 1] === '\n')) {
+          let j = i;
+          while (j < code.length && code[j] !== '\n' && code[j] !== ' ' && code[j] !== '\t') j++;
+          // Include the directive keyword
+          while (j < code.length && (code[j] === ' ' || code[j] === '\t')) j++;
+          while (j < code.length && /[a-zA-Z_]/.test(code[j])) j++;
+          tokens.push({ type: 'preprocessor', text: code.slice(i, j) });
+          i = j;
+          continue;
+        }
+        
+        // Word (identifier, keyword, type)
+        if (/[a-zA-Z_]/.test(code[i])) {
+          let j = i;
+          while (j < code.length && /[a-zA-Z0-9_]/.test(code[j])) j++;
+          const word = code.slice(i, j);
+          
+          const keywords = ['if', 'else', 'while', 'for', 'do', 'switch', 'case', 'default', 
+                            'break', 'continue', 'return', 'goto', 'sizeof', 'typedef', 
+                            'struct', 'union', 'enum', 'static', 'extern', 'const', 'volatile',
+                            'register', 'auto', 'inline', 'restrict'];
+          const types = ['void', 'char', 'short', 'int', 'long', 'float', 'double', 'signed', 
+                         'unsigned', 'bool', 'int8_t', 'int16_t', 'int32_t', 'int64_t',
+                         'uint8_t', 'uint16_t', 'uint32_t', 'uint64_t', 'size_t', 'ssize_t',
+                         'ptrdiff_t', 'intptr_t', 'uintptr_t', 'FILE', 'NULL', 'true', 'false'];
+          
+          // Check if followed by ( for function
+          let k = j;
+          while (k < code.length && (code[k] === ' ' || code[k] === '\t')) k++;
+          const isFunction = code[k] === '(';
+          
+          let type = 'variable';  // default to variable (light blue)
+          if (keywords.includes(word)) type = 'keyword';
+          else if (types.includes(word)) type = 'type';
+          else if (/^[A-Z][A-Z0-9_]{2,}$/.test(word)) type = 'constant';
+          else if (isFunction) type = 'function';
+          
+          tokens.push({ type, text: word });
+          i = j;
+          continue;
+        }
+        
+        // Number
+        if (/[0-9]/.test(code[i]) || (code[i] === '.' && /[0-9]/.test(code[i + 1]))) {
+          let j = i;
+          // Hex
+          if (code[i] === '0' && (code[i + 1] === 'x' || code[i + 1] === 'X')) {
+            j += 2;
+            while (j < code.length && /[0-9a-fA-F]/.test(code[j])) j++;
+          } else {
+            while (j < code.length && /[0-9.]/.test(code[j])) j++;
+          }
+          // Suffix
+          while (j < code.length && /[fFlLuU]/.test(code[j])) j++;
+          tokens.push({ type: 'number', text: code.slice(i, j) });
+          i = j;
+          continue;
+        }
+        
+        // Operators
+        if (/[+\-*/%=<>!&|^~?:]/.test(code[i])) {
+          let j = i;
+          // Handle multi-character operators
+          while (j < code.length && /[+\-*/%=<>!&|^~?:]/.test(code[j])) j++;
+          tokens.push({ type: 'operator', text: code.slice(i, j) });
+          i = j;
+          continue;
+        }
+        
+        // Other characters (punctuation, whitespace, etc.)
+        tokens.push({ type: 'text', text: code[i] });
+        i++;
+      }
+      
+      // Convert tokens to HTML
+      return tokens.map(t => {
+        const escaped = t.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        if (t.type === 'text') return escaped;
+        return `<span class="${t.type}">${escaped}</span>`;
+      }).join('');
+    }
+
+    // Get file icon class
+    function getFileIconClass(filename) {
+      if (filename.endsWith('.c')) return 'c-file';
+      if (filename.endsWith('.h')) return 'h-file';
+      return 'other-file';
+    }
+
+    // Get file icon symbol
+    function getFileIcon(filename) {
+      if (filename.endsWith('.c')) return 'C';
+      if (filename.endsWith('.h')) return 'H';
+      if (filename.endsWith('.pio')) return 'P';
+      return '◇';
+    }
+
+    // Sort files alphabetically by base name, then .h before .c
+    function sortFiles(files) {
+      return files.sort((a, b) => {
+        const aBase = a.replace(/\.[^.]+$/, '');
+        const bBase = b.replace(/\.[^.]+$/, '');
+        if (aBase !== bBase) return aBase.localeCompare(bBase);
+        // Same base name: .h before .c
+        const aExt = a.split('.').pop();
+        const bExt = b.split('.').pop();
+        const order = { 'h': 0, 'c': 1 };
+        return (order[aExt] ?? 2) - (order[bExt] ?? 2);
+      });
+    }
+
+    // Render file list
+    function renderFileList(files) {
+      const fileListEl = document.getElementById('fileList');
+      const sorted = sortFiles(files);
+      
+      fileListEl.innerHTML = sorted.map(file => `
+        <li class="file-item" data-file="${file}">
+          <span class="file-icon ${getFileIconClass(file)}">${getFileIcon(file)}</span>
+          <span>${file}</span>
+        </li>
+      `).join('');
+
+      document.querySelectorAll('.file-item').forEach(item => {
+        item.addEventListener('click', () => loadFile(item.dataset.file));
+      });
+    }
+
+    // Load file list - try manifest.json first (works on GitHub Pages), fall back to directory listing
+    async function loadFileList() {
+      const fileListEl = document.getElementById('fileList');
+      
+      // Try manifest.json first (works everywhere including GitHub Pages)
+      try {
+        const manifestResponse = await fetch('code/manifest.json');
+        if (manifestResponse.ok) {
+          const files = await manifestResponse.json();
+          renderFileList(files);
+          return;
+        }
+      } catch (e) {
+        // Manifest failed, try directory listing
+      }
+      
+      // Fall back to directory listing (works on local servers with directory indexing)
+      try {
+        const response = await fetch('code/');
+        const text = await response.text();
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        const links = doc.querySelectorAll('a');
+        
+        const files = [];
+        links.forEach(link => {
+          const href = link.getAttribute('href');
+          if (href && !href.startsWith('..') && !href.startsWith('/') && !href.endsWith('/') && href !== 'manifest.json' && !href.startsWith('.')) {
+            files.push(href);
+          }
+        });
+
+        if (files.length > 0) {
+          renderFileList(files);
+          return;
+        }
+      } catch (e) {
+        // Directory listing also failed
+      }
+      
+      fileListEl.innerHTML = `
+        <li class="loading" style="flex-direction: column; padding: 16px;">
+          <p>Could not load file list.</p>
+          <p style="font-size: 0.8em; margin-top: 8px;">Create a manifest.json in the code/ folder with an array of filenames.</p>
+        </li>
+      `;
+    }
+
+    // Load and display a file
+    async function loadFile(filename) {
+      const codeContent = document.getElementById('codeContent');
+      const currentTab = document.getElementById('currentTab');
+      
+      // Update active state in file list
+      document.querySelectorAll('.file-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.file === filename);
+      });
+
+      // Update tab
+      currentTab.textContent = filename;
+
+      // Show loading
+      codeContent.innerHTML = '<div class="loading">Loading...</div>';
+
+      try {
+        const response = await fetch('code/' + filename);
+        if (!response.ok) throw new Error('File not found');
+        
+        let code = await response.text();
+        // Normalize line endings
+        code = code.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const lines = code.split('\n');
+        
+        // Check if it's a C/H file for syntax highlighting
+        const shouldHighlight = filename.endsWith('.c') || filename.endsWith('.h');
+        const highlightedCode = shouldHighlight ? highlightC(code) : 
+          code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        // Generate line numbers
+        const lineNumbers = lines.map((_, i) => `<span>${i + 1}</span>`).join('');
+
+        codeContent.innerHTML = `
+          <div class="code-content">
+            <div class="line-numbers">${lineNumbers}</div>
+            <div class="code-text">${highlightedCode}</div>
+          </div>
+        `;
+
+      } catch (error) {
+        codeContent.innerHTML = `
+          <div class="empty-state">
+            <p>Error loading file: ${filename}</p>
+            <p style="font-size: 0.8em; margin-top: 8px;">${error.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    // Initialize
+    loadFileList();
+  </script>
+</body>
+</html>
+

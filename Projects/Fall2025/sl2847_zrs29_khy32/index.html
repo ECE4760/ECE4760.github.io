@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> PicoChess </title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>ECE 4760: Digital Systems Design Using Microcontrollers</h1>
+      <h2>PicoChess</h2>
+      <p class="author-info">
+        <strong>Authors:</strong> Rachel Lee, Zephan Sanghani, Kailey Ye<br>
+        <strong>Date:</strong> Fall 2025
+      </p>
+    </header>
+
+    <nav>
+      <a href="#intro">Introduction</a>
+      <a href="#highlevel">High-Level Design</a>
+      <a href="#hardware">Hardware Design</a>
+      <a href="#software">Software Design</a>
+      <a href="#results">Results</a>
+      <a href="#conclusion">Conclusion</a>
+      <a href="#appendix">Appendix</a>
+    </nav>
+
+    <div class="video-container">
+      <iframe width="560" height="315" src="https://www.youtube.com/embed/cyuMKzzZeAY?si=6v1AC-HuMDeeYJzJ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      <p class="video-label">Demonstration Video</p>
+    </div>
+
+    <section id="intro">
+      <h2>Introduction</h2>
+      <p class="sound-bite">
+        <strong>An interactive physical chess game featuring piece detection, VGA display, and a computer opponent.</strong>
+      </p>
+      <figure>
+        <img src="images/chessboard.jpg" alt="Chessboard display showing the game interface on VGA monitor">
+        <figcaption>The PicoChess game board displayed on a VGA monitor.</figcaption>
+      </figure>
+      <p>
+        This project creates a physical, interactive chess game that combines the tactile experience of a real chessboard 
+        with the functionality of modern chess applications. The system uses a Raspberry Pi Pico (RP2040) microcontroller 
+        to interface with a physical chessboard equipped with reed switches and magnetic pieces, enabling automatic piece 
+        detection. Players interact with real chess pieces on a physical board, while the system provides visual feedback 
+        on a VGA display, legal move hints when pieces are picked up, and an optional computer opponent.
+      </p>
+      <p>
+        The system supports both two-player and single-player modes, with additional features including optional game timing 
+        and move hints. The implementation includes all standard chess rules: check, checkmate, en passant, pawn promotion, and 
+        comprehensive move validation. The board automatically detects piece movements and validates each move in real-time.
+      </p>
+    </section>
+
+    <section id="highlevel">
+      <h2>High-Level Design</h2>
+      
+      <h3>Rationale and Sources</h3>
+      <p>
+        The motivation behind this project was to create a physical chess game that combines the tactile experience 
+        of a real chessboard with the functionality of modern chess applications. Unlike purely digital chess games, 
+        this system allows players to interact with physical pieces while receiving visual feedback, legal move hints, 
+        and optional computer assistance. The project draws inspiration from online chess platforms but maintains the 
+        traditional feel of moving pieces by hand.
+      </p>
+      <p>
+        The system integrates several key technologies: reed switch-based piece detection for automatic board state 
+        tracking, VGA display for visual feedback, a computer opponent using minimax search, and a keypad interface 
+        for game configuration. This combination creates a unique hybrid experience that bridges physical and digital 
+        gameplay.
+      </p>
+
+      <figure>
+        <img src="images/system_block_diagram.svg" alt="System block diagram showing RP2040 Pico with software modules and hardware components">
+        <figcaption>System block diagram showing software modules inside RP2040 Pico (left) and hardware components (right), with connections showing hardware-software interfaces.</figcaption>
+      </figure>
+
+      <p>
+        As shown in the block diagram above, the system consists of five software modules running inside the RP2040 Pico, 
+        which interact with three external hardware components. The <strong>Chess Engine</strong> 
+        serves as the central orchestrator, maintaining the canonical representation of the chess board, current turn, check 
+        status, and all game rules. The <strong>Board Scanner</strong> continuously monitors the <strong>physical chessboard</strong>, 
+        detecting when pieces are lifted or placed by reading the 64 reed switches. The <strong>Computer</strong> 
+        module implements the opponent logic using minimax search to calculate moves. The <strong>User Interface</strong> 
+        processes <strong>keypad</strong> input, handling menu navigation and game configuration. The 
+        <strong>VGA Display</strong> generates video signals to render the game state, legal moves, 
+        and menus on the <strong>VGA monitor</strong>.
+      </p>
+      <p>
+        The modules interact through a coordinated flow. When a player lifts a piece on the physical chessboard, the 
+        Board Scanner detects the change and queries the Chess Engine to identify which 
+        piece was lifted and request all legal moves for that piece. The Chess Engine responds with valid 
+        destinations and passes them to the VGA Display to render as visual 
+        hints. When the player places the piece, the Board Scanner calls the Chess Engine 
+        to validate the move. If valid, the move is committed to Game State. If invalid, an error is displayed.
+      </p>
+      <p>
+        In single-player mode, when it's the computer's turn, the Chess Engine requests a move from the 
+        Computer module. The Computer reads the current Game State, uses the Chess Engine's 
+        move generation functions to explore possibilities, evaluates positions, and returns its chosen move. The 
+        Chess Engine then updates Game State with the computer's move and signals the Board Scanner 
+        to enter verification mode. The Board Scanner monitors the physical board until the player executes 
+        the computer's move, creating a handoff where digital calculation is followed by physical execution. The 
+        VGA Display receives all rendering information from the Chess Engine, which provides the current board state, 
+        legal moves to highlight, and move history, ensuring the display always reflects the authoritative game state.
+      </p>
+    </section>
+
+    <section id="hardware">
+      <h2>Hardware Design</h2>
+      <p>
+        The hardware design centers around the physical chessboard with 64 reed switches arranged in an 8×8 grid, 
+        each corresponding to a square on the chessboard. Magnets attached to the bottom of each chess piece activate 
+        the reed switches when placed on the board, enabling automatic piece detection. The system also includes VGA 
+        output for visual feedback, a keypad for menu navigation, and the RP2040 microcontroller coordinating all 
+        components.
+      </p>
+
+      <h3>Chessboard</h3>
+      <p>
+        The <a href="https://www.amazon.com/Cardinal-Classics-Strategy-Beginners-Learners/dp/B09NNZW1YW">chessboard</a> uses 64 <a href="https://www.digikey.com/en/products/detail/littelfuse-inc/MDSR-7-10-20/199534">Littlefuse MDSR-7-10-20 reed switches</a>, one for each square. The switches are arranged 
+        in a matrix configuration with 8 rows and 8 columns. Each row is connected to a GPIO output pin (GPIO 0-7), 
+        and each column is connected to a GPIO input pin (GPIO 8-15) with internal pull-down resistors enabled. 
+        <a href="https://www.digikey.com/en/products/detail/stackpole-electronics-inc/CF14JT330R/1741399">330Ω current-limiting resistors</a> are placed in series with each row to protect the GPIO outputs from overcurrent.
+      </p>
+      <p>
+        <a href="https://www.digikey.com/en/products/detail/onsemi/1N4148/458603">Diodes (1N4148)</a> are placed in series with each reed switch to prevent current from flowing between columns 
+        when multiple switches are closed simultaneously. This is essential because when multiple pieces are on the 
+        board, multiple switches may be closed, and without diodes, current could flow between columns, causing 
+        false readings.
+      </p>
+
+      <figure class="side-by-side">
+        <div class="side-by-side-images">
+          <img src="images/circuitdiagram.png" alt="Circuit diagram showing 8×8 reed switch matrix with diodes and resistors">
+          <img src="images/reedswitches.jpg" alt="Physical chessboard with reed switches mounted on each square">
+        </div>
+        <figcaption>Left: Chessboard reed switch matrix schematic showing row/column connections and diode protection.<br>Right: Physical implementation with reed switches mounted on the chessboard during the construction process.</figcaption>
+      </figure>
+
+      <h3>Chess Pieces</h3>
+      <p>
+        We attached multiple small <a href="https://www.amazon.com/DIYMAG-Different-Neodymium-Refrigerator-Building/dp/B09X1X656W">neodymium</a> 
+        <a href="https://www.amazon.com/TRYMAG-Different-Neodymium-Refrigerator-Whiteboard/dp/B09WZTSQ9Y">disc magnets</a> 
+        to the bottom of each chess piece. We experimentally discovered that the reed switches only close when a 
+        magnet is positioned directly over them, so a single small magnet didn't reliably activate the switch regardless 
+        of piece placement. To solve this, we placed 4-5 magnets spread across the base of each piece, ensuring at least 
+        one magnet is always over the reed switch. An alternative approach would be using larger, thinner magnets that 
+        cover more area with a single magnet per piece.
+      </p>
+      <figure class="small-image">
+        <img src="images/pieces.jpg" alt="Chess pieces with neodymium magnets attached to their bases">
+        <figcaption>Chess pieces with multiple neodymium magnets attached to the base for reliable reed switch activation.</figcaption>
+      </figure>
+
+      <h3>VGA Interface</h3>
+      <p>
+        The VGA display connects to the RP2040 via GPIOs 16-21 and ground. HSync and VSync (GPIOs 16-17) connect 
+        directly to the VGA connector. The interface uses 4-bit color: 2 bits for green, 1 bit for blue, and 1 bit 
+        for red. Green gets more bits since human eyes are more sensitive to green.
+      </p>
+      <p>
+        For red and blue, 330Ω resistors create a voltage divider with the display's internal 70Ω resistor, stepping 
+        down the RP2040's 3.3V output to the 0.0-0.7V range expected by VGA. For green, the high bit uses a 330Ω 
+        resistor while the low bit uses 470Ω, enabling a more expressive range from the 2-bit green values.
+      </p>
+      <figure class="small-image">
+        <img src="images/vga_display.png" alt="VGA connector pinout showing HSync, VSync, and RGB connections with resistor values">
+        <figcaption>VGA connector pinout (from <a href="https://vanhunteradams.com/Pico/VGA/VGA.html">Professor Adams</a>).</figcaption>
+      </figure>
+
+      <h3>Keypad Interface</h3>
+      <p>
+        The keypad works similarly to the chessboard: pressing a key closes a switch that shorts a row pin to a column pin. 
+        We use three keys (2, 5, 8) from a standard 3×4 matrix keypad. Row pins are configured as outputs and the column 
+        pin as an input with internal pulldown. Scanning sets each row high and reads the column to detect presses. A 
+        rising edge detector ensures that holding a key registers as only a single press.</p>
+
+    </section>
+
+    <section id="software">
+      <h2>Software Design</h2>
+      <p>
+        The software architecture uses protothreads for concurrent task management, with two main threads handling 
+        board scanning and keypad input. The system is organized into five modules corresponding to the system 
+        block diagram: the Chess Engine, Board Scanner, Computer, User Interface, and VGA Display. Each module 
+        is implemented in separate source files with clear interfaces. The chess algorithms are based on techniques 
+        described in <a href="https://www.cs.cornell.edu/boom/2004sp/ProjectArch/Chess/algorithms.html">Cornell's AI Chess Algorithms</a>.
+      </p>
+
+      <h3>Chess Engine (
+        <a href="code/chess.c" target="_blank"><code>chess.c</code></a>/
+        <a href="code/chess.h" target="_blank"><code>h</code></a>
+        )</h3>
+      <p>
+        The Chess Engine maintains the canonical 8×8 board representation, tracks turns, manages check status, 
+        and enforces all chess rules. The board is stored as a 2D array of <code>Tile</code> structures containing 
+        piece type and color.
+      </p>
+      
+      <h4>Move Generation</h4>
+      <p>
+        The move generator populates an 8×8 bitmap of legal destinations for a selected piece. Sliding pieces 
+        (rooks, bishops, queens) iterate outward in each direction until hitting the board edge or another piece, 
+        stopping after captures. Knights use a lookup table of eight L-shaped offsets. Kings check all eight 
+        adjacent squares. Pawns move forward (one or two squares from start), capture diagonally, and can 
+        perform en passant when the opponent's pawn just advanced two squares. En passant is tracked via state 
+        variables that record the "passed through" square, cleared after each move.
+      </p>
+      
+      <h4>Check and Checkmate Detection</h4>
+      <p>
+        Check detection locates the king, then generates moves for all enemy pieces to see if any attack the 
+        king's square. When in check, the move generator filters candidates by temporarily applying each move, 
+        testing for check, and restoring the board. Checkmate occurs when the king is in check and no legal 
+        moves exist.
+      </p>
+      
+      <h4>State Management</h4>
+      <p>
+        The engine provides save/restore functions using <code>memcpy()</code> to copy the entire game state, 
+        enabling the computer to explore hypothetical moves without corrupting actual state. A render-enable 
+        flag suppresses VGA updates during search.
+      </p>
+
+      <h3>Board Scanner (
+        <a href="code/chessboard.c" target="_blank"><code>chessboard.c</code></a>/
+        <a href="code/chessboard.h" target="_blank"><code>h</code></a>
+        )</h3>
+      <p>
+        The Board Scanner translates reed switch states into game actions by comparing "expected" occupancy 
+        (from the Chess Engine) against actual occupancy (from hardware). GPIO pins 0-7 drive rows, and pins 8-15 
+        read columns with pull-downs. Each scan cycle activates one row, waits 10μs for signals to stabilize, 
+        and reads all columns, completing in under 100μs. The 10μs delay is necessary. We initially used 1μs 
+        but encountered faulty readings due to insufficient settling time.
+      </p>
+      
+      <h4>State Machine</h4>
+      <p>
+        A seven-state machine interprets player actions. The state machine also provides implicit debouncing: 
+        if a piece momentarily bounces during placement, the system transitions from IDLE to a lifted state 
+        and back to IDLE without registering an invalid state.
+      </p>
+      <ul>
+        <li><strong>BOARD_SETUP:</strong> Before game start; shows green/red borders for correct/incorrect piece positions.</li>
+        <li><strong>BOARD_IDLE:</strong> Board matches expected state; waits for piece lift.</li>
+        <li><strong>BOARD_OWN_LIFTED:</strong> Player's piece lifted; legal moves highlighted; awaits placement or return.</li>
+        <li><strong>BOARD_ENEMY_LIFTED:</strong> Opponent's piece lifted first (capture intent); awaits player's capturing piece.</li>
+        <li><strong>BOARD_BOTH_LIFTED:</strong> Both pieces lifted; awaits placement on capture square.</li>
+        <li><strong>BOARD_INVALID:</strong> Unexpected board state; shows error indicators until corrected.</li>
+        <li><strong>BOARD_COMPUTER:</strong> Computer calculating; yields to search algorithm.</li>
+        <li><strong>BOARD_VERIFY:</strong> Player must execute computer's move on physical board.</li>
+      </ul>
+
+      <figure>
+        <img src="images/chessboard_fsm.svg" alt="State machine diagram showing transitions between board states">
+        <figcaption>Chessboard state machine diagram showing all states and transitions for move detection and validation.</figcaption>
+      </figure>
+
+      <p>
+        The distinction between <code>OWN_LIFTED</code> and <code>ENEMY_LIFTED</code> supports two capture 
+        styles: some players lift their own piece first, others remove the captured piece first. When a 
+        player lifts an enemy piece, the system checks if any friendly piece can capture that square. If so, 
+        it waits for the capturing piece to be lifted. Once both pieces are off the board (<code>BOTH_LIFTED</code>), 
+        placing the player's piece on the capture square completes the move.
+      </p>
+      <p>
+        The <code>INVALID</code> state handles error recovery by displaying red borders on squares missing 
+        pieces and yellow borders on squares with unexpected pieces. The system waits until the board matches 
+        the expected state before returning to <code>IDLE</code>. The <code>VERIFY</code> state is used after 
+        the computer selects its move: cyan borders indicate the source and destination squares, and the 
+        system waits for the player to physically execute the move before continuing.
+      </p>
+
+      <h3>Computer (
+        <a href="code/computer.c" target="_blank"><code>computer.c</code></a>/
+        <a href="code/computer.h" target="_blank"><code>h</code></a>
+        )</h3>
+      <p>
+        The Computer module implements an AI opponent using minimax search with alpha-beta pruning, constrained 
+        by a 2-second time limit.
+      </p>
+      
+      <h4>Position Evaluation</h4>
+      <p>
+        The evaluation function combines material (pawns=1, knights/bishops=3, rooks=5, queens=9, kings=100), 
+        positional bonuses from piece-square tables (rewarding central knights, advanced pawns, safe kings), 
+        and mobility (counting safe squares each piece can reach, weighted by piece value). The final score 
+        weights material heavily (×100), adds position directly, and includes mobility (×10). These weights 
+        were <strong>not optimized</strong> and were chosen <strong>mostly arbitrarily</strong> to ensure 
+        the computer makes somewhat reasonable moves. There is <strong>significant room for improvement</strong> 
+        in tuning these parameters.
+      </p>
+      
+      <h4>Minimax with Alpha-Beta Pruning</h4>
+      <p>
+        Minimax models chess as a two-player zero-sum game. The algorithm recursively explores the game tree, 
+        alternating between maximizing (computer's turn) and minimizing (opponent's turn) at each level. At 
+        leaf nodes, the static evaluation function scores the position. These scores propagate up the tree: 
+        maximizing nodes take the highest child score, minimizing nodes take the lowest. The depth of search 
+        determines how many moves ahead the computer considers.
+      </p>
+      <p>
+        Alpha-beta pruning dramatically reduces the search space by eliminating branches that cannot affect 
+        the final decision. The algorithm maintains two bounds: alpha (the best score the maximizer can 
+        guarantee) and beta (the best score the minimizer can guarantee). When evaluating a maximizing node, 
+        if any child's score exceeds beta, the remaining children are skipped because the minimizer would 
+        never allow this path. Similarly, at minimizing nodes, scores below alpha trigger cutoffs. With 
+        good move ordering, alpha-beta can reduce the effective branching factor from ~35 to ~25.
+      </p>
+      <p>
+        Move ordering improves pruning efficiency by examining likely-good moves first. Captures are searched 
+        before non-captures, sorted by MVV-LVA (Most Valuable Victim, Least Valuable Attacker), so capturing 
+        a queen with a pawn is examined before capturing a pawn with a queen. Non-captures are sorted by the 
+        moving piece's value.
+      </p>
+      
+      <h4>Iterative Deepening</h4>
+      <p>
+        The algorithm searches to depth 1, then 2, then 3, etc., until the time limit expires. This guarantees 
+        a move is always available (using the best from the last completed depth) and provides natural time 
+        management.
+      </p>
+      
+      <h4>Quiescence Search</h4>
+      <p>
+        At leaf nodes, instead of returning static evaluation immediately, the algorithm extends along capture 
+        sequences until a "quiet" position is reached. This prevents the horizon effect where a position appears 
+        favorable just before a devastating capture. However, due to the RP2040's limited processing power 
+        (typically evaluating only ~2,000 positions per move), we believe the search rarely reaches sufficient depth for 
+        quiescence to provide significant benefit.
+      </p>
+
+      <h3>User Interface (
+        <a href="code/user_interface.c" target="_blank"><code>user_interface.c</code></a>/
+        <a href="code/user_interface.h" target="_blank"><code>h</code></a>
+        )</h3>
+      <p>
+        The User Interface handles keypad input, the pre-game menu, chess clocks, move history, and promotion 
+        selection.
+      </p>
+      
+      <h4>Keypad and Menu</h4>
+      <p>
+        Three buttons (Up, Select, Down) use row-column scanning identical to the chessboard. Edge detection 
+        ensures held buttons register as single presses. The menu offers game mode (1-player, 2-player, debug), 
+        player color, and time control options. The Start button activates only when all pieces are correctly 
+        positioned.
+      </p>
+      
+      <h4>Chess Clocks</h4>
+      <p>
+        Each player's time is stored in microseconds using <code>time_us_64()</code>. The display updates only 
+        when seconds change, reducing redraw overhead. Timeout triggers immediate game-over.
+      </p>
+      
+      <h4>Move History and Promotion</h4>
+      <p>
+        Moves are recorded in algebraic notation and displayed in a scrolling two-column list. When a pawn 
+        promotes, a menu appears for piece selection. The game pauses until confirmed.
+      </p>
+
+      <h3>VGA Display (
+        <a href="code/vga16_graphics_v2.c" target="_blank"><code>vga16_graphics_v2.c</code></a>/
+        <a href="code/vga16_graphics_v2.h" target="_blank"><code>h</code></a>
+        )</h3>
+      <p>
+        We use the VGA library provided by Professor Adams and Land. The library stores a 640×480 4-bit pixel 
+        array in memory, supported by a front-end library for drawing shapes and text. In the backend, three 
+        PIO state machines generate VGA signals: one for HSync, one for VSync, and one for pixel output. The 
+        pixel state machine connects to the frame buffer via DMA, producing 60 Hz VGA signals while the game 
+        updates at 30 FPS without 
+        CPU intervention. Chess pieces are rendered from 28×28 pixel art sprites by 
+        <a href="https://smolware.itch.io/pixel-art-chess-pie">Etienne Pouvreau</a>, stored with transparency in 
+        <code>chess_rom.h</code>.
+      </p>
+
+      <h3>Main Program (
+        <a href="code/animation.c" target="_blank"><code>animation.c</code></a>
+        )</h3>
+      <p>
+        The main program initializes hardware, then launches two protothreads. The board thread (30ms interval) 
+        scans reed switches and runs the state machine, triggering computer moves when needed. The keypad thread 
+        (20ms interval) handles menu navigation, timer updates, and promotion input. The system clock runs at 
+        150 MHz.
+      </p>
+
+      <h3>AI Use</h3>
+      <p>
+        We used AI assistants for code generation and debugging throughout development. Specifically, AI generated 
+        several functions in the computer module (quiescence search, minimax with alpha-beta pruning, iterative 
+        deepening) and the entire keypad/menu interface in <code>user_interface.c</code>. All AI-generated functions 
+        are annotated in the source code. We also used AI extensively for formatting and styling this website. 
+        See <a href="#ai-prompt-log">Appendix: AI Prompt Log</a> for detailed prompts and edit statistics.
+      </p>
+    </section>
+
+    <section id="results">
+      <h2>Results</h2>
+      <p>
+        The final implementation of PicoChess is functionally complete and responsive. The VGA display renders 
+        smoothly with no visible flickering or tearing. Reed switch readings and keypad presses are detected 
+        with minimal latency, contributing to a smooth gameplay experience.
+      </p>
+      <p>
+        The success of our implementation is primarily evaluated through direct gameplay. We assessed the game 
+        based on the responsiveness of piece detection, the clarity of visual feedback, and how intuitive the 
+        physical interaction felt. Testing with multiple users confirmed that players could understand the system 
+        and play without technical instructions.
+      </p>
+
+      <h3>Speed of Execution</h3>
+      <ul>
+        <li><strong>Board Scanning:</strong> Complete 8×8 scan completes in under 100μs, with scans performed every 30ms</li>
+        <li><strong>Frame Rate:</strong> Stable 30 FPS game updates on 60 Hz VGA signal with no visible flicker</li>
+        <li><strong>Computer Response Time:</strong> 2 seconds per move (iterative deepening uses full time limit)</li>
+        <li><strong>Search Depth:</strong> Typically reaches depth 2-3, evaluating ~2,000 positions per move</li>
+        <li><strong>Move Detection Latency:</strong> Physical moves detected within one scan cycle (30ms)</li>
+        <li><strong>Keypad Response:</strong> 20ms polling interval with edge detection</li>
+      </ul>
+
+      <h3>Accuracy and Functionality</h3>
+      <p>
+        The reed switch detection system accurately identifies piece presence on all 64 squares. The system correctly 
+        distinguishes between piece lifts, placements, and captures. Move validation ensures all moves conform to 
+        chess rules, preventing illegal moves from being accepted. All implemented chess rules function correctly:
+      </p>
+      <ul class="checkmark-list">
+        <li>Piece movement patterns (pawn, rook, knight, bishop, queen, king)</li>
+        <li>Check and checkmate detection</li>
+        <li>Move validation (prevents moves that leave own king in check)</li>
+        <li>En passant capture</li>
+        <li>Pawn promotion with piece selection</li>
+        <li>Turn-based gameplay with timer support</li>
+        <li>Move history tracking in algebraic notation</li>
+      </ul>
+
+      <h3>Usability</h3>
+      <p>
+        Before the game begins, the system verifies that all pieces are correctly positioned. Each square is 
+        highlighted with a green border when its expected piece is detected, or a red border when the piece is 
+        missing or misplaced. The game only starts once all 32 pieces show green, ensuring reliable detection 
+        before play begins.
+      </p>
+      <p>
+        The system provides clear visual feedback throughout gameplay. When a piece is lifted, legal move destinations 
+        are highlighted with colored borders (cyan for moves, magenta for captures). Invalid board states trigger 
+        error indicators with red and yellow borders. The menu system allows easy configuration of game mode, player 
+        color, and timer settings. The physical board provides natural interaction while the VGA display supplements 
+        with game state information.
+      </p>
+
+      <h3>Computer Performance</h3>
+      <p>
+        The computer opponent plays reasonably and has achieved checkmate against inexperienced players. However, 
+        due to the unoptimized evaluation function, it tends to blunder pieces in certain positions. The shallow 
+        search depth (2-3 ply) limits its ability to see tactical sequences, and the arbitrary weighting of material, 
+        position, and mobility leads to suboptimal decisions.
+      </p>
+      <p>
+        One notable quirk: the computer strongly prioritizes putting the opponent in check, since check positions 
+        receive high evaluation scores. While checking moves are often strong, this bias causes the computer to 
+        pursue checks even when better quiet moves exist. Tuning the evaluation weights and increasing search 
+        depth would significantly improve play quality.
+      </p>
+
+      <h3>Safety</h3>
+      <p>
+        The project operates at safe voltage levels (3.3V logic, 5V USB power). All GPIO pins are configured with 
+        appropriate pull-down resistors to prevent floating inputs. Current-limiting resistors protect GPIO outputs 
+        when driving the reed switch matrix. The system includes error handling to recover gracefully from invalid 
+        board states.
+      </p>
+
+      <h3>Gameplay Screenshots</h3>
+      <div class="screenshot-grid">
+        <figure class="screenshot-pair">
+          <div class="screenshot-row">
+            <img src="images/fig7_left.png" alt="Idle state">
+            <img src="images/fig7_right.png" alt="Legal moves">
+          </div>
+          <figcaption>Left: Board in idle state awaiting player move. Right: Legal moves highlighted when piece is lifted (cyan for moves, magenta for captures).</figcaption>
+        </figure>
+
+        <figure class="screenshot-pair">
+          <div class="screenshot-row">
+            <img src="images/fig8_left.png" alt="Computer move">
+            <img src="images/fig8_right.png" alt="Invalid state">
+          </div>
+          <figcaption>Left: Computer's move displayed with cyan borders on source and destination. Right: Invalid board state showing error indicators.</figcaption>
+        </figure>
+
+        <figure class="screenshot-pair">
+          <div class="screenshot-row">
+            <img src="images/fig9_left.png" alt="Check">
+            <img src="images/fig9_right.png" alt="Checkmate">
+          </div>
+          <figcaption>Left: King in check with limited escape options. Right: Checkmate screen displaying winner.</figcaption>
+        </figure>
+
+        <figure class="screenshot-pair">
+          <div class="screenshot-row">
+            <img src="images/fig10_left.png" alt="Pawn promotion">
+            <img src="images/fig10_right.png" alt="Game menu">
+          </div>
+          <figcaption>Left: Pawn promotion menu for piece selection. Right: Pre-game menu with mode, color, and timer options.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="conclusion">
+      <h2>Conclusion</h2>
+      <p>
+        This project successfully demonstrates a physical chess game on the RP2040 that combines reed switch-based 
+        piece detection, VGA graphics, and a minimax-based computer opponent. The system bridges physical and digital 
+        gameplay, allowing players to move real pieces while receiving visual feedback and playing against an AI.
+      </p>
+
+      <h3>Intellectual Property Considerations</h3>
+      <p>
+        The chess engine and board detection system were implemented from scratch. The VGA graphics library was 
+        provided by Professor Adams. The minimax algorithm is a standard game programming technique, and our implementation
+        is original. Chess piece sprites are by <a href="https://smolware.itch.io/pixel-art-chess-pie">Etienne Pouvreau</a>, 
+        released as a free asset pack. The project is for educational purposes only.
+      </p>
+
+      <h3>Future Improvements</h3>
+      <p>
+        Future work could add castling support to complete the rule set, implement sound effects for captures and 
+        checkmate, add an opening book for stronger early-game play, and improve the physical board construction 
+        with better cable management and more permanent reed switch mounting.
+      </p>
+
+    </section>
+
+    <section id="appendix">
+      <h2>Appendix</h2>
+      
+      <h3>Permissions</h3>
+      <p>
+        The group <strong>approves</strong> this report for inclusion on the course website.
+      </p>
+      <p>
+        The group <strong>approves</strong> the video for inclusion on the course youtube channel.
+      </p>
+
+      <h3>Parts List</h3>
+      <table>
+        <tr>
+          <th>Part</th>
+          <th>Quantity</th>
+          <th>Cost</th>
+        </tr>
+        <tr>
+          <td><a href="https://www.digikey.com/en/products/detail/littelfuse-inc/MDSR-7-10-20/199534">Littelfuse MDSR-7-10-20 Reed Switches</a></td>
+          <td>64</td>
+          <td>$37.07</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.digikey.com/en/products/detail/stackpole-electronics-inc/CF14JT330R/1741399">330Ω Resistors</a></td>
+          <td>11</td>
+          <td>Free (lab)</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.digikey.com/en/products/detail/onsemi/1N4148/458603">1N4148 Diodes</a></td>
+          <td>64</td>
+          <td>$2.50</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.amazon.com/Cardinal-Classics-Strategy-Beginners-Learners/dp/B09NNZW1YW">Chessboard with Pieces</a></td>
+          <td>1</td>
+          <td>$12.99</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.amazon.com/DIYMAG-Different-Neodymium-Refrigerator-Building/dp/B09X1X656W">Neodymium Magnets (DIYMAG)</a></td>
+          <td>1 pack</td>
+          <td>$9.99</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.amazon.com/TRYMAG-Different-Neodymium-Refrigerator-Whiteboard/dp/B09WZTSQ9Y">Neodymium Magnets (TRYMAG)</a></td>
+          <td>1 pack</td>
+          <td>$13.99</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.elexp.com/products/1700kpswitch-key-pad-tele-ieee">12-Button Keypad</a></td>
+          <td>1</td>
+          <td>Free (lab)</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.raspberrypi.com/products/raspberry-pi-pico/">Raspberry Pi Pico</a></td>
+          <td>1</td>
+          <td>Free (lab)</td>
+        </tr>
+        <tr>
+          <th colspan="2" style="text-align: right;">Total</th>
+          <th>$76.54</th>
+        </tr>
+      </table>
+
+      <h3>Source Code</h3>
+      <p>
+        Full source code is available in the <a href="code.html">interactive code viewer</a>. The complete project includes 
+        the chess game engine, user interface module, computer player, and main program files.
+      </p>
+
+      <h3>Work Distribution</h3>
+      <p>
+        <strong>Rachel Lee:</strong> Tested/debugged magnet detection across board, attached magnets to chess pieces<br>
+        <strong>Zephan Sanghani:</strong> Hardware assembly, software development<br>
+        <strong>Kailey Ye:</strong> Soldered and constructed chessboard with reed switches
+      </p>
+
+      <h3>References</h3>
+      <ul>
+        <li>Raspberry Pi Pico C/C++ SDK Documentation. Raspberry Pi Foundation. 
+            <a href="https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf">https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf</a></li>
+        <li>RP2040 Datasheet. Raspberry Pi Foundation. 
+            <a href="https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf">https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf</a></li>
+        <li>VGA Timing Specifications. VESA. 
+            <a href="https://web.mit.edu/6.111/www/s2004/NEWKIT/vga.shtml">https://web.mit.edu/6.111/www/s2004/NEWKIT/vga.shtml</a></li>
+        <li>Hunter Adams. VGA Graphics Library for RP2040. Cornell University ECE 4760.</li>
+        <li>Cornell University. "AI Chess Algorithms." CS Boom 2004.
+            <a href="https://www.cs.cornell.edu/boom/2004sp/ProjectArch/Chess/algorithms.html">https://www.cs.cornell.edu/boom/2004sp/ProjectArch/Chess/algorithms.html</a></li>
+        <li>Etienne Pouvreau. "Pixel Art Chess Pieces Sprites." itch.io.
+            <a href="https://smolware.itch.io/pixel-art-chess-pie">https://smolware.itch.io/pixel-art-chess-pie</a></li>
+      </ul>
+
+      <h3 id="ai-prompt-log">AI Prompt Log</h3>
+      
+      <h4><a href="code/computer.c" target="_blank"><code>computer.c</code></a></h4>
+      <table>
+        <tr>
+          <th>Date</th>
+          <th>Function</th>
+          <th>Prompt</th>
+          <th>Edits</th>
+        </tr>
+        <tr>
+          <td>Dec 3</td>
+          <td><code>minimax_alphabeta()</code></td>
+          <td>Implement minimax search with alpha-beta pruning using the existing evaluate_board function</td>
+          <td><span style="color: #22a722;">+104</span> <span style="color: #cc0000;">−8</span></td>
+        </tr>
+        <tr>
+          <td>Dec 3</td>
+          <td><code>quiescence_search()</code></td>
+          <td>Write a quiescence search function that continues searching captures until quiet, and integrate it into minimax</td>
+          <td><span style="color: #22a722;">+72</span> <span style="color: #cc0000;">−68</span></td>
+        </tr>
+        <tr>
+          <td>Dec 3</td>
+          <td><code>iterative_deepening_search()</code></td>
+          <td>Wrap minimax in an iterative deepening loop that increases depth until time expires</td>
+          <td><span style="color: #22a722;">+52</span> <span style="color: #cc0000;">−10</span></td>
+        </tr>
+      </table>
+
+      <h4>
+        <a href="code/user_interface.c" target="_blank"><code>user_interface.c</code></a>/
+        <a href="code/user_interface.h" target="_blank"><code>h</code></a>
+      </h4>
+      <table>
+        <tr>
+          <th>Date</th>
+          <th>Feature</th>
+          <th>Prompt</th>
+          <th>Edits</th>
+        </tr>
+        <tr>
+          <td>Dec 8</td>
+          <td>Menu system</td>
+          <td>Implement a menu with toggle buttons for game mode, player color, timer, and enable/disable start button</td>
+          <td><span style="color: #22a722;">+232</span> <span style="color: #cc0000;">−39</span></td>
+        </tr>
+        <tr>
+          <td>Dec 8</td>
+          <td>Chess clocks</td>
+          <td>Add chess clocks with configurable time limits that count down and display in mm:ss format</td>
+          <td><span style="color: #22a722;">+103</span> <span style="color: #cc0000;">−17</span></td>
+        </tr>
+        <tr>
+          <td>Dec 8</td>
+          <td>Move history</td>
+          <td>Add a scrollable move history panel displaying moves in algebraic notation with move numbers</td>
+          <td><span style="color: #22a722;">+193</span> <span style="color: #cc0000;">−30</span></td>
+        </tr>
+      </table>
+      <p><em>Note: Prompts were summarized by AI for readability.</em></p>
+
+    </section>
+  </main>
+</body>
+</html>

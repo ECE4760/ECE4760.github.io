@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="830" viewBox="120 240 1360 830">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#0055aa" />
+    </marker>
+    <style>
+      .state-circle { fill: #f9f9f9; stroke: #0055aa; stroke-width: 2.5; }
+      .state-text { font-family: system-ui, Arial, sans-serif; font-size: 15px; font-weight: bold; fill: #003366; text-anchor: middle; }
+      .transition-path { stroke: #0055aa; stroke-width: 2; fill: none; marker-end: url(#arrowhead); opacity: 0.8; }
+      .transition-label { font-family: system-ui, Arial, sans-serif; font-size: 12px; fill: #333; }
+    </style>
+  </defs>
+  
+  <!-- State circles -->
+  <circle id="idle" cx="800" cy="550" r="55" class="state-circle"/>
+  <text x="800" y="558" class="state-text">Idle</text>
+  
+  <circle id="own-lifted" cx="200" cy="400" r="50" class="state-circle"/>
+  <text x="200" y="408" class="state-text">Own Lifted</text>
+  
+  <circle id="enemy-lifted" cx="1400" cy="400" r="50" class="state-circle"/>
+  <text x="1400" y="408" class="state-text">Enemy Lifted</text>
+  
+  <circle id="both-lifted" cx="800" cy="300" r="50" class="state-circle"/>
+  <text x="800" y="308" class="state-text">Both Lifted</text>
+  
+  <circle id="invalid" cx="400" cy="950" r="50" class="state-circle"/>
+  <text x="400" y="958" class="state-text">Invalid</text>
+  
+  <circle id="computer" cx="800" cy="950" r="50" class="state-circle"/>
+  <text x="800" y="958" class="state-text">Computer</text>
+  
+  <circle id="verify" cx="1200" cy="950" r="50" class="state-circle"/>
+  <text x="1200" y="958" class="state-text">Verify</text>
+  
+  <!-- Transitions - paths for arrows and separate offset paths for text -->
+  
+  <!-- Idle → Own Lifted (text path reversed for readability) -->
+  <path d="M 747 537 Q 512 416 249 412" class="transition-path"/>
+  <path id="path-idle-own" d="M 249 402 Q 512 406 747 527" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-idle-own" startOffset="30%">lift own piece</textPath></text>
+  
+  <!-- Idle → Enemy Lifted -->
+  <path d="M 853 537 Q 1117 533 1352 412" class="transition-path"/>
+  <path id="path-idle-enemy" d="M 853 527 Q 1117 523 1352 402" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-idle-enemy" startOffset="35%">lift enemy piece first</textPath></text>
+  
+  <!-- Idle → Invalid (text path reversed for readability) -->
+  <path d="M 761 589 Q 502 752 435 915" class="transition-path"/>
+  <path id="path-idle-invalid" d="M 425 910 Q 492 747 751 584" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-idle-invalid" startOffset="25%">extra/missing pieces</textPath></text>
+  
+  <!-- Own Lifted → Idle -->
+  <path d="M 249 412 Q 484 533 747 537" class="transition-path"/>
+  <path id="path-own-idle" d="M 249 422 Q 484 543 747 547" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-own-idle" startOffset="15%">put piece back / place on valid square</textPath></text>
+  
+  <!-- Own Lifted → Both Lifted -->
+  <path d="M 249 392 Q 500 200 751 308" class="transition-path"/>
+  <path id="path-own-both" d="M 249 382 Q 500 190 751 298" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-own-both" startOffset="30%">lift enemy piece</textPath></text>
+  
+  <!-- Own Lifted → Invalid -->
+  <path d="M 217 447 Q 250 700 383 903" class="transition-path"/>
+  <path id="path-own-invalid" d="M 207 447 Q 240 700 373 903" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-own-invalid" startOffset="30%">illegal move</textPath></text>
+  
+  <!-- Enemy Lifted → Idle (text path reversed for readability) -->
+  <path d="M 1352 412 Q 1088 416 853 537" class="transition-path"/>
+  <path id="path-enemy-idle" d="M 853 547 Q 1088 426 1352 422" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-enemy-idle" startOffset="30%">enemy piece put back</textPath></text>
+  
+  <!-- Enemy Lifted → Both Lifted (text path reversed for readability) -->
+  <path d="M 1351 392 Q 1136 290 849 308" class="transition-path"/>
+  <path id="path-enemy-both" d="M 849 298 Q 1136 280 1351 382" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-enemy-both" startOffset="40%">lift own piece</textPath></text>
+  
+  <!-- Enemy Lifted → Invalid (text path reversed for readability) -->
+  <path d="M 1356 424 Q 1000 700 444 926" class="transition-path"/>
+  <path id="path-enemy-invalid" d="M 444 916 Q 1000 690 1356 414" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-enemy-invalid" startOffset="65%">invalid capture</textPath></text>
+  
+  <!-- Both Lifted → Idle -->
+  <path d="M 800 350 L 800 495" class="transition-path"/>
+  <path id="path-both-idle" d="M 790 350 L 790 495" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-both-idle" startOffset="50%" text-anchor="middle">capture</textPath></text>
+  
+  <!-- Both Lifted → Enemy Lifted -->
+  <path d="M 849 308 Q 1064 410 1351 392" class="transition-path"/>
+  <path id="path-both-enemy" d="M 849 318 Q 1064 420 1351 402" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-both-enemy" startOffset="25%">own piece returned</textPath></text>
+  
+  <!-- Idle → Computer -->
+  <path d="M 800 605 L 800 900" class="transition-path"/>
+  <path id="path-idle-computer" d="M 790 605 L 790 900" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-idle-computer" startOffset="10%">computer move</textPath></text>
+  
+  <!-- Invalid → Idle -->
+  <path d="M 435 915 Q 694 752 761 589" class="transition-path"/>
+  <path id="path-invalid-idle" d="M 445 920 Q 704 762 771 599" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-invalid-idle" startOffset="25%">board corrected</textPath></text>
+  
+  <!-- Computer → Verify -->
+  <path d="M 850 950 L 1150 950" class="transition-path"/>
+  <path id="path-computer-verify" d="M 850 940 L 1150 940" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-computer-verify" startOffset="25%">move calculated</textPath></text>
+  
+  <!-- Verify → Idle (text path reversed for readability) -->
+  <path d="M 1165 915 Q 1000 700 839 589" class="transition-path"/>
+  <path id="path-verify-idle" d="M 849 594 Q 1010 705 1175 920" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-verify-idle" startOffset="55%">player executes move</textPath></text>
+  
+  <!-- Verify → Invalid (text path reversed for readability) -->
+  <path d="M 1150 950 Q 800 1080 450 950" class="transition-path"/>
+  <path id="path-verify-invalid" d="M 450 960 Q 800 1090 1150 960" fill="none" stroke="none"/>
+  <text class="transition-label"><textPath href="#path-verify-invalid" startOffset="30%">board doesn't match</textPath></text>
+  
+</svg>
