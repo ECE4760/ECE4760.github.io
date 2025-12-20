@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ECE 4760 Final Project: 3D Orientation Mouse</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<nav>
+    <h3>Project Menu</h3>
+    <a href="#intro">Introduction</a>
+    <a href="#high-level-design">High-Level Design</a>
+    <a href="#hardware-design">Program & Hardware</a>
+    <a href="#results">Results</a>
+    <a href="#conclusions">Conclusions</a>
+    <a href="#appendices">Appendices</a>
+</nav>
+
+<main>
+    <h1>3D Orientation Mouse</h1>
+    <p><em>Adin Moskowitz (am2736) and Siang Peng (sp2222)</em></p>
+
+    <section id="intro">
+        <h2>Project Introduction</h2>
+        <p>We created a handheld 3D orientation mouse that uses IMU motion and orientation quaternions for two practical computer interfaces: a “laser pointer mouse” where pointing the device controls the on-screen cursor, and a “3D mouse” for SolidWorks, where rotating the device live-rotates a CAD model view.</p>
+        <div class="video-container">
+            <iframe width="560" height="315" src="https://youtu.be/Hqhhgok1frU" frameborder="0" allowfullscreen></iframe>
+        </div>
+            <p>We used an MPU6050 6-axis IMU (3-axis accelerometer + 3-axis gyroscope) connected to an RP2040 microcontroller to record 3D orientation of our device. On the RP2040, we estimate the device’s full 3D orientation using a quaternion-based pipeline (gyro integration with accelerometer-based tilt correction). This quaternion orientation is then used for two functions:</p>
+        <ul>
+            <li><strong>Pointer Mode:</strong> We compute the device’s pointing direction from the quaternion and map that direction to cursor motion, similarly to products like TV “air remotes.”</li>
+            <li><strong>CAD Mode:</strong> We stream orientation data over serial to a PC program, which converts our device’s orientation into SolidWorks or AutoCAD view rotations, allowing for continuous 3D view manipulation.</li>
+        <p>To make the device easily usable, we designed and fabricated a 3D-printed enclosure with dedicated mounting for the RP2040 and IMU. The device includes three debounced buttons for user input: one for mouse left-click, one for manual drift correction, and one for entering the RP2040’s BOOTSEL mode for easy reprogramming.
+        </p>
+        </section>
+
+    <section id="high-level-design">
+    <h2>High Level Design</h2>
+    
+    <h3>Motivation For Project</h3>
+    <p>Our motivation for this project was to build a handheld device that fully utilizes the IMU capabilities of the MPU6050, explores the use of quaternions to track 3D rotations, and expands the basic functions of USB mouse control. Inspired by consumer devices such as the LG Magic Remote and the Wii remote, which let users control an on-screen cursor by pointing and rotating a handheld controller. We wanted to recreate a similar user experience for a computer by creating a 3D mouse that maps its pointing direction to an (x,y) cursor position on the screen, enabling remote mouse control for tasks like navigating a desktop, using their computer like a TV, or for better interaction with slides during presentations. 
+</p>
+    <p>We were also inspired by 3D CAD devices such as the SpaceMouse, which make it much easier to manipulate a model’s view. However, traditional CAD controllers are designed for use on a desk. We wanted to combine concept of the SpaceMouse with our 3D controller, allowing a user to rotate the device in their hand (in the air) to live rotate the CAD view directly.</p>
+
+    <div class="math-section">
+        <h3>Relavent Math</h3>
+        <h4>Quaternions vs. Euler Angles</h4>
+        <p>
+            While Euler angles (Roll, Pitch, and Yaw) are the most intuitive way to visualize rotation, they have a few limitations which make them unsuitable for 3D orientation and rotation tracking:
+        </p>
+        <ul>
+            <li><strong>Gimbal Lock:</strong>Euler angles have a mathematical singularity (at 0 or 90 degrees) where two of the three axes align, causing the system to "lock," losing a degree of freedom and making it impossible to track rotations around the third axis independently.</li>
+            
+            <li><strong>Multiple Interpolations:</strong> The other issue with Euler angles is that there are multiple (up to 12) possible orders for applying Euler rotations to get to the same final orientation, leading to computational issues with tracking. This also causes issues with smoothly transitioning between two orientations, leading to jerky or unnatural movements.</li>
+        </ul>
+        <p>Here is a funny example of an interpolation issue in graphics caused by using Euler angles:</p>
+        
+        <div class="video-container">
+            <video width="320" height="180" controls>
+                <source src="m2-res_240p.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <figcaption>https://www.reddit.com/r/EASportsFC/comments/9gms3n/most_realistic_graphics_ever_in_fifa_history/</figcaption>
+        </div>
+        <p>
+            Because of these issues, we represent orientation using a <strong>unit quaternion</strong>, a 4-dimensional mathematical object $q=(w,x,y,z)$ where w is the real component and (x, y, z) are the imaginary components. For our calculations we use unit quaternions which are normalized, meaning $\sqrt{w^{2}+x^{2}+y^{2}+z^{2}}=1$.</p>
+            <p> This mathematical representation avoids the Euler angle issues of gimbal lock and rotational interpolation. Additionally, quaternions allow for Spherical Linear Interpolation (Slerp), which creates smooth, constant transitions between two orientations, making them a smoother representation of rotational motion.
+        </p>
+
+        <h4>Axis-Angle Representation</h4>
+        <p>
+            Quaternions use the idea that every rotation in space has an axis of rotation. We can use this idea to compute a rotation quaternion $q$. Any rotation can be represented by a single rotation, around a specific unit axis in space $(u=u_{x},u_{y},u_{z})$ given by the equation:
+            $$q=(cos\frac{\theta}{2},u_{x}sin\frac{\theta}{2},u_{y}sin\frac{\theta}{2},u_{z}sin\frac{\theta}{2})$$
+        </p>
+
+        <h4>Computing Rotations</h4>
+        <p>
+            We can represent 3D vectors with quaternions by setting the real part, $w$, to 0:</p>
+            <p class="center-text"> $q_{u}=0+u_{x}i+u_{y}j+u_{z}k$ </p>
+            <p> We can apply a 3D rotation to a vector in $u$ in quaternion form $q_{u}$ with the equation:</p>
+            <p class="center-text">${q^{\prime}}_{u}=qq_{u}q^{-1}$</p>
+            <p>where ${q^{\prime}}_{u}$ is the rotated vector, $q$ is the rotation quaternion defined above, and $q^{-1}$ is its inverse defined as:</p>
+            <p class="center-text"> $q^{-1}=(w,-x,-y,-z)$</p>
+        <h4>Quaternion Multiplication</h4>
+    <p>The rotation equation uses quaternion multiplication where the product of two quaternions \(q_1\) and \(q_2\) is defined as:</p>
+        \[
+        \begin{aligned}
+        q_1 q_2 = ( & w_1 w_2 - x_1 x_2 - y_1 y_2 - z_1 z_2, \\
+                    & w_1 x_2 + x_1 w_2 + y_1 z_2 - z_1 y_2, \\
+                    & w_1 y_2 - x_1 z_2 + y_1 w_2 + z_1 x_2, \\
+                    & w_1 z_2 + x_1 y_2 - y_1 x_2 + z_1 w_2 )
+        \end{aligned}
+        \]
+            <p> It is important to note that quaternion multiplication is non-commutative, meaning the order of multiplication matters.</p>
+            
+        <h4>Filtering</h4>
+            <p>In addition, we used complementary filtering to fuse gyroscope and accelerometer data:
+            $$q_{est} = \alpha \cdot q_{gyro} + (1 - \alpha) \cdot q_{accel\_correction}$$
+            We also used low-pass filtering to smooth cursor motion with the equation:
+            $$x_{smoothed} = s \cdot x_{previous} + (1 - s) \cdot x_{current}$$
+            where $s$ is the smoothing factor.
+        </p>
+    </div>
+
+    <section id="logical-structure">
+    <h3>Logical Structure</h3>
+    <p>The general structure of the code can be broken down as follows:</p>
+    
+    <div class="logical-layout">
+        <div class="logical-text">
+            <h4>1. Interrupt Service Routine</h4>
+            <p>We use a PWM wrap interrupt as a periodic timer to run the interrupt service routine code at around 1.2kHz. At each interrupt we read raw accelerometer and gyroscope data, store them in shared variables, and signal an IMU thread to update the attitude estimation.</p>
+
+            <h4>3. IMU Thread</h4>
+            <p>The IMU thread is signaled each time we read new IMU data. It primarily runs the imu_update() function to compute the new orientation quaternion from the accelerometer and gyroscope readings.</p>
+
+            <h4>4. Cursor and CAD Control</h4>
+            <p>The device can switch between two modes. The first is <strong>CAD Mode</strong>, where the device controls the orientation of a CAD model on the user's PC. The second is <strong>Pointer Mode</strong>, where the device controls the cursor location on the user's PC.</p>
+
+            <h4>4.1 Pointer Mode</h4>
+            <p>In Pointer Mode, we make the RP2040 act as a USB device to the user's PC. We map the orientation of our device to a delta x and y position on the PC screen and output that to the computer as a mouse signal. We also check if the user pressed the calibration or the mouse left click button and output the corresponding signal.</p>
+
+            <h4>4.2 CAD Mode</h4>
+            <p>In CAD Mode, the RP2040 acts as a serial device where we output the most recent orientation quaternion over serial to the PC. The PC then runs a Python program to manipulate the camera view of an open CAD model to match the orientation of our device.</p>
+        </div>
+
+        <div class="logical-diagram">
+            <img src="Code_Flowchart.png" alt="Logical Structure Diagram">
+        </div>
+    </div>
+</section>
+    
+
+    <h3>Hardware/software tradeoffs</h3>
+    <p>The main tradeoff we ran into was system complexity versus long-term orientation accuracy. Our current design uses a 6-axis IMU (accelerometer + gyroscope). The accelerometer provides a stable long-term reference because it can measure the direction of the gravity vector, so it does not accumulate drift. However, the gyroscope, which measures angular velocit,y has an issue of dead reckoning, meaning its orientation estimate is always relative to its initial value and will drift as small bias errors accumulate.
+    </p>
+    <p>To get the best of both sensors, we use a complementary filter: the gyroscope provides smooth short-term motion, and the accelerometer slowly corrects long-term tilt. This works for pitch and roll, because the gravity vector provides a reference direction to correct drift on those axes. However, yaw rotates perpendicularly to the gravity axis, so gravity does not change during yaw motion. Therefore, yaw cannot be corrected using the accelerometer alone, and it will drift over time if we rely only on the gyroscope.
+    </p>
+    <p>One common solution is to add a magnetometer (using a 9-axis IMU) to provide an absolute heading reference and correct yaw drift (either by using the earth’s magnetic field or a magnet placed near the user). However, one of the issues with magnetometers is that they require heavy calibration, due to environmental magnetic interference, and would be too complex for the scope and timeline of this project. Instead, we adopted a simple user-friendly approach with manual re-centering calibration during use to manage yaw drift.
+    </p>
+    <p>From a computational standpoint, we had no major constraints. The project is primarily user experience oriented, so our target update rate was around 100 Hz, which is well within the RP2040’s capabilities for quaternion calculations, filtering, and calculations for the different modes of the device. 
+    </p>
+
+
+
+    <h3>Intellectual Property Concerns: Patents, Copyrights, and Trademarks</h3>
+    <p>There are no patents, copyrights, or trademarks associated with the methods we used. Any of the quaternion math and orientation calculation methods were obtained from public-domain sources. We use products such as SOLIDWORKS, AutoCAD, MPU-6050, and VS Code (with the TinyUSB library) for our project. 
+    </p>
+</section>
+
+<section id="hardware-design">
+    <h2>Hardware Design</h2>
+
+    <h3>Program Details</h3>
+    <h4>1. Main</h4>
+    <p>The main function simply initializes the IMU, GPIO, I2C communication, threads, etc.</p>
+    <h4>2. PWM ISR</h4>
+        <p>The PWM ISR runs at a set frequency of around 1.2kHz. It first reads raw gyroscope and accelerometer values from the MPU6050. Then it converts the raw values into floating-point numbers and converts the gyroscope values from degrees to radians, which is necessary for the orientation quaternion calculations. The ISR then uses a semaphore to signal the IMU thread that new data is ready.
+        </p>
+    <h4>3. IMU Thread</h4>
+    <p>The IMU thread waits on the semaphore signal from the ISR that new IMU data is ready. We then perform an important calculation of the time elapsed since we last ran the thread. When we process the IMU data, we must integrate the gyroscope, so we need an accurate record of the time that passed since our last used reading and the current reading. We must calculate this value within the IMU thread each iteration since this thread does not necessarily run at the same rate as the ISR so we can’t just use the frequency that the ISR runs at (we first ran under this assumption and noticed that the dt value was around 2.5x the actual value). We then run the <strong>imu_update(gx, gy, gz, ax, ay, az, dt)</strong> function (which lives in the <strong>quat_math.c</strong> file) to calculate the orientation quaternion based on dt and the new IMU data. This gives us the device’s new orientation.</p>
+    <h4>4. Blink Thread</h4>
+    <p>The Blink thread simply toggles the onboard LED on and off to help us see that the program is running correctly.</p>
+    <h4>5. Mouse Thread (Pointer Mode)</h4>
+    <p>The Mouse thread runs at a preset rate of 100Hz. In essence, it uses the IMU quaternion to determine the motion of the cursor on the user’s PC. This thread handles the <strong>Pointer Mode</strong> of the device. It is important to note that in this mode, we make the RP2040 appear as a simple USB device (in this case, a mouse) to the PC. We did this by adapting the dev_hid_composite example that can be found at (https://github.com/raspberrypi/pico-examples/tree/master/usb/device/dev_hid_composite).</p>
+    <p>In this thread, we calculate the rotation of the device relative to the center of the screen (defined as the direction of the y-axis of the IMU when it is powered on), work out <strong>dx</strong> and <strong>dy</strong> values, then it send out the data over USB mouse report. We also check for manual use calibrations and user left clicks (of the <strong>red button</strong>). </p>
+    <p><strong>Manual calibrations</strong> are done by simply holding down the small side button (which freezes cursor movement), reorienting the device so it is pointing directly at the cursor, then releasing the button. In the code, this sets the new center position for cursor calculations to the position that you are ponting the pen after you release the button. <strong>Left clicks</strong> are done by pressing the large red button on the top of the device, which sends a left-click HID report to the PC.</p>
+    </p>
+    <p><strong>Calculation of Cursor Movement:</strong> First, we alculate horizontal and vertical angles relative to the center position (defined above) using the arctangent function: $\text{h_angle} = atan2f(d.x, d.y);$ $\text{v_angle = atan2f(d.z, sqrtf(d.xd.x + d.yd.y))}$. Then multiply by a constant to convert to screen displacement. Here we use 2000. A bigger value causes faster mouse motion on screen, meaning the value should be larger if the device is closer to the screen. Through testing, 2000 works well at half a meter. The multiplied values are named $\text{cursor_x}$ and $\text{cursor_y}$.</p>
+    <p>To make pointer movement smooth, a buffer similar to low-pass filtering is applied. For the x direction:</p> <p>$\text{smooth_x = 0.8f * smooth_x + 0.2f * cursor_x;}$</p><p>$\text{final_x = 0.8f * prev_x + 0.2f * smooth_x}$.</p><p>This has two steps: the first layer keeps 80% of the previous smooth value and adds 20% of the new cursor value; the second layer keeps 80% of the last output and adds 20% of the first layer result.</p>
+    <p>We use $\text{final_x - prev_x}$ to get the x displacement for the HID report; y direction is the same. Finally, the TinyUSB library (tinyusb.org) function $\text{tud_hid_mouse_report()}$ is used to send the mouse movement command.
+    </p>
+
+    <h4>6. Print Thread (CAD Mode)</h4>
+    <p>The Print thread also runs at 100Hz, and essentailly grabs the most recent orientation quaternion and sends it over the serial port to the PC. A python script on the PC then records these values and converts them to CAD view orientations. This thread handles the <strong>CAD Mode</strong> of the design. It is important to note that in this mode the RP2040 appears as a Serial device to the computer (not as a USB device like in Pointer Mode).</p>
+     
+    <h4>7. Orientation Quaternion Calculation (quat_math.c)</h4>
+
+<p>
+Next, we explain in detail how the IMU readings are converted into a quaternion and how small rotation changes are represented. To make the process clear, we start by explaining the implementation of the key function <strong>imu_update()</strong>.
+</p>
+
+<p><strong>Step 1: Using gyroscope data to predict orientation q<sub>w</sub></strong></p>
+<p>
+The MPU6050 provides angular velocity readings gx, gy, and gz from the gyroscope, measured in radians per second. These three values form an angular velocity vector. The magnitude of this vector is calculated to describe how fast the device is rotating.
+</p>
+<p>
+The rotation axis is obtained by normalizing the angular velocity vector, and the rotation angle is computed by multiplying the angular speed by the time interval dt. Using this rotation axis and angle, the function <strong>quat_from_axis_angle</strong> is called to create a quaternion q<sub>delta</sub>, which represents the small rotation during this time step.
+</p>
+<p>
+This incremental rotation quaternion is then multiplied with the previous orientation estimate q<sub>est</sub>. The result is the gyroscope-predicted orientation q<sub>w</sub>. The quaternion is normalized afterward to prevent numerical drift.
+</p>
+
+<p><strong>Step 2: Using accelerometer data to compute the tilt correction quaternion q<sub>tilt</sub></strong></p>
+<p>
+The accelerometer provides ax, ay, and az, which measure acceleration along the three body axes. These values are normalized to form a unit vector a<sub>body_norm</sub>. This vector represents the direction of gravity in the device’s body coordinate frame.
+</p>
+<p>
+The predicted orientation q<sub>w</sub> is then used to rotate this gravity vector into the world coordinate frame. In the world frame, gravity is defined to point in the fixed direction (0, 0, 1).
+</p>
+<p>
+The difference between the measured gravity direction and the expected gravity direction is calculated. The angle between them is found using a dot product, and the rotation axis needed to align them is found using a cross product. A complementary filter factor α is applied so that only part of this correction is used. Based on the weighted angle and rotation axis, a tilt correction quaternion q<sub>tilt</sub> is created.
+</p>
+
+<p><strong>Step 3: Updating the final orientation quaternion</strong></p>
+<p>
+In the final step, the tilt correction quaternion q<sub>tilt</sub> is multiplied with the gyroscope-predicted quaternion q<sub>w</sub>. This produces the updated orientation estimate q<sub>est</sub>. The result is normalized again to ensure it remains a valid unit quaternion.
+</p>
+
+<p>
+At this point, the internal process of <strong>imu_update()</strong> is complete. Next, a unit direction vector f<sub>body</sub> = (0, 1, 0) is defined in the IMU body frame. This vector represents the forward direction of the device and is fixed relative to the sensor.
+</p>
+
+<p>
+Finally, the following operation is performed:
+</p>
+
+<p class="center-text">
+d = quat_rotate_vec(q, f<sub>body</sub>);
+</p>
+
+<p>
+The vector d is obtained by rotating the body-frame forward vector f<sub>body</sub> into the world coordinate frame using the current orientation quaternion q<sub>est</sub>. Therefore, d represents the direction in the real world that the device is pointing toward.
+</p>
+
+<p><strong>In summary:</strong></p>
+<ul>
+    <li><strong>f<sub>body</sub>:</strong> Defines the forward direction in the device’s own coordinate frame.</li>
+    <li><strong>q<sub>est</sub>:</strong> Represents the orientation of the device relative to the world.</li>
+    <li><strong>d:</strong> Represents the direction in the world that the device is currently pointing.</li>
+</ul>
+
+<p>
+Next we explain how to control mouse movement using vector d.
+</p>
+
+<p>
+First, calculate horizontal and vertical angles using arctangent:
+</p>
+
+<p class="center-text">
+h_angle = atan2f(d.x, d.y);<br>
+v_angle = atan2f(d.z, sqrtf(d.x*d.x + d.y*d.y));
+</p>
+
+<p>
+Then multiply by a constant to convert to screen displacement. Here we use 2000. A bigger value causes faster mouse motion on screen, meaning the value should be larger if the device is closer to the screen. Through testing, 2000 works well at half a meter. The multiplied values are named cursor_x and cursor_y.
+</p>
+
+<p>
+To make pointer movement smooth, a buffer similar to low-pass filtering is applied. For the x direction:
+</p>
+
+<p class="center-text">
+smooth_x = 0.8f * smooth_x + 0.2f * cursor_x;<br>
+final_x = 0.8f * prev_x + 0.2f * smooth_x;
+</p>
+
+<p>
+This has two steps: the first layer keeps 80% of the previous smooth value and adds 20% of the new cursor value; the second layer keeps 80% of the last output and adds 20% of the first layer result.
+</p>
+
+<p>
+We use final_x - prev_x to get the x displacement for the HID report; y direction is the same. Finally, the TinyUSB library (tinyusb.org) function <strong>tud_hid_mouse_report</strong> is used to send the mouse movement command.
+</p>
+
+    
+     <h3>Hardware Details</h3>
+    <p>The pointer is modeled using Autodesk Fusion 360 and 3D printed with a Prusa printer. The overall shape is a cylinder, with a flat cut made along the central axis at a short distance from the center, creating a rectangular plane. On the rectangular plane, we carved out mounting slots for the RP2040 and MPU6050. The RP2040 has dimensions of 51×21 mm, and the MPU6050 measures 1.0×0.7 inches. Additionally, a hole was designed at the bottom of the cylindrical body to accommodate the data cable. The settings used in Prusa Slicer include 20% infill and natural support, with PLA as the material. All other settings are left as default.</p>
+<div style="display: flex; gap: 20px; justify-content: space-between; margin-top: 20px;">
+    <div style="flex: 1; text-align: center;">
+        <img src="rod.jpg" alt="Rod" style="width: 100%; height: auto; max-width: 300px;">
+        <figcaption>Rod</figcaption>
+    </div>
+    <div style="flex: 1; text-align: center;">
+        <img src="RP2040_Size.PNG" alt="RP2040 Size" style="width: 100%; height: auto; max-width: 300px;">
+        <figcaption>RP2040 Size</figcaption>
+    </div>
+    <div style="flex: 1; text-align: center;">
+        <img src="IMU_Size.PNG" alt="IMU Size" style="width: 100%; height: auto; max-width: 300px;">
+        <figcaption>IMU Size</figcaption>
+    </div>
+</div>
+    <p>Note: This design does not have any strict hardware requirements. Any reasonable method for securing the MPU6050 is acceptable. The MPU6050 used in this model is the black version, not the common blue one typically found on the market. If readers wish to replicate the model, they should ensure they are using the correct MPU specifications. </p>
+    <p><strong>Hardware overview:</strong></p>
+    <img src="overview.jpg" alt="3D design overview of the pointer device" id="image_300px">
+
+    <p><strong>Buttons on the device:</strong></p>
+    <img src="button.jpg" alt="Device with labeled buttons" id="image_300px">
+    <p>The red button on the top is used for recalibration, and the black button at the bottom is used for simulating a left click.</p>
+
+
+    <h3>Trial and Error</h3>
+    <p><strong>Things we tried which did not work</strong></p>
+    <p>We designed a linkage that could rotate freely, connected to a fixed base, with the goal of allowing the pointer to be inserted and counteract the drift issue in CAD mode. However, due to the limited precision of the 3D printer, the linkage was unable to rotate freely within the base. As a result, we abandoned this solution and instead allow the pointer to rotate freely in space during CAD mode.</p>
+<div style="text-align: center; margin-top: 20px;">
+    <img src="doesnotwork.jpg" alt="Does Not Work" style="width: 50%; height: auto; max-width: 500px;">
+    <figcaption>Attempted design that did not work</figcaption>
+</div>
+
+    <p><strong>Testing and Result</strong></p>
+    <p>Initially, before using the IMU, we tested using a physical button to simulate USB input, moving the cursor to the bottom-right corner, which verified the feasibility of the TinyUSB library. After adding the IMU and related code, we tested dragging a webpage tab, confirming that our finished product can effectively control cursor position and simulate left-clicks and long presses.</p>
+
+<section id="results">
+    <h2>Results of the Design and Conclusions</h2>
+
+    <p><strong>Design Analysis</strong></p>
+    <p>The yaw direction measured by the IMU tends to drift. This happens because the accelerometer can only measure directions constrained by gravity. The yaw direction rotates around the gravity axis and therefore cannot be observed by the accelerometer. In our approach, yaw is mainly obtained by integrating gyroscope data. Without correction from the accelerometer, drift gradually appears.</p>
+    <p>In addition, even with low-pass filtering applied, the gyroscope remains sensitive to small vibrations. This effect is most noticeable in CAD mode. When the pointer is rotated, the model on the screen shows small jitters during motion. After long periods of operation, even if the pointer stays in the same physical position, the CAD model may drift to a different orientation.</p>
+    <p>One solution we considered is adding a magnetometer. By using the Earth’s magnetic field, it would be possible to obtain a more accurate yaw reference.</p>
+
+    <p><strong>Applicable Sandards</strong></p>
+    <p>The project does not require compliance with formal regulatory standards. Nevertheless, it follows common engineering practices and basic safety requirements.</p>
+
+    <p><strong>AI Assistance</strong></p>
+    <p>In this project, AI was mainly used to help write lens control scripts for Autodesk Fusion360 and SolidWorks. While we were not fully familiar with the APIs and scripting methods of these programs, AI helped generate functional scripts efficiently.</p>
+</section>
+
+
+    
+
+    <section id="appendices">
+        <h2>Appendices</h2>
+        <h3>Appendix A: Permissions</h3>
+        <p >"The group approves this report for inclusion on the course website."</p>
+        <p>"The group approves the video for inclusion on the course youtube channel."</p>
+        
+        <h3>Appendix B: Source Code</h3>
+        <p>All code is provided in <code>quat_math.c</code> and <code>main.c</code></p>
+
+	<h3>Appendix C: References</h3>
+        <p>EE 267 Virtual Reality. Course Notes: 3-DOF Orientation Tracking with IMUs.<br>
+	<a href="https://stanford.edu/class/ee267/notes/ee267_notes_imu.pdf" target="_blank">https://stanford.edu/class/ee267/notes/ee267_notes_imu.pdf</a>
+	</p>
+        <h3>Appendix D: Work Distribution</h3>
+        <p><strong>Adin:</strong> Mainly responsible for USB signal simulation and quaternion calculations.</p>
+        <p><strong>Siang:</strong> Mainly responsible for 3D design and printing, as well as CAD software control.</p>
+    </section>
+</main>
+
+</body>
+</html>
