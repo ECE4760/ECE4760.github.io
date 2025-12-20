@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Appendix - Autonomous Drawing Car</title>
+    <style>
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.6;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #555;
+            margin-top: 25px;
+        }
+        .code-section {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        pre {
+            margin: 0;
+            font-family: 'Courier New', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        code {
+            font-family: 'Courier New', 'Monaco', monospace;
+        }
+        .comment {
+            color: #6c757d;
+            font-style: italic;
+        }
+        .keyword {
+            color: #0066cc;
+            font-weight: bold;
+        }
+        .string {
+            color: #008800;
+        }
+        .number {
+            color: #cc0000;
+        }
+        .function {
+            color: #6600cc;
+        }
+        .description {
+            background-color: #e7f3ff;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .file-header {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .section-note {
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #6c757d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Appendix: Commented C Code Listings</h1>
+        
+        <p>This appendix contains the most critical code sections from the autonomous drawing car project, with detailed comments explaining the algorithms and implementation details. All code follows the protothreads cooperative multitasking model, allowing multiple concurrent tasks (UDP receive, motor control, IMU reading) to run without preemption overhead.</p>
+
+        <h2>1. Path Optimization Algorithms</h2>
+        
+        <div class="description">
+            <strong>File:</strong> <code>picomobile/udp_and_vga/picow_udp_send_recv_data.c</code><br>
+            <strong>Purpose:</strong> Implements nearest-neighbor and 2-opt optimization algorithms to find the shortest path through all waypoints while preserving the overall drawing flow. The optimization runs only when the user right-clicks to send waypoints, preventing VGA freezes during waypoint accumulation.
+        </div>
+
+        <h3>1.1 Nearest Neighbor Algorithm</h3>
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * Nearest Neighbor (NN) path optimization
+ * Greedily selects the closest unvisited waypoint at each step
+ * Time complexity: O(n²) where n is the number of waypoints
+ * 
+ * @param points: Array of waypoint coordinates
+ * @param count: Number of waypoints to optimize
+ * @param start: Starting position (robot's current location)
+ * @param route: Output array storing the optimized route indices
+ */</span>
+<span class="keyword">static void</span> <span class="function">compute_nearest_neighbor_route</span>(<span class="keyword">const</span> waypoint_point_t *points, <span class="keyword">int</span> count,
+                                           waypoint_point_t start, <span class="keyword">int</span> *route) {
+    <span class="keyword">bool</span> visited[MAX_WAYPOINTS] = {<span class="number">0</span>};  <span class="comment">// Track which waypoints have been visited</span>
+    waypoint_point_t current = start;  <span class="comment">// Start from robot's current position</span>
+
+    <span class="comment">// Build route step by step</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> step = <span class="number">0</span>; step < count; step++) {
+        <span class="keyword">float</span> best_dist = FLT_MAX;  <span class="comment">// Initialize to maximum distance</span>
+        <span class="keyword">int</span> best_idx = -<span class="number">1</span>;  <span class="comment">// Index of closest unvisited waypoint</span>
+        
+        <span class="comment">// Find the closest unvisited waypoint</span>
+        <span class="keyword">for</span> (<span class="keyword">int</span> idx = <span class="number">0</span>; idx < count; idx++) {
+            <span class="keyword">if</span> (visited[idx]) {
+                <span class="keyword">continue</span>;  <span class="comment">// Skip already visited waypoints</span>
+            }
+            <span class="keyword">const</span> <span class="keyword">float</span> dist = <span class="function">waypoint_distance</span>(current, points[idx]);
+            <span class="keyword">if</span> (dist < best_dist) {
+                best_dist = dist;
+                best_idx = idx;  <span class="comment">// Update closest waypoint</span>
+            }
+        }
+        
+        <span class="keyword">if</span> (best_idx < <span class="number">0</span>) {
+            <span class="keyword">break</span>;  <span class="comment">// No more unvisited waypoints</span>
+        }
+        
+        route[step] = best_idx;  <span class="comment">// Add to route</span>
+        visited[best_idx] = <span class="keyword">true</span>;  <span class="comment">// Mark as visited</span>
+        current = points[best_idx];  <span class="comment">// Move to next position</span>
+    }
+}</code></pre>
+        </div>
+
+        <h3>1.2 2-Opt Local Improvement</h3>
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * 2-Opt optimization: Improves route by swapping edge pairs
+ * Iteratively finds and reverses route segments that reduce total distance
+ * Continues until no further improvements can be made
+ * 
+ * @param points: Array of waypoint coordinates
+ * @param count: Number of waypoints
+ * @param start: Starting position
+ * @param route: Route array (modified in-place)
+ */</span>
+<span class="keyword">static void</span> <span class="function">two_opt_local_improvement</span>(<span class="keyword">const</span> waypoint_point_t *points, <span class="keyword">int</span> count,
+                                      waypoint_point_t start, <span class="keyword">int</span> *route) {
+    <span class="keyword">if</span> (count < <span class="number">3</span>) {
+        <span class="keyword">return</span>;  <span class="comment">// Need at least 3 points for 2-opt to make sense</span>
+    }
+
+    <span class="keyword">bool</span> improved = <span class="keyword">true</span>;
+    <span class="comment">// Keep iterating until no improvements are found</span>
+    <span class="keyword">while</span> (improved) {
+        improved = <span class="keyword">false</span>;
+        
+        <span class="comment">// Try all pairs of edges (i, i+1) and (j, j+1)</span>
+        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i < count - <span class="number">1</span>; i++) {
+            <span class="comment">// Get the two endpoints of first edge</span>
+            <span class="keyword">const</span> waypoint_point_t A = (i == <span class="number">0</span>) ? start : points[route[i - <span class="number">1</span>]];
+            <span class="keyword">const</span> waypoint_point_t B = points[route[i]];
+            
+            <span class="keyword">for</span> (<span class="keyword">int</span> j = i + <span class="number">1</span>; j < count; j++) {
+                <span class="comment">// Get the two endpoints of second edge</span>
+                <span class="keyword">const</span> waypoint_point_t C = points[route[j]];
+                <span class="keyword">const</span> waypoint_point_t D = (j == count - <span class="number">1</span>) ? start : points[route[j + <span class="number">1</span>]];
+                
+                <span class="comment">// Calculate current distance: A->B + C->D</span>
+                <span class="keyword">const</span> <span class="keyword">float</span> current = <span class="function">waypoint_distance</span>(A, B) + <span class="function">waypoint_distance</span>(C, D);
+                <span class="comment">// Calculate swapped distance: A->C + B->D</span>
+                <span class="keyword">const</span> <span class="keyword">float</span> swapped = <span class="function">waypoint_distance</span>(A, C) + <span class="function">waypoint_distance</span>(B, D);
+                
+                <span class="comment">// If swapping reduces distance (with small tolerance), reverse the segment</span>
+                <span class="keyword">if</span> (swapped + <span class="number">1e-3f</span> < current) {
+                    <span class="function">reverse_route_segment</span>(route, i, j);  <span class="comment">// Reverse route[i..j]</span>
+                    improved = <span class="keyword">true</span>;  <span class="comment">// Found improvement, continue searching</span>
+                }
+            }
+        }
+    }
+}</code></pre>
+        </div>
+
+        <h2>2. Car Navigation and Motor Control</h2>
+        
+        <div class="description">
+            <strong>File:</strong> <code>picomobile/car_and_udp/picow_udp_send_recv_data.c</code><br>
+            <strong>Purpose:</strong> Main control loop implementing a state machine for waypoint navigation. Uses IMU heading data to turn toward targets and time-based control for forward motion. The car has no wheel encoders, so position is estimated by sequentially updating the pose at each waypoint and correcting heading using the BNO055 IMU.
+        </div>
+
+        <h3>2.1 Navigation Helper Functions</h3>
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * Calculate Euclidean distance from robot to target waypoint
+ */</span>
+<span class="keyword">static float</span> <span class="function">distance_to_waypoint</span>(<span class="keyword">const</span> pose_t *robot_pose, <span class="keyword">const</span> waypoint_t *target)
+{
+    <span class="keyword">float</span> dx = target->x - robot_pose->x;
+    <span class="keyword">float</span> dy = target->y - robot_pose->y;
+    <span class="keyword">return</span> <span class="function">sqrtf</span>(dx * dx + dy * dy);
+}
+
+<span class="comment">/**
+ * Update robot heading from BNO055 IMU Euler angles
+ * Reads yaw angle in degrees, converts to radians for internal use
+ */</span>
+<span class="keyword">static void</span> <span class="function">update_robot_heading_from_imu</span>(<span class="keyword">void</span>)
+{
+    <span class="keyword">float</span> yaw_deg = <span class="function">fix2float15</span>(euler[<span class="number">0</span>]);   <span class="comment">// heading in degrees (15.16 fixed point)</span>
+    robot.heading_rad = <span class="function">deg2rad</span>(yaw_deg);    <span class="comment">// store in radians</span>
+}
+
+<span class="comment">/**
+ * Calculate absolute angle (in world frame) from robot to target waypoint
+ * Returns angle in radians, range [-π, π]
+ */</span>
+<span class="keyword">static float</span> <span class="function">angle_to_waypoint</span>(<span class="keyword">const</span> pose_t *robot_pose, <span class="keyword">const</span> waypoint_t *target)
+{
+    <span class="keyword">float</span> dx = target->x - robot_pose->x;
+    <span class="keyword">float</span> dy = target->y - robot_pose->y;
+    <span class="keyword">float</span> waypoint_angle = <span class="function">atan2f</span>(dy, dx);  <span class="comment">// atan2 handles all quadrants correctly</span>
+    <span class="keyword">return</span> waypoint_angle;   <span class="comment">// radians</span>
+}
+
+<span class="comment">/**
+ * Calculate signed turn angle error from current heading to waypoint
+ * Normalizes error to [-π, π] range for shortest rotation direction
+ * Positive error = turn right (clockwise), negative = turn left (counter-clockwise)
+ */</span>
+<span class="keyword">static float</span> <span class="function">turn_angle_to_waypoint</span>(<span class="keyword">const</span> pose_t *robot_pose, <span class="keyword">const</span> waypoint_t *target)
+{
+    <span class="keyword">float</span> desired = <span class="function">angle_to_waypoint</span>(robot_pose, target);  <span class="comment">// Desired heading</span>
+    <span class="keyword">float</span> err     = desired - robot_pose->heading_rad;  <span class="comment">// Heading error</span>
+
+    <span class="comment">// Normalize to [-π, π] to ensure shortest rotation</span>
+    <span class="keyword">while</span> (err >=  <span class="number">3.14159265f</span>) err -= <span class="number">2.0f</span> * <span class="number">3.14159265f</span>;
+    <span class="keyword">while</span> (err < -<span class="number">3.14159265f</span>) err += <span class="number">2.0f</span> * <span class="number">3.14159265f</span>;
+
+    <span class="keyword">return</span> err;
+}</code></pre>
+        </div>
+
+        <h3>2.2 Main Control Loop (State Machine)</h3>
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * Main movement control thread using protothreads
+ * Implements a state machine with three states:
+ *   - MOVE_WAITING_FOR_ROUTE: No waypoints available, car is stationary
+ *   - MOVE_TURNING: Rotating to face the next waypoint
+ *   - MOVE_DRIVING: Moving forward toward the waypoint
+ * 
+ * Handles dynamic waypoint addition: new waypoints can be added while car is moving
+ */</span>
+<span class="keyword">static</span> PT_THREAD (<span class="function">protothread_I_like_to_move_it_move_it</span>(<span class="keyword">struct</span> pt *pt))
+{
+    PT_BEGIN(pt);
+    <span class="keyword">static</span> <span class="keyword">enum</span> {
+        MOVE_WAITING_FOR_ROUTE = <span class="number">0</span>,
+        MOVE_TURNING,
+        MOVE_DRIVING
+    } move_state = MOVE_WAITING_FOR_ROUTE;
+    <span class="keyword">static</span> <span class="keyword">uint64_t</span> drive_end_time_us = <span class="number">0</span>;  <span class="comment">// Timestamp when forward motion should stop</span>
+    <span class="keyword">static</span> waypoint_t *current_target = NULL;
+    <span class="keyword">static</span> <span class="keyword">bool</span> route_initialized = <span class="keyword">false</span>;
+    <span class="keyword">static</span> <span class="keyword">int</span> last_seen_waypoint_count = -<span class="number">1</span>;  <span class="comment">// Track waypoint count to detect new waypoints</span>
+    <span class="keyword">static</span> <span class="keyword">int</span> last_processed_waypoint_index = -<span class="number">1</span>;  <span class="comment">// Track progress through waypoints</span>
+
+    <span class="keyword">while</span> (<span class="number">1</span>) {
+        <span class="keyword">uint32_t</span> delay_us = <span class="number">50000</span>;  <span class="comment">// Default 50ms delay (20 Hz control loop)</span>
+
+        <span class="comment">// Check for new waypoint data
+        // Format: [0]=waypoint_count, [1]=robot_x, [2]=robot_y, [3]=wp1_x, [4]=wp1_y, ...</span>
+        <span class="keyword">if</span> (data_array[<span class="number">0</span>] != -<span class="number">1</span> && data_array[<span class="number">1</span>] != -<span class="number">1</span> && data_array[<span class="number">2</span>] != -<span class="number">1</span>) {
+            <span class="keyword">int</span> current_waypoint_count = data_array[<span class="number">0</span>];
+            
+            <span class="comment">// Only process if waypoint count increased (new waypoints added)</span>
+            <span class="keyword">if</span> (current_waypoint_count > last_seen_waypoint_count) {
+                <span class="keyword">if</span> (!route_initialized) {
+                    <span class="comment">// First time: initialize robot position and load all waypoints</span>
+                    <span class="function">populate_robot</span>();  <span class="comment">// Set robot position from UDP data</span>
+                    <span class="function">populate_waypoints_from_index</span>(<span class="number">0</span>);
+                    current_waypoint = <span class="number">1</span>;  <span class="comment">// Start from waypoint 1 (skip waypoint 0 = home)</span>
+                    last_processed_waypoint_index = <span class="number">0</span>;
+                    route_initialized = (loaded_waypoint_count > <span class="number">1</span>);
+                    move_state = route_initialized ? MOVE_TURNING : MOVE_WAITING_FOR_ROUTE;
+                } <span class="keyword">else</span> {
+                    <span class="comment">// More waypoints added: load only new waypoints, keep current robot position</span>
+                    <span class="keyword">int</span> start_index = last_processed_waypoint_index + <span class="number">1</span>;
+                    <span class="function">populate_waypoints_from_index</span>(start_index);
+                    current_waypoint = start_index;  <span class="comment">// Resume from first unvisited waypoint</span>
+                    
+                    <span class="keyword">if</span> (current_waypoint < loaded_waypoint_count) {
+                        move_state = MOVE_TURNING;  <span class="comment">// Resume navigation</span>
+                    } <span class="keyword">else</span> {
+                        move_state = MOVE_WAITING_FOR_ROUTE;  <span class="comment">// All waypoints completed</span>
+                        <span class="function">set_left_motor_signed</span>(<span class="number">0.0f</span>);
+                        <span class="function">set_right_motor_signed</span>(<span class="number">0.0f</span>);
+                    }
+                }
+                
+                last_seen_waypoint_count = current_waypoint_count;
+            }
+        }
+
+        <span class="comment">// State machine: handle current movement state</span>
+        <span class="keyword">switch</span> (move_state) {
+            <span class="keyword">case</span> MOVE_WAITING_FOR_ROUTE:
+                delay_us = <span class="number">200000</span>;  <span class="comment">// Wait 200ms when no route available</span>
+                <span class="keyword">break</span>;
+
+            <span class="keyword">case</span> MOVE_TURNING: {
+                <span class="function">update_robot_heading_from_imu</span>();  <span class="comment">// Read current heading from IMU</span>
+                <span class="keyword">float</span> err = <span class="function">turn_angle_to_waypoint</span>(&robot, current_target);  <span class="comment">// Calculate heading error</span>
+                
+                <span class="keyword">if</span> (<span class="function">fabsf</span>(err) < ANGLE_TOL_RAD) {  <span class="comment">// Within tolerance (10 degrees)</span>
+                    <span class="function">set_left_motor_signed</span>(<span class="number">0.0f</span>);  <span class="comment">// Stop turning</span>
+                    <span class="function">set_right_motor_signed</span>(<span class="number">0.0f</span>);
+                    
+                    <span class="keyword">float</span> dist = <span class="function">distance_to_waypoint</span>(&robot, current_target);
+                    <span class="keyword">if</span> (dist < <span class="number">0.01f</span>) {  <span class="comment">// Already at waypoint (within 1cm)</span>
+                        robot.x = current_target->x;  <span class="comment">// Update robot position</span>
+                        robot.y = current_target->y;
+                        last_processed_waypoint_index = current_waypoint;
+                        current_waypoint++;  <span class="comment">// Move to next waypoint</span>
+                        <span class="keyword">break</span>;
+                    }
+                    
+                    <span class="comment">// Calculate drive time based on distance and speed</span>
+                    <span class="keyword">float</span> time_s = dist / UNITS_PER_SECOND;  <span class="comment">// UNITS_PER_SECOND = 50 units/second</span>
+                    drive_end_time_us = <span class="function">time_us_64</span>() + (<span class="keyword">uint64_t</span>)(time_s * <span class="number">1000000.0f</span>);
+                    <span class="function">set_left_motor_signed</span>(PWM_FORWARD);  <span class="comment">// Start forward motion</span>
+                    <span class="function">set_right_motor_signed</span>(PWM_FORWARD);
+                    move_state = MOVE_DRIVING;  <span class="comment">// Transition to driving state</span>
+                } <span class="keyword">else if</span> (err < <span class="number">0.0f</span>) {
+                    <span class="comment">// Turn left: left motor backward, right motor forward</span>
+                    <span class="function">set_left_motor_signed</span>(-TURN_PWM);
+                    <span class="function">set_right_motor_signed</span>(+TURN_PWM);
+                } <span class="keyword">else</span> {
+                    <span class="comment">// Turn right: left motor forward, right motor backward</span>
+                    <span class="function">set_left_motor_signed</span>(+TURN_PWM);
+                    <span class="function">set_right_motor_signed</span>(-TURN_PWM);
+                }
+                delay_us = <span class="number">50000</span>;  <span class="comment">// 50ms control loop during turning</span>
+                <span class="keyword">break</span>;
+            }
+
+            <span class="keyword">case</span> MOVE_DRIVING: {
+                <span class="keyword">if</span> (<span class="function">time_us_64</span>() >= drive_end_time_us) {  <span class="comment">// Time-based motion complete</span>
+                    <span class="function">set_left_motor_signed</span>(<span class="number">0.0f</span>);  <span class="comment">// Stop motors</span>
+                    <span class="function">set_right_motor_signed</span>(<span class="number">0.0f</span>);
+                    robot.x = current_target->x;  <span class="comment">// Update position to waypoint</span>
+                    robot.y = current_target->y;
+                    last_processed_waypoint_index = current_waypoint;
+                    current_waypoint++;  <span class="comment">// Move to next waypoint</span>
+                    move_state = MOVE_TURNING;  <span class="comment">// Transition back to turning</span>
+                } <span class="keyword">else</span> {
+                    <span class="comment">// Continue driving forward</span>
+                    <span class="function">set_left_motor_signed</span>(PWM_FORWARD);
+                    <span class="function">set_right_motor_signed</span>(PWM_FORWARD);
+                }
+                delay_us = <span class="number">50000</span>;
+                <span class="keyword">break</span>;
+            }
+        }
+
+        PT_YIELD_usec(delay_us);  <span class="comment">// Yield control, resume after delay</span>
+    }
+
+    PT_END(pt);
+}</code></pre>
+        </div>
+
+        <h3>2.3 Motor Control Functions</h3>
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * Set left motor speed with signed value
+ * Positive = forward, negative = backward, zero = stop
+ * Uses H-bridge with separate forward/reverse PWM channels
+ */</span>
+<span class="keyword">void</span> <span class="function">set_left_motor_signed</span>(<span class="keyword">float</span> speed) {
+    <span class="keyword">if</span> (speed > <span class="number">0.0f</span>) {
+        <span class="comment">// Forward: use forward PWM channel (GPIO16)</span>
+        <span class="function">left_forward_pin_pwm</span>(speed);
+        <span class="function">left_reverse_pin_pwm</span>(<span class="number">0.0f</span>);
+    } <span class="keyword">else if</span> (speed < <span class="number">0.0f</span>) {
+        <span class="comment">// Backward: use reverse PWM channel (GPIO7)</span>
+        <span class="function">left_forward_pin_pwm</span>(<span class="number">0.0f</span>);
+        <span class="function">left_reverse_pin_pwm</span>(-speed);  <span class="comment">// Negate to get positive PWM value</span>
+    } <span class="keyword">else</span> {
+        <span class="comment">// Stop: set both channels to zero</span>
+        <span class="function">left_forward_pin_pwm</span>(<span class="number">0.0f</span>);
+        <span class="function">left_reverse_pin_pwm</span>(<span class="number">0.0f</span>);
+    }
+}
+
+<span class="comment">/**
+ * PWM interrupt service routine
+ * Called periodically by hardware PWM timer
+ * Reads IMU Euler angles for heading estimation
+ * NOTE: This runs in an interrupt context - keep it fast!
+ */</span>
+<span class="keyword">void</span> <span class="function">on_pwm_wrap</span>() {
+    <span class="comment">// Clear the interrupt flag</span>
+    <span class="function">pwm_clear_irq</span>(slice_fwd);
+    <span class="function">pwm_clear_irq</span>(slice_rev);
+
+    <span class="comment">// Read IMU Euler angles (yaw/pitch/roll)
+    // Data is in 15.16 fixed point format
+    // euler[0] = yaw (heading) in degrees</span>
+    <span class="function">bno055_read_euler</span>(euler);
+}</code></pre>
+        </div>
+
+        <h2>3. UDP Communication</h2>
+        
+        <div class="description">
+            <strong>File:</strong> <code>picomobile/car_and_udp/picow_udp_send_recv_data.c</code><br>
+            <strong>Purpose:</strong> Handles wireless UDP communication between PC-side and car-side Pico Ws. Receives waypoint data and sends acknowledgments.
+        </div>
+
+        <h3>3.1 UDP Receive Callback</h3>
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * UDP receive callback function
+ * Called by lwIP stack when a UDP packet arrives
+ * This runs in an interrupt context - MUST be kept short!
+ * 
+ * @param arg: User argument (unused)
+ * @param upcb: UDP protocol control block
+ * @param p: Packet buffer containing received data
+ * @param addr: Source IP address
+ * @param port: Source port
+ */</span>
+<span class="keyword">static void</span>
+<span class="function">udpecho_raw_recv</span>(<span class="keyword">void</span> *arg, <span class="keyword">struct</span> udp_pcb *upcb, <span class="keyword">struct</span> pbuf *p,
+                 <span class="keyword">const</span> ip_addr_t *addr, <span class="keyword">u16_t</span> port)
+{
+    LWIP_UNUSED_ARG(arg);
+
+    <span class="keyword">if</span> (p != NULL) {
+        <span class="comment">// Copy packet payload to receive buffer
+        // Format: [0]=waypoint_count, [1]=robot_x, [2]=robot_y, [3]=wp1_x, [4]=wp1_y, ...</span>
+        <span class="function">memcpy</span>(recv_data, p->payload, UDP_MSG_LEN_MAX);
+        
+        <span class="comment">// Signal protothread that new data is available
+        // PT_SEM_SIGNAL can be called from ISR context</span>
+        PT_SEM_SIGNAL(pt, &new_udp_recv_s);
+        
+        <span class="comment">// Free the packet buffer (required by lwIP)</span>
+        <span class="function">pbuf_free</span>(p);
+    }
+}
+
+<span class="comment">/**
+ * Initialize UDP receive socket
+ * Binds to UDP_PORT (4444) and sets up receive callback
+ */</span>
+<span class="keyword">void</span> 
+<span class="function">udpecho_raw_init</span>(<span class="keyword">void</span>)
+{
+    udpecho_raw_pcb = <span class="function">udp_new_ip_type</span>(IPADDR_TYPE_ANY);  <span class="comment">// Create UDP PCB</span>
+    p = <span class="function">pbuf_alloc</span>(PBUF_TRANSPORT, UDP_MSG_LEN_MAX+<span class="number">1</span>, PBUF_RAM);
+
+    <span class="keyword">if</span> (udpecho_raw_pcb != NULL) {
+        <span class="keyword">err_t</span> err;
+        <span class="comment">// Bind to local IP address and UDP_PORT</span>
+        err = <span class="function">udp_bind</span>(udpecho_raw_pcb, <span class="function">netif_ip4_addr</span>(netif_list), UDP_PORT);
+
+        <span class="keyword">if</span> (err == ERR_OK) {
+            <span class="comment">// Register receive callback</span>
+            <span class="function">udp_recv</span>(udpecho_raw_pcb, udpecho_raw_recv, NULL);
+        }
+    }
+}</code></pre>
+        </div>
+
+        <h2>4. Key Constants and Configuration</h2>
+        
+        <div class="code-section">
+            <pre><code><span class="comment">// Motor control constants</span>
+<span class="keyword">#define</span> PWM_FORWARD        <span class="number">4000.0f</span>   <span class="comment">// PWM duty cycle for forward motion</span>
+<span class="keyword">#define</span> TURN_PWM           <span class="number">3500.0f</span>   <span class="comment">// PWM level used while turning</span>
+<span class="keyword">#define</span> ANGLE_TOL_DEG      <span class="number">10.0f</span>      <span class="comment">// Acceptable heading error (degrees)</span>
+<span class="keyword">#define</span> ANGLE_TOL_RAD      (ANGLE_TOL_DEG * <span class="number">3.14159265f</span> / <span class="number">180.0f</span>)  <span class="comment">// Convert to radians</span>
+<span class="keyword">#define</span> UNITS_PER_SECOND  <span class="number">50.0f</span>     <span class="comment">// Robot speed: 50 units/second</span>
+
+<span class="comment">// UDP configuration</span>
+<span class="keyword">#define</span> UDP_PORT           <span class="number">4444</span>      <span class="comment">// UDP port for communication</span>
+<span class="keyword">#define</span> UDP_MSG_LEN_MAX   <span class="number">1024</span>      <span class="comment">// Maximum UDP packet size</span>
+<span class="keyword">#define</span> MAX_WAYPOINTS      <span class="number">256</span>       <span class="comment">// Maximum number of waypoints</span>
+<span class="keyword">#define</span> MAX_DATA_SIZE     <span class="number">512</span>       <span class="comment">// Maximum data array size</span>
+
+<span class="comment">// Robot pose structure</span>
+<span class="keyword">typedef struct</span> {
+    <span class="keyword">float</span> x;              <span class="comment">// X position (units)</span>
+    <span class="keyword">float</span> y;              <span class="comment">// Y position (units)</span>
+    <span class="keyword">float</span> heading_rad;    <span class="comment">// Heading angle (radians)</span>
+} pose_t;
+
+<span class="comment">// Waypoint structure</span>
+<span class="keyword">typedef struct</span> {
+    <span class="keyword">float</span> x;              <span class="comment">// X coordinate</span>
+    <span class="keyword">float</span> y;              <span class="comment">// Y coordinate</span>
+} waypoint_t;</code></pre>
+        </div>
+
+        <div class="section-note">
+            <strong>Note:</strong> This appendix shows the most critical code sections. The complete source code is available in the repository.
+        </div>
+
+    </div>
+</body>
+</html>

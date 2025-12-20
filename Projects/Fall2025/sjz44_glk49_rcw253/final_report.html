@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Report - Autonomous Drawing Car</title>
+    <style>
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+        p {
+            text-align: justify;
+            margin: 15px 0;
+        }
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .sound-bite {
+            font-style: italic;
+            font-size: 1.1em;
+            color: #2980b9;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #ebf5fb;
+            border-left: 4px solid #3498db;
+        }
+        .figure {
+            margin: 20px 0;
+            padding: 10px;
+            text-align: center;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        .figure strong {
+            display: block;
+            margin-top: 6px;
+        }
+        .figure-pair {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .figure-pair .figure {
+            flex: 1 1 300px;
+            margin: 10px 0;
+        }
+        .scope-pair img {
+            max-width: 360px;
+            width: 100%;
+            height: auto;
+        }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 15px 0;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .formula {
+            font-family: 'Courier New', monospace;
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #6c757d;
+        }
+        .code-section {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        .code-section pre {
+            margin: 0;
+            font-family: 'Courier New', 'Monaco', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .code-section code {
+            font-family: 'Courier New', 'Monaco', monospace;
+        }
+        .code-section .comment {
+            color: #6c757d;
+            font-style: italic;
+        }
+        .code-section .keyword {
+            color: #0066cc;
+            font-weight: bold;
+        }
+        .code-section .string {
+            color: #008800;
+        }
+        .code-section .number {
+            color: #cc0000;
+        }
+        .code-section .function {
+            color: #6600cc;
+        }
+    </style>
+    <!-- MathJax for LaTeX rendering -->
+    <script>
+    window.MathJax = {
+        tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+        options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    
+</head>
+<body>
+    <div class="container">
+        <h1>Final Report</h1>
+
+        <h2>Project Introduction</h2>
+        
+        <h3>Project Sound Bite</h3>
+        <div class="sound-bite">
+            An autonomous drawing car that turns mouse-drawn inputs displayed on a VGA GUI into real-world motion by wirelessly driving a robot car along digitally generated paths.
+        </div>
+        <div class="figure">
+            <img src="images/car_magestic.png" alt="Autonomous drawing car" style="max-width: 100%; height: auto;">
+            <strong>Figure:</strong> Autonomous drawing car
+        </div>
+
+        <h3>Summary</h3>
+        
+        <h4>What we did:</h4>
+        <p>We built an autonomous drawing system using two Raspberry Pi Pico Ws that communicate over UDP. One Pico W interfaces with a PC, handling mouse input and VGA output to generate and display waypoints. These waypoints are transmitted wirelessly to a second Pico W mounted on a car. The car uses a 9-axis IMU to determine its orientation, computes PWM values, and drives its motors to reach each target point. The system supports two operating modes. In direct-follow mode, the car traces the path exactly as drawn. In optimized-route mode, the car calculates the shortest path through all points, improving efficiency while preserving the overall flow.</p>
+
+        <h4>Why we did it:</h4>
+        <p>One group member admired a previous year's drawing robot, and we share an interest in cars and Formula One. All group members work on a student project team that builds autonomous air systems, which motivated us to explore similar concepts on the ground. We wanted to combine creative expression with autonomous vehicle concepts like navigation, state estimation, and control. The project required us to work through autonomous navigation, reliable wireless communication, and real-time control while building something engaging to watch and satisfying to tune.</p>
+
+        <h2>High Level Design</h2>
+        
+        <h3>Rationale and Sources</h3>
+        <p>Our drawing and communication subsystems are based on reference designs and sample code from ECE 4760 course materials provided by Professors Bruce Land and Van Hunter Adams. For the drawing interface, we adapted Professor Land's USB Host HID and VGA graphics demonstrations for the Raspberry Pi Pico RP2040. These examples showed how to run USB mouse input, VGA output, and protothreads concurrently across both cores. We modified this structure to sample mouse position data, generate waypoints, and render the drawing in real time on a VGA display.</p>
+
+        <p>The VGA graphics framework and USB HID handling provided a stable foundation. The separation of USB tasks, VGA graphics, and event-handling logic informed our thread organization. We modified the example code to stream drawing coordinates rather than perform direct on-screen drawing, allowing the generated data to be reused as motion commands for the car.</p>
+
+        <p>For wireless communication between the two Pico Ws, we based our design on Professor Land's UDP data transfer examples using LWIP and protothreads. These examples demonstrated efficient, low-latency communication between Pico Ws on the same network. We adapted this approach to continuously transmit waypoint data from the PC-side Pico W to the car.</p>
+
+        <p>We also used reference material and sample code from Professor Hunter Adams. PWM generation for motor control was adapted from course examples demonstrating the RP2040's hardware PWM peripherals. Sensor interfacing and I2C communication patterns were informed by Professor Adams' sample code, which we extended to support our onboard sensors.</p>
+
+        <p>For orientation sensing, we combined these course references with an external driver for the BNO055 9-axis IMU. We adapted the BNO055 driver from the JRDPropulsion BNO055-RP2040-Library (<a href="https://github.com/JRDPropulsion/BNO055-RP2040-Library/blob/main/src/BNO055.cpp" target="_blank">https://github.com/JRDPropulsion/BNO055-RP2040-Library/blob/main/src/BNO055.cpp</a>), converting it from C++ to C for use with the Pico SDK. The driver handled low-level device configuration and data acquisition, allowing us to focus on heading estimation and motor control rather than register-level setup.</p>
+
+        <p>Building on established course examples from both professors let us avoid reimplementing low-level drivers and focus on system integration, control logic, and overall behavior.</p>
+
+        <h3>Background Math</h3>
+        
+        <h4>Mathematical Background: Baseline Navigation</h4>
+
+        <p>This section describes the mathematical model used for baseline robot navigation through a sequence of user-defined waypoints. The approach combines planar geometry, trigonometry, and simple threshold-based control to guide a differential-drive robot along straight-line segments between waypoints.</p>
+
+        <h5>Coordinate System and Robot Pose</h5>
+        <p>The robot operates in a two-dimensional Cartesian world frame. Its pose is represented as
+        \[
+        \mathbf{p} = (x, y, \theta),
+        \]
+        where \(x\) and \(y\) denote the robot's position and \(\theta\) is the robot's heading angle in radians, with \(\theta = 0\) aligned with the positive \(x\)-axis. Each waypoint is defined as a fixed target position
+        \[
+        \mathbf{w}_i = (x_i, y_i).
+        \]</p>
+
+        <h5>Distance to a Waypoint</h5>
+        <p>The straight-line distance from the robot to a target waypoint is computed using the Euclidean distance formula:
+        \[
+        d = \sqrt{(x_i - x)^2 + (y_i - y)^2}.
+        \]
+        This distance determines how long the robot drives forward after aligning its heading with the waypoint.</p>
+
+        <h5>Angle to a Waypoint</h5>
+        <p>The absolute direction from the robot to a waypoint in the world frame is computed using the two-argument arctangent function:
+        \[
+        \theta_{\text{target}} = \operatorname{atan2}(y_i - y,\; x_i - x).
+        \]
+        The use of \(\operatorname{atan2}\) ensures correct angle computation across all quadrants and avoids division-by-zero errors.</p>
+
+        <h5>IMU Heading and Degree-to-Radian Conversion</h5>
+        <p>The robot’s heading is measured by an onboard IMU as a yaw angle in degrees. For use in trigonometric calculations, this value is converted to radians:
+        \[
+        \theta = \theta_{\deg} \cdot \frac{\pi}{180}.
+        \]
+        Using radians ensures compatibility with standard math library functions.</p>
+
+        <h5>Heading Error and Angle Normalization</h5>
+        <p>The signed heading error between the robot’s current orientation and the desired waypoint direction is given by
+        \[
+        e_\theta = \theta_{\text{target}} - \theta.
+        \]
+        Because angular quantities are periodic, this error is normalized to the interval \([-\pi, \pi]\) to ensure the robot always turns along the shortest angular path:
+        \[
+        e_\theta \leftarrow
+        \begin{cases}
+        e_\theta - 2\pi, & e_\theta \ge \pi,\\
+        e_\theta + 2\pi, & e_\theta < -\pi,\\
+        e_\theta, & \text{otherwise}.
+        \end{cases}
+        \]</p>
+
+        <h5>Angular Tolerance and Alignment</h5>
+        <p>Perfect alignment is unnecessary and can cause oscillatory behavior. Instead, the robot is considered aligned when
+        \[
+        |e_\theta| < \theta_{\text{tol}},
+        \]
+        where \(\theta_{\text{tol}}\) is a predefined angular tolerance. This threshold improves robustness and reduces control chatter.</p>
+
+        <h5>Differential-Drive Turning Logic</h5>
+        <p>The robot uses differential drive to rotate in place by driving the left and right motors in opposite directions. The sign of the heading error determines the direction of rotation:
+        \[
+        \begin{cases}
+        e_\theta > 0 \;\Rightarrow\; \text{turn right},\\
+        e_\theta < 0 \;\Rightarrow\; \text{turn left}.
+        \end{cases}
+        \]
+        A constant-magnitude PWM signal is applied during turning, resulting in a bang-bang control strategy.</p>
+
+        <h5>Distance-to-Time Conversion for Forward Motion</h5>
+        <p>Once aligned, the robot drives forward for a duration proportional to the computed distance. Assuming a constant linear speed \(v\), the required travel time is
+        \[
+        t = \frac{d}{v}.
+        \]
+        This time is converted into milliseconds or microseconds for implementation. The approach is open-loop, meaning the robot does not continuously measure distance during motion.</p>
+
+        <h5>PWM Scaling and Saturation</h5>
+        <p>Motor commands are implemented using pulse-width modulation (PWM). Commands are constrained to hardware-safe limits:
+        \[
+        0 \le \mathrm{PWM} \le \mathrm{PWM}_{\max}.
+        \]
+        A signed PWM convention encodes both direction and magnitude, ensuring safe and consistent motor control.</p>
+
+        <h5>Baseline Navigation Assumptions</h5>
+        <p>The baseline navigation model assumes:</p>
+        <ul>
+          <li>Motion occurs on a flat 2D plane.</li>
+          <li>IMU heading measurements are sufficiently accurate.</li>
+          <li>Forward speed is approximately constant at a fixed PWM level.</li>
+          <li>Wheel slip and external disturbances are minimal.</li>
+        </ul>
+
+        <h4>Mathematical Background: Optimized Path Planning</h4>
+
+        <p>In addition to baseline waypoint following, an optional path optimization step is implemented to reduce total travel distance. This optimization operates on the set of waypoints before transmission to the robot and is independent of the low-level motion controller.</p>
+
+        <h5>Problem Formulation</h5>
+        <p>Given a starting position \(\mathbf{s}\) and a set of \(N\) waypoints
+        \[
+        \{\mathbf{w}_1, \mathbf{w}_2, \dots, \mathbf{w}_N\},
+        \]
+        the objective is to determine an ordering of the waypoints that minimizes the total path length
+        \[
+        L = \sum_{k=0}^{N-1} \left\lVert \mathbf{p}_{k+1} - \mathbf{p}_k \right\rVert,
+        \]
+        where \(\mathbf{p}_0 = \mathbf{s}\) and \(\mathbf{p}_{k}\) denotes the \(k\)-th waypoint in the chosen route. This problem is a variant of the Traveling Salesman Problem (TSP), which is NP-hard.</p>
+
+        <h5>Nearest-Neighbor Heuristic</h5>
+        <p>To construct an initial feasible route efficiently, a nearest-neighbor heuristic is used. Starting from the current position \(\mathbf{s}\), the algorithm repeatedly selects the closest unvisited waypoint:
+        \[
+        \mathbf{w}_{\text{next}} = \arg\min_{\mathbf{w}_i \in \mathcal{U}} \left\lVert \mathbf{w}_i - \mathbf{p}_{\text{current}} \right\rVert,
+        \]
+        where \(\mathcal{U}\) is the set of unvisited waypoints. This approach produces a valid route with low computational cost, though it is not guaranteed to be globally optimal.</p>
+
+        <h5>2-Opt Local Improvement</h5>
+        <p>To further reduce total path length, the route produced by the nearest-neighbor heuristic is refined using a 2-opt local optimization method. Two edges in the route,
+        \[
+        (A \rightarrow B) \quad \text{and} \quad (C \rightarrow D),
+        \]
+        are replaced with
+        \[
+        (A \rightarrow C) \quad \text{and} \quad (B \rightarrow D),
+        \]
+        if doing so reduces the total distance:
+        \[
+        \lVert A - C \rVert + \lVert B - D \rVert
+        <
+        \lVert A - B \rVert + \lVert C - D \rVert.
+        \]
+        When such an improvement is found, the intermediate segment of the route is reversed. This process is repeated until no further improvements are possible, yielding a locally optimized path.</p>
+
+        <h5>Optimized Path Characteristics</h5>
+        <p>The optimized route typically results in:</p>
+        <ul>
+          <li>Reduced total travel distance</li>
+          <li>Fewer large heading changes</li>
+          <li>Smoother overall trajectories</li>
+        </ul>
+        <p>Although the optimized path is not guaranteed to be globally optimal, the combination of nearest-neighbor initialization and 2-opt refinement provides a strong balance between computational efficiency and path quality for real-time use.</p>
+
+        <h5>Integration with Navigation Controller</h5>
+        <p>Once computed, the optimized waypoint order is transmitted to the robot in the same format as the baseline route. The low-level navigation controller operates identically in both cases, ensuring modular separation between high-level path planning and low-level motion control.</p>
+
+        <h3>Logical Structure</h3>
+        <p>The system architecture uses two cooperating Pico W subsystems. The PC-side Pico W reads mouse input via USB HID, maintains a VGA display of the drawing interface, generates waypoints, and sends them via UDP. The car-side Pico W receives UDP waypoints and queues them for execution, reads BNO055 Euler angles for heading estimation, computes heading error and distance to the next waypoint, executes motor control through PWM signals, and runs a PWM ISR for precise motor timing without blocking main control loops.</p>
+
+        <div class="figure">
+            <img src="images/softwarediagram.png" alt="System architecture diagram showing PC-side and car-side Pico W subsystems with component connections" style="max-width: 100%; height: auto;">
+            <strong>Figure:</strong> System architecture diagram showing the PC-side and car-side Pico W subsystems, their internal components, and data flow between them.
+        </div>
+
+        <h3>Hardware/Software Tradeoffs</h3>
+        
+        <h4>Hardware</h4>
+        
+        <h5>Chassis and Marker Mounting</h5>
+        <p>The car uses a reverse-engineered chassis with a centrally mounted hole to hold a dry erase marker. This design is simple to CAD and ensures rigidity, reducing wobble during movement. However, accurately positioning the marker at the optimal height is challenging. If the marker sits too low, it drags against the surface and resists motion, introducing extra friction. If it's too high, the drawn line may be faint or inconsistent. Misalignment can also alter the car's motion, reducing path accuracy, especially during sharp turns or tight curves. The tradeoff is between ease of construction and mechanical precision: a simple rigid mount is easier to fabricate, but fine-tuning marker height and placement is time-consuming and directly affects performance.</p>
+
+        <h4>Software</h4>
+        
+        <h5>Motor Control</h5>
+        <p>The car has no wheel encoders, so position is estimated by sequentially updating the pose at each waypoint and correcting heading using the BNO055 IMU. We chose to forgo encoders because we were satisfied with timing-based control, where the duration of the "drive forward" command is calculated based on distance and expected speed. This approach reduces hardware complexity and simplifies the control system. However, this timing-based method assumes consistent motor performance and surface conditions. In cases where there is increased friction, such as when the marker is positioned too low and drags against the drawing surface, the car travels a shorter distance than expected for the given time duration. This causes position estimation errors and cumulative drift, particularly over longer paths or during tight turns. The lack of position feedback means the system cannot detect or compensate for these variations in actual distance traveled. PWM duty cycles are tuned to balance speed and stability under normal conditions. High duty cycles can saturate the motors, causing uneven motion or overshoot, while too low duty cycles reduce responsiveness. The control loop continuously adjusts left/right motor speeds based on heading error, ensuring the car corrects deviations dynamically, but it cannot correct for distance errors without encoder feedback.</p>
+
+        <h5>Communication</h5>
+        <p>UDP was chosen for its low-latency characteristics, ideal for real-time transmission of waypoints from the PC-side Pico W. UDP operates on a "quantity over quality" principle, where packets may be lost and there is no way to verify on the PC-side (sender) that the data was received by the car (receiver). We contemplated switching to TCP or Bluetooth after noticing lags and pairing issues, but later realized that the problems were caused by the RedRover connection, not UDP itself. After switching to a phone hotspot, UDP proved to be quite reliable. There is a tradeoff with UDP: without any feedback or acknowledgment from the receiver, we don't have full interactivity. To allow the user to append more waypoints to the car, we leave it up to the user to wait for the car to finish its previous course. When sending a new payload, the sender updates the first element of the data array, which indicates how many total waypoints are encoded. The car receives this value and compares it to the previous count. When the car receives a value in the first element that is greater than the previous count, it knows the data is newly received and where to begin reading new waypoints. Dropped packets are tolerated; continuous streaming ensures that missing points have minimal effect on overall path execution.</p>
+
+        <h5>IMU Integration</h5>
+        <p>The BNO055 provides Euler angles for heading estimation, allowing the car to maintain a correct trajectory toward each waypoint. While the driver simplifies access to orientation data, it limits low-level timing control, which can slightly reduce precision when combined with PWM motor updates. IMU readings are polled at high frequency and integrated with motor commands to allow real-time heading correction.</p>
+
+        <h5>Software Architecture</h5>
+        <p>Two Pico Ws separate concerns: the PC-side handles USB mouse input, waypoint generation, and VGA visualization, while the car-side manages sensing, control logic, and motor actuation. This separation reduces timing conflicts and ensures that heavy computation on one side (e.g., VGA rendering) does not disrupt motor control or heading updates. Protothreads enable cooperative multitasking, efficiently scheduling multiple tasks without preemption overhead. Tasks include UDP packet reception, IMU reading, heading computation, motor PWM updates, and optional VGA debug output. Careful thread synchronization is required, especially for tasks tied to PWM timing and real-time UDP handling. The ISR-driven motor PWM ensures precise motor timing independent of the main control loop, while cooperative threads manage higher-level decision-making.</p>
+
+        <h2>Software Design</h2>
+        
+        <p>The software architecture is divided into two subsystems running on separate Pico Ws: the PC-side interface and the car-side control system. Both systems use protothreads for cooperative multitasking, enabling concurrent execution of multiple tasks without preemption overhead.</p>
+
+        <h3>1. PC-Side Software</h3>
+        
+        <p>The PC-side Pico W runs on dual cores with the following thread organization:</p>
+        <ul>
+            <li><strong>Core 0:</strong> UDP communication, USB HID processing, waypoint management, LED status</li>
+            <li><strong>Core 1:</strong> VGA graphics rendering (dedicated core for display updates)</li>
+        </ul>
+
+        <h4>1.1 VGA Graphics Subsystem</h4>
+        
+        <p>The VGA display runs on Core 1 using the VGA16 graphics library, providing a 640×480 pixel, 16-color display. The VGA thread continuously updates the screen to show the drawing interface, waypoint markers, and system status at approximately 60 Hz.</p>
+
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * VGA graphics thread (Core 1)
+ * Continuously renders the drawing interface, waypoints, and status information
+ * Updates at ~60 Hz for smooth display
+ */</span>
+PT_THREAD (<span class="function">protothread_vga</span>(<span class="keyword">struct</span> pt *pt))
+{
+    PT_BEGIN(pt);
+    <span class="keyword">static</span> <span class="keyword">char</span> video_str[<span class="number">64</span>], mouse_str[<span class="number">10</span>];
+    <span class="keyword">static</span> <span class="keyword">unsigned char</span> draw_color = GREEN;
+    <span class="keyword">static</span> <span class="keyword">int</span> prev_dot_x = -<span class="number">1</span>, prev_dot_y = -<span class="number">1</span>;
+    <span class="keyword">static</span> <span class="keyword">int</span> has_prev_dot = <span class="number">0</span>;
+
+    <span class="comment">// Display team names and status information</span>
+    setTextColor(WHITE);
+    setCursor(<span class="number">65</span>, <span class="number">20</span>);
+    writeString(<span class="string">"Sarah Zhong"</span>);
+    <span class="comment">// ... additional team member names</span>
+
+    <span class="keyword">while</span> (<span class="number">1</span>) {
+        <span class="comment">// Get current mouse position and waypoint count</span>
+        <span class="keyword">extern</span> <span class="keyword">int</span> mouse_x, mouse_y, mouse_button;
+        <span class="keyword">extern</span> <span class="keyword">short</span> data_array[];
+        <span class="keyword">int</span> waypoint_count = (data_array[<span class="number">0</span>] >= <span class="number">0</span>) ? (<span class="keyword">int</span>)data_array[<span class="number">0</span>] : <span class="number">0</span>;
+
+        <span class="comment">// Draw cursor at mouse position</span>
+        <span class="function">erase_cursor</span>(prev_cursor_x, prev_cursor_y);
+        <span class="function">draw_cursor</span>(mouse_x, mouse_y);
+
+        <span class="comment">// Draw waypoints and connecting lines</span>
+        <span class="keyword">if</span> (waypoint_count > <span class="number">0</span>) {
+            <span class="comment">// Draw waypoint markers and connecting lines</span>
+            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i < waypoint_count; i++) {
+                <span class="keyword">int</span> base = <span class="number">3</span> + i * <span class="number">2</span>;
+                <span class="keyword">int</span> wp_x = data_array[base];
+                <span class="keyword">int</span> wp_y = data_array[base + <span class="number">1</span>];
+                <span class="function">fillCircle</span>(wp_x, wp_y, <span class="number">3</span>, draw_color);
+                <span class="comment">// Draw line to previous waypoint</span>
+                <span class="keyword">if</span> (i > <span class="number">0</span>) {
+                    <span class="keyword">int</span> prev_base = <span class="number">3</span> + (i - <span class="number">1</span>) * <span class="number">2</span>;
+                    <span class="function">drawLine</span>(data_array[prev_base], data_array[prev_base + <span class="number">1</span>],
+                              wp_x, wp_y, draw_color);
+                }
+            }
+        }
+
+        <span class="comment">// Update status text (waypoint count, UDP status, optimization mode)</span>
+        <span class="function">sprintf</span>(video_str, <span class="string">"Waypoints: %d"</span>, waypoint_count);
+        <span class="function">setCursor</span>(<span class="number">505</span>, <span class="number">30</span>);
+        <span class="function">writeString</span>(video_str);
+
+        PT_YIELD_usec(<span class="number">16667</span>);  <span class="comment">// ~60 Hz update rate</span>
+    }
+    PT_END(pt);
+}</code></pre>
+        </div>
+
+        <p>The VGA subsystem uses a framebuffer approach where pixel data is stored in a 153.6 kB array (`vga_data_array`). Each byte encodes two pixels (4 bits per pixel for 16 colors). The display is updated via DMA transfers to the VGA connector, with horizontal and vertical sync signals generated by PIO state machines.</p>
+
+        <h4>1.2 USB Mouse Input Subsystem</h4>
+        
+        <p>Mouse input is handled using TinyUSB's USB Host functionality. The HID thread polls the USB bus at 125 Hz to detect mouse movement and button clicks, updating global variables for mouse position and button state.</p>
+
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * USB HID thread (Core 0)
+ * Polls USB bus for mouse input at 125 Hz
+ * Updates global mouse_x, mouse_y, and mouse_button variables
+ */</span>
+PT_THREAD (<span class="function">protothread_hid</span>(<span class="keyword">struct</span> pt *pt))
+{
+    PT_BEGIN(pt);
+    <span class="keyword">while</span> (<span class="number">1</span>) {
+        <span class="function">tuh_task</span>();  <span class="comment">// Process USB host events</span>
+        PT_YIELD_usec(<span class="number">8000</span>);  <span class="comment">// 125 Hz polling rate</span>
+    }
+    PT_END(pt);
+}</code></pre>
+        </div>
+
+        <p>Mouse coordinates are captured in the `my_hid_app.c` callback functions, which update global variables `mouse_x`, `mouse_y`, and `mouse_button`. The mouse position is constrained to the VGA display bounds (0-639 for x, 0-479 for y).</p>
+
+        <h4>1.3 Waypoint Generation and Management</h4>
+        
+        <p>Waypoints are captured when the user left-clicks on the VGA display. The mouse sender thread monitors button state changes using edge detection and adds waypoints to the data array.</p>
+
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * Mouse sender thread (Core 0)
+ * Monitors mouse clicks and manages waypoint capture/sending
+ * Handles auto-pairing, waypoint accumulation, and UDP transmission
+ */</span>
+<span class="keyword">static</span> PT_THREAD (<span class="function">protothread_mouse_sender</span>(<span class="keyword">struct</span> pt *pt))
+{
+    PT_BEGIN(pt);
+    <span class="keyword">extern</span> <span class="keyword">int</span> mouse_x, mouse_y, mouse_button;
+    <span class="keyword">static</span> <span class="keyword">int</span> prev_mouse_button = <span class="number">0</span>;
+    <span class="keyword">static</span> <span class="keyword">int</span> pairing_sent = <span class="number">0</span>, ack_sent = <span class="number">0</span>;
+
+    <span class="keyword">while</span> (<span class="number">1</span>) {
+        <span class="comment">// Step 1: Auto-pairing - send IP address until paired</span>
+        <span class="keyword">if</span> (!paired) {
+            <span class="function">memset</span>(send_data, <span class="number">0</span>, UDP_MSG_LEN_MAX);
+            <span class="function">sprintf</span>(send_data, <span class="string">"IP %s"</span>, 
+                     <span class="function">ip4addr_ntoa</span>(<span class="function">netif_ip4_addr</span>(netif_list)));
+            packet_length = command;
+            PT_SEM_SIGNAL(pt, &new_udp_send_s);
+            PT_YIELD_INTERVAL(<span class="number">1000000</span>);  <span class="comment">// Retry every 1 second</span>
+        }
+
+        <span class="comment">// Step 2: Left-click detection - add waypoint</span>
+        <span class="keyword">if</span> (paired && ack_sent && (mouse_button & <span class="number">1</span>) && !(prev_mouse_button & <span class="number">1</span>)) {
+            <span class="comment">// Edge detection: button just pressed</span>
+            <span class="keyword">if</span> (click_count == <span class="number">0</span>) {
+                <span class="function">reset_data_array</span>();
+                <span class="comment">// First waypoint: set robot position</span>
+                data_array[<span class="number">1</span>] = mouse_x;  <span class="comment">// robot x</span>
+                data_array[<span class="number">2</span>] = mouse_y;  <span class="comment">// robot y</span>
+                data_array[<span class="number">3</span>] = mouse_x;  <span class="comment">// waypoint1 x</span>
+                data_array[<span class="number">4</span>] = mouse_y;  <span class="comment">// waypoint1 y</span>
+            } <span class="keyword">else</span> {
+                <span class="comment">// Subsequent waypoints: append to array</span>
+                <span class="keyword">int</span> base = <span class="number">3</span> + click_count * <span class="number">2</span>;
+                <span class="keyword">if</span> (base + <span class="number">1</span> < MAX_DATA_SIZE) {
+                    data_array[base] = mouse_x;
+                    data_array[base + <span class="number">1</span>] = mouse_y;
+                }
+            }
+            click_count++;
+            data_array[<span class="number">0</span>] = (<span class="keyword">short</span>)click_count;  <span class="comment">// Update waypoint count</span>
+            optimized_route_valid = <span class="number">0</span>;  <span class="comment">// Invalidate optimized route</span>
+        }
+
+        <span class="comment">// Step 3: Right-click detection - send waypoints to car</span>
+        <span class="keyword">if</span> (paired && ack_sent && (mouse_button & <span class="number">2</span>) && !(prev_mouse_button & <span class="number">2</span>)) {
+            <span class="keyword">if</span> (click_count > <span class="number">0</span>) {
+                <span class="keyword">short</span> *route_ptr = data_array;
+                
+                <span class="comment">// Apply path optimization if enabled</span>
+                <span class="keyword">if</span> (use_optimized_route) {
+                    <span class="keyword">if</span> (!optimized_route_valid) {
+                        optimized_route_valid = <span class="function">update_optimized_waypoints</span>();
+                    }
+                    <span class="keyword">if</span> (optimized_route_valid) {
+                        route_ptr = optimized_waypoint_array;
+                    }
+                }
+
+                <span class="comment">// Copy route to send buffer and transmit</span>
+                <span class="function">memcpy</span>(send_data, route_ptr, send_data_size);
+                packet_length = data;
+                PT_SEM_SIGNAL(pt, &new_udp_send_s);
+                continuously_sending = <span class="number">1</span>;
+            }
+        }
+
+        prev_mouse_button = mouse_button;
+        PT_YIELD_usec(<span class="number">10000</span>);  <span class="comment">// 100 Hz polling</span>
+    }
+    PT_END(pt);
+}</code></pre>
+        </div>
+
+        <p><strong>Data Array Format:</strong> The waypoint data is stored in a `short` array with the following structure:</p>
+        <ul>
+            <li><code>data_array[0]</code>: Waypoint count (number of waypoints)</li>
+            <li><code>data_array[1]</code>: Robot starting X position</li>
+            <li><code>data_array[2]</code>: Robot starting Y position</li>
+            <li><code>data_array[3], data_array[4]</code>: Waypoint 1 (x, y)</li>
+            <li><code>data_array[5], data_array[6]</code>: Waypoint 2 (x, y)</li>
+            <li>... and so on for subsequent waypoints</li>
+        </ul>
+
+        <h4>1.4 Path Optimization Subsystem</h4>
+        
+        <p>When optimization mode is enabled, the system applies two algorithms to minimize travel distance: Nearest Neighbor for initial route construction, followed by 2-Opt local improvement. The optimization runs only when the user right-clicks to send waypoints, preventing VGA freezes during waypoint accumulation.</p>
+
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * Update optimized waypoint order
+ * Applies nearest-neighbor and 2-opt algorithms
+ * Returns true if optimization succeeded
+ */</span>
+<span class="keyword">static bool</span> <span class="function">update_optimized_waypoints</span>(<span class="keyword">void</span>)
+{
+    <span class="keyword">if</span> (!use_optimized_route || click_count <= <span class="number">0</span>) {
+        <span class="keyword">return false</span>;
+    }
+
+    <span class="comment">// Extract waypoints to optimize (skip prefix waypoints if needed)</span>
+    waypoint_point_t points[MAX_WAYPOINTS];
+    <span class="keyword">int</span> valid_points = <span class="number">0</span>;
+    <span class="keyword">int</span> prefix_count = optimize_start_waypoint;
+
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i < suffix_count; i++) {
+        <span class="keyword">int</span> base = <span class="number">3</span> + (prefix_count + i) * <span class="number">2</span>;
+        points[valid_points].x = (<span class="keyword">float</span>)data_array[base];
+        points[valid_points].y = (<span class="keyword">float</span>)data_array[base + <span class="number">1</span>];
+        points[valid_points].raw_x = data_array[base];
+        points[valid_points].raw_y = data_array[base + <span class="number">1</span>];
+        valid_points++;
+    }
+
+    <span class="comment">// Build optimized route</span>
+    <span class="keyword">int</span> route[MAX_WAYPOINTS];
+    <span class="function">compute_nearest_neighbor_route</span>(points, valid_points, start_point, route);
+    <span class="function">two_opt_local_improvement</span>(points, valid_points, start_point, route);
+
+    <span class="comment">// Reorder waypoints according to optimized route</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i < valid_points; i++) {
+        <span class="keyword">int</span> src_idx = route[i];
+        optimized_waypoint_array[dest_index++] = points[src_idx].raw_x;
+        optimized_waypoint_array[dest_index++] = points[src_idx].raw_y;
+    }
+
+    optimized_route_valid = <span class="number">1</span>;
+    <span class="keyword">return true</span>;
+}</code></pre>
+        </div>
+
+        <p><em>Note: Detailed algorithm explanations and mathematical background are provided in a separate algorithms document.</em></p>
+
+        <h4>1.5 UDP Transmission</h4>
+        
+        <p>The UDP send thread waits on a semaphore until waypoint data is ready to transmit. It handles both command packets (pairing, acknowledgments) and data packets (waypoint arrays).</p>
+
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * UDP send thread (Core 0)
+ * Transmits waypoint data or command packets to car-side Pico W
+ * Uses semaphore-based signaling for non-blocking operation
+ */</span>
+<span class="keyword">static</span> PT_THREAD (<span class="function">protothread_udp_send</span>(<span class="keyword">struct</span> pt *pt))
+{
+    PT_BEGIN(pt);
+    <span class="keyword">static</span> <span class="keyword">struct</span> udp_pcb* pcb = <span class="function">udp_new</span>();
+    <span class="keyword">static</span> ip_addr_t addr;
+
+    <span class="keyword">while</span> (<span class="keyword">true</span>) {
+        <span class="comment">// Wait for data to send (signaled by mouse_sender thread)</span>
+        PT_SEM_WAIT(pt, &new_udp_send_s);
+
+        <span class="comment">// Determine destination IP (car-side Pico W)</span>
+        <span class="function">ipaddr_aton</span>(udp_target_pico, &addr);
+
+        <span class="comment">// Determine packet length based on type</span>
+        <span class="keyword">int</span> udp_send_length;
+        <span class="keyword">switch</span> (packet_length) {
+            <span class="keyword">case</span> command: udp_send_length = <span class="number">32</span>; <span class="keyword">break</span>;
+            <span class="keyword">case</span> data:     udp_send_length = send_data_size; <span class="keyword">break</span>;
+            <span class="keyword">case</span> ack:      udp_send_length = <span class="number">5</span>; <span class="keyword">break</span>;
+        }
+
+        <span class="comment">// Allocate packet buffer and copy data</span>
+        <span class="keyword">struct</span> pbuf *p = <span class="function">pbuf_alloc</span>(PBUF_TRANSPORT, udp_send_length + <span class="number">1</span>, PBUF_RAM);
+        <span class="function">memcpy</span>(p->payload, send_data, udp_send_length);
+
+        <span class="comment">// Transmit packet</span>
+        <span class="keyword">err_t</span> err = <span class="function">udp_sendto</span>(pcb, p, &addr, UDP_PORT);
+        <span class="function">pbuf_free</span>(p);
+    }
+    PT_END(pt);
+}</code></pre>
+        </div>
+
+        <h3>2. Car-Side Software</h3>
+        
+        <p>The car-side Pico W runs all control logic on Core 0, with Core 1 reserved for future expansion. The system uses a state machine to navigate between waypoints, reading IMU data for heading estimation.</p>
+
+        <h4>2.1 Data Structures</h4>
+        
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * Robot pose structure
+ * Tracks current position and heading in world coordinates
+ */</span>
+<span class="keyword">typedef struct</span> {
+    <span class="keyword">float</span> x;              <span class="comment">// X position (units, matches VGA coordinates)</span>
+    <span class="keyword">float</span> y;              <span class="comment">// Y position (units)</span>
+    <span class="keyword">float</span> heading_rad;    <span class="comment">// Current heading angle (radians, 0 = +x axis)</span>
+} pose_t;
+
+<span class="comment">/**
+ * Waypoint structure
+ * Stores target coordinates for navigation
+ */</span>
+<span class="keyword">typedef struct</span> {
+    <span class="keyword">float</span> x;              <span class="comment">// Target X coordinate</span>
+    <span class="keyword">float</span> y;              <span class="comment">// Target Y coordinate</span>
+} waypoint_t;
+
+<span class="comment">// Global robot state</span>
+pose_t robot = { .x = <span class="number">0.0f</span>, .y = <span class="number">0.0f</span>, .heading_rad = <span class="number">0.0f</span> };
+waypoint_t waypoints[NUM_WAYPOINTS];  <span class="comment">// Array of waypoints (max 20)</span>
+
+<span class="comment">// Movement constants</span>
+<span class="keyword">#define</span> PWM_FORWARD       <span class="number">5000.0f</span>   <span class="comment">// Forward PWM duty cycle</span>
+<span class="keyword">#define</span> TURN_PWM          <span class="number">3500.0f</span>   <span class="comment">// Turning PWM duty cycle</span>
+<span class="keyword">#define</span> ANGLE_TOL_RAD     (<span class="number">10.0f</span> * <span class="number">3.14159265f</span> / <span class="number">180.0f</span>)  <span class="comment">// 10° tolerance</span>
+<span class="keyword">#define</span> UNITS_PER_SECOND  <span class="number">200.0f</span>     <span class="comment">// Robot speed: 200 units/second</span></code></pre>
+        </div>
+
+        <h4>2.2 UDP Reception and Waypoint Parsing</h4>
+        
+        <p>The car-side UDP receive callback runs in an interrupt context when packets arrive. It copies the packet payload to a receive buffer and signals the receive thread via semaphore.</p>
+
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * UDP receive callback (ISR context)
+ * Called by lwIP when UDP packet arrives
+ * MUST be kept short - only copies data and signals thread
+ */</span>
+<span class="keyword">static void</span> <span class="function">udpecho_raw_recv</span>(<span class="keyword">void</span> *arg, <span class="keyword">struct</span> udp_pcb *upcb, 
+                                 <span class="keyword">struct</span> pbuf *p, <span class="keyword">const</span> ip_addr_t *addr, <span class="keyword">u16_t</span> port)
+{
+    <span class="keyword">if</span> (p != NULL) {
+        <span class="comment">// Copy packet payload to receive buffer</span>
+        <span class="function">memcpy</span>(recv_data, p->payload, UDP_MSG_LEN_MAX);
+        
+        <span class="comment">// Signal receive thread (safe to call from ISR)</span>
+        PT_SEM_SIGNAL(pt, &new_udp_recv_s);
+        
+        <span class="function">pbuf_free</span>(p);  <span class="comment">// Free packet buffer</span>
+    }
+}
+
+<span class="comment">/**
+ * UDP receive processing thread
+ * Parses received waypoint data and updates waypoint array
+ */</span>
+<span class="keyword">static</span> PT_THREAD (<span class="function">protothread_udp_recv</span>(<span class="keyword">struct</span> pt *pt))
+{
+    PT_BEGIN(pt);
+    <span class="keyword">while</span> (<span class="number">1</span>) {
+        <span class="comment">// Wait for new packet (signaled by ISR)</span>
+        PT_SEM_WAIT(pt, &new_udp_recv_s);
+
+        <span class="comment">// Copy binary waypoint data to data_array</span>
+        <span class="function">memcpy</span>(data_array, recv_data, send_data_size);
+
+        <span class="comment">// Send acknowledgment back to PC-side</span>
+        <span class="function">memset</span>(send_data, <span class="number">0</span>, UDP_MSG_LEN_MAX);
+        <span class="function">sprintf</span>(send_data, <span class="string">"ack"</span>);
+        packet_length = ack;
+        PT_SEM_SIGNAL(pt, &new_udp_send_s);
+    }
+    PT_END(pt);
+}</code></pre>
+        </div>
+
+        <h4>2.3 IMU Integration</h4>
+        
+        <p>The BNO055 IMU is read via I2C. Heading data is read in the PWM interrupt service routine to ensure high-frequency updates without blocking the main control loop.</p>
+
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * PWM wrap interrupt service routine
+ * Called periodically by hardware PWM timer
+ * Reads IMU Euler angles for heading estimation
+ * Runs at PWM frequency (~1 kHz for motors)
+ */</span>
+<span class="keyword">void</span> <span class="function">on_pwm_wrap</span>() {
+    <span class="comment">// Clear interrupt flags</span>
+    <span class="function">pwm_clear_irq</span>(slice_fwd);
+    <span class="function">pwm_clear_irq</span>(slice_rev);
+
+    <span class="comment">// Read BNO055 Euler angles (yaw/pitch/roll)
+    // Data is in 15.16 fixed-point format
+    // euler[0] = yaw (heading) in degrees</span>
+    <span class="function">bno055_read_euler</span>(euler);
+}
+
+<span class="comment">/**
+ * Update robot heading from IMU
+ * Converts fixed-point degrees to radians
+ */</span>
+<span class="keyword">static void</span> <span class="function">update_robot_heading_from_imu</span>(<span class="keyword">void</span>)
+{
+    <span class="keyword">float</span> yaw_deg = <span class="function">fix2float15</span>(euler[<span class="number">0</span>]);   <span class="comment">// Convert 15.16 fixed-point to float</span>
+    robot.heading_rad = <span class="function">deg2rad</span>(yaw_deg);    <span class="comment">// Store in radians</span>
+}</code></pre>
+        </div>
+
+        <p>The BNO055 is configured in NDOF (Nine Degrees of Freedom) fusion mode, which internally combines accelerometer, gyroscope, and magnetometer data to provide stable Euler angles. The I2C communication runs at 400 kHz, and the sensor is polled at approximately 1 kHz via the PWM ISR.</p>
+
+        <h4>2.4 Motor Control Functions</h4>
+        
+        <p>Motor control uses the RP2040's hardware PWM peripherals. Four PWM channels control the H-bridge driver: two for forward motion (GPIO16, GPIO17) and two for reverse (GPIO6, GPIO7). Motors use a wrap value of 5000 with a clock divider of 25.0, resulting in a PWM frequency of approximately 1 kHz.</p>
+
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * Set left motor speed with signed value
+ * Positive = forward, negative = backward, zero = stop
+ * Uses separate PWM slices for forward and reverse channels
+ */</span>
+<span class="keyword">void</span> <span class="function">set_left_motor_signed</span>(<span class="keyword">float</span> speed) {
+    <span class="keyword">if</span> (speed > <span class="number">0.0f</span>) {
+        <span class="comment">// Forward: use forward PWM channel (GPIO16)</span>
+        <span class="function">left_forward_pin_pwm</span>(speed);
+        <span class="function">left_reverse_pin_pwm</span>(<span class="number">0.0f</span>);
+    } <span class="keyword">else if</span> (speed < <span class="number">0.0f</span>) {
+        <span class="comment">// Backward: use reverse PWM channel (GPIO7)</span>
+        <span class="function">left_forward_pin_pwm</span>(<span class="number">0.0f</span>);
+        <span class="function">left_reverse_pin_pwm</span>(-speed);  <span class="comment">// Negate to get positive PWM value</span>
+    } <span class="keyword">else</span> {
+        <span class="comment">// Stop: set both channels to zero</span>
+        <span class="function">left_forward_pin_pwm</span>(<span class="number">0.0f</span>);
+        <span class="function">left_reverse_pin_pwm</span>(<span class="number">0.0f</span>);
+    }
+}
+
+<span class="comment">/**
+ * Low-level PWM helper with clamping
+ * Ensures duty cycle stays within valid range [0, WRAPVAL]
+ */</span>
+<span class="keyword">static inline void</span> <span class="function">left_forward_pin_pwm</span>(<span class="keyword">float</span> pwm) {
+    <span class="keyword">if</span> (pwm < <span class="number">0.0f</span>) pwm = <span class="number">0.0f</span>;
+    <span class="keyword">if</span> (pwm > (<span class="keyword">float</span>)WRAPVAL) pwm = (<span class="keyword">float</span>)WRAPVAL;
+    <span class="function">pwm_set_chan_level</span>(slice_fwd, PWM_CHAN_A, pwm);  <span class="comment">// GPIO16</span>
+}</code></pre>
+        </div>
+
+        <h4>2.5 Navigation State Machine</h4>
+        
+        <p>The main control loop implements a three-state finite state machine for waypoint navigation.</p>
+
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * Main movement control thread
+ * Implements state machine: WAITING → TURNING → DRIVING → TURNING → ...
+ * Handles dynamic waypoint addition during execution
+ */</span>
+<span class="keyword">static</span> PT_THREAD (<span class="function">protothread_I_like_to_move_it_move_it</span>(<span class="keyword">struct</span> pt *pt))
+{
+    PT_BEGIN(pt);
+    <span class="keyword">static enum</span> {
+        MOVE_WAITING_FOR_ROUTE = <span class="number">0</span>,
+        MOVE_TURNING,
+        MOVE_DRIVING
+    } move_state = MOVE_WAITING_FOR_ROUTE;
+    <span class="keyword">static</span> <span class="keyword">uint64_t</span> drive_end_time_us = <span class="number">0</span>;
+    <span class="keyword">static</span> waypoint_t *current_target = NULL;
+    <span class="keyword">static</span> <span class="keyword">int</span> last_seen_waypoint_count = -<span class="number">1</span>;
+
+    <span class="keyword">while</span> (<span class="number">1</span>) {
+        <span class="keyword">uint32_t</span> delay_us = <span class="number">50000</span>;  <span class="comment">// 50ms default (20 Hz control loop)</span>
+
+        <span class="comment">// Check for new waypoint data</span>
+        <span class="keyword">if</span> (data_array[<span class="number">0</span>] != -<span class="number">1</span> && data_array[<span class="number">0</span>] > last_seen_waypoint_count) {
+            <span class="keyword">int</span> current_waypoint_count = data_array[<span class="number">0</span>];
+            
+            <span class="keyword">if</span> (!route_initialized) {
+                <span class="comment">// First time: initialize robot position and load all waypoints</span>
+                <span class="function">populate_robot</span>();
+                <span class="function">populate_waypoints_from_index</span>(<span class="number">0</span>);
+                current_waypoint = <span class="number">1</span>;  <span class="comment">// Start from waypoint 1 (skip waypoint 0 = home)</span>
+                route_initialized = <span class="keyword">true</span>;
+                move_state = MOVE_TURNING;
+            } <span class="keyword">else</span> {
+                <span class="comment">// More waypoints added: load only new waypoints, keep current position</span>
+                <span class="keyword">int</span> start_index = last_processed_waypoint_index + <span class="number">1</span>;
+                <span class="function">populate_waypoints_from_index</span>(start_index);
+                current_waypoint = start_index;
+                <span class="keyword">if</span> (current_waypoint < loaded_waypoint_count) {
+                    move_state = MOVE_TURNING;  <span class="comment">// Resume navigation</span>
+                }
+            }
+            last_seen_waypoint_count = current_waypoint_count;
+        }
+
+        <span class="comment">// State machine execution</span>
+        <span class="keyword">switch</span> (move_state) {
+            <span class="keyword">case</span> MOVE_WAITING_FOR_ROUTE:
+                delay_us = <span class="number">200000</span>;  <span class="comment">// Wait 200ms when no route</span>
+                <span class="keyword">break</span>;
+
+            <span class="keyword">case</span> MOVE_TURNING: {
+                <span class="function">update_robot_heading_from_imu</span>();
+                <span class="keyword">float</span> err = <span class="function">turn_angle_to_waypoint</span>(&robot, current_target);
+                
+                <span class="keyword">if</span> (<span class="function">fabsf</span>(err) < ANGLE_TOL_RAD) {
+                    <span class="comment">// Aligned: check distance and transition to driving</span>
+                    <span class="function">set_left_motor_signed</span>(<span class="number">0.0f</span>);
+                    <span class="function">set_right_motor_signed</span>(<span class="number">0.0f</span>);
+                    
+                    <span class="keyword">float</span> dist = <span class="function">distance_to_waypoint</span>(&robot, current_target);
+                    <span class="keyword">if</span> (dist < <span class="number">0.01f</span>) {
+                        <span class="comment">// Already at waypoint</span>
+                        robot.x = current_target->x;
+                        robot.y = current_target->y;
+                        current_waypoint++;
+                        <span class="keyword">break</span>;
+                    }
+                    
+                    <span class="comment">// Calculate drive time and start forward motion</span>
+                    <span class="keyword">float</span> time_s = dist / UNITS_PER_SECOND;
+                    drive_end_time_us = <span class="function">time_us_64</span>() + (<span class="keyword">uint64_t</span>)(time_s * <span class="number">1000000.0f</span>);
+                    <span class="function">set_left_motor_signed</span>(PWM_FORWARD);
+                    <span class="function">set_right_motor_signed</span>(PWM_FORWARD);
+                    move_state = MOVE_DRIVING;
+                } <span class="keyword">else if</span> (err < <span class="number">0.0f</span>) {
+                    <span class="comment">// Turn left: differential steering</span>
+                    <span class="function">set_left_motor_signed</span>(-TURN_PWM);
+                    <span class="function">set_right_motor_signed</span>(+TURN_PWM);
+                } <span class="keyword">else</span> {
+                    <span class="comment">// Turn right</span>
+                    <span class="function">set_left_motor_signed</span>(+TURN_PWM);
+                    <span class="function">set_right_motor_signed</span>(-TURN_PWM);
+                }
+                delay_us = <span class="number">50000</span>;
+                <span class="keyword">break</span>;
+            }
+
+            <span class="keyword">case</span> MOVE_DRIVING: {
+                <span class="keyword">if</span> (<span class="function">time_us_64</span>() >= drive_end_time_us) {
+                    <span class="comment">// Time-based motion complete</span>
+                    <span class="function">set_left_motor_signed</span>(<span class="number">0.0f</span>);
+                    <span class="function">set_right_motor_signed</span>(<span class="number">0.0f</span>);
+                    robot.x = current_target->x;  <span class="comment">// Update position</span>
+                    robot.y = current_target->y;
+                    current_waypoint++;
+                    move_state = MOVE_TURNING;  <span class="comment">// Transition back to turning</span>
+                } <span class="keyword">else</span> {
+                    <span class="comment">// Continue driving forward</span>
+                    <span class="function">set_left_motor_signed</span>(PWM_FORWARD);
+                    <span class="function">set_right_motor_signed</span>(PWM_FORWARD);
+                }
+                delay_us = <span class="number">50000</span>;
+                <span class="keyword">break</span>;
+            }
+        }
+
+        PT_YIELD_usec(delay_us);
+    }
+    PT_END(pt);
+}</code></pre>
+        </div>
+
+        <p><strong>State Transitions:</strong></p>
+        <ul>
+            <li><strong>MOVE_WAITING_FOR_ROUTE:</strong> Initial state when no waypoints are available. Car remains stationary.</li>
+            <li><strong>MOVE_TURNING:</strong> Car rotates to face the current target waypoint. Uses differential steering (left and right motors run in opposite directions). Exits when heading error is within 10° tolerance.</li>
+            <li><strong>MOVE_DRIVING:</strong> Car moves forward in a straight line for a calculated duration based on distance and speed. Uses time-based control rather than position feedback (no encoders).</li>
+        </ul>
+
+        <h3>3. Communication Subsystem</h3>
+        
+        <h4>3.1 UDP Protocol</h4>
+        
+        <p>Communication between PC-side and car-side Pico Ws uses UDP over Wi-Fi. The protocol supports three packet types. Command packets are 32 bytes, used for pairing ("IP &lt;address&gt;") and acknowledgments ("ack"). Data packets are variable length (up to 1024 bytes) and contain the waypoint array. Acknowledgment packets are 5 bytes and confirm data receipt.</p>
+
+        <h4>3.2 Pairing Mechanism</h4>
+        
+        <p>The system uses an automatic pairing protocol to discover and connect the two Pico Ws. The PC-side broadcasts its IP address as "IP 192.168.1.100". The car-side receives the broadcast and responds with its own IP as "IP 192.168.1.101". Both sides store each other's IP addresses and mark <code>paired = true</code>. The car-side sends an acknowledgment "ack", and the PC-side begins sending waypoint data.</p>
+
+        <div class="code-section">
+            <pre><code><span class="comment">/**
+ * Pairing packet handling in UDP receive thread
+ */</span>
+<span class="keyword">if</span> (<span class="function">strcmp</span>(arg1, <span class="string">"IP"</span>) == <span class="number">0</span>) {
+    <span class="keyword">if</span> (mode == echo) {  <span class="comment">// Car-side (echo unit)</span>
+        <span class="comment">// Save sender's IP address</span>
+        <span class="function">strcpy</span>(udp_target_pico, arg2);
+        paired = <span class="keyword">true</span>;
+        
+        <span class="comment">// Respond with our IP address</span>
+        <span class="function">memset</span>(send_data, <span class="number">0</span>, UDP_MSG_LEN_MAX);
+        <span class="function">sprintf</span>(send_data, <span class="string">"IP %s"</span>, 
+                 <span class="function">ip4addr_ntoa</span>(<span class="function">netif_ip4_addr</span>(netif_list)));
+        packet_length = command;
+        PT_SEM_SIGNAL(pt, &new_udp_send_s);
+    } <span class="keyword">else</span> {  <span class="comment">// PC-side (send unit)</span>
+        <span class="comment">// Save car's IP address</span>
+        <span class="function">strcpy</span>(udp_target_pico, arg2);
+        paired = <span class="keyword">true</span>;
+    }
+}</code></pre>
+        </div>
+
+        <h4>3.3 Packet Format</h4>
+        
+        <p>Waypoint data packets use a binary format for efficiency. Bytes 0-1 contain the waypoint count (short, 2 bytes). Bytes 2-3 contain the robot starting X position (short, 2 bytes). Bytes 4-5 contain the robot starting Y position (short, 2 bytes). Bytes 6 and beyond contain waypoint coordinates as pairs of shorts (x, y, x, y, ...). This binary format minimizes packet size compared to text-based protocols, reducing transmission time and improving real-time responsiveness.</p>
+
+        <h4>3.4 Thread Synchronization</h4>
+        
+        <p>Inter-thread communication uses protothread semaphores. The <code>new_udp_recv_s</code> semaphore is signaled by the UDP receive ISR when a packet arrives. The <code>new_udp_send_s</code> semaphore is signaled by the mouse sender thread when waypoints are ready to transmit. These semaphores enable non-blocking, event-driven communication between threads, ensuring that heavy VGA rendering or UDP transmission doesn't block mouse input processing or motor control.</p>
+
+        <h4>3.5 Error Handling and Reliability</h4>
+        
+        <p>UDP is connectionless and doesn't guarantee delivery. The system handles this through several mechanisms. After right-click, waypoint data is sent repeatedly until new waypoints arrive. The car-side sends "ack" packets to confirm receipt, though this is not strictly required for operation. New waypoints can be added while the car is moving, and the car will incorporate them into its path. The waypoint count in <code>data_array[0]</code> allows detection of new waypoint sets.</p>
+
+        <h3>4. Thread Organization and Concurrency</h3>
+        
+        <h4>4.1 PC-Side Threads (Core 0)</h4>
+        <p>Core 0 runs several protothreads. The <code>protothread_udp_recv</code> thread processes incoming UDP packets (pairing, acknowledgments). The <code>protothread_udp_send</code> thread transmits waypoint data and command packets. The <code>protothread_hid</code> thread polls the USB bus for mouse input at 125 Hz. The <code>protothread_mouse_sender</code> thread monitors mouse clicks, manages waypoint accumulation, and triggers UDP transmission. The <code>protothread_toggle_cyw43</code> thread blinks the Wi-Fi LED to indicate system status.</p>
+
+        <h4>4.2 PC-Side Threads (Core 1)</h4>
+        <p>Core 1 runs the <code>protothread_vga</code> thread, which renders the VGA display at approximately 60 Hz, drawing waypoints, cursor, and status text.</p>
+
+        <h4>4.3 Car-Side Threads (Core 0)</h4>
+        <p>Core 0 runs several protothreads. The <code>protothread_udp_recv</code> thread parses received waypoint data and updates <code>data_array</code>. The <code>protothread_udp_send</code> thread sends acknowledgment packets back to the PC-side. The <code>protothread_I_like_to_move_it_move_it</code> thread implements the main navigation control loop with the state machine. The <code>protothread_toggle_cyw43</code> thread provides status LED indication.</p>
+
+        <h4>4.4 Interrupt Service Routines</h4>
+        <p>Two interrupt service routines handle time-critical operations. The PWM Wrap ISR updates motor PWM duty cycles and reads IMU data at approximately 1 kHz. The UDP Receive ISR copies incoming packets to a buffer and signals the receive thread (asynchronous, triggered by lwIP). All ISRs are kept minimal to avoid blocking other system operations. The PWM ISR only updates hardware registers and reads sensor data, while the UDP ISR only copies data and signals a semaphore.</p>
+
+        <h3>Hardware Details</h3>
+        
+        <h4>Electrical Hardware</h4>
+        <div class="figure-pair">
+            <div class="figure">
+                <img src="images/car_hardware.png" alt="Electronics mounted on the car" style="max-width: 100%; height: auto;">
+                <strong>Figure:</strong> Electronics mounted on the car
+            </div>
+            <div class="figure">
+                <img src="images/vga_hardware.png" alt="Pico W and VGA interface hardware" style="max-width: 100%; height: auto;">
+                <strong>Figure:</strong> Pico W and VGA interface hardware
+            </div>
+        </div>
+        <h4>Mechanical Hardware</h4>
+        
+        <h5>Preliminary Design</h5>
+        <p>The autonomous drawing car uses a chassis sourced from the lab, likely part of a car kit. We reverse-engineered the chassis in CAD to accommodate a central dry erase marker mount, ensuring the marker tip makes contact with the drawing surface without interfering with wheel motion.</p>
+
+        <h5>CAD Design</h5>
+        <p>The original CAD model was modified to include a marker holder at the geometric center of the chassis. The mount was designed to be rigid and aligned with the chassis' center of mass, minimizing wobble during movement. Adjustments in CAD focused on ensuring clearance for the motors and wheels while maintaining a simple, manufacturable design.</p>
+
+        <div class="figure">
+            <img src="images/chassis.png" alt="Original chassis design" style="max-width: 100%; height: auto;">
+            <strong>Figure:</strong> Chassis
+        </div>
+
+        <div class="figure">
+            <img src="images/reverseengineered.png" alt="Reverse engineered CAD model" style="max-width: 100%; height: auto;">
+            <strong>Figure:</strong> Reverse engineered CAD
+        </div>
+
+        <div class="figure">
+            <img src="images/modified.png" alt="Chassis with dry erase marker mount" style="max-width: 100%; height: auto;">
+            <strong>Figure:</strong> With dry erase marker mount
+        </div>
+
+        <h5>Implementation Notes</h5>
+        <p>The modified chassis was printed and assembled using standard lab components. The marker is secured in the mount and can be removed or replaced for maintenance. The mount is fixed in height, but slight manual adjustments were made during testing to ensure reliable contact with the drawing surface.</p>
+
+        <h3>Code and Design References</h3>
+        <p>All source files retain their original copyright notices where applicable, and this project complies with the terms of all included licenses. Detailed attribution information is documented in <code>picomobile/ATTRIBUTIONS.md</code> and in the References section below. We drew heavily from ECE 4760 course examples provided by Professors Bruce Land and Van Hunter Adams: Professor Land provided USB Host HID examples, UDP data transfer examples using LWIP and protothreads, and the VGA graphics framework. Professor Hunter Adams provided PWM generation examples for motor control, I2C communication patterns, and sensor interfacing examples.</p>
+
+        <h3>Things We Tried That Did Not Work</h3>
+
+        <p>Over the final weeks of development, we explored several approaches that ultimately proved ineffective or counterproductive. While these attempts did not make it into the final system, they were critical in shaping our understanding of the problem and guiding us toward more robust solutions.</p>
+
+        <p><strong>Continuous Dead-Reckoning Position Integration.</strong> Early on, we attempted to continuously update the robot’s global position by integrating forward motion over time using a fixed velocity model. In practice, small variations in motor speed, battery voltage, and surface friction caused position estimates to drift rapidly. Without wheel encoders or closed-loop distance sensing, the accumulated error became large enough that waypoint navigation degraded significantly over longer paths. This led us to abandon continuous integration in favor of discrete waypoint execution with heading correction.</p>
+
+        <p><strong>Closed-Loop Heading Control with Aggressive Gains.</strong> We initially implemented a proportional-style heading controller with relatively high gains in an effort to achieve fast alignment. While this worked in simulation, the real system exhibited oscillations and jitter due to IMU noise and motor dead zones. The robot would repeatedly overshoot the desired heading, resulting in audible motor chatter and unstable motion. Reducing this to a threshold-based, bang-bang turning strategy produced far more reliable and repeatable behavior.</p>
+
+        <p><strong>Driving While Turning Toward a Waypoint.</strong> Another attempted improvement was to allow the robot to drive forward while simultaneously correcting its heading, rather than fully aligning before moving. In theory, this should have produced smoother trajectories. In practice, mismatched motor characteristics and uneven friction caused the robot to arc unpredictably, especially at low speeds. This made path execution less consistent than the simpler “turn-then-drive” approach.</p>
+
+        <p><strong>Exact Path Following of Dense Waypoints.</strong> When streaming dense point data from the drawing interface, we attempted to have the car follow every point exactly. This overwhelmed the control loop and amplified small heading errors, leading to jerky motion and excessive turning. The robot spent more time correcting orientation than making forward progress. This experience motivated the use of waypoint spacing and optional path optimization to reduce unnecessary heading changes.</p>
+
+        <p><strong>More Complex Path Optimization Schemes.</strong> Beyond nearest-neighbor and 2-opt refinement, we briefly explored more exhaustive path reordering strategies inspired by full TSP solvers. These approaches were either too computationally expensive for our workflow or offered negligible improvement over simpler heuristics, especially given the physical limitations and noise of the robot. The added complexity was not justified by real-world performance gains.</p>
+
+        <p><strong>Mechanical Marker Adjustments as a Software Fix.</strong> We repeatedly tried to compensate in software for issues caused by marker drag and uneven contact with the drawing surface. No amount of tuning could fully overcome poor marker height or alignment, reinforcing the lesson that some problems are fundamentally mechanical. Once the marker mount was physically adjusted, many previously mysterious control issues disappeared.</p>
+
+        <p>Although these approaches did not succeed, each failure clarified system constraints and informed the final design. Many of the project’s most stable features emerged directly from understanding why these ideas did not work on real hardware.</p>
+
+
+        <h3>AI Use</h3>
+        <p>Throughout the project, we experimented with two main AI tools: ChatGPT and Cursor. We attempted to use both for a wide range of tasks including hardware troubleshooting, code writing, VGA graphics formatting, and understanding Git workflows.</p>
+
+        <p>During the initial brainstorming phase, we used ChatGPT extensively to explore project ideas and generate initial concepts. We also attempted to use it for component selection, but found this approach to be significantly flawed. ChatGPT often hallucinated component specifications or recommended parts that were poorly suited to our requirements, leading us to rely on datasheets and vendor documentation instead.</p>
+
+        <p>For code generation, we found both Cursor and ChatGPT to be ineffective. The AI tools frequently produced what we came to call "monkey-paw" code: technically correct code that compiled and ran, but failed to meet our actual design goals or requirements. However, the exercise of prompting the LLM and then realizing its output was inadequate forced us to think more critically about what we were trying to accomplish. This process of identifying the gaps between the AI's output and our needs helped us manually write better code and think through design choices more carefully.</p>
+
+        <p>During the main development phase of the final project, attempting to use AI for code generation actually slowed us down. Similar to our experience in previous lab assignments for this course, we found AI tools to be most helpful when used in "Ask mode" for informational questions. Cursor was particularly useful in this context because it could analyze multiple files simultaneously, providing context-aware answers about our codebase. However, we did not use Agent mode and did not accept any code suggestions generated in Ask mode.</p>
+
+        <p>ChatGPT proved valuable for addressing side issues unrelated to core development, such as version control workflows, troubleshooting build system problems, and resolving issues with uploading code to the Pico W. For these peripheral tasks, the AI's ability to provide quick explanations and step-by-step guidance was helpful, though we always verified the information against official documentation.</p>
+
+        <p>In summary, while AI tools were useful for brainstorming, asking questions, and troubleshooting auxiliary issues, we found them counterproductive for actual code development. The process of working with AI-generated code that was technically correct but functionally wrong ultimately helped us develop a deeper understanding of our system requirements and write more thoughtful, purpose-driven code.</p>
+
+        <h2>Results of the Design</h2>
+        
+        <h3>Test Data, Scope Traces, and Waveforms</h3>
+        <div class="figure-pair scope-pair">
+            <div class="figure">
+                <img src="images/testing_scope_car.png" alt="Scope view of the car outputs during testing">
+                <strong>Figure:</strong> Scope view of the car outputs during testing
+            </div>
+            <div class="figure">
+                <img src="images/testing_scope_trace.png" alt="Detailed PWM waveform trace">
+                <strong>Figure:</strong> Detailed PWM waveform trace
+            </div>
+        </div>
+
+        <h3>Speed of Execution</h3>
+        <p>The speed is adjustable by adjusting the speed of the wheels during the "drive forward" phase. The turning phase takes approximately half a second, but depending on factors like friction between the wheels and the charge of the battery, the angle correction could take longer. If batteries are at a slightly higher voltage than 5V, the car can overshoot its target angle and require additional time to correct.</p>
+
+        <h3>Accuracy</h3>
+        <p>Without the pen attached, the car can reliably trace out any shape. If you draw a closed shape where the last waypoint on the VGA is where the car started, the car will reliably arrive at the same place it started in real life as well. With the pen attached, inconsistent drag and friction cause issues and lead to reduced accuracy. The additional friction from the marker dragging against the surface introduces position estimation errors, as the timing-based control cannot account for the reduced distance traveled.</p>
+
+        <h3>Safety Measures</h3>
+        <p>We implemented two switches on the car for safety. One switch connects or disconnects the batteries from the four motors on the car, allowing the motors to be powered off independently. Another switch connects or disconnects the batteries from powering the on-car Pico W. We also used a Schottky diode so that the Pico could safely be connected to both the battery source and be plugged in through micro-USB for programming, preventing damage from multiple power sources.</p>
+
+        <h3>Usability</h3>
+        <p>The autonomous drawing car performed reliably across all tested functions during final evaluation.</p>
+
+        <p>The VGA interface rendered the drawn path clearly with no flicker or visual artifacts. Waypoints generated on the PC-side Pico W were transmitted via UDP with minimal latency; the car responded to path updates almost instantaneously.</p>
+
+        <p>IMU-based heading estimation and PWM motor control allowed smooth corrections toward each waypoint. Control loops ran reliably with minimal jitter, and concurrent PWM updates did not interfere with sensor readings or UDP packet handling. Scope traces of the PWM signals confirmed reliable timing across all four motor outputs, validating accurate motor actuation.</p>
+
+        <p>In regular mode, the car successfully followed the path as it was drawn, and optimized waypoints ensured minimal travel distance. Additional waypoints could be added iteratively after the car completed its current movement, and the car would incorporate them into its path without restarting. Without the dry erase marker installed, the car followed waypoints accurately, with negligible drift. When the marker was inserted, mechanical misalignment and friction introduced noticeable drift, especially around sharp turns or tight curves.</p>
+
+        <p>All GPIO lines and PWM outputs were tested under continuous operation. Sensor timeouts and PWM clamping prevented runaway behavior. The chassis and enclosure effectively protected the electronics and motors, ensuring safe operation during repeated tests.</p>
+
+        <p>Interactions via the PC-side interface were intuitive. Users could draw paths, see them updated in real time, and issue new waypoints without restarting the system. The car responded consistently to input commands, making it easy for multiple users to test without supervision.</p>
+
+        <p>The system demonstrated effective integration of hardware and software. Visual feedback via VGA was clear, communication latency from PC to car was minimal, and interactions were intuitive. The main limitation observed was the increased drift when the marker was mounted, emphasizing the tradeoff between mechanical simplicity and precise drawing accuracy.</p>
+
+        <p>The full demonstration of these capabilities is included in the project demo video.</p>
+
+        <h2>Conclusions</h2>
+        
+        <h3>Design Analysis and Future Improvements</h3>
+        <p>The autonomous drawing car successfully achieved the core objectives we set out in our original proposal: it is mobile, responsive to user input, and capable of following paths in real time with both manual and autonomous control. Integration of motor control, heading sensing, real-time path updates, and VGA feedback resulted in a cohesive system that reliably executed drawn paths with minimal latency. Scope traces confirmed that PWM outputs were stable across all four motors, validating accurate and responsive actuation.</p>
+
+        <h4>Key Challenges and Adaptations</h4>
+        <p>During development, we encountered multiple challenges that required deviation from our original plan of image-based path extraction. Rather than processing photos to extract waypoints, we pivoted to real-time mouse-driven path input, which simplified input processing while still demonstrating the core autonomous control concepts.</p>
+
+        <p>Reverse-engineering the chassis and implementing a dry erase marker mount introduced mechanical drift, particularly on sharp turns, but the overall system remained functional. Electrical issues included accidentally shorting 12 rechargeable batteries, a battery pack, and a USB cable during early testing, which prompted redesigns and reinforced safety procedures. Subsequent solderboard and wiring refinements ensured reliable operation.</p>
+
+        <p>Debugging on the Pico W was limited without a serial monitor, requiring the use of the VGA interface and test Pico units for output. UDP communication, motor PWM, and IMU integration were tuned iteratively to minimize latency and drift.</p>
+
+        <p>Safety measures such as PWM clamping, sensor timeouts, and careful electrical isolation were enforced to prevent runaway behavior and hardware damage.</p>
+
+        <h4>Future Improvements</h4>
+        <p>Future improvements could include creating a more intuitive manual control interface, such as arrow keys or on-screen directional buttons, to improve usability. Adjusting or redesigning the marker mount to reduce drift, potentially with an adjustable height mechanism or low-friction holder, would also help. Reinforcing the chassis would further reduce mechanical wobble.</p>
+
+        <h4>Reflection on Team Effort</h4>
+        <p>Our group collaborated closely throughout the project, sharing responsibilities across hardware, software, and integration tasks. While the project deviated from the initial image-processing goal, the shift allowed us to explore cooperative multitasking, real-time UDP communication, PWM motor control, and IMU-based heading correction in a practical, hands-on way. The final system demonstrates a working, interactive, and modular autonomous drawing platform, providing a strong foundation for future expansions or refinements.</p>
+
+        <h2>Standards Compliance</h2>
+        
+        <h3>Intellectual Property Considerations</h3>
+        
+        <h4>Code and Design Reuse</h4>
+        <p>We reused and adapted code from multiple sources. Professor Bruce Land's USB Host HID library was especially helpful, providing the foundation for mouse input handling on the PC-side Pico W. We also used Professor Land's UDP data transfer examples using LWIP and protothreads, which demonstrated efficient, low-latency communication between Pico Ws. The VGA graphics framework was adapted from Professor Hunter Adams' original VGA code, with 16-color modifications by Professor Bruce Land. For motor control, we adapted PWM generation examples from Professor Hunter Adams' ECE 4760 materials, which demonstrated use of the RP2040's hardware PWM peripherals. Sensor interfacing and I2C communication patterns were also informed by Professor Adams' sample code.</p>
+
+        <p>The BNO055 IMU driver was adapted from the JRDPropulsion BNO055-RP2040-Library (<a href="https://github.com/JRDPropulsion/BNO055-RP2040-Library/blob/main/src/BNO055.cpp" target="_blank">https://github.com/JRDPropulsion/BNO055-RP2040-Library/blob/main/src/BNO055.cpp</a>), originally written in C++ for Arduino and converted to C for use with the Pico SDK. This driver handled low-level device configuration and data acquisition, allowing us to focus on heading estimation and motor control rather than register-level setup.</p>
+
+        <p>UDP networking code was adapted from multiple sources: base UDP code by Andrew McDonnell (2022), UDP echo examples by Stephan Linz (2016), and Raspberry Pi Pico examples. We used the Cornell RP2040 Protothreads library (original by Adam Dunkels, Swedish Institute of Computer Science; Cornell RP2040 version by Bruce Land) for cooperative multitasking. USB host capabilities were implemented using the TinyUSB library by Ha Thach (tinyusb.org). The Raspberry Pi Pico SDK and lwIP networking stack provided the core framework for our system.</p>
+
+        <h4>Public Domain Code</h4>
+        <p>All code reused in this project is either open source or publicly available. The Raspberry Pi Pico SDK and lwIP networking stack are open source with BSD-3-Clause licenses. The TinyUSB library uses an MIT License. The Protothreads library is open source. All course-provided examples from Professors Bruce Land and Hunter Adams are publicly available for educational use. The BNO055 driver from JRDPropulsion is available on GitHub. All borrowed code retains its original copyright notices and licenses, and this project complies with the terms of all included licenses.</p>
+
+        <h4>Reverse Engineering and Patent/Trademark Issues</h4>
+        <p>We reverse-engineered a car chassis that was sourced from the lab, likely part of a car kit. We do not know the exact manufacturer, but the chassis appears to be mass-produced and available on Amazon. It does not seem to belong to one particular author or manufacturer, and we found no specific trademarks or patents associated with it. We modified the chassis in CAD to add a central dry erase marker mount, creating our own design for the marker holder. No commercial patents were infringed, and the design remains primarily educational and experimental. All mechanical modifications were fully documented in CAD.</p>
+
+        <h3>Standards Compliance</h3>
+        <p>The design conformed to relevant embedded systems and safety standards. Motor voltage and PWM signals stayed within the safe limits of the DC motors and H-bridge driver. All circuits operated at low voltages (3.3V logic, 5–12V motor power) to avoid electrical hazards. Mechanical components were secured to prevent sudden shifts, and emergency stop and timeout mechanisms ensured safe operation. While no formal automotive standards were strictly applied, we conceptually followed principles from ISO 26262 for functional safety.</p>
+
+        <h3>Intellectual Property Considerations</h3>
+        <p>All primary code, control algorithms, and CAD designs were developed by the team. No proprietary IP, patents, or trademarks were used, and nothing required non-disclosure agreements. All borrowed code retains its original copyright notices and licenses (BSD-3-Clause, MIT, etc.). No commercial patents were infringed, and the design remains primarily educational and experimental. All attributions are documented in the source code headers and in the References section below.</p>
+
+        <h2>Work Distribution</h2>
+        <p>We completed approximately 90% of our work collaboratively in the same room, with all team members contributing to software development, electrical hardware setup, and mechanical integration. While most tasks involved group discussion and shared implementation, certain components saw individual members taking primary responsibility. Ruby Wu designed and CADed the chassis and marker holder, creating the mechanical structure that accommodates the dry erase marker mount. Gebran Kastoun developed the IMU driver, adapting the BNO055 library from C++ to C and integrating it with the Pico SDK for heading estimation. Sarah Zhong implemented the UDP communication system, establishing the wireless protocol for transmitting waypoint data between the PC-side and car-side Pico Ws.</p>
+        <div class="figure">
+            <img src="images/selfie.png" alt="Team selfie with the car" style="max-width: 70%; height: auto;">
+            <strong>Figure:</strong> Team selfie with the car (and an attempt to draw "4760"...)
+        </div>
+        <div class="figure">
+            <img src="images/sarah_listening.png" alt="Sarah listening for a heartbeat on V1 of the car" style="max-width: 60%; height: auto;">
+            <strong>Figure:</strong> Sarah listening for a heartbeat on V1 of the car
+        </div>
+
+        <h2>Appendix A (Permissions)</h2>
+        <p>The group approves this report for inclusion on the course website.</p>
+        <p>The group approves the video for inclusion on the course YouTube channel.</p>
+
+        <h2>Additional Appendices</h2>
+        <ul>
+            <li><a href="code_appendix.html" target="_blank">Commented C and other program listings</a> - Key code sections including path optimization, motor control, and UDP communication</li>
+            <li><a href="picomobile.zip" download="picomobile.zip">Complete source code repository (picomobile.zip)</a> - Full project source code including PC-side (udp_and_vga) and car-side (car_and_udp) implementations</li>
+            <li>Schematics for hardware external to the Pico board</li>
+            <li>List of specific tasks carried out by each team member</li>
+        </ul>
+
+        <h2>References</h2>
+        
+        <h3>Data Sheets</h3>
+        <ul>
+            <li>Bosch BNO055 9-DOF Absolute Orientation Sensor Datasheet</li>
+            <li>Raspberry Pi Pico W Datasheet</li>
+            <li>RP2040 Microcontroller Datasheet</li>
+        </ul>
+
+        <h3>Vendor Sites</h3>
+        <ul>
+            <li>Raspberry Pi Foundation: <a href="https://www.raspberrypi.com/" target="_blank">https://www.raspberrypi.com/</a></li>
+            <li>Bosch Sensortec: <a href="https://www.bosch-sensortec.com/" target="_blank">https://www.bosch-sensortec.com/</a></li>
+        </ul>
+
+        <h3>Code/Designs Borrowed from Others</h3>
+        <ul>
+            <li><strong>JRDPropulsion BNO055-RP2040-Library:</strong> <a href="https://github.com/JRDPropulsion/BNO055-RP2040-Library/blob/main/src/BNO055.cpp" target="_blank">https://github.com/JRDPropulsion/BNO055-RP2040-Library/blob/main/src/BNO055.cpp</a> (C++ library adapted to C)</li>
+            <li><strong>UDP Networking:</strong> Andrew McDonnell (2022), Stephan Linz (2016), Raspberry Pi Pico examples (<a href="https://github.com/raspberrypi/pico-examples/tree/master/pico_w/wifi/udp_beacon" target="_blank">https://github.com/raspberrypi/pico-examples/tree/master/pico_w/wifi/udp_beacon</a>)</li>
+            <li><strong>Protothreads:</strong> Original by Adam Dunkels (Swedish Institute of Computer Science, 2004-2005), Cornell RP2040 version by Bruce Land (BRL4), Cornell University</li>
+            <li><strong>VGA Graphics:</strong> Original by Hunter Adams (vha3@cornell.edu), 16-color modifications by Bruce Land (BRL4)</li>
+            <li><strong>TinyUSB:</strong> Ha Thach (tinyusb.org), <a href="https://github.com/hathach/tinyusb" target="_blank">https://github.com/hathach/tinyusb</a></li>
+            <li><strong>lwIP:</strong> <a href="https://savannah.nongnu.org/projects/lwip/" target="_blank">https://savannah.nongnu.org/projects/lwip/</a></li>
+            <li><strong>Raspberry Pi Pico SDK:</strong> <a href="https://github.com/raspberrypi/pico-sdk" target="_blank">https://github.com/raspberrypi/pico-sdk</a></li>
+            <li><strong>Professors Bruce Land and Van Hunter Adams' ECE 4760 Examples:</strong> USB Host HID (Professor Land), UDP communication (Professor Land), VGA graphics framework (Professors Land and Hunter Adams), protothreads (Professor Land), PWM motor control (Professor Hunter Adams), I2C communication (Professor Hunter Adams), sensor interfacing (Professor Hunter Adams)</li>
+        </ul>
+
+        <h3>Background Sites/Papers</h3>
+        <ul>
+            <li>Raspberry Pi Pico C/C++ SDK Documentation: <a href="https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf" target="_blank">https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf</a></li>
+            <li>lwIP Documentation: <a href="https://www.nongnu.org/lwip/2_1_x/index.html" target="_blank">https://www.nongnu.org/lwip/2_1_x/index.html</a></li>
+            <li>TinyUSB Documentation: <a href="https://docs.tinyusb.org/" target="_blank">https://docs.tinyusb.org/</a></li>
+            <li>Protothreads Documentation: <a href="https://dunkels.com/adam/pt/" target="_blank">https://dunkels.com/adam/pt/</a></li>
+            <li>Cornell ECE 4760 Course Materials: <a href="https://people.ece.cornell.edu/land/courses/ece4760/" target="_blank">https://people.ece.cornell.edu/land/courses/ece4760/</a></li>
+        </ul>
+    </div>
+</body>
+</html>
