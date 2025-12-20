@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Physical PocketChess: Chess Puzzles Game</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="script.js"></script>
+</head>
+
+<body>
+  <main class="layout" id="scroll-root">
+    <article class="content">
+      <h1>ECE4760, Physical PocketChess: Chess Puzzles Game</h1>
+	  <p>(Do you always have someone to play chess with?)</p>
+	  <p><i>By Coby Lai(cl2367) and Maksym Ioffe(mi266)</i></p>
+	  <h3>Acknowledgement: Some parts of code and project are inspired by <a href = "https://github.com/sidharthmrao/LINUS">Linus</a></h3>
+	  
+	  <!--<p>Scroll and watch the nav highlight. Click nav links for smooth scroll.</p>-->
+
+      <!--INTRO-->
+	  <section id="intro"><h2>Motivation</h2>
+	  
+	  <p>Chess is an ancient, well-known, and yet still growing sport. With impact coming from media, 
+	  social events, and culture more and more people are willing not only to learn how to play chess, 
+	  but also get better, fighting for elo points or for fun against others. The old-fashioned method to get better by yourself is to solve 
+	  special puzzles (“Mate in 2”, “Advantage in 3”), which previously (when we were learning how to play chess) were printed on the last page of the newspaper or in special 
+	  puzzle books. Now you can access an endless number of them in any online chess platform (like <a href="https://chess.com/">chess.com</a>  or <a href="https://lichess.org/">lichess.org</a>), you can see an example below:  </p>
+	  
+	  <div class="img-wrap">
+	  <img src="./img/chesscom.png" class="hero-img">
+	  </div>
+	  <h3 align = "center">Example of the puzzle (from chess.com)</h3>
+	 
+	  <p>The issue with the current puzzle is that it shows too much of the board space, 
+	  which doesn’t impact the intuition of what is happening on the board. Moving pieces closer doesn't always impact 
+	  the puzzle but will reduce it to 5x5 subboard making it look slightly more trivial. 
+	  This is the background of the Pocket Chess game, smaller board, same puzzles, easy interface that mimics 3D: 
+	  </p>
+	  
+	  <div class="img-wrap">
+	  <img src="./img/pocketchess.png" alt="...">
+	  </div>
+	  <h3 align = "center">Example of the PocketChess puzzle</h3>
+	  <p>This gave us an inspiration to make something like this in real life using 
+	  tools introduced in class and additional methods that we can find useful. 
+	  As one of us studies Mechanical Engineering and another Computer Science, this project 
+	  ]has enough potential to give fulfilling work for both of us: a significant portion of the project will be 
+	  designing and building the board but also connecting everything, programming mechanisms, and algorithms. </p> </section>
+    
+	  <section id="one"><h2>What we did?</h2>
+	  
+	  <!--<div class="img-wrap">
+	  <img src="./img/Result.jpg" alt="...">
+	  </div>-->
+	  <video class="hero-video" src="./video/minidemo.mp4" autoplay muted loop playsinline></video>
+	  <h3 align = "center">Working board "set up"</h3>
+	  <p>Above you can see the minidemo of the final results. Over the 4 weeks we built and programmed the 3D physical version of the game, 
+	  \starting with designing and assembling the board; wiring, checking connections, setting coding interface; adding chess engine, pathing, 
+	  moving interface. We split the analysis between Hardware and Software as they consist of many subparts which are connected to each other, 
+	  but can be connected independently. Unfortunately, we were not able to accomplish all goals of functionalities, reasons for which and future 
+	  steps we analyze in “Improvements” section. </p>
+	  
+	  
+	  </section>
+      <!--<section id="two"><h2>Two</h2><p>Lots of content…</p></section>-->
+
+      <section id="hardware">
+        <h2>Hardware</h2>
+		<section id="hardware-design">
+		
+		<h3>Overall design</h3>
+		
+		<p>We now present the CAD of overall design which was done before we began the project. As we were working 
+		with some paremeters that require tight calculations and fitting, it was important to be sure that we can make them work:</p>
+		
+		<div class="img-wrap">
+		<img src="./img/overall.png" alt="...">
+		</div>
+		<h3 align = "center">Result</h3>
+		
+		
+		<p> The overall model includes wooden base (which was laser cut accordingly): 
+		
+		<video class="hero-video" src="./video/lasercut.mp4" autoplay muted loop playsinline></video>
+		<h3 align = "center">Cutting base</h3>
+	  
+		<p> Accrylic top (also laser cut in the Cornell Makers Lab) with engraved cells, initial locations, and labels: </p>
+		
+		<video class="hero-video" src="./video/lasercut2.mp4" autoplay muted loop playsinline></video>
+		<h3 align = "center">Cutting top</h3>
+
+		<p>As well as 3D printed supports using PLA filament from Bambu Lab(video of 3D printing is not as cool as laser cutting above -> ignored), two stepper motors and belts (explained below in the "Stepper motors" section Reed switches (see "Reed grid" section), PI 3b+ (See "Engine"), RP2040, stopping switches (See "Stopping switches"). 
+		The plan of assembly without the upper-top looked like this:</p>
+		<div class="img-wrap">
+		<img src="./img/open.png" alt="...">
+		</div>
+		<h3 align = "center">Inner mechanisms</h3>
+		
+		<p>Let's now talk about the individual parts mentioned above.</p>
+		
+		</section>
+		<section id="hardware-pieces"><h3>Pieces</h3>
+		<p>(Apart from the board) We also 3D printed chess pieces that will have small holes below them to barely fit the magnet:</p>
+		
+		<div class="two-images">
+		  <img src="./img/black.jpg" alt="A">
+		  <img src="./img/white2.png" alt="B">
+		</div>
+		<h3 align = "center">Pieces</h3>
+		
+		<p>VERY IMPORTANT FACT: Sizes of pieces were not chosen randomly. Why? As we are working with magnets (we will talk aaaaaaa lot more about it)
+		we don't want an interaction between the pieces in any way (neither due to the physical contact, nor magnetic field). Thus, for 
+		we set the pieces to be 3/7 of the size of the board cell, meaning that we can do the following without any corresponding problems: 
+		</p>
+		
+		<div class="img-wrap">
+		<img src="./img/psize.png" alt="...">
+		</div>
+		<h3 align = "center">Geometry</h3>
+		
+		As future magnetic control only can move in two directions (against the human player who can do three directions) we needed the solution for pieces moving between each other. 
+		This prevented collision, gave some room for error for magnet moving the piece, but didn't make pieces look miserably small (3/7 is better than 1/3, ha? 5/11 seemed to crazy of the choice -> joke, all three achive the same, 3/7th just seemed to us like a "cooler" number 😎)
+		
+		</section>
+        <section id="hardware-motors"><h3>Stepper motors (and belts)</h3>
+		
+		
+		<p>Mechanically, the system centers on a CoreXY-driven gantry. The X-beam rides on two parallel Y linear rails, 
+		and the print head travels along an X linear rail mounted to that beam. Two stepper motors route and tension the belts through the gantry, 
+		and their combined motion actuates the print head in X and Y. 
+		The magnetic head is mounted to the carriage of the X rail:</p>
+		<div class="img-wrap">
+		<img src="./img/motor.png" alt="...">
+		</div>
+		<h3 align = "center">Motor CAD</h3>
+		
+		The design also includes belt gripper and belt brace, which are used for stable control of the system above: 
+		
+		<div class="two-images">
+		  <img src="./img/gripper.png" alt="A">
+		  <img src="./img/brace.png" alt="B">
+		</div>
+		<h3 align = "center">Gripper (left) and brace (right)</h3>
+		
+		The assembled version of the belts looks like: 
+		
+		<div class="img-wrap">
+		<img src="./img/belts.png" alt="...">
+		</div>
+		<h3 align = "center">Implementation of motor</h3>
+			
+		With 3D printed brace and additional connections
+		
+		<div class="img-wrap">
+		<img src="./img/real_brace2.png" alt="...">
+		</div>
+		<h3 align = "center">Printed brace</h3>
+		
+		<p>
+		The core XY style belt pathing utilizes two stepper motors to drive our motion.
+		If one stepper is driven alone, the manipulator will move out at a 45° angle.
+		In order to get linear motion, both motors must be driven simultaneously. 
+		This style of belt pathing is beneficial to us as both belts follow similar routing paths, 
+		one above the other. Because of this, backlash caused by imperfections during manufacturing is avoided. .
+		</p>
+		
+		<video class="hero-video" src="./video/45deg.mp4" autoplay muted loop playsinline></video>
+		<h3 align = "center">Simple movement</h3>
+		<p>
+		Mounted on the X rail carriage is a 12 V electromagnet. As we did not have the time to run magnetic simulations,
+		we found the cheapest and most powerful 12 V electromagnet that Amazon had. Power to the magnet is controlled by a 
+		MOSFET that is connected to one of the GPIO pins.
+		</p>
+
+		<p>As with any timing belt based actuation system, the belts needed to be tensioned correctly. Rather than including 
+		a designated belt tensioner system, we had fixed loop belt stops attached to the center carriage of the X direction linear 
+		rail underneath the magnet. Due to the geometry of the holder, the teeth on the belt loop around a central post and grip back onto themselves. 
+		This approach to belt tensioning is more granular than typical belt tensioning systems, such as spring-loaded or tensioning screw based. 
+		For our project, this is OK due to the low speeds and rather simple motion paths of our system. To tension each belt, standard 3-D printer belt tensioning tables were referenced. 
+		The tension itself was measured using a guitar tuner app on our phones, then adjusting its fitted position by one tooth, and repeating until the desired frequency was met. 
+		This is common practice for 3-D printers.
+		</p>
+
+		<p>
+		Each stepper motor had a 20 tooth D-shaft fitted gear that allowed the stepper motors to interface with the timing belt properly without slipping:
+		</p>
+		
+		<div class="img-wrap">
+		<img src="./img/gear.jpg" alt="gear-img">
+		</div>
+		<h3 align = "center">Motor belt gears</h3>
+		
+		
+		</section>
+        
+		
+		
+		<section id="hardware-reed"><h3>Reed Grid</h3>
+		
+		
+		 <p>
+    For piece sensing, each 3D-printed chess piece has a magnet embedded in its center, and the playing surface has
+    reed switches embedded inside the board.
+    When a piece is placed on a square, its magnet closes the reed switch (two thin ferric plates inside a glass casing
+    attract and complete the circuit), giving us electrical continuity for that cell:
+  </p>
+  
+  <div class="img-wrap">
+		<img src="./img/reed.png" alt="...">
+		</div>
+		<h3 align = "center">Reed mechanism</h3>
+
+  <p>
+    Electrically, the sensing board is wired as a row - column matrix. Each reed switch has a diode placed after it,
+    and the whole grid is connected by shared row and column lines. The diodes are there so each piece can be detected individually without interfering with other pieces (“anti-ghosting”):
+  </p>
+
+	<div class="img-wrap">
+		<img src="./img/grid.jpg" alt="...">
+		</div>
+		<h3 align = "center">Reed Grid</h3>
+  
+
+  <p>
+    The Pico connects one set of GPIO pins to the rows and another set to the columns.
+    This lets us scan by row and detect by column.
+  </p>
+  
+  <p>
+    Because we kept the magnet clearance very small, we needed the reed-switch + diode pairs to be extremely consistent
+    across the whole board to make detection reliable.
+    To get that consistency, we made 3D-printed fixtures that trimmed reed + diode leads to the same length,
+    held the reed switch and diode at a fixed distance during soldering, and guided identical 90° bends so the
+    parts fit into the laser-cut slots without stressing the glass reed casing:
+  </p>
+  
+  <div class="two-images">
+		  <img src="./img/diode.png" alt="A">
+		  <img src="./img/trim.png" alt="B">
+		</div>
+		<h3 align = "center">Trimmer (left) and diode assembler (right)</h3>
+
+  <p>
+    We inserted the bent reed + diode pairs into a soldering template and soldered the row - column wiring using silicone-coated wire
+    (chosen because the insulation is easy to strip).
+    After soldering, each connection was tested using a magnet and a multimeter for continuity, then the array was moved onto the final
+    acrylic playing surface.
+    Since silicone wire tends to sag, we used hot-melt glue to secure wire paths along the acrylic and keep them out of the magnet’s path.
+    
+    We also applied hot melt glue inside the reed-switch cutouts after verifying the switches worked, to eliminate movement. 
+  </p>
+
+  <p>
+    With 25 sensors, problems were inevitable. We had to re-bend some reed+diode pairs because small rotation errors could prevent the
+    reed switch from closing reliably.
+    Later, repeated testing caused permanent magnetization effects in some reed-switch wiring, which could even prevent pieces from being moved
+    by the electromagnet on heavily-used squares. 
+  </p>
+		
+		
+		</section>
+        
+		
+		
+		
+		<section id="hardware-magnet"><h3>Magnet</h3>
+		
+		
+		Mounted on the X rail carriage is a 12 V electromagnet. As we did not have the time to run, magnetic simulations, we just found the cheapest and most powerful 12 V electromagnet that Amazon had. 
+		Power to the magnet is controlled by a MOSFET that is connected to one of the GPIO pins. The magnet is strong enough to get every piece present on the board with high control and accuracy. 
+		
+		<video class="hero-video" src="./video/magnet.mp4" autoplay muted loop playsinline></video>
+	  <h3 align = "center">First try of magnet</h3>
+		
+		</section>
+		
+		
+		
+		<section id="hardware-stopping"><h3>Stopping switches</h3>
+		
+		
+		<p>
+		A typical issue with any standard 3D printer is knowing where the tool head is at any time. A slightly outdated method,
+		due to its lack of precision at the fraction-of-a-millimeter scale, is to use specialized mechanical momentary switches called “limit switches,” 
+		which typically involve a long lever arm and a standard button:
+		</p>
+		
+		<div class="img-wrap">
+		<img src="./img/switch.jpg" alt="gear-img">
+		</div>
+		<h3 align = "center">Stopping switch</h3>
+
+		<p>By adding one of these switches to each axis near the homing origin, the rails can be driven toward 
+		the axis until the switch is triggered. At this point, the machine knows where its zero point is and will not be misaligned while executing the program. The reason to use 
+		limit switches over traditional momentary switches is that they allow some motion past their trigger point without damaging the switch itself. Any latency in detection when using a normal momentary 
+		switch may result in the end effector crashing into the zero position, possibly damaging the system and/or the momentary switch.
+		</p>
+		</section>
+		<section id="hardware-breadboard"><h3>Breadboard</h3>
+		
+		<p>
+    The wiring layout is summarized in the diagram below. We used a soldered prototyping breadboard as a permanent
+    place for connections, mainly to avoid wires popping out like they do on a solderless breadboard. The Pico is
+    permanently soldered to this board, and we exposed its pins using male headers so we could plug in the main
+    subsystems (limit switches, the sensing array, the MOSFET for the magnet, and communication to the Raspberry Pi 3B+
+    running Stockfish).
+  </p>
+
+  <div class="img-wrap">
+		<img src="./img/diagram.jpg" alt="gear-img">
+		</div>
+		<h3 align = "center">Wiring diagram</h3>
+
+  <p>
+    For motion, the Pico drives two stepper drivers using a STEP pulse train and a DIRECTION signal (shown
+    as “step” and “direction” lines going to each driver in the diagram). Each STEP pulse advances the motor by one step
+    (or microstep depending on driver settings), and DIR selects the rotation direction.
+    We set the driver current using the NEMA 17 datasheet rating and tuned the driver’s onboard potentiometer using a
+    multimeter. 
+  </p>
+
+  <p>
+    The electromagnet is a 12V load, so power to it is switched by a MOSFET controlled from a Pico
+    GPIO pin (as shown in the diagram). 
+  </p>
+
+  <p>
+    Finally, we intentionally didn't solder the stepper drivers directly onto the board, since we’ve fried drivers
+    in past projects and wanted them to be replaceable without desoldering.
+  </p>
+		
+		
+		
+		
+		</section>
+		
+	  <section id="software">
+        <h2>Software</h2>
+		
+		<section id="software-control"><h3>Controlling magnet and motors(The most hardware software)</h3>
+		
+		<p>Internally, stepper motors have two coils, and the rotor (the core) is free to rotate. Rotation is controlled 
+		by energizing these coils in a specific sequence, which creates a rotating magnetic field that pulls the rotor from one discrete 
+		step to the next.</p> 
+		<div class="img-wrap">
+		<img src="./img/motor2.jpg" alt="...">
+		</div>
+		<h3 align = "center">Stepper motor from inside</h3>
+		
+		To drive these 12 V motors, we use stepper motor drivers. The stepper motor drivers take a PWM pulse train on the STEP input, 
+		where each pulse advances the motor by one step (or microstep, depending on the driver settings). The other input to the stepper motor driver 
+		is the DIRECTION pin. If the pin is high, the stepper motor rotates one way; if the pin is low, it rotates the other way. This eliminates the need 
+		for an H-bridge, which would be needed if we drove the system with a DC motor.</p>
+
+		<p>From our NEMA 17 stepper motor datasheet, we determined the rated current for the motors. We then used a multimeter to tune the stepper motor driver’s 
+		onboard current-adjustment potentiometer so the driver supplied the correct current to the stepper motors during operation. We also selected an appropriate step pulse rate 
+		(frequency) based on the motor and driver specifications to achieve the desired speed without skipping steps.</p>
+		
+		
+		<p>The control of the electromagnet was much more trivial: it is connected to GPIO, where setting it to 1 will activate it and to 0 deactivate</p>
+		</section>
+		
+		<section id="software-logic"><h3>Game logic</h3>
+		 
+		<p>Can we skip explanation of chess rules? (Check here if you need help <a href="https://www.chess.com/lessons/all-lessons">guide</a>) What we are trying to implement is called a "Garden chess" or classical chess on 5x5 board. 
+		Thus the board outline will look like: </p>
+		
+		<div class="img-wrap">
+		<img src="./img/board.jpg" alt="...">
+		</div>
+		<h3 align = "center">"Blueprint of board"</h3>
+		<p>Player always plays white (doesn't matter which side you play for solving riddles, right?). Both parties have access to 
+		five pawns (<code>P</code>), a King (<code>K</code>), a Queen (<code>Q</code>), a Rook (<code>R</code>), a Bishop (<code>B</code>), and a kNight (<code>N</code>).
+		Playing regions are labeled <code>A ... E</code> for columns and <code>1 ... 5</code> for rows. Columns <code>S, F</code> as well as <code>0, 6</code> are meant for backend and are not visible to the user. 
+		</p>
+		
+		<p>The game starts by the engine setting up the puzzle. Every piece has corresponding outside-of-the-board location and will be brought by mechanical arm to the game. Player makes the move by hand:
+		As they would have if they were playing against real player. The system moves pieces using magnetic arm. NOTE: system doesn't assume any advercerial behaviour (be nice to it). 
+		</p>
+		
+		</section>
+		
+	
+		<section id="software-pathing"><h3>Pathing</h3>
+		
+		
+		<p>As we now have assembled everything, we need proper tools to control the motor and the magnet. 
+		This rases the question of pathing:
+		How can we guarantee that pieces travel in the proper way, without loss and interference? 
+		</p>
+		
+		<div class="img-wrap">
+		<img src="./img/manh.png" alt="gear-img">
+		</div>
+		<h3 align = "center">Manhattan assumption</h3>
+		
+		<p>The solution was fairly simple: Use grid of nodes and treat them as a lattice with equal 
+		distane between two neighbouring nodes (except the special case one for origin). We can then run Manhattan protocol, where to travel from node <code>A:(a1, a2)</code> with coordinates 
+		to <code>B:(b1, b2) </code> will simply be <code>(b1 - a1, b2 - a2)</code>. Even though this ommits principles of Pythogorian triangle, it gives an efficient computation for obstacle free pathing. 
+		</p>
+		<p>
+		To then go from node to the desired location we call a helper function (something like <code>to_center(...)</code> to go from node to center of the cell or <code>pickAPiece(...)</code> 
+		to grab the piece from its home on the side). <code>ORIGIN</code> is treated as a special case in the beggining, end, and recalibration steps. 
+		</p>
+		
+		</section>
+		
+		
+		
+		<section id="software-callibration"><h3>Starting callibration</h3>
+		
+		<p>It's important that no matter where we ended last game, the new one should start from the same location. 
+		That's why we implemented resetting protocol, that will push the arm with electromagnet towards lower left corner until it 
+		triggers the stopping switches. It will then hit what we labeled as origin and will perform the step to the board to the first valid
+		node. We can demonstater this as: </p>
+		
+		<video class="hero-video" src="./video/reset.mp4" autoplay muted loop playsinline></video>
+		<h3 align = "center">"Homing"</h3>
+		</section>
+		
+		
+		<section id="software-detection"><h3>Piece detection</h3>
+		
+		<p>Since now we have Reed switches that detect if there is a piece in every single cell on board, we can connect software to 
+		work with it. Let's now go back to our original configuration. Since every piece has the same magnet and is not visible 
+		to Pico in any other way, we should add a software copy of the board that will record the initial pieces and how they move</p>
+		
+		<p>It is important to say that we can attach imformation to the movement given that we keep tract of <code>from</code> and <code>to</code> coordinates. 
+		As a result, we designed a <code>Piece</code> structure in the code, to correspond to the piece (color, name, and index number for pawns - there are more than one of them).
+		Each <code>Piece</code> then can be added to the <code>Board</code> structure according to the inital location. <code>Board</code>  will try to keep track of the 
+		game without knowing the rules and checl if the board switches correspond to what it sees. We can demonstrate this in the following demo (40 second):</p>
+		
+		<video class="detect-video" src="./video/detection.mp4" autoplay muted loop playsinline></video>
+		<h3 align = "center">Piece detection</h3>
+		<p>From the video, you can see that upon moving the piece, the code gives its inital location, folllowing location(both of 
+		which correspond to correct position on board), name, and color of the piece. Notice, that after moving every piece the entire board updates, where only corresponding one moves.		
+		As we now can move the piece, and detect the move, we can work on the chess engine that will power this.</p>
+		
+		</section>
+		
+		
+		<section id="software-engine"><h3>Chess engine</h3>
+		
+		<p>To add the "chess logic" to the implmentation, we used an open-source chess bot called "StockFish". We wrapped it 
+		into the python script, where user can send the command and the bot will play agains them. The user wrapper of this looks like the following:</p>
+		
+		 <video class="hero-video" src="./video/brain.mp4" autoplay muted loop playsinline></video>
+		<h3 align = "center">Python + stockfish</h3>
+		Notice, that the similar strategy will be used with physical setup, where user input will be passed from the physical move.
+		
+		</section>
+		
+		
+		<section id="software-communication"><h3>Chess Communication (Big TODO )</h3>
+		
+		<p>We envision all interfaces acting as follows to bring all the pieces mentioned above together: </p>
+		
+		
+		<div class="img-wrap">
+		<img src="./img/cart.png" alt="gear-img">
+		</div>
+		<h3 align = "center">Communication diagram</h3>
+		
+		<p><b>Human vs Board:</b> Simple chess game. User behaves as it would have against normal player. Moves the pieces and waits for response</p>
+		
+		<p><b>Mechanical + Electrical vs Board:</b> The mentioned mechanisms move the pieces, read data, and set up the board, user has no direct control of them</p>
+		
+		<p><b>Pico vs Mechanical + Electrical:</b> Pico dictates and coordinates Mechanical and Electrical tools based on the received signals or deterministic protocols</p>
+		
+		<p><b>Pi vs Pico:</b> Pi dictates Pico what to do, but it has no idea about processes that happen and how Pico gets the input</p>
+		
+		
+		
+		<p>Notice, that we have successfully implemented all steps until the last channel between Pi and Pico. We began designing the communication protocol between PI and Pico. Notice that our code contains <code>parse.c</code>
+		which receives the input from the StockFish in the FEN (special chess notation) and makes a valid set of <code>Piece</code> and 
+		puts them on the board. Sadly, due to the debugging and a short time frame, we were not able to set up a <code>UART</code> channel properly 
+		to fully encorporate this. However, we introduced the main functionality from both sides, which we are planning to finish after the end of the course.</p>
+		
+		</section>
+      </section>
+	  <section id="improve"><h2>What could have been better?</h2>
+	  
+	  
+	  <p>
+		We’re happy with what worked (because it actually moves real pieces 👀), but a few things limited reliability and
+		prevented the full “engine vs Pico vs physical move” pipeline from being finished in time. Additionally, we found some issues we didn't expect at all, that require a major fix. 
+	  </p>
+
+	  <h3>1) Finish Pi vs Pico communication </h3>
+	  <p>
+		The biggest missing piece is a clean UART protocol between the Raspberry Pi (Stockfish brain) and the Pico (sensing + motion).
+		Right now we can: (a) detect a human move, (b) run Stockfish in Python, and (c) move pieces with the gantry.
+		What we didn’t fully close is the loop that turns a detected move into engine input and then turns engine output into a physical move.
+		Next step: define a protocol that will do it by sending FEN and move strings. 
+	  </p>
+
+	  <h3>2) Motion smoothness (pieces shouldn’t “wiggle”)</h3>
+	  <p>
+		Our motion is grid-based and works, but sudden starts/stops can shake pieces slightly, which makes detection and alignment harder.
+		A real upgrade would be acceleration ramps (trapezoidal motion), microstepping. This is mostly a software improvement (timing / stepping) with big physical payoff and calibration.
+	  </p>
+
+	  <h3>3) Reed grid robustness </h3>
+	  <p>
+		Reed switches did the job, but they’re fragile (glass) and also a bit sensitive to magnet orientation and spacing.
+		If we were redesigning, Hall-effect sensors would be a cleaner long-term solution: no glass, more consistent readings.
+		If we keep reed switches, then better fixtures + cleaner wiring + standardized placement is the path forward.
+	  </p>
+
+	  <h3>4) Magnet + wiring reliability</h3>
+	  <p>
+		The magnet is strong enough, but the clearance is tight. 
+		A next revision should route wires in a protected channel, add strain relief, and add a flyback diode or proper switching protection
+		if not already present. Additionally, we noticed that the magnet can get warm if you keep it on too long.
+	  </p>
+
+	  
+	  </section>
+	  
+	  
+	  
+	  <section id="conclude">
+	  
+	  <h2>Conclusion</h2>
+	  
+	  <p>
+    Overall, we built a real, physical version of “PocketChess”: a 5x5 chess puzzle board where you play moves by hand,
+    and the system responds by moving pieces with a CoreXY gantry + electromagnet. Over four weeks we went from CAD to
+     stepper motors to a working motion platform that can home itself with limit switches,
+    reliably pick up pieces, and execute grid-based motion on command.
+  </p>
+
+  <p>
+    On the sensing side, we also got the board to “understand” a human move. Using a reed-switch grid and a software board model,
+    the Pico can detect a piece relocation and print the piece type, color, and <code>("from",to)</code> coordinates, then update the internal board state.
+  </p>
+
+  <p>
+    For the chess functionality, we successfully wrapped a 5x5 Stockfish variant in Python and proved that engine interaction works in software.
+    We only miss finishing a clean UART loop between Pi and Pico,
+    so the physical move becomes engine input and the engine’s output becomes a real move on the board.
+  </p>
+
+  <p>
+    If we continue after the course, the next improvements are 
+    to finish Pi↔Pico UART; smoothen the motion; improve magnet connections, reed wiring, and structure overall,
+    and revisit sensing hardware if we want more reliability long-term.
+  </p>
+
+  <p>
+    Even with the TODOs, the project achieved what we wanted: a compact, physical chess-puzzle experience that feels more intuitive than
+    staring at a full 8x8 online board.
+  </p>
+	  
+	  
+	  </section>
+      
+	  
+	  
+	  
+	  <section id="links"><h2>Links</h2>
+	  
+	  <p>LINUS (Thanks a lot!): <a href = "https://github.com/sidharthmrao/LINUS">https://github.com/sidharthmrao/LINUS</a></p>
+	  <p>Website template: <a href = "https://www.bram.us/2020/01/10/smooth-scrolling-sticky-scrollspy-navigation/">https://www.bram.us/2020/01/10/smooth-scrolling-sticky-scrollspy-navigation/</a></p>
+	  <p>Chess.com: <a href = "https://chess.com">chess.com</a></p>
+	  <p>REED image: <a href = "https://www.deeterelectronics.com/us/reed-switch-how-it-works/">https://www.deeterelectronics.com/us/reed-switch-how-it-works/</p>
+	  <p>Image with a motor: <a href = "https://www.pololu.com/product/2267">https://www.pololu.com/product/2267</a></p>
+	  <p>StockFish: <a href = "https://stockfishchess.org/">https://stockfishchess.org/</a></p>
+	  
+	  </section>
+	  
+	  
+	  <section id="github"><h2>GitHub</h2>
+	  <p>Link to the code: <a href = "https://github.coecis.cornell.edu/mi266/4760_chess.git">https://github.coecis.cornell.edu/mi266/4760_chess.git</a></p>
+	  </section>
+	  
+	  <section id="ai"><h2>Gen AI Usage: </h2>
+	  <p> - Used AI to assist with the code during debugging</p>
+	  <p> - Used AI to build the strategies for debugging and wiring</p>
+	  <p> - Used AI to format, write, and proof-read this report </p>
+	  </section>
+	  
+	  
+      <section id="filters"><h2>Appendix A</h2>
+	  
+	  <p>"The group approves this report for inclusion on the course website."</p>
+	  <p>"The group approves the video for inclusion on the course youtube channel."</p>
+	  
+	  
+	  </section>
+	
+	</article>
+	
+    <nav class="section-nav" aria-label="Section navigation">
+      <ol>
+        <li><a href="#intro">Motivation</a></li>
+        <li><a href="#one">Summary</a></li>
+        <!--<li><a href="#two">Two</a></li>-->
+        <li>
+          <a href="#hardware">Hardware</a>
+          <ul>
+            <li><a href="#hardware-design">Design</a></li>
+            <li><a href="#hardware-pieces">Pieces</a></li>
+            <li><a href="#hardware-motors">Stepper motors</a></li>
+			<li><a href="#hardware-reed">Reed</a></li>
+			<li><a href="#hardware-magnet">Magnet</a></li>
+			<li><a href="#hardware-stopping">Stopping switches</a></li>
+			<li><a href="#hardware-breadboard">Breadboard</a></li>
+          </ul>
+        </li>
+		<li>
+          <a href="#software">Software</a>
+          <ul>
+			<li><a href="#software-control">Controling motors and magnet</a></li>
+			<li><a href="#software-logic">Game logic</a></li>
+            <li><a href="#software-pathing">Pathing</a></li>
+            <li><a href="#software-callibration">Callibration</a></li>
+            <li><a href="#software-detection">Detection</a></li>
+			<li><a href="#software-engine">Engine</a></li>
+			<li><a href="#software-communication">Communication</a></li>
+          </ul>
+        </li>
+		<li><a href="#improve">Improvements</a></li>
+		<li><a href="#conclude">Conclusion</a></li>
+        <li><a href="#links">Links</a></li>
+		<li><a href="#github">GitHub</a></li>
+		<li><a href="#ai">AI Statement</a></li>
+        <li><a href="#filters">Appendix A</a></li>
+      </ol>
+    </nav>
+  </main>
+</body>
+</html>
