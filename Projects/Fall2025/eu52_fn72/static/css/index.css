@@ -1,0 +1,810 @@
+:root {
+	--green: #2c734a;
+	--gray: #f7f7f7;
+	--text-dark: #222;
+	--text-light: #fff;
+	--accent: #222;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	font-family: "Helvetica Neue", Arial, sans-serif;
+	line-height: 1.7;
+	font-size: 16px;
+	color: var(--text-dark);
+	background-color: #fff;
+	padding-top: 60px;
+}
+
+nav {
+	background: var(--green);
+	color: var(--text-light);
+	position: fixed;
+	top: 0;
+	width: 100%;
+	z-index: 1000;
+}
+
+nav .container {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 20px;
+}
+
+.menu-toggle {
+	display: none;
+	font-size: 1.5em;
+	cursor: pointer;
+	background: none;
+	border: none;
+	color: #fff;
+	margin-right: 10px;
+}
+
+ul.nav-links {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	transition: max-height 0.3s ease;
+}
+
+ul.nav-links a {
+	display: block;
+	padding: 15px 10px;
+	text-decoration: none;
+	color: #fff;
+	opacity: 0.9;
+}
+
+ul.nav-links a:hover {
+	opacity: 1;
+	text-decoration: underline;
+	background-color: rgba(255, 255, 255, 0.1);
+	border-radius: 4px;
+}
+
+ul.nav-links a.active {
+	opacity: 1;
+	font-weight: bold;
+	text-decoration: underline;
+}
+/* Responsive styles for collapsible menu */
+@media (max-width: 900px) {
+	nav .container {
+		flex-direction: row;
+		justify-content: space-between;
+		padding: 0 20px;
+		height: 57px;
+	}
+
+	.menu-toggle {
+		display: block;
+	}
+
+	ul.nav-links {
+		flex-direction: column;
+		width: 100%;
+		max-height: 0;
+		overflow: hidden;
+		background: var(--green);
+		position: absolute;
+		left: 0;
+		top: 100%;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	}
+
+	ul.nav-links.open {
+		max-height: 700px;
+		transition: max-height 0.3s ease;
+	}
+
+	ul.nav-links li {
+		width: 100%;
+	}
+
+	ul.nav-links a {
+		padding: 15px 20px;
+	}
+}
+
+section {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 60px 20px;
+}
+
+section h1,
+section h2,
+section h3 {
+	color: var(--green);
+	border-bottom: 2px solid var(--green);
+	padding-bottom: 5px;
+}
+
+section h1 {
+	font-size: 2em;
+	margin: 0 0 20px 0;
+}
+
+section h2 {
+	font-size: 1.5em;
+	margin: 0 0 15px 0;
+}
+
+section h3 {
+	font-size: 1.2em;
+	margin: 30px 0 10px 0;
+}
+
+section p {
+	margin: 10px 0;
+}
+
+section:nth-of-type(even) {
+	background-color: var(--gray);
+}
+
+figure {
+	margin: 0;
+	text-align: center;
+}
+
+figcaption {
+	font-size: 0.9em;
+	font-style: italic;
+	color: #666;
+	margin-top: 5px;
+}
+
+img {
+	display: block;
+	margin: 0 auto;
+}
+
+pre {
+	max-width: 100%;
+	overflow-x: auto;
+	white-space: pre;
+	word-wrap: normal;
+	font-family: monospace;
+	font-size: 16px;
+	box-sizing: border-box;
+}
+
+mjx-container {
+	overflow-x: auto;
+	max-width: 100%;
+	padding: 0.5em 0;
+}
+
+mjx-container[jax="CHTML"] {
+	text-align: left;
+	/* prevents math from being centered awkwardly */
+}
+
+code[class*="language-"],
+pre[class*="language-"] {
+	color: #000;
+	background: 0 0;
+	text-shadow: 0 1px #fff;
+	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+	font-size: 1em;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	word-wrap: normal;
+	line-height: 1.5;
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+}
+
+code[class*="language-"] ::-moz-selection,
+code[class*="language-"]::-moz-selection,
+pre[class*="language-"] ::-moz-selection,
+pre[class*="language-"]::-moz-selection {
+	text-shadow: none;
+	background: #b3d4fc;
+}
+
+code[class*="language-"] ::selection,
+code[class*="language-"]::selection,
+pre[class*="language-"] ::selection,
+pre[class*="language-"]::selection {
+	text-shadow: none;
+	background: #b3d4fc;
+}
+
+@media print {
+	code[class*="language-"],
+	pre[class*="language-"] {
+		text-shadow: none;
+	}
+}
+
+pre[class*="language-"] {
+	padding: 1em;
+	margin: .5em 0;
+	overflow: auto;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+	background: #f5f2f0;
+}
+
+:not(pre) > code[class*="language-"] {
+	padding: .1em;
+	border-radius: .3em;
+	white-space: normal;
+}
+
+.token.cdata,
+.token.comment,
+.token.doctype,
+.token.prolog {
+	color: #708090;
+}
+
+.token.punctuation {
+	color: #999;
+}
+
+.token.namespace {
+	opacity: .7;
+}
+
+.token.boolean,
+.token.constant,
+.token.deleted,
+.token.number,
+.token.property,
+.token.symbol,
+.token.tag {
+	color: #905;
+}
+
+.token.attr-name,
+.token.builtin,
+.token.char,
+.token.inserted,
+.token.selector,
+.token.string {
+	color: #690;
+}
+
+.language-css .token.string,
+.style .token.string,
+.token.entity,
+.token.operator,
+.token.url {
+	color: #9a6e3a;
+	background: hsla(0, 0%, 100%, .5);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+	color: #07a;
+}
+
+.token.class-name,
+.token.function {
+	color: #dd4a68;
+}
+
+.token.important,
+.token.regex,
+.token.variable {
+	color: #e90;
+}
+
+.token.bold,
+.token.important {
+	font-weight: 700;
+}
+
+.token.italic {
+	font-style: italic;
+}
+
+.token.entity {
+	cursor: help;
+}
+/* Start Project Wallace extracted inline styles */
+div {
+	text-align: center;
+	margin-bottom: 20px;
+}
+
+img {
+	max-width: 100%;
+	height: auto;
+}
+
+img {
+	width: 100%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+iframe {
+	border: none;
+}
+
+img {
+	width: 100%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 20px;
+}
+
+figure {
+	width: 25%;
+}
+
+img {
+	width: 100%;
+}
+
+blockquote {
+	border-left: 5px solid #2c734a;
+	padding: 10px 20px;
+	background-color: #f9f9f9;
+	font-style: italic;
+	font-size: 1.2em;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+	align-items: center;
+}
+
+figure {
+	text-align: center;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 50%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 75%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+div {
+	display: flex;
+	justify-content: space-between;
+}
+
+figure {
+	width: 45%;
+	text-align: center;
+}
+
+img {
+	width: 100%;
+}
+
+figure {
+	width: 45%;
+	text-align: center;
+}
+
+img {
+	width: 100%;
+}
+
+div {
+	display: flex;
+	align-items: flex-start;
+	gap: 20px;
+}
+
+figure {
+	width: 35%;
+	text-align: center;
+}
+
+img {
+	width: 100%;
+}
+
+div {
+	max-width: 60%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+	gap: 20px;
+	align-items: center;
+}
+
+figure {
+	text-align: center;
+	width: 60%;
+}
+
+img {
+	width: 100%;
+}
+
+figure {
+	text-align: center;
+	width: 27%;
+}
+
+img {
+	width: 100%;
+}
+
+div {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 20px;
+}
+
+figure {
+	width: 65%;
+	text-align: center;
+}
+
+img {
+	width: 90%;
+}
+
+figure {
+	width: 65%;
+	text-align: center;
+}
+
+img {
+	width: 70%;
+}
+
+div {
+	display: flex;
+	justify-content: space-between;
+}
+
+figure {
+	width: 45%;
+	text-align: center;
+}
+
+img {
+	width: 70%;
+}
+
+figure {
+	width: 45%;
+	text-align: center;
+}
+
+img {
+	width: 70%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 60%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 40%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 45%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 40%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+figure {
+	text-align: center;
+}
+
+img {
+	width: 50%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 45%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 60%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 30%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+figure {
+	text-align: center;
+}
+
+img {
+	width: 55%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+	margin-top: 20px;
+	gap: 40px;
+}
+
+table {
+	border-collapse: collapse;
+	text-align: left;
+}
+
+table {
+	border-collapse: collapse;
+	text-align: left;
+}
+
+div {
+	overflow-x: auto;
+	max-width: 100%;
+	margin-top: 20px;
+}
+
+table {
+	min-width: 600px;
+	border-collapse: collapse;
+	text-align: center;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-top: 20px;
+}
+
+table {
+	border-collapse: collapse;
+	text-align: center;
+}
+
+p {
+	text-align: center;
+}
+
+span {
+	font-family: monospace;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+	gap: 20px;
+}
+
+figure {
+	text-align: center;
+}
+
+img {
+	width: 50%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+	gap: 20px;
+}
+
+figure {
+	text-align: center;
+}
+
+img {
+	width: 70%;
+}
+
+figure {
+	text-align: center;
+}
+
+img {
+	width: 295.5px;
+	height: 591px;
+}
+
+figure {
+	text-align: center;
+}
+
+img {
+	width: 70%;
+}
+
+figure {
+	text-align: center;
+}
+
+img {
+	width: 60%;
+}
+
+figure {
+	text-align: center;
+}
+
+img {
+	width: 60%;
+}
+
+figure {
+	text-align: center;
+}
+
+img {
+	width: 40%;
+}
+
+figure {
+	text-align: center;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	padding: 0;
+	margin: 0;
+}
+
+div {
+	margin: 0;
+	padding: 0;
+}
+
+img {
+	width: 100%;
+	display: block;
+}
+
+div {
+	margin: 0;
+	padding: 0;
+}
+
+img {
+	width: 100%;
+	display: block;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 80%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 80%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+
+img {
+	width: 80%;
+}
+
+div {
+	display: flex;
+	justify-content: center;
+}
+/** End Project Wallace extracted inline styles */

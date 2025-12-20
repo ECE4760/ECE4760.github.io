@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Writeup</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<h1 id="snake-inspired-game-on-the-rp2040">Snake-inspired Game on the
+RP2040</h1>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Gj2DFg01Oc0?si=-EzkMRs6QJ7xzC38&amp;mute=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+</iframe>
+<h2 id="introduction">Introduction</h2>
+<p>We created a ‘<a href="http://slither.io/">slither.io</a>’ like game
+which runs on a single raspberry pi pico. Upon game startup there is a
+set number of active snakes and active pellets on the gameboard. Pellets
+are stationary green circles which act as ‘food’ for the snakes: when
+the head of a certain snake comes into contact with a pellet, it ‘eats’
+the pellet, causing the pellet to be respawned on the gameboard
+somewhere else and increasing the score of the snake. At certain score
+thresholds, the snake will grow a set length, represented by the number
+of segments on the snake. If a snake head touches ANY part of the body
+of another snake or any of the walls, it will die causing it to loose
+all accumulated score and segments as it is respawned in a random
+location with just one segment.</p>
+<h2 id="program-structure">Program Structure</h2>
+<pre class="text"><code> src (root)
+ ├── .clangd (linting)
+ ├── .gitignore
+ ├── CMakeLists.txt (main CMakeLists, include all subdirs)
+ ├── pico_sdk_import.cmake
+ ├── pt_cornell_rp2040_v1_4.h (protothreads)
+ ├── snake_server.c (main server/game source code)
+ ├── snake_spi.h (constants/definitions for server &amp; agent SPI)
+ ├── snake_state.c (library for tracking and updating snakes)
+ ├── snake_state.h (see above)
+ ├── config (Header only interfaces for configuration/constants)
+ │   ├── CMakeLists.txt
+ │   └── game.h (Game parameters)
+ ├── demo (Demos we modify for testing)
+ │   ├── CMakeLists.txt
+ │   ├── galton.c
+ │   ├── spi_test_master.c
+ │   └── spi_test_slave.c
+ ├── driver (External device drivers)
+ │   ├── CMakeLists.txt
+ │   ├── vga.h (Wrapper for the custom VGA library)
+ │   └── vga
+ │       ├── CMakeLists.txt
+ │       ├── font_rom_brl4.h
+ │       ├── glcdfont.c
+ │       ├── hsync.pio
+ │       ├── rgb.pio
+ │       ├── vga16_graphics_v2.c
+ │       ├── vga16_graphics_v2.h
+ │       └── vsync.pio
+ ├── scripts (Any scripts we make)
+ │   ├── find_freq.py (Brute force testing to find good fractional divider)
+ │   ├── font_dump.png
+ │   └── print_font.py (Python impl of drawChar that can generate a font ma)
+ └── smath (math library)
+     ├── CMakeLists.txt
+     ├── fix.c (fix8,15,21 function implementations)
+     ├── fix.h (fix... macros and definitions)
+     ├── linalg.c (vector and matrix operations, `_in` are in-place)
+     └── linalg.h   (header for above)</code></pre>
+<h2 id="hardware-layout">Hardware Layout</h2>
+<p><img src="images/Final_BB_Diagram.png" /></p>
+<p>Figure: Simplified diagram of the breadboard layout of the
+project.</p>
+<p><img src="images/schematic.png" /></p>
+<p>Figure: Schematic of the final hardware layout.</p>
+<p>Our final hardware design is relatively simple. It consists of the
+RP2040-based Raspberry Pi Pico board, a custom VGA adapter board, basic
+controls, and support circuitry to power the board from an external
+source. This is all contained on one breadboard.</p>
+<h2 id="game-parameters">Game Parameters</h2>
+<p>In our design of the game, we focused on having as much work as
+possible be performed upon game startup. This means that generally we
+made constants for the amount of snakes or pellets, and other game
+variables. These constants are stored within game.h, in the config
+directory.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c#"><code class="sourceCode cs"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Integer pixel values</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> HEAD_RADIUS <span class="dv">4</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> PELLET_RADIUS <span class="dv">2</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SEGMENT_LEN <span class="dv">3</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">/* GAMEPLAY STARTING CONDITIONS */</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">// True/False</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> START_CONTROLLING     <span class="dv">0</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Float</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> START_TIMESCALE       <span class="fl">1.0f</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">/* DRAWING CONSTANTS */</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">// True/False</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SHOW_SEG_JOINTS       <span class="dv">0</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SHOW_HVEC             <span class="dv">1</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SHOW_VVEC             <span class="dv">0</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SHOW_SID              <span class="dv">0</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co">// color_t</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> HVEC_COLOR            DARK_ORANGE</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> VVEC_COLOR            MAGENTA</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SID_COLOR             WHITE</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">// color_t</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> BORDER_COLOR          WHITE</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co">/* GAME-STATE &amp; PHYSICS */</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co">// Names for SNAKE_SCORE_METHOD</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SNAKE_ONE             <span class="dv">0</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SNAKE_FIB             <span class="dv">1</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SNAKE_LOG2            <span class="dv">2</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="co">// 0, 1, or 2 (see above)</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co">// 0 -&gt; 1-to-1, 1 -&gt; Fibonacci sequence, 2 -&gt; log2</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SNAKE_SCORE_METHOD    SNAKE_ONE</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co">// Bounded integers (loosely checked at compile-time)</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> MAX_PELLETS           <span class="dv">100</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> MAX_SNAKE_SEGMENTS    <span class="dv">250</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> MAX_SNAKES            <span class="dv">6</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co">// Fix15</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co">// Distances are in pixels</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co">// Angles are in radians</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co">// Velocities are px/ms</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SNAKE_SPEED           <span class="dv">2000</span>    <span class="co">// px/ms</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SNAKE_SPEED_MAX       <span class="dv">3000</span>    <span class="co">// px/ms</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SNAKE_SPEED_MIN       <span class="dv">1000</span>    <span class="co">// px/ms</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> TURN_SPEED            <span class="dv">400</span>     <span class="co">// radians</span></span></code></pre></div>
+<p>Note the SNAKE_SCORE_METHOD and associated options. This is the way
+in which the snake score, ie. the number of pellets which the snake has
+‘eaten’ since spawning in, is converted into the length of the snake.
+The SNAKE_ONE option means that for each pellet that the snake eats, the
+length of the snake increases by one segment. The SNAKE_FIB option means
+that the score required for the nth segment is equal to the nth
+fibbonacci number. The SNAKE_LOG2 option means that the snake will have
+segment count equal to log(score, base 2).</p>
+<h2 id="math-libraries">Math libraries</h2>
+<p>The smath directory is the math library for basically all of the
+operations to be performed on non-basic variable types. It contains two
+major math libraries, one for fixed point integers and another for a 2d
+vector variable type called hvec2d_t.</p>
+<p>The math implementations for basic operations on fixed point integer
+representations borrow heavily from those provided to us by Hunter. We
+directly use the provided fix15 operations, alongside implementing a set
+of operations on fix21. Defined operations include:</p>
+<ul>
+<li>Unary conversions between fix15 and int32/float/char data types</li>
+<li>Binary operations requiring two fix15 variables to be input:
+multiplication/division/mod</li>
+<li>Unary operations on a fix15 angular representation, to/from degree
+or radian representation</li>
+<li>Random value generation for a specific value range: [-1,1]… [a,
+b]</li>
+</ul>
+<p>In addition we implement a set of pre-defined constants in each fixed
+point representation:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c#"><code class="sourceCode cs"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> FIX15_MAX         INT32_MAX</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> FIX15_MIN         INT32_MIN</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> INT2FIX15_MAX     <span class="dv">65535</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> INT2FIX15_MIN     <span class="op">-</span><span class="dv">1024</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Useful, pre-converted literals</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> PI15              <span class="dv">102944</span>  <span class="co">// pi      ( &lt;== 3.1416015625      )</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> TAU15             <span class="dv">205888</span>  <span class="co">// 2 * pi  ( &lt;== 6.283203125       )</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> PI_O_TWO15        <span class="dv">51472</span>   <span class="co">// pi/2    ( &lt;== 1.57080078125     )</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> PI_O_FOUR15       <span class="dv">25736</span>   <span class="co">// pi/4    ( &lt;== 0.785400390625    )</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> PI_O_18015        <span class="dv">572</span>     <span class="co">// pi/180  ( &lt;== 0.0174560546875   )</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> ONEEIGHTY_O_PI15  <span class="dv">1877468</span> <span class="co">// 180/pi  ( &lt;== 57.2957763671875  )</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> ONE_O_PI15        <span class="dv">10430</span>   <span class="co">// 1/pi    ( &lt;== 0.31829833984375  )</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> ONE15             <span class="dv">32768</span>   <span class="co">// 1       ( &lt;== 1                 )</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> PTONE15           <span class="dv">3277</span>    <span class="co">// 0.1     ( &lt;== 0.100006103515625 )</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> PTZEROONE15       <span class="dv">328</span>     <span class="co">// 0.01    ( &lt;== 0.010009765625    )</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> FIX15_UNIT        <span class="dv">1</span>       <span class="co">// 2^{-15} ( &lt;== 0.000030517578125 )</span></span></code></pre></div>
+<p>Figure: The set of predefined constants in fix15 representation. We
+implement the same constants for fix21 representation, though they are
+omitted for clarity in this writeup.</p>
+<p>We use these basic operations on fix15 variables to assemble a math
+library, linalg.c, for our 2D vector variables. These structs not only
+store the 2D coordinate components of the vector, but also a third
+variable which encodes whether this is a point or a vector, something
+which is useful for our graphics. Below, we will discuss what is
+implemented by this file.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">union</span> hvec2d <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    fix15 x<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    fix15 y<span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    fix15 w<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">};</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  fix15 data<span class="op">[</span><span class="dv">3</span><span class="op">];</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> hvec2d_t<span class="op">;</span></span></code></pre></div>
+<p>Figure: The definition of the hvec2d_t struct, within the linalg.h
+file.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">//Functions to make a vector or a point with fix15 components</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>hvec2d_t make_vec<span class="op">(</span>fix15 x<span class="op">,</span> fix15 y<span class="op">);</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>hvec2d_t make_point<span class="op">(</span>fix15 x<span class="op">,</span> fix15 y<span class="op">);</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>fix15 fast_dist<span class="op">(</span>fix15 dx<span class="op">,</span> fix15 dy<span class="op">);</span> <span class="co">//A function to quickly compute the length of the difference vector between two points</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>fix15 vec_dot<span class="op">(</span>hvec2d_t a<span class="op">,</span> hvec2d_t b<span class="op">);</span> <span class="co">//A function to compute the dot product of two vectors</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>fix15 vec_perp_dot<span class="op">(</span>hvec2d_t a<span class="op">,</span> hvec2d_t b<span class="op">);</span> <span class="co">// ||a x b|| assuming a.w, b.w == 0</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>fix15 vec_mag<span class="op">(</span>hvec2d_t a<span class="op">);</span> <span class="co">//Unary operation to calculate the magnitude of a vector</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>fix15 vec_angle<span class="op">(</span>hvec2d_t a<span class="op">);</span> <span class="co">//Unary operation to calculate the angle of a vector from an implicit direction vector of &lt;1,0&gt; = 0 degrees = 0 radians</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>≈fix15 vec_vec_angle<span class="op">(</span>hvec2d_t a<span class="op">,</span> hvec2d_t b<span class="op">);</span> <span class="co">// ||a x b|| assuming a.w, b.w == 0</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>hvec2d_t vec_lerp<span class="op">(</span>fix15 alpha<span class="op">,</span> hvec2d_t a<span class="op">,</span> hvec2d_t b<span class="op">);</span> <span class="co">//Linear interpolation for the vector, alpha must be in the range of 0 to 1</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">// Out-of-place operations</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>hvec2d_t vec_scale<span class="op">(</span>hvec2d_t a<span class="op">,</span> fix15 scalar<span class="op">);</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>hvec2d_t vec_div<span class="op">(</span>hvec2d_t a<span class="op">,</span> fix15 scalar<span class="op">);</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>hvec2d_t vec_normalize<span class="op">(</span>hvec2d_t a<span class="op">);</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>hvec2d_t vec_homogenize<span class="op">(</span>hvec2d_t a<span class="op">);</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>hvec2d_t vec_add<span class="op">(</span>hvec2d_t a<span class="op">,</span> hvec2d_t b<span class="op">);</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>hvec2d_t vec_sub<span class="op">(</span>hvec2d_t a<span class="op">,</span> hvec2d_t b<span class="op">);</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>hvec2d_t vec_rotate<span class="op">(</span>hvec2d_t vec<span class="op">,</span> fix15 angle<span class="op">);</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>hvec2d_t vec_apply_matrix<span class="op">(</span> hvec2d_t v<span class="op">,</span> hmat2d_t m<span class="op">);</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">// In-place operations</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> vec_scale_in<span class="op">(</span>hvec2d_t<span class="op">*</span> a<span class="op">,</span> fix15 scalar<span class="op">);</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> vec_div_in<span class="op">(</span>hvec2d_t<span class="op">*</span> a<span class="op">,</span> fix15 scalar<span class="op">);</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> vec_normalize_in<span class="op">(</span>hvec2d_t<span class="op">*</span> a<span class="op">);</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> vec_homogenize_in<span class="op">(</span>hvec2d_t<span class="op">*</span> a<span class="op">);</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> vec_add_in<span class="op">(</span>hvec2d_t<span class="op">*</span> a<span class="op">,</span> hvec2d_t b<span class="op">);</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> vec_sub_in<span class="op">(</span>hvec2d_t<span class="op">*</span> a<span class="op">,</span> hvec2d_t b<span class="op">);</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> vec_rotate_in<span class="op">(</span>hvec2d_t<span class="op">*</span> vec<span class="op">,</span> fix15 angle<span class="op">);</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> vec_apply_matrix_in<span class="op">(</span>hvec2d_t<span class="op">*</span> v<span class="op">,</span> hmat2d_t m<span class="op">);</span></span></code></pre></div>
+<p>Figure: A selection of functions implemented in linalg.c. Though some
+functions have been omitted, this list can be considered comprehensive
+in terms of what is actually being used by our code.</p>
+<h2 id="overclocking">Overclocking</h2>
+<p>For this project we overclocked the PICO to 270MHz. For good
+performance, this required us to max out the voltage supplied to the
+CPU.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>VREG_VOLTAGE_MAX <span class="op">=</span> VREG_VOLTAGE_1_30<span class="op">,</span>      <span class="co">///&lt; Always the maximum possible voltage</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#define SYS_CLOCK_KHZ </span><span class="dv">270000</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>vreg_set_voltage<span class="op">(</span>VREG_VOLTAGE_MAX<span class="op">);</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>set_sys_clock_khz<span class="op">(</span>SYS_CLOCK_KHZ<span class="op">,</span> <span class="kw">true</span><span class="op">);</span></span></code></pre></div>
+<h2 id="vga">VGA</h2>
+<h3 id="vga-hardware">VGA Hardware</h3>
+<p><img src="images/Pasted-image-20251218151410.png" /></p>
+<p>Figure: Diagram of hardware connection between the RP 2040 and the
+VGA connector to the monitor. Borrowed from provided class resources: <a
+href="https://vanhunteradams.com/Pico/VGA/VGA.html">VGA</a>. The HSYNC
+and VSYNC lines are directly connected to the GPIO pins. This cannot be
+done with the RGB pins, because they are analog and output a range of
+3.3V whereas the display expects a voltage in the range of 0-0.7V. There
+is 70 ohm resistance to ground in the display, so that resistance and a
+330 ohm resistor on each RGB GPIO reduces the voltage to a safe level
+for the display. In addition, the diagram does not show this, but there
+is a second GPIO pin connected in parallel to the green analog VGA pin,
+with a 470 ohm resistor. The higher resistance on the “L GREEN” signal
+allows a finer range of possible voltages and thus more color detail for
+greens than is possible with a single 4-bit color. Green is a dominant
+color in human vision, so we prioritize giving it a larger range of
+values.</p>
+<p><img src="images/Pasted-image-20251219135851.jpg" /></p>
+<p>Figure: The course-provided protoboard to interface between the GPIO
+ports and the VGA header. Note the consistency with the previous
+diagram: there are TWO DIFFERENT inputs for the green color, labeled H
+(High) and L (low) which lead to a single green output port on the VGA
+header.</p>
+<h3 id="vga-software-hardware-integration">VGA Software-Hardware
+Integration</h3>
+<p>The following section is directly taken from a previous lab report
+(Galton Board, PID Helicopter). The specific hardware used in
+controlling the VGA connection was the same in both labs and this final
+report.</p>
+<p>To transmit VGA data to the external monitor we make use of a
+provided VGA library (<a
+href="https://vanhunteradams.com/Pico/VGA/VGA.html">VGA</a>). This
+library uses three synchronized PIO state machines (hsync.pio,
+vsync.pio, rgb.pio) to drive the VGA monitor. In addition to the PIO
+state machines the library includes functions (within
+vga_16_graphicsv2.c) to draw graphics primitives such as circles,
+squares, and lines on the VGA in addition to setting single pixels to a
+color. Furthermore, we make use of library functionality for drawing the
+standard ASCII 5x7 font on the monitor(glcdfont.c, font_rom_brl4.h).</p>
+<p>Before explaining the pin connection system between the VGA header
+and the GPIO ports, we note some specifics defined in the library. The
+library defines char values of colors as follows (note that there are 16
+possible values for colors):</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> colors <span class="op">{</span>BLACK<span class="op">,</span> DARK_GREEN<span class="op">,</span> MED_GREEN<span class="op">,</span> GREEN<span class="op">,</span> DARK_BLUE<span class="op">,</span> BLUE<span class="op">,</span> LIGHT_BLUE<span class="op">,</span> CYAN<span class="op">,,</span> DARK_ORANGE<span class="op">,</span> ORANGE<span class="op">,</span> YELLOW<span class="op">,</span> <span class="op">,</span> PINK<span class="op">,</span> LIGHT_PINK<span class="op">,</span> WHITE<span class="op">}</span> <span class="op">;</span> </span></code></pre></div>
+<p>In addition, the GPIO pins are masked as the following:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> vga_pins <span class="op">{</span>HSYNC<span class="op">=</span><span class="dv">16</span><span class="op">,</span> VSYNC<span class="op">,</span> LO_GRN<span class="op">,</span> HI_GRN<span class="op">,</span> BLUE_PIN<span class="op">,</span> RED_PIN<span class="op">}</span> <span class="op">;</span></span></code></pre></div>
+<p>Pixel color values are stored in a global character array
+(vga_data_array), and 4 bits are used to store color data for each
+pixel. This means that each element of the array stores color data for
+two pixels, allowing the final size of the array to be 640 x 240 =
+153600 char values. The VGA pixel clock runs at about 25.172 MHz. It
+would be a massive drain on compute resources for the CPU to transmit
+the pixel data of this array at the clock speed required to drive the
+monitor. Therefore, this is done through the PIO state machines and DMA
+channels, saving cycles on the CPU.</p>
+<h3 id="vga-and-overclocking">VGA and Overclocking</h3>
+<p>One of the major issues with overlocking the CPU was that the
+provided VGA driver library was configured for a clock rate of 125MHz.
+Furthermore, due to the specifications of VGA design standards, we were
+required to output pixel data at a constant rate (25.172MHz). Therefore,
+when overclocking the system, we needed to also change the way in which
+the system handled this VGA data output. To ensure that the modified cpu
+clock speed is compatible with the VGA clock speed we had to modify the
+the PIO state machines which are associated with ensuring that the VGA
+output timing stays consistent. For HSYNC.pio and VSYNC.pio we use
+fractional divider to achieve ~25.172MHz. This is basically correct
+pixel clock, though it adds a minimal amount of jitter. This approach
+allowed us to implement a single-line change to retain the functionality
+of the PIO state machines at a completely different cpu frequency.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sm_config_set_clkdiv_int_frac8<span class="op">(&amp;</span>c<span class="op">,</span> <span class="dv">10</span><span class="op">,</span> <span class="dv">186</span><span class="op">);</span></span></code></pre></div>
+<p>For the final PIO state machine, RGB.pio, we increased the pixel
+holds:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>define pixel1hold <span class="dv">9</span> <span class="op">;</span> pixel1hold should be <span class="dv">5</span> <span class="cf">for</span> <span class="dv">150</span> MHz  <span class="op">(</span><span class="dv">4</span> <span class="cf">for</span> <span class="dv">125</span> MHz<span class="op">)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>define pixel2hold <span class="dv">7</span> <span class="op">;</span> pixel2hold should be <span class="dv">3</span> <span class="cf">for</span> <span class="dv">150</span> MHz  <span class="op">(</span><span class="dv">2</span> <span class="cf">for</span> <span class="dv">125</span> MHz<span class="op">)</span></span></code></pre></div>
+<p>We increased the delay between the start of the pixel output loop and
+the first time that the PIO machine will enter the pixel color value
+output loop:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>wait <span class="dv">1</span> irq <span class="dv">1</span> <span class="op">[</span><span class="dv">8</span><span class="op">]</span>            <span class="op">;</span> Wait <span class="cf">for</span> vsync active mode <span class="op">(</span>Increased from from <span class="dv">3</span><span class="op">-&gt;</span><span class="dv">8</span><span class="op">)</span>  </span></code></pre></div>
+<p>Finally, we implemented a small fractional clock divider. The
+original PIO state machine only used an integer clock divider value.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Small fractional clock div to get closer to perfect timing</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>sm_config_set_clkdiv_int_frac8<span class="op">(&amp;</span>c<span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">19</span><span class="op">)</span> <span class="op">;</span></span></code></pre></div>
+<h3 id="vga-changes">VGA Changes</h3>
+<p>We implement some very minor changes to update file structure. The
+only functional change is in the spacing when drawing chars/strings. The
+GLCD font which is used in the original code provided by Bruce and
+Hunter is 5px wide and 8px tall. Included in our project files, in the
+scripts directory, is a python script named ‘print_font.py’ which prints
+out the available characters so that they can be viewed. However,
+drawChar() draws extra empty column on the right of each char and the
+string writing functions advance the cursor 1 extra column for each
+character, effectively making chars 6x8 instead of 5x8. Overall, this is
+great for text readability, but it makes some of the (undocumented)
+symbolic characters look bad when put together because it creates a 1px
+gap between lines that should be connected. We added a check in
+tft_write and drawChar to stop this extra column from being drawn for
+specific characters: “if (c &gt;= ‘’ &amp;&amp; c &lt;= ‘’)” Overall,
+drawChar now returns before printing that empty line, and tft_write
+advances the cursor one less step than before.</p>
+<p><img src="images/font_dump_extra-line.bmp" /></p>
+<p>Figure: Display of the characters included in GLCD font. This set of
+characters are printed out using the logic of the ORIGINAL drawChar()
+code.</p>
+<p><img src="images/font_dump_variable-width.bmp" /></p>
+<p>Figure: Display of the characters included in GLCD font. This set of
+characters are printed out using the logic of the MODIFIED drawChar()
+code.</p>
+<p><img src="images/Pasted-image-20251218232150.png" /></p>
+<p>Figure: 6 selected characters from the MODIFIED GLCD font list, the
+character index for each is listed in just above the diagram of the
+pixels for that character. Note the column count for character ‘0xad’
+and ‘0xae’. There is one less column in the character, displaying the
+results of the logic change within the drawChar() function.</p>
+<h2 id="game-object-handling">Game Object Handling</h2>
+<p>All elements in this section are contained within the file:
+‘snake_state.h’</p>
+<h3 id="snake-representation">Snake Representation</h3>
+<div class="sourceCode" id="cb13"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> snake <span class="op">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">uint8_t</span>       id<span class="op">;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">uint32_t</span>      score<span class="op">;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#if (SNAKE_SCORE_METHOD == SNAKE_FIB)</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">uint32_t</span>      next_seg_score<span class="op">;</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">uint32_t</span>      last_seg_score<span class="op">;</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  hvec2d_t      head_pos<span class="op">;</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  hvec2d_t      heading<span class="op">;</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  hvec2d_t      goal_heading<span class="op">;</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  fix15         speed<span class="op">;</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">uint16_t</span>      num_segments<span class="op">;</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  segment_t     body<span class="op">[</span>MAX_SNAKE_SEGMENTS<span class="op">];</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> snake_t<span class="op">;</span></span></code></pre></div>
+<p>Each snake has a unique ID, head position (point), heading
+(normalized vector), goal/input heading (normalized vector), speed
+(scalar), length (int), and list of body segments (array of points).
+There are also “goal” score that are used for the “Fibonacci” scoring
+method described below.</p>
+<ul>
+<li>id: set at initialization and used for comparison</li>
+<li>head_pos: set randomly at each snake spawn and updated depending on
+other struct parameters</li>
+<li>heading: a unit vector from the snake’s head representing its facing
+angle, set randomly at each spawn and updated by goal_heading</li>
+<li>goal_heading: a unit vector from the snakes head representing the
+angle that the snake wants to head towards in the next time-step.
+<ul>
+<li>This is stored as a separate value from the current heading because
+there is a limit on the amount that the snake can turn each physics
+update.
+<ul>
+<li>Therefore from one physics update to the next a new goal heading may
+be set that is 180 degrees away relative to the current heading, whereas
+this new heading cannot be met in a single physics update.</li>
+</ul></li>
+<li>Heading is interpolated from heading to goal heading every tick.
+This occurs in the snake_update_position() function.</li>
+</ul></li>
+<li>speed: a scalar value, pixels per unit time
+<ul>
+<li>Displacement is calculated by multiplying speed by the heading</li>
+</ul></li>
+<li>num_segments: the number of segments active, updated when a snake
+eats a certain amount of pellets</li>
+<li>body: an array of segments with an arbitrary max (static
+allocation)</li>
+</ul>
+<div class="sourceCode" id="cb14"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> snake_segment <span class="op">{</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  hvec2d_t start_pos<span class="op">;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  hvec2d_t end_offset<span class="op">;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> segment_t<span class="op">;</span></span></code></pre></div>
+<p>Segments are made of a start point and a vector to their end
+point.</p>
+<h3 id="pellet-representation">Pellet Representation</h3>
+<div class="sourceCode" id="cb15"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> pellet <span class="op">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">uint16_t</span>      id<span class="op">;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  hvec2d_t      position<span class="op">;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int8_t</span>        value<span class="op">;</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> pellet_t<span class="op">;</span></span></code></pre></div>
+<p>Figure: The struct used for storing information about each food
+pellet in the game. Each pellet has a unique id, a position vector and
+the option to have a certain value ascribed to it.</p>
+<h3 id="snake-scoring">Snake scoring</h3>
+<p>There are three different scoring methods that can be used. The first
+is a basic one-to-one method where each point of the score adds another
+segment to the snake. The others are a logarithmic method where the
+snake’s length is determined by the log of its score, and a Fibonacci
+method where each time a snake reaches a goal score, a segment is added
+and the goal is added to the last goal.</p>
+<h3 id="game-object-parameters">Game Object Parameters</h3>
+<p>A comprehensive list of some basic parameters for the snakes:</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode c#"><code class="sourceCode cs"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> PELLET_RADIUS <span class="dv">3</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> HEAD_RADIUS <span class="dv">5</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> MAX_SNAKE_SEGMENTS <span class="dv">100</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> MAX_SNAKES <span class="dv">1</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> MAX_PELLETS <span class="dv">50</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> SNAKE_SPEED <span class="dv">100</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="kw">#define</span> TURN_SPEED <span class="dv">5</span></span></code></pre></div>
+<h2 id="snake-physics">Snake Physics</h2>
+<p>The main initialization function for the actual game board is:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Initialize the game-state with given board parameters</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_game_init<span class="op">(</span><span class="dt">int</span> board_left<span class="op">,</span> <span class="dt">int</span> board_top<span class="op">,</span> <span class="dt">int</span> board_right<span class="op">,</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">int</span> board_bottom<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  snake_board_left <span class="op">=</span> int2fix15<span class="op">(</span>board_left<span class="op">);</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  snake_board_top <span class="op">=</span> int2fix15<span class="op">(</span>board_top<span class="op">);</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  snake_board_right <span class="op">=</span> int2fix15<span class="op">(</span>board_right<span class="op">);</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  snake_board_bottom <span class="op">=</span> int2fix15<span class="op">(</span>board_bottom<span class="op">);</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  origin<span class="op">.</span>x <span class="op">=</span> snake_board_left<span class="op">;</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  origin<span class="op">.</span>y <span class="op">=</span> snake_board_top<span class="op">;</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  origin<span class="op">.</span>w <span class="op">=</span> ONE15<span class="op">;</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  spawn_min_x <span class="op">=</span> board_left <span class="op">+</span> <span class="op">(</span>HEAD_RADIUS <span class="op">*</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  spawn_max_x <span class="op">=</span> board_right <span class="op">-</span> <span class="op">(</span>HEAD_RADIUS <span class="op">*</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  spawn_min_y <span class="op">=</span> board_top <span class="op">+</span> <span class="op">(</span>HEAD_RADIUS <span class="op">*</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  spawn_max_y <span class="op">=</span> board_bottom <span class="op">-</span> <span class="op">(</span>HEAD_RADIUS <span class="op">*</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>  <span class="co">// gs-&gt;active_snakes = 0;</span></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  <span class="co">// gs-&gt;active_pellets = 0;</span></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>  memset<span class="op">(&amp;</span>snakes<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>snakes<span class="op">));</span></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>  memset<span class="op">(&amp;</span>pellets<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>pellets<span class="op">));</span></span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> MAX_SNAKES<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>    snakes<span class="op">[</span>i<span class="op">].</span>id <span class="op">=</span> i <span class="op">+</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The set of spawning helper functions is below:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Spawn one `snake` at (x,y) `position` `angle` rads from x-axis</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_spawn<span class="op">(</span>snake_t <span class="op">*</span>snake<span class="op">,</span> hvec2d_t position<span class="op">,</span> fix15 angle<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  snake<span class="op">-&gt;</span>head_pos <span class="op">=</span> position<span class="op">;</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  snake<span class="op">-&gt;</span>heading <span class="op">=</span> vec_rotate<span class="op">(</span>xhat<span class="op">,</span> angle<span class="op">);</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  snake<span class="op">-&gt;</span>goal_heading <span class="op">=</span> snake<span class="op">-&gt;</span>heading<span class="op">;</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  snake<span class="op">-&gt;</span>num_segments <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  snake<span class="op">-&gt;</span>speed <span class="op">=</span> SNAKE_SPEED<span class="op">;</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  memset<span class="op">(</span>snake<span class="op">-&gt;</span>body<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>snake<span class="op">-&gt;</span>body<span class="op">));</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  snake<span class="op">-&gt;</span>score <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="pp">#if (SNAKE_SCORE_METHOD == SNAKE_FIB)</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  snake<span class="op">-&gt;</span>next_seg_score <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  snake<span class="op">-&gt;</span>last_seg_score <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  snake_add_segment<span class="op">(</span>snake<span class="op">);</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>hvec2d_t rand_bounded_point<span class="op">(</span>fix15 min_x<span class="op">,</span> fix15 min_y<span class="op">,</span> fix15 max_x<span class="op">,</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>                            fix15 max_y<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">(</span>hvec2d_t<span class="op">){</span>rand_fix15<span class="op">(</span>min_x<span class="op">,</span> max_x<span class="op">),</span> rand_fix15<span class="op">(</span>min_y<span class="op">,</span> max_y<span class="op">),</span> ONE15<span class="op">};</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>hvec2d_t rand_spawn_point<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  <span class="dt">uint32_t</span> x <span class="op">=</span> <span class="op">(</span>get_rand_32<span class="op">()</span> <span class="op">%</span> <span class="op">(</span>spawn_max_x <span class="op">-</span> spawn_min_x<span class="op">))</span> <span class="op">+</span> spawn_min_x<span class="op">;</span></span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>  <span class="dt">uint32_t</span> y <span class="op">=</span> <span class="op">(</span>get_rand_32<span class="op">()</span> <span class="op">%</span> <span class="op">(</span>spawn_max_y <span class="op">-</span> spawn_min_y<span class="op">))</span> <span class="op">+</span> spawn_min_y<span class="op">;</span></span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">(</span>hvec2d_t<span class="op">){</span>int2fix15<span class="op">(</span>x<span class="op">),</span> int2fix15<span class="op">(</span>y<span class="op">),</span> ONE15<span class="op">};</span></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a><span class="co">// Spawn all snakes randomly</span></span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_spawn_all<span class="op">();</span></span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a><span class="co">//Spawn all pellets randomly</span></span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_spawn_all_pellets<span class="op">();</span></span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a><span class="co">//spawn a pellet in a specific location</span></span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_spawn_pellet<span class="op">(</span>pellet_t<span class="op">*</span> pellet<span class="op">,</span> hvec2d_t position<span class="op">,</span> <span class="dt">int8_t</span> value<span class="op">);</span></span></code></pre></div>
+<p>We have a couple of utility functions:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">//A function, to get the snake object associated with a unique snake id number</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>snake_t <span class="op">*</span>snake_get<span class="op">(</span><span class="dt">int</span> id<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> <span class="op">&amp;</span>snakes<span class="op">[</span>id <span class="op">-</span> <span class="dv">1</span><span class="op">];</span> <span class="op">}</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">//To find the difference between the heading angle and the implicit 0 degree vector of &lt;1,0&gt;</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>fix15 snake_get_world_angle<span class="op">(</span>snake_t <span class="op">*</span>snake<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> vec_vec_angle<span class="op">(</span>xhat<span class="op">,</span> snake<span class="op">-&gt;</span>heading<span class="op">);</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="co">//To find the difference between the goal angle and the implicit 0 degree vector of &lt;1,0&gt;</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>fix15 snake_get_goal_world_angle<span class="op">(</span>snake_t <span class="op">*</span>snake<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> vec_vec_angle<span class="op">(</span>xhat<span class="op">,</span> snake<span class="op">-&gt;</span>goal_heading<span class="op">);</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="co">// Update snake&#39;s heading direction to an absolute angle</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_change_angle<span class="op">(</span>snake_t<span class="op">*</span> snake<span class="op">,</span> fix15 world_angle<span class="op">);</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a><span class="co">// Rotate the snakes heading direction by a certain offset</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_turn<span class="op">(</span>snake_t<span class="op">*</span> snake<span class="op">,</span> fix15 angle_offset<span class="op">);</span></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="co">// Set a target heading. If passing in a point, changes goal heading to a normalized vector to target. If passing in a vector, changes goal heading to that vector (MUST BE NORMALIZED)</span></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_target<span class="op">(</span>snake_t<span class="op">*</span> snake<span class="op">,</span> hvec2d_t pt_o_vec<span class="op">);</span></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="co">//A function to get the velocity vector of a certain snake from its current speed and current heading</span></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>hvec2d_t find_velocity_vec<span class="op">(</span>fix15 speed<span class="op">,</span> fix15 heading<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">(</span>hvec2d_t<span class="op">){</span>multfix15<span class="op">(</span>speed<span class="op">,</span> cosfx15<span class="op">(</span>heading<span class="op">)),</span></span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>                    multfix15<span class="op">(</span>speed<span class="op">,</span> sinfx15<span class="op">(</span>heading<span class="op">)),</span> <span class="dv">0</span><span class="op">};</span></span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a><span class="co">//A function to allow us to dynamically change the speed of a snake</span></span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_scale_velocity<span class="op">(</span>snake_t <span class="op">*</span>snake<span class="op">,</span> fix15 scalar<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>  snake<span class="op">-&gt;</span>speed <span class="op">=</span> multfix15<span class="op">(</span>snake<span class="op">-&gt;</span>speed<span class="op">,</span> scalar<span class="op">);</span></span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> snake_check_pellets<span class="op">(</span>snake_t <span class="op">*</span>snake<span class="op">)</span> <span class="co">//A function to check for collisions with a food pellet. If a collision has occurred this will update the total score of the snake and respawn the pellet in a random location. </span></span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> snake_check_collision<span class="op">(</span>snake_t <span class="op">*</span>snake<span class="op">)</span> <span class="co">//A function to check for collisions with another snake or wall and update appropriately. It returns -1 for wall collisions, 0 for no collision, and snake ID for a snake collision</span></span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a><span class="co">//A function to find the closest pellet to a specific snake head</span></span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>pellet_t<span class="op">*</span> snake_find_closest_pellet<span class="op">(</span>snake_t<span class="op">*</span> snake<span class="op">,</span> hvec2d_t<span class="op">*</span> disp<span class="op">,</span> fix15<span class="op">*</span> dist<span class="op">);</span></span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a><span class="co">//A function to find the closest snake segment to a specific snake head</span></span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>snake_t<span class="op">*</span> snake_find_closest_snake<span class="op">(</span>snake_t<span class="op">*</span> snake<span class="op">,</span> hvec2d_t<span class="op">*</span> disp<span class="op">,</span> fix15<span class="op">*</span> dist<span class="op">);</span></span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a><span class="co">//A poorly named function which basically just finds the closest snake segment for a certain snake</span></span></code></pre></div>
+<p>Finally, we will discuss the function which allows us to update the
+position of the entire snake body based on the amount of time which has
+passed between physics update ticks:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_update_position<span class="op">(</span>snake_t <span class="op">*</span>snake<span class="op">,</span> fix15 delta_time<span class="op">){}</span></span></code></pre></div>
+<p>This function begins with the head of the snake. It calculates the
+angular difference between the goal heading and the current heading.
+Then, the resulting value is clamped based on the maximum turn speed and
+the amount of time that has passed since the last physics update.
+Finally, the heading of the snake is rotated by the clamped angular
+difference value.</p>
+<p>After moving the head, using the NEW position of the head of the
+snake, we iterate through the subsequent segments of the snake. For each
+segment:</p>
+<ul>
+<li>We calculate the current end point using the current offset vector
+and the current start point.</li>
+<li>We move the start point to the end point of the previous segment,
+then calculate the displacement vector, pt_disp, between the current end
+point and this new start point.</li>
+<li>We then calculate a new offset vector by rotating the current offset
+vector using the angle of the displacement vector, pt_disp.</li>
+<li>Finally we calculate the new end position based on the new offset
+vector and store this for use on the next segment.</li>
+</ul>
+<p>Overall, this allows segments to remain fixed length while also
+leading to more natural bending behavior. A diagram of this can be seen
+below.</p>
+<p><img src="images/snake_body.png" /></p>
+<h2 id="snake-intelligence">Snake Intelligence:</h2>
+<p>The primary AI decision-making function that determines each snake’s
+movement strategy is:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_ai_choose_goal_fix15<span class="op">(</span>snake_t <span class="op">*</span>me<span class="op">,</span> pellet_t <span class="op">**</span>closest_pellet_to_head<span class="op">,</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>hvec2d_t <span class="op">*</span>closest_pellet_to_head_displacement<span class="op">,</span> <span class="dt">bool</span> is_selected<span class="op">)</span></span></code></pre></div>
+<p>This function implements a physics-based AI system where snakes are
+simultaneously attracted to food and repelled by other snakes segments
+and walls. The algorithm operates by calculating force vectors from each
+element and combining them to determine the snake’s goal heading. The
+function begins by establishing tunable parameters that control
+behavior:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>R_SEG_INFLUENCE   <span class="op">=</span> int2fix15<span class="op">(</span><span class="dv">80</span><span class="op">);</span>    <span class="co">// Detection radius for other snakes (px)</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>R_WALL_INFLUENCE  <span class="op">=</span> int2fix15<span class="op">(</span><span class="dv">20</span><span class="op">);</span>    <span class="co">// Detection radius for walls (px)</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>K_FOOD            <span class="op">=</span> float2fix15<span class="op">(</span><span class="fl">0.01</span><span class="bu">f</span><span class="op">);</span>  <span class="co">// Food attraction strength</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>K_SEG_REP         <span class="op">=</span> float2fix15<span class="op">(</span><span class="fl">50.0</span><span class="bu">f</span><span class="op">);</span>  <span class="co">// Snake repulsion strength  </span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>K_WALL_REP        <span class="op">=</span> multfix15<span class="op">(</span>K_SEG_REP<span class="op">,</span> int2fix15<span class="op">(</span><span class="dv">2</span><span class="op">));</span> <span class="co">// Wall repulsion (2x stronger)</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>STRENGTH_MAX_SEG  <span class="op">=</span> float2fix15<span class="op">(</span><span class="fl">80.</span><span class="bu">f</span><span class="op">);</span>      </span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>STRENGTH_MAX_WALL <span class="op">=</span> multfix15<span class="op">(</span>STRENGTH_MAX_SEG<span class="op">,</span> int2fix15<span class="op">(</span><span class="dv">2</span><span class="op">));</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>MAX_REP_MAG       <span class="op">=</span> float2fix15<span class="op">(</span><span class="fl">400.0</span><span class="bu">f</span><span class="op">);</span></span></code></pre></div>
+<p>The food attaction vector calculation is done using a single target
+pellet at a time. The function calls snake_find_weighted_pellet() to
+select ONE target pellet whereupon a normalized attraction vector is
+calculated pointing toward it and scaled by the food attraction
+magnitude K_FOOD. During testing we noticed that some snakes might get
+caught chasing one pellet for too long without making progress, such as
+when another snake is also aiming for the same pellet nearby. This can
+lead to positional deadlock between two or more snakes, and is remedied
+by eventually banning that pellet for a short period of time:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>pellet_t <span class="op">*</span>snake_find_weighted_pellet<span class="op">(</span>snake_t <span class="op">*</span>snake<span class="op">,</span> hvec2d_t <span class="op">*</span>disp<span class="op">,</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>                                    fix15 <span class="op">*</span>dist<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  pellet_t <span class="op">*</span>best_pellet <span class="op">=</span> NULL<span class="op">;</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  hvec2d_t best_disp <span class="op">=</span> <span class="op">{</span><span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">};</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  fix15 best_dist <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  fix15 best_score <span class="op">=</span> FIX15_MAX<span class="op">;</span>  <span class="co">// Lower score = better pellet</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  fix15 my_score <span class="op">=</span> FIX15_MAX<span class="op">;</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Evaluate each pellet</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> p <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> p <span class="op">&lt;</span> MAX_PELLETS<span class="op">;</span> p<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    pellet_t <span class="op">*</span>plt <span class="op">=</span> <span class="op">&amp;</span>pellets<span class="op">[</span>p<span class="op">];</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    hvec2d_t disp_to_pellet <span class="op">=</span> vec_sub<span class="op">(</span>plt<span class="op">-&gt;</span>position<span class="op">,</span> snake<span class="op">-&gt;</span>head_pos<span class="op">);</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    fix15 my_dist <span class="op">=</span> vec_mag<span class="op">(</span>disp_to_pellet<span class="op">);</span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>my_dist <span class="op">&gt;</span> best_score<span class="op">)</span> <span class="cf">continue</span><span class="op">;</span> <span class="co">//Omit if too far away</span></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>avoid_pellet_id<span class="op">[</span>snake<span class="op">-&gt;</span>id <span class="op">-</span> <span class="dv">1</span><span class="op">]</span> <span class="op">==</span> plt<span class="op">-&gt;</span>id<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> <span class="op">(</span>avoid_pellet_counter<span class="op">[</span>snake<span class="op">-&gt;</span>id <span class="op">-</span> <span class="dv">1</span><span class="op">]</span> <span class="op">&gt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>        avoid_pellet_counter<span class="op">[</span>snake<span class="op">-&gt;</span>id <span class="op">-</span> <span class="dv">1</span><span class="op">]--;</span></span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span><span class="op">;</span> <span class="co">// skip</span></span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>        avoid_pellet_id<span class="op">[</span>snake<span class="op">-&gt;</span>id <span class="op">-</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> <span class="co">// Clear when counter expires</span></span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span></span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Calculate base score from distance (closer = lower score = better)</span></span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>    my_score <span class="op">=</span> my_dist<span class="op">;</span></span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Add penalty for other snakes being close to this pellet</span></span>
+<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> s <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> s <span class="op">&lt;</span> MAX_SNAKES<span class="op">;</span> s<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>      snake_t <span class="op">*</span>other_snake <span class="op">=</span> <span class="op">&amp;</span>snakes<span class="op">[</span>s<span class="op">];</span></span>
+<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> <span class="op">(</span>other_snake <span class="op">==</span> snake<span class="op">)</span> <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>      hvec2d_t other_snake_disp <span class="op">=</span> vec_sub<span class="op">(</span>plt<span class="op">-&gt;</span>position<span class="op">,</span> other_snake<span class="op">-&gt;</span>head_pos<span class="op">);</span></span>
+<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>      fix15 other_dist <span class="op">=</span> vec_mag<span class="op">(</span>other_snake_disp<span class="op">);</span></span>
+<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>      <span class="co">// If other snake is closer to this pellet, heavily penalize it</span></span>
+<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> <span class="op">(</span>other_dist <span class="op">&lt;</span> my_dist<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a>        fix15 penalty <span class="op">=</span> multfix15<span class="op">(</span>my_dist <span class="op">-</span> other_dist<span class="op">,</span> int2fix15<span class="op">(</span><span class="dv">3</span><span class="op">));</span> <span class="co">// 3x penalty</span></span>
+<span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a>        my_score <span class="op">+=</span> penalty<span class="op">;</span></span>
+<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span></span>
+<span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a>      <span class="co">// Add smaller penalty for other snakes being nearby</span></span>
+<span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> <span class="op">(</span>other_dist <span class="op">&lt;</span> int2fix15<span class="op">(</span><span class="dv">60</span><span class="op">))</span> <span class="op">{</span></span>
+<span id="cb23-45"><a href="#cb23-45" aria-hidden="true" tabindex="-1"></a>        fix15 proximity_penalty <span class="op">=</span> divfix15<span class="op">(</span>int2fix15<span class="op">(</span><span class="dv">30</span><span class="op">),</span> other_dist <span class="op">+</span> ONE15<span class="op">);</span></span>
+<span id="cb23-46"><a href="#cb23-46" aria-hidden="true" tabindex="-1"></a>        my_score <span class="op">+=</span> proximity_penalty<span class="op">;</span> </span>
+<span id="cb23-47"><a href="#cb23-47" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span></span>
+<span id="cb23-48"><a href="#cb23-48" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb23-49"><a href="#cb23-49" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb23-50"><a href="#cb23-50" aria-hidden="true" tabindex="-1"></a>      hvec2d_t other_heading_to_pellet <span class="op">=</span> vec_normalize<span class="op">(</span>other_snake_disp<span class="op">);</span></span>
+<span id="cb23-51"><a href="#cb23-51" aria-hidden="true" tabindex="-1"></a>      fix15 heading_alignment <span class="op">=</span> vec_dot<span class="op">(</span>other_snake<span class="op">-&gt;</span>goal_heading<span class="op">,</span> other_heading_to_pellet<span class="op">);</span></span>
+<span id="cb23-52"><a href="#cb23-52" aria-hidden="true" tabindex="-1"></a>      <span class="co">// Check if other snake is moving toward this pellet</span></span>
+<span id="cb23-53"><a href="#cb23-53" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> <span class="op">(</span>heading_alignment <span class="op">&gt;</span> float2fix15<span class="op">(</span><span class="fl">0.7</span><span class="bu">f</span><span class="op">)</span> <span class="op">&amp;&amp;</span> other_dist <span class="op">&lt;</span> int2fix15<span class="op">(</span><span class="dv">80</span><span class="op">))</span> <span class="op">{</span> </span>
+<span id="cb23-54"><a href="#cb23-54" aria-hidden="true" tabindex="-1"></a>        fix15 competition_penalty <span class="op">=</span> multfix15<span class="op">(</span>heading_alignment<span class="op">,</span> int2fix15<span class="op">(</span><span class="dv">20</span><span class="op">));</span></span>
+<span id="cb23-55"><a href="#cb23-55" aria-hidden="true" tabindex="-1"></a>        my_score <span class="op">+=</span> competition_penalty<span class="op">;</span> <span class="co">// If so, add penalty</span></span>
+<span id="cb23-56"><a href="#cb23-56" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span></span>
+<span id="cb23-57"><a href="#cb23-57" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb23-58"><a href="#cb23-58" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb23-59"><a href="#cb23-59" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Update best pellet if this one has a better (lower) score</span></span>
+<span id="cb23-60"><a href="#cb23-60" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>my_score <span class="op">&lt;</span> best_score<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb23-61"><a href="#cb23-61" aria-hidden="true" tabindex="-1"></a>      best_score <span class="op">=</span> my_score<span class="op">;</span></span>
+<span id="cb23-62"><a href="#cb23-62" aria-hidden="true" tabindex="-1"></a>      best_pellet <span class="op">=</span> plt<span class="op">;</span></span>
+<span id="cb23-63"><a href="#cb23-63" aria-hidden="true" tabindex="-1"></a>      best_disp <span class="op">=</span> disp_to_pellet<span class="op">;</span></span>
+<span id="cb23-64"><a href="#cb23-64" aria-hidden="true" tabindex="-1"></a>      best_dist <span class="op">=</span> my_dist<span class="op">;</span></span>
+<span id="cb23-65"><a href="#cb23-65" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb23-66"><a href="#cb23-66" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span></code></pre></div>
+<p>As for the repulsion from other snake segments, the algorithm first
+handles repulsion from other snake heads using a 4x multiplier to
+prevent direct collisions. This is important because the heads of the
+snake are by far the most erratic part of the snake, and snakes need to
+give each other a wide berth so that they don’t crash into each other.
+After working on the heads, the function iterates through each segment
+of every other snake, calculating the distance from the current snake’s
+head to each segment. Finally, the distance to each segment is used to
+weight a repulsion vector (dir_away) pointing away from that segment by
+the inverse square value of the distance measure after it has been
+linearly scaled. The repulsion vector magnitude is clamped. The distance
+from the current snake’s head to each segment is calculated using
+distance_point_to_segment_fix15():</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>fix15 distance_point_to_segment_fix15<span class="op">(</span>hvec2d_t p<span class="op">,</span> hvec2d_t a<span class="op">,</span> hvec2d_t b<span class="op">,</span> hvec2d_t <span class="op">*</span>dir_away<span class="op">)</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    hvec2d_t ab <span class="op">=</span> vec_sub<span class="op">(</span>b<span class="op">,</span> a<span class="op">);</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    fix15 dist_ <span class="op">=</span> vec_mag<span class="op">(</span>ab<span class="op">);</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    fix15 ab2 <span class="op">=</span> multfix15<span class="op">(</span>dist_<span class="op">,</span> dist_<span class="op">);</span>  <span class="co">// ab squared</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// t in [0,1] along segment in fix15</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    hvec2d_t pa <span class="op">=</span> vec_sub<span class="op">(</span>p<span class="op">,</span> a<span class="op">);</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    fix15 num   <span class="op">=</span> vec_dot<span class="op">(</span>pa<span class="op">,</span> ab<span class="op">);</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    fix15 t     <span class="op">=</span> divfix15<span class="op">(</span>num<span class="op">,</span> ab2<span class="op">);</span>   <span class="co">// dimensionless</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Clamp t to [0, 1]</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>t <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span>      t <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>t <span class="op">&gt;</span> ONE15<span class="op">)</span>  t <span class="op">=</span> ONE15<span class="op">;</span></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">// closest = a + ab * t</span></span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>    hvec2d_t ab_t   <span class="op">=</span> vec_scale<span class="op">(</span>ab<span class="op">,</span> t<span class="op">);</span></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>    hvec2d_t closest <span class="op">=</span> vec_add<span class="op">(</span>a<span class="op">,</span> ab_t<span class="op">);</span></span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">// away = p - closest</span></span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>dir_away <span class="op">=</span> vec_sub<span class="op">(</span>p<span class="op">,</span> closest<span class="op">);</span></span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>    fix15 d <span class="op">=</span> vec_mag<span class="op">(*</span>dir_away<span class="op">);</span></span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> d<span class="op">;</span></span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>For walls, the snake_wall_repulsion() helper function is called for
+each of the four walls. The distance to wall weighting basically
+functions the same as the distance to snake segment weighting:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> snake_wall_repulsion<span class="op">(</span>fix15 dist_wall<span class="op">,</span> hvec2d_t normal<span class="op">,</span> fix15 offset<span class="op">,</span> hvec2d_t <span class="op">*</span>repulse<span class="op">){</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>dist_wall <span class="op">&lt;</span> R_WALL_INFLUENCE<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    dist_wall <span class="op">=</span> multfix15<span class="op">(</span>dist_wall<span class="op">,</span> WALL_D_SCALE<span class="op">);</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    fix15 d_plus <span class="op">=</span> dist_wall <span class="op">+</span> ONE15<span class="op">;</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>d_plus <span class="op">&lt;=</span> <span class="dv">0</span><span class="op">)</span> d_plus <span class="op">=</span> ONE15<span class="op">;</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    fix15 inv_d  <span class="op">=</span> divfix15<span class="op">(</span>ONE15<span class="op">,</span> d_plus<span class="op">);</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    fix15 inv_d2 <span class="op">=</span> multfix15<span class="op">(</span>inv_d<span class="op">,</span> inv_d<span class="op">);</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    fix15 base <span class="op">=</span> inv_d2 <span class="op">-</span> offset<span class="op">;</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>base <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> base <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    fix15 strength <span class="op">=</span> multfix15<span class="op">(</span>K_WALL_REP<span class="op">,</span> base<span class="op">);</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>strength <span class="op">&gt;</span> STRENGTH_MAX_WALL<span class="op">)</span></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>        strength <span class="op">=</span> STRENGTH_MAX_WALL<span class="op">;</span></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    hvec2d_t contrib <span class="op">=</span> vec_normalize<span class="op">(</span>normal<span class="op">);</span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>    contrib <span class="op">=</span> vec_scale<span class="op">(</span>contrib<span class="op">,</span> strength<span class="op">);</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>    vec_add_in<span class="op">(</span>repulse<span class="op">,</span> contrib<span class="op">);</span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>After clamping the total repulsion magnitude to prevent excessive
+forces, the function adds the attraction and total repulsion vectors.
+However, if the repulsion magnitude exceeds a threshold magnitude
+(50.0f), the snake will completely ignore the food attraction vector;
+planning its next move only using the repulsion from danger. The desired
+direction vector is normalized and passed to snake_target() to set the
+snake’s new goal heading. This approach creates emergent behaviors where
+snakes spread out to avoid competition, maintain safe distances from
+walls and each other, and pursue food when safe.</p>
+<h2 id="multicore-and-protothreads">Multicore and Protothreads</h2>
+<p>This project uses both cores of the Pico, and makes heavy use of the
+course’s modified version of the protothreads library developed by Adam
+Dunkels. Before getting into the discussion of how the central gamestate
+and graphics protothreads work, we first cover some of the supplementary
+protothreads (those which are either entirely supportive to, subordinate
+to, or not necessary for the function of: the central protothreads)</p>
+<h3 id="core-0-supplementary-protothreads">Core 0 Supplementary
+Protothreads:</h3>
+<h4 id="protothread-blinky">Protothread Blinky</h4>
+<p>Blinks the LED continuously. Just helps to show that the Pico is
+turned on/connected to power/running. Not necessary for any part of the
+design.</p>
+<h3 id="core-1-supplementary-protothreads">Core 1 Supplementary
+Protothreads:</h3>
+<h4 id="protothread-serial">Protothread Serial</h4>
+<p>This thread handles any and all serial communications with the Pico
+post-initialization. The thread initially sends a message instructing
+the user how to access the full list of commands:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>sprintf<span class="op">(</span>pt_serial_out_buffer<span class="op">,</span> <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">Enter `h[elp]` to get a list of commands!</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>serial_write<span class="op">;</span></span></code></pre></div>
+<p>After sending the instruction message once, the protothread enters
+into an infinite polling loop which reads in whatever is in the serial
+FIFO before acting upon it. The serial input handling is performed by
+accepting a set of single letters which then trigger specific
+functionality. Our implementation uses a single switch statement, which
+is passed the return value of the serial read, to ensure that only one
+action can be performed at a time. At the end of the switch statement
+the thread is yielded for at least 10ms. Functions which accept a value
+we range-check before updating associated variables. We list the
+accepted letters and their corresponding functionality below:</p>
+<ul>
+<li>‘ ‘ or ‘\0’ or ‘\r’ or ‘\n’ - We break the switch statement
+immediately.<br />
+</li>
+<li>‘i’ - displays the IDs of the snakes in play</li>
+<li>‘t’ - Prompts the user to manually enter a value which will set the
+timescale of the game, the value passed must be greater than 0.</li>
+<li>’q’ - Toggles a flag which will pause/unpause the game during the
+next game loop thread.</li>
+<li>‘p’ - Prompts the user to enter a decimal value of a certain pellet.
+So long as this is a pellet in-play, debug information about this pellet
+will be printed every second until new information is in the serial port
+(corresponds to the user typing anything).</li>
+<li>‘s’ - Prompts the user to enter a decimal value of a certain snake.
+So long as this is a snake in-play, debug information about the selected
+snake will be printed every second until new information is received by
+serial.</li>
+<li>‘c’ - Allows the user to assume manual control of a snake in-play.
+This case leads directly into the ‘s’ case so that the user can select a
+snake.</li>
+<li>‘h’ or default - As the initial message says: by entering the
+character h, the pico will print this entire list out over serial:</li>
+</ul>
+<div class="sourceCode" id="cb27"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">const</span> <span class="dt">char</span> help_text<span class="op">[]</span> <span class="op">=</span> </span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;Commands:</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;</span><span class="sc">\t</span><span class="st">h         : Show this text</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;</span><span class="sc">\t</span><span class="st">q         : Pause the game</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;</span><span class="sc">\t</span><span class="st">i         : Show snake IDs (SID)</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;</span><span class="sc">\t</span><span class="st">t &lt;float&gt; : Set the time scale to &lt;float&gt; (&lt;float&gt; &gt; 0)</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;</span><span class="sc">\t</span><span class="st">c &lt;int&gt;   : Control snake with ID &lt;int&gt; until you press another key&quot;</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;(0 &lt; &lt;int&gt; &lt; &quot;</span> XSTR<span class="op">(</span>MAX_SNAKES<span class="op">)</span> <span class="st">&quot;)</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;</span><span class="sc">\t</span><span class="st">s &lt;int&gt;   : Select snake with ID &lt;int&gt; and print info until you press&quot;</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot; another key (0 &lt; &lt;int&gt; &lt; &quot;</span> XSTR<span class="op">(</span>MAX_SNAKES<span class="op">)</span> <span class="st">&quot;)</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;</span><span class="sc">\t</span><span class="st">p &lt;int&gt;   : Select pellet with ID &lt;int&gt; and print info until you press&quot;</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot; another key (0 &lt; &lt;int&gt; &lt; &quot;</span> XSTR<span class="op">(</span>NUM_PELLETS<span class="op">)</span> <span class="st">&quot;)</span><span class="sc">\n\n\0</span><span class="st">&quot;</span><span class="op">;</span></span></code></pre></div>
+<h4 id="protothread-clear">Protothread Clear:</h4>
+<p>Because our game does not take up the entire VGA screen space, this
+protothread will only clear the space which we are drawing onto. This
+includes the text box on the left and the game screen on the right.</p>
+<h4 id="protothread-controls">Protothread Controls:</h4>
+<p>This thread sets up the ADC hardware for the potentiometer. This
+includes initializing the hardware peripheral and the physical GPIO pin,
+setting up the ADC fifo and linking the fifo to the GPIO port. The state
+of the potentiometer is stored using 5 variables:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">uint32_t</span> pot_accum <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">uint8_t</span> fifo_samples<span class="op">;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">uint16_t</span> pot_val <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">uint16_t</span> old_pot_val <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> fix15 snake_angle <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span></code></pre></div>
+<p>The thread also sets up the Button which includes initializing the
+physical gpio, setting it as an input, and ensuring that the gpio is
+pull down. The state of the button is stored at all times using three
+variables:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>debounce_state <span class="op">=</span> NOT_PRESSED<span class="op">;</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>possible <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">bool</span> i<span class="op">;</span></span></code></pre></div>
+<p>Once these two hardware peripherals are set up, the thread then
+enters into an infinite loop which collects sample information from the
+button and the potentiometer. We first discuss the state machine for the
+button press handling, then the way in which the potentiometer is
+handled:</p>
+<p><img src="images/Pasted-image-20251219133230.png" /></p>
+<p>Figure: Button press state diagram with debounce functionality. While
+the actual code uses a variable named “i” to store the gpio read value,
+this diagram renames that variable to button_val for readability.</p>
+<p>Unlike the button, the potentiometer has been set up such that the
+GPIO port is directly linked to the ADC which has FIFO storage for the
+last few samples of the port. Each sampling loop, the accumulator and
+sample count variables are set to 0 before all samples in the ADC FIFO
+are summed into the accumulator variable. The average value of the
+samples is computer and then clamped to ensure that it is within an
+acceptable range. Finally, this clamped value is then converted into
+fix15 representation and converted into an angle from a ADC value before
+being converted into a percentage value which is stored in a global
+variable: man_snake_angle. This global variable replaces the algorithmic
+selection of a new heading each physics update for that manually
+controlled snake.</p>
+<h3 id="core-0-protothread-graphics">Core 0: Protothread Graphics</h3>
+<p>This thread begins by setting up some of the variables used for
+tracking progress throughout updating the pixels for each frame:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co">//Init the redraw flag</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>full_redraw_f <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Timekeeping</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">uint8_t</span> frame <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>time_elapsed_s <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>time_elapsed_ms <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Variables for maintaining frame rate</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> absolute_time_t loop_start_time<span class="op">;</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> absolute_time_t loop_end_time<span class="op">;</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">uint32_t</span> begin_time<span class="op">;</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>draw_time <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">char</span> frame_rate<span class="op">[</span><span class="dv">16</span><span class="op">];</span> <span class="co">// 15 char string for displaying frame rate</span></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a><span class="co">// Default for drawing is white on black background w/ smallest text size</span></span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>setTextColor2<span class="op">(</span>WHITE<span class="op">,</span> BLACK<span class="op">);</span></span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>setTextSize<span class="op">(</span><span class="dv">1</span><span class="op">)</span></span></code></pre></div>
+<p>After initializing the important variables, the thread then enters an
+infinite loop, where one cycle through that loop contains all processes
+needed for each individual frame update.</p>
+<p>At the beginning of each iteration through the loop is a check to the
+‘restart_graphics’ flag, which restarts the entire protothread —
+reinitializing state tracking variables. This is useful for during
+execution changes to game execution such as those contained within
+Protothread Serial. In addition, the thread uses SDK supported MUTEX to
+ensure that race conditions between the Gameloop Protothread on CORE 1
+and this Protothread on CORE 0 do not occur.</p>
+<p>After passing the checks and acquiring the MUTEX, the thread waits
+for the gpio attached to VSYNC to be set high. This is important because
+it signals to the PICO when it is safe to overwrite pixel data such that
+a race conditions with the DMA is avoided. Immediately, the thread saves
+the current time (stored in the variable ‘loop_start_time’) and begins
+the following processes (in order, top to bottom):</p>
+<ul>
+<li>The thread checks the ‘full_redraw_f’ flag if it needs to do a full
+redraw of the background.
+<ul>
+<li>If it does, the background is redrawn and the flag is cleared.</li>
+<li>If it does not, the informational text box area is redrawn. The
+thread then checks if any snakes have been taken over by manual control;
+drawing the angle dial associated with the potentiometer controlled
+snake just below the information text box area.</li>
+</ul></li>
+<li>The MUTEX ‘selected_m’ and ‘control_m’ are released and the thread
+proceeds.</li>
+</ul>
+<p>The thread then checks if the current frame is divisible by 8, if so
+the current frame rate is calculated and displayed in the top right of
+the VGA display.</p>
+<p>The graphics thread has now reached the portion where it will redraw
+the actual game board. First the entire game board, and a 1 pixel border
+around it is set to black before the 1px thick border is redrawn. Using
+MUTEX, the thread waits for Core 1 to finish calculating the pellet
+information in the Gameloop protothread:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>PT_SEM_SDK_WAIT<span class="op">(</span>pt<span class="op">,</span> <span class="op">&amp;</span>done_calc_pellets<span class="op">);</span></span></code></pre></div>
+<p>Then, for each pellet in play, the thread checks if the system has a
+manually controlled snake AND if that pellet has been selected for
+tracking (this must be done through the serial protothread). If both
+conditions are true then the pellet is drawn in red, otherwise it is
+drawn in light blue.</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>drawCircle<span class="op">(</span>fix152int<span class="op">(</span>pellets<span class="op">[</span>i<span class="op">].</span>position<span class="op">.</span>x<span class="op">){</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    fix152int<span class="op">(</span>pellets<span class="op">[</span>i<span class="op">].</span>position<span class="op">.</span>y<span class="op">),</span> PELLET_RADIUS<span class="op">,</span> pellet_color<span class="op">);</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>After the pellets have been drawn the thread signals this using MUTEX
+and waits until the Gameloop Protothread is done updating the positions
+of snakes:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>PT_SEM_SDK_SIGNAL<span class="op">(</span>pt<span class="op">,</span> <span class="op">&amp;</span>done_draw_pellets<span class="op">);</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>PT_SEM_SDK_WAIT<span class="op">(</span>pt<span class="op">,</span> <span class="op">&amp;</span>done_calc_snakes<span class="op">);</span></span></code></pre></div>
+<p>The thread draws one snake at time, iterating through the list of
+active snakes one by one. The code checks if the snake is manually
+controlled:</p>
+<ul>
+<li>If not manually controlled, snakes are colored DARK_GREEN. The head
+of each snake is drawn as a circle of fixed size. Snake segments are
+drawn using the following function:</li>
+</ul>
+<div class="sourceCode" id="cb34"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> draw_segments<span class="op">(</span>snake_t <span class="op">*</span>snk<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  segment_t <span class="op">*</span>seg<span class="op">;</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  color_t snake_color <span class="op">=</span> MED_GREEN<span class="op">;</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  color_t snake_color_alt <span class="op">=</span> snk <span class="op">==</span> selected_snake <span class="op">?</span> GREEN <span class="op">:</span> DARK_GREEN<span class="op">;</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> snk<span class="op">-&gt;</span>num_segments<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    seg <span class="op">=</span> <span class="op">&amp;</span>snk<span class="op">-&gt;</span>body<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>seg<span class="op">-&gt;</span>start_pos<span class="op">.</span>x <span class="op">&lt;</span> int2fix15<span class="op">(</span>board_left<span class="op">)</span> <span class="op">||</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>        seg<span class="op">-&gt;</span>start_pos<span class="op">.</span>x <span class="op">&gt;</span> int2fix15<span class="op">(</span>board_right<span class="op">)</span> <span class="op">||</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>        seg<span class="op">-&gt;</span>start_pos<span class="op">.</span>y <span class="op">&lt;</span> int2fix15<span class="op">(</span>board_top<span class="op">)</span> <span class="op">||</span></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>        seg<span class="op">-&gt;</span>start_pos<span class="op">.</span>y <span class="op">&gt;</span> int2fix15<span class="op">(</span>board_bottom<span class="op">))</span></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>      <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>    draw_vec<span class="op">(</span>seg<span class="op">-&gt;</span>start_pos<span class="op">.</span>x<span class="op">,</span> seg<span class="op">-&gt;</span>start_pos<span class="op">.</span>y<span class="op">,</span> seg<span class="op">-&gt;</span>end_offset<span class="op">,</span> snake_color<span class="op">);</span></span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>    snake_color <span class="op">=</span> snake_color <span class="op">==</span> MED_GREEN <span class="op">?</span> snake_color_alt <span class="op">:</span> MED_GREEN<span class="op">;</span></span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a><span class="pp">#if SHOW_SEG_JOINTS</span></span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>    fillCircle<span class="op">(</span>fix152int<span class="op">(</span>seg<span class="op">-&gt;</span>start_pos<span class="op">.</span>x<span class="op">),</span> fix152int<span class="op">(</span>seg<span class="op">-&gt;</span>start_pos<span class="op">.</span>y<span class="op">),</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>               WHITE<span class="op">);</span></span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a><span class="pp">#if SHOW_SEG_JOINTS</span></span>
+<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a>  fillCircle<span class="op">(</span>fix152int<span class="op">(</span>seg<span class="op">-&gt;</span>start_pos<span class="op">.</span>x <span class="op">+</span> seg<span class="op">-&gt;</span>end_offset<span class="op">.</span>x<span class="op">),</span></span>
+<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a>             fix152int<span class="op">(</span>seg<span class="op">-&gt;</span>start_pos<span class="op">.</span>y <span class="op">+</span> seg<span class="op">-&gt;</span>end_offset<span class="op">.</span>y<span class="op">),</span> <span class="dv">1</span><span class="op">,</span> WHITE<span class="op">);</span></span>
+<span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span>
+<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<ul>
+<li>If it is manually controlled, all of the above still applies,
+however the snake is colored GREEN; a light blue line is drawn between
+the head of the snake and the nearest snake body segment to the head;
+and a red line is drawn between the head of the snake and the nearest
+food pellet.</li>
+</ul>
+<p>The thread then takes the current time, and calculates the time spent
+in this thread for this single frame by subtracting it from the current
+time at the start of the thread. To prevent unnecessary waiting in the
+gameloop protothread the graphics protothread then yields for nearly the
+entire remaining time for calculating the frame.</p>
+<h3 id="core-1-protothread-gameloop">Core 1: Protothread Gameloop</h3>
+<p>This protothread makes heavy use of the functions defined within
+snake_state.c so as to be more readable and easier to edit. The whole
+initialization code is below:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>PT_BEGIN<span class="op">(</span>pt<span class="op">);</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>PT_MUTEX_SDK_AQUIRE<span class="op">(</span>pt<span class="op">,</span> <span class="op">&amp;</span>state_m<span class="op">);</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>pstate <span class="op">=</span> INIT<span class="op">;</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> absolute_time_t loop_start<span class="op">;</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> fix15 dt_ms_loc <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>loop_start <span class="op">=</span> get_absolute_time<span class="op">();</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>snake_game_init<span class="op">(</span>board_left<span class="op">,</span> board_top<span class="op">,</span> board_right<span class="op">,</span> board_bottom<span class="op">);</span></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>snake_game_start<span class="op">(</span>MAX_SNAKES<span class="op">,</span> MAX_PELLETS<span class="op">);</span></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>pstate <span class="op">=</span> ACTIVE<span class="op">;</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>PT_MUTEX_SDK_RELEASE<span class="op">(&amp;</span>state_m<span class="op">);</span></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>PT_SEM_SDK_SIGNAL<span class="op">(</span>pt<span class="op">,</span> <span class="op">&amp;</span>draw_start<span class="op">);</span></span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>PT_SEM_SDK_SIGNAL<span class="op">(</span>pt<span class="op">,</span> <span class="op">&amp;</span>done_calc_pellets<span class="op">);</span></span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>PT_SEM_SDK_SIGNAL<span class="op">(</span>pt<span class="op">,</span> <span class="op">&amp;</span>done_calc_snakes<span class="op">);</span></span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>PT_SEM_SDK_WAIT<span class="op">(</span>pt<span class="op">,</span> <span class="op">&amp;</span>done_draw_snakes<span class="op">);</span></span></code></pre></div>
+<p>After init, the thread enters an infinite loop, where the physics
+updates for the entire frame will occur within a single iteration. The
+thread will not perform any physics update without the game state, held
+in pstate, set as active. If the game is active, the thread immediately
+saves the current time so as to track the time needed to finish all
+physics updates.</p>
+<p>The physics updates happen in stages, and the order matters for
+correct physics execution:</p>
+<ul>
+<li>Using snake_check_pellets(), the thread checks if any snakes have
+came into contact with any pellets, and for each touching pellet the
+associated snake’s score is updated and the pellet is respawned.</li>
+<li>The thread waits for the dt_ready semaphore to be signaled -
+indicating that the graphics updates for the current frame have been
+completed.</li>
+<li>Then, the thread operates on one snake at a time, performing the
+following operations:
+<ul>
+<li>The positions of all segments in the snake are updated using
+snake_update_position() with arguments of the time spent in the graphics
+protothread and the time scale.</li>
+<li>After the positions of all the segments in the snake have been
+updated, the code checks if the snake has collided with a wall or with
+another snake segment. If it has, the length and score of the current
+snake will be reset and respawned in a random position.</li>
+<li>A new heading is calculated based on the current game state
+(positions of pellets, position of current snake head, position of other
+snake heads AND body segments)</li>
+<li>If the snake is currently selected (only one at a time, requires
+human serial input) then the current closest pellet to the snake is
+noted and the displacement vector between the snake head and the closest
+pellet and closest snake segment are saved.</li>
+</ul></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<h4
+id="this-group-approves-this-report-for-inclusion-on-the-course-website.">This
+group approves this report for inclusion on the course website.</h4>
+<h4
+id="this-group-does-approve-publishing-of-our-video-to-the-course-website.">This
+group does approve publishing of our video to the course website.</h4>
+<h4
+id="ai-usage-statement-no-generative-ai-was-used-in-the-creation-of-this-writeup.-all-high-level-design-has-been-managed-solely-by-humans-throughout-the-span-of-the-project.-generative-ai-was-used-to-rapidly-prototype-code-functionality-or-as-a-second-set-of-eyes-when-searching-for-the-cause-of-specific-bugs.">AI
+Usage statement: No generative AI was used in the creation of this
+writeup. All high-level design has been managed solely by humans
+throughout the span of the project. Generative AI was used to rapidly
+prototype code functionality, or as a second set of eyes when searching
+for the cause of specific bugs.</h4>
+<h3 id="potential-optimizations">Potential Optimizations</h3>
+<ul>
+<li>Using hardware interpolator for line drawing
+<ul>
+<li><a
+href="https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#group_hardware_interp">https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#group_hardware_interp</a></li>
+<li><a
+href="https://people.ece.cornell.edu/land/courses/ece4760/RP2040/C_SDK_interpolator/index_interpolator.html">https://people.ece.cornell.edu/land/courses/ece4760/RP2040/C_SDK_interpolator/index_interpolator.html</a></li>
+</ul></li>
+<li>Reducing color-depth - by signficantly reducing the color depth to
+only 4 bit color instead of 16 bit color we may have been able to pack
+more graphics updates into a single frame.</li>
+</ul>
+<h3 id="potential-features-more-human-controllers">Potential Features:
+More human controllers</h3>
+<p>Special mode: Human takeover - Snakes start in agent controlled mode.
+Each snake would be a different color. We would keep this simple by only
+having 4-6 snakes. At any point in time, a button can be pressed
+triggering human takeover of the associated snake. This is done with a
+pause to the game, where the snake to takeover flashes between its
+current color and white then current color, then white and finally back
+to the current color. Due to the inclusion of multiple human control,
+and the jankiness we would decrease Dt and the physics update rate,
+perhaps to half speed. The potentiometers should be polled using a timer
+triggered interrupt for consistency, do this at maybe 300hz and use a
+digital low pass filter to decide the actual direction to store at any
+time.</p>
+<h3
+id="potential-features-multiple-pico-setup-with-spi-communication">Potential
+Features: Multiple PICO setup with SPI communication</h3>
+<p>We spent quite a few hours attemping SPI communication with one main
+server PICO and subsidiary agent PICO boards. The idea was that the
+agents would take over the role of calculating the next snake goal
+heading between each physics update. We developed a communication
+protocol for this and set up the physical hardware connections necessary
+for direction communication between the PICO boards. However, spi
+communication gave us many issues and after many days of work we found
+out that we would need to completely refactor much of our communication
+code to make it work. The major challenge revolved around setting SPI in
+the right mode (phase and polarity) and also dealing with issues mainly
+stemming from using slave mode SPI on the PICO. Unfortunately we did not
+have time to complete this before the demo date.</p>
+<p>The high level explanation of what would need to occur follows:
+Communication Structure</p>
+<ul>
+<li>Server broadcasts game state data to every agent</li>
+<li>Game state consists of array of pellet and snake positions</li>
+<li>Snake array is ~72kB</li>
+<li>Can almost halve that by only including vectors/points of body</li>
+<li>Pellets array is 1.6kB</li>
+<li>Can send a diff of the changes after the initial </li>
+</ul>
+<p>The code that we created for the SPI communication had the following
+structure: - On the agent pico, the CS pin is tied to a hardware
+interrupt, allowing rapid response to a request from the server. - The
+interrput has a state machine which expects either a header or a body.
+The meassage structure is in the form header-body-header-body… - The
+first message is expected to be a header. The following message body
+should contain initialization information about which snakes that agent
+is controlling, how many snakes and pellets are in play and other
+parameters. - By analyzing the header content after recieving it, the
+agent will have time to prepare for the structure of the subsequent
+message body. During the waiting period the agent should: prepare a
+predefined message type struct to be filled with information. - If it’s
+a broadcast: (server will wait a small amount of time before initiating
+the continuous broadcast). Upon the interrupt following delivery of the
+message header, the agent should initiate a blocking read to fill the
+struct with an expected number of reads provided in the message header -
+If it’s a request/init: The agent will immediately fill the tx buffer
+with info to transmit, server will grab this when it wants.</p>
+<p>A list of resources detailing issues with running the SPI in slave
+mode on a PICO:</p>
+<ul>
+<li><p><a
+href="https://github.com/raspberrypi/pico-examples/blob/master/spi/spi_master_slave/spi_slave/spi_slave.c">https://github.com/raspberrypi/pico-examples/blob/master/spi/spi_master_slave/spi_slave/spi_slave.c</a></p>
+<p>The code here uses the default mode 0 for spi communication. This is
+known to have issues, especially when reviewing more recent threads
+about spi slave functionality. The exact reasoning as for why is
+unknown.</p></li>
+<li><p><a
+href="https://github.com/raspberrypi/pico-examples/issues/115">Add PIO
+SPI slave example · Issue #115 · raspberrypi/pico-examples</a></p></li>
+<li><p><a
+href="https://forums.raspberrypi.com/viewtopic.php?t=318758">PICO only
+only recieves first byte of SPI message - Raspberry Pi
+Forums</a></p></li>
+<li><p><a
+href="https://github.com/raspberrypi/pico-examples/tree/master/spi/spi_master_slave">pico-examples/spi/spi_master_slave
+at master · raspberrypi/pico-examples</a></p></li>
+<li><p><a
+href="https://forums.raspberrypi.com/viewtopic.php?f=145&amp;t=300589">SPI
+master and slave problems - Raspberry Pi Forums</a></p></li>
+<li><p><a
+href="https://forums.raspberrypi.com/viewtopic.php?t=315889">Issues with
+spi on pico as slave! - Raspberry Pi Forums</a></p></li>
+</ul>
+<p>SPI slaves hi-Z their I/O when CS is not asserted and have no impact
+on the bus whatsoever.</p>
+<p>Mode 0 (polarity 0 and phase 0) requires the slave to correctly latch
+data immediately on the first active edge after CS goes low. But, if the
+slave has even a small internal delay (clock domain crossing,
+synchronizer delay, etc.), the very first sampled bit can be unstable.
+This can corrupt the entire frame after the first byte, since the
+internal shift-register alignment breaks.</p>
+<p>In mode 3 (polarity 1 and phase 1):</p>
+<ul>
+<li><p>CS goes low</p></li>
+<li><p>Clock idles high</p></li>
+<li><p>First edge is falling (ignored for sampling)</p></li>
+<li><p>Slave has a whole half-cycle before the rising edge where
+sampling really happens.</p></li>
+</ul>
+<p>This removes the critical timing pressure on the slave and allows
+multi-byte transfers to work. This is a known PL022 quirk in slave
+mode.</p>
+<p>SPI</p>
+<ul>
+<li><p>If doing a broadcast message, all slaves will need to disable
+their output unless actively outputting</p></li>
+<li><p>RP2040 is not configured to allow tri-stating the SPI TX</p></li>
+<li><p>Have to use OEOVER GPIO register to disable output separately to
+peripheral config</p></li>
+<li><p>Might cause issues with a basic DMA setting</p></li>
+<li><p>Could chain DMA so SPI triggers a channel that either enables or
+disables output and then triggers actual DMA</p></li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,2910 @@
+<!DOCTYPE html>
+
+<!-- In the below script block, write markdown and it will be rendered on the page. -->
+<script id="markdown_text" type='text/markdown'>
+<hr>
+  # Introduction
+<hr>
+<marquee scrollamount="20" style="font-size: 1.4rem; font-weight: bold;" class="quote">Why spend $500 on lab equipment when you can build it for the price of a Big Mac?</marquee>
+
+
+
+**Project:** LAFT is a 16-channel logic analyzer built with the RP2350 microcontroller, capable of sampling
+signals up to 100 MHz. The analyzer uses the Pico 2 PIO state machine to capture the logic values of 16
+GPIO pins simultaneously on every microcontroller CLK cycle. We also designed a custom PCB for the device
+with 8-channel header pins on each side. Furthermore, each channel connects to one of two level-shifters,
+which convert input logic levels between 1.8V and 5V to the 3.3V required by the RP2350. Our logic analyzer
+is compatible with the open-source SUMP protocol, so tools such as PulseView can be used with LAFT. 
+
+**Motivation:** Traditional electrical measurement tools are a significant cost for any electrical lab.
+Complex logic analyzers typically cost hundreds to thousands of dollars. Assuming bulk part orders, we
+are building a functional analyzer for just ~$10. This device would be one or two orders of magnitude
+cheaper than consumer options, acting as a powerful, cost-effective alternative that is easily replicable.
+The inclusion of the SUMP interface will make it extremely simple to gather data with the logic analyzer and
+port it over to another to PulseView for visualization purposes. 
+
+<figure>
+  <img src="logicanalyzer_wiredboardandGUI.png" id="wiredboardandGUI" alt="Wired board and GUI" style="max-width: 90%; height: auto; display:block; margin:auto;">
+  <figcaption>LAFT Logic Analyzer Setup & PulseView GUI</figcaption>
+</figure>
+
+<br>
+<br>
+<br>
+<br>
+
+<hr>
+# High-Level Design
+<hr>
+
+### Rationale and Project Sources
+The idea for our project was initially driven by the interests of two group members. One member of our team was interested in building
+a piece of electrical equipment on the RP2040, and another planned on making a controller adapter in the near future. A logic analyzer would meet the first goal while
+still proving to be extremely useful for debugging erronious logic to and from the controller adapter. It would also aid in figuring out poorly documented protocols, and support
+the 3.3 to 5V logic range of the signals being adapted. Since commercial solutions are generally in the $50 to $1500 range, it made logical sense to design one of our own.
+
+There are many open-source logic analyzer projects. One we drew much inspiration from was
+[ula](https://github.com/dotcypress/ula), a logic analyzer for the RP2040 partially implementing the SUMP protocol. It
+was made to be used with [PulseView](https://sigrok.org/wiki/PulseView), which we also attempted to support via similar
+means.
+
+<figure>
+  <img src="logicanalyzer_examples.png" id="logican-example" alt="High-end logic analyzers" style="max-width: 40%; height: auto; display:block; margin:auto;">
+  <figcaption>Example of high-end logic analyzers</figcaption>
+</figure>
+
+<br>
+<br>
+<br>
+
+### Logical Structure
+There are three parts to the software of this project. For our Pico 2, we created firmware to let the device be used as
+a vendor specific USB device, software to connect to the logic analyzer when using this firmware, and firmware to let
+the device connect over the serial port to the PulseView logic analyzer software using the
+[SUMP protocol](https://sump.org/projects/analyzer/protocol/).
+
+<br>
+<br>
+<br>
+
+### Hardware / Software Tradeoffs
+<ul>
+- **Hardware Tradeoffs**
+  <ul>
+  - **Max Input Frequency:** to create a truly effective logic analyzer, it was in our best interest to design for the highest input frequency possible. This not only complicated trace routing, but also our choice of level shifters to use on the board. We found that they tend to be limited to around 100 MHz or less in terms of bandwidth, so it was difficult to design for anything higher.
+  - **Designing a PCB:** we could have potentially gotten away with just feeding digital signals directly into the RP2350 pins, avoiding the need to design a PCB at all and pushing our schedule ahead by about a week or so (avoids the turnaround time on JLCPCB orders). However, designing a PCB enabled the use of SMT level shifters with wide input ranges, providing a more convenient user interface (and the ability to include Matt's dog, Buddy, in silkscreen).
+  </ul>
+
+  <figure>
+    <img src="logicanalyzer_levelshifterblockdiagram.png" id="levelshifterblockdiagram" alt="Level shifter block diagram" style="max-width: 45%; height: auto; display:block; margin:auto;">
+  </figure>
+  <figure>
+    <img src="logicanalyzer_levelshifterrange.png" id="levelshifterrange" alt="Level shifter input and output range" style="max-width: 75%; height: auto; display:block; margin:auto;">
+    <figcaption>Level shifter block diagram and voltage range ([TI Datasheet](https://www.ti.com/lit/ds/symlink/sn74lvc8t245.pdf?ts=1766119193997))</figcaption>
+  </figure>
+
+  <br>
+- **Software Tradeoffs**
+  <ul>
+  - **Creating a Custom GUI:** when starting out the project, we found it useful to write our own GUI. It took inspiration from [can-explorer](https://github.com/Tbruno25/can-explorer) and connected to the logic analyzer flashed with different firmware. For this GUI, the Pico connected as a vendor-specific USB device communicating with our own protocol. We are not aware of other projects built on Raspberry Pis which do something similar. This gave us full control over the GUI, as we could choose what to support and what not to, as well as letting us create a protocol made specifically for the RP2350. The tradeoff is that specifying a protocol and creating a GUI proved to be a large time sink. We additionally found that TinyUSB seemed to have flakey support for vendor-specific USB devices, so we used the RP2350's USB peripheral directly. As with the above, the tradeoff was additional work for a more reliable design.
+  - **Using the SUMP Protocol:** implementing SUMP allowed us to use PulseView, creating compatibility with existing logic analyzer tools and eliminating the need for further work on our custom GUI. Unfortunately, complying with the SUMP protocol proved to be a time sink of its own, as we later came to realize that it felt like a poor fit for the RP2350's hardware.
+  </ul>
+</ul>
+
+<br>
+<br>
+<br>
+
+### Existing Patents, Copyrights, and Trademarks
+We are not aware of any relevant patents or trademarks. We reference copyrighted code above, which has been distributed under premissive licences which we follow. We are aware of many commercial products doing similar things to laft (e.g. DSLogic Plus, Saleae Logic 8-B, ...) but did not use or reference them in our design.
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<hr>
+# Hardware Design
+<hr>
+
+In order to create a logic analyzer that could accommodate a wide range of digital input signals, three main goals had to be met on the hardware end:
+<ul>
+- **Requirement 1:** The design needs to be able to accommodate the voltage levels of many common protocols (e.g. 1.8V, 3.3V, 5V) and translate them to 3.3V logic that can be safely input to the RP2350.
+- **Requirement 2:** It should be possible to feed in signals on 8+ channels, and the corresponding GPIO pins should be easily accessible.
+- **Requirement 3:** The hardware should ideally be able to sample high-frequency signals up to around 100 MHz.
+</ul>
+
+To meet all of the above goals, we opted to design a PCB in Altium. The board acts as a 
+standalone interface for interacting with the logic analyzer; it contains two 16-pin 
+headers, each of which accommodates 8 high-speed digital signals from 1.8V to 5V, GND 
+connections, and a signal indicating the voltage level (VCCB). One header feeds into level 
+shifter 1 (LS1), which will translate the digital inputs to 3.3V (VCCA) and pass those to 
+GPIO8 through GPIO15. The other header feeds into level shifter 2 (LS2), which does the same 
+but for GPIO16 through GPIO22 (as well as GPIO26). 
+
+Both level shifters can be enabled by driving GPIO5 and GPIO28 (the designated output-enable 
+pins on the RP2350) low. While these level shifters can function bidirectionally, the 
+direction (DIR) pins are hardwired to GND using pull-down resistors, strictly enforcing 
+voltage translation from the headers pins towards the RP2350.
+
+<div class="row">
+  <div class="column">
+    <figure>
+      <img src="logicanalyzer_layout3D.png" alt="layout3D" style="max-width: 118%; height: auto; display:block; margin:auto;">
+      <figcaption>3D view of logic analyzer PCB</figcaption>
+    </figure>
+  </div>
+  <div class="column">
+    <figure>
+      <img src="logicanalyzer_layout2D.png" alt="layout2D" style="max-width: 120%; height: auto; display:block; margin:auto;">
+      <figcaption>Layout of logic analyzer PCB</figcaption>
+    </figure>
+  </div>
+</div> 
+
+<br>
+
+<figure>
+  <img src="logicanalyzer_fullschematic.png" alt="fullschematic" style="max-width: 100%; height: auto; display:block; margin:auto;">
+  <figcaption>Full schematic of logic analyzer PCB (for higher resolution screenshots, see Appendix C)</figcaption>
+</figure>
+
+The level shifters present on our PCB easily accommodate a number of common logic levels 
+and are able to pass signals up to 100 MHz, allowing us to emulate the behavior of benchtop 
+logic analyzers at a fraction of the cost. Signal integrity is not a major issue here even 
+at high-speed, since we were particular about controlling trace width and keeping trace 
+lengths to a minimum. Other parts our PCB, like the UART debug header, optional external 
+power circuitry, and reset button are other convenience features that further expand 
+functionality for the user.
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<hr>
+# Program Design
+<hr>
+We will enumerate the three separate software projects composing our logic analyzer. We start with the firmware and
+software connecting as a vendor-specific USB device, and then follow up with the firmware connecting as a virtual serial
+port to PulseView.
+
+<br>
+<br>
+<br>
+
+## USB Logic Analyzer
+The firmware does not depend on any third party libraries, such as TinyUSB, when interfacing with the USB peripheral.
+However, it uses a good amount of code from the [dev lowlevel](https://github.com/raspberrypi/pico-examples/tree/4c3a3dc0196dd426fddd709616d0da984e027bab/usb/device/dev_lowlevel)
+example for listening and responding to transfers from the USB host. To be more specific, we use logic from the example to receive
+transfers from the host and then call a handler. Our responses are composed of multiple transfers, so we wrote a request
+queue. This is implemented as a fixed sized FIFO built around a circular buffer. When the logic analyzer needs to send
+a sequence of responses, it queues each of these responses in the request queue, starting the first response in the
+request queue. Once that response is sent, the program calls a handler which checks if the queue is empty. If it isn't,
+the program will send the next request. This repeats until the queue is empty.
+
+The data sent over USB uses a protocol we created. It is incomplete, as we abandoned it to instead use SUMP as
+described below. The description of the incomplete protocol follows:
+
+<br>
+<br>
+
+#### Protocol Overview
+The laft USB application must communicate with the logic analyzer. It does so with the following protocol sent through
+USB bulk transfers. The laft application, a USB host, sends requests—and the logic analyzer, a USB device, sends
+responses. There is no channel for the logic analyzer to make requests of its host. Each request is a 64-bit packet
+**starting with a 1 byte opcode**. The rest of request varies between opcodes. The format and size of a response depends
+on it's corresponding request. 
+
+<br>
+
+#### Protocol Opcodes
+<ul>
+- **Trace Request: |01|XX|SSSS|XXXXXXXX|**
+  <ul>
+  - This request is used to dump data from every trace attached to the logic analyzer. A trace request starts with a 1 byte opcode, 0x01. It then follows with a 2 bytes of don't care. It then is a 2 byte little endian integer, the number of *bits* of data being requested *from each trace*. It then ends with 4 don't care bytes.
+  - **Response**: The response will be a series of 8 byte responses, the raw data from each trace. Bits from each and every trace are packaged into 2 bytes (traces indexed lower being first) and then this packed data is sequenced. It is sent over 64-bit responses. The final response may be incomplete, in which case the final bytes will be don't cares.
+  </ul>
+
+- **Frequency Set Request: |02|XXXXXX|FFFFFFFF|**
+  <ul>
+  - This request sets the frequency the logic analyzer will expect from its traces. A frequency set request starts with a 1 byte opcode, 0x01. It is then followed by 3 bytes of don't cares and ends with a 4 byte little endian integer, the frequency to listen at.
+  - **Response**: N/A (the MCU is not expected to respond to this request).
+  </ul>
+  
+- **Rising Edge Trigger Request: |04|X|P|SSSS|XXXXXXXX|**
+  <ul>
+  - This request is used to dump data from every trace attached to the logic analyzer starting on a rising edge, for a pin specified by P. This is similar to a trace request, but instead of starting recording at some arbitrary point in time, it starts on a rising edge. The format is composed of a one byte opcode, followed by a nibble of don't cares and then a 4 bit number, the pin of the logic analyzer to look for an edge on. This is followed by a little endian two byte size, the number of bits to record *from each trace*. The request is then padded by four bytes of don't cares.
+  - **Response**: The response is a series of 8 byte responses, the raw data from each trace. Its format is the same as a Trace Request.
+  </ul>
+</ul>
+
+<br>
+
+#### Implementation Notes
+The most difficult piece of this protocol to implement was rising edge trigger requests. The frequency set request
+could be implemented by setting the PIO state machine clock divider, and the trace request was simply an easier version
+of the rising edge trigger request.
+
+To implement the rising edge trigger request, we use PIO state machines to read in values from the GPIO pins. This lets
+the logic analyzer perform reads during every cycle, thus letting it scan on the order of 100MHz. We hard code
+recognition for rising edges.
+```
+top:
+  jmp pin, top
+  jmp pin, read
+  jmp top
+read:
+.wrap_target
+  in pins, 16
+.wrap
+```
+The program allows reads every cycle, but misses one cycle of reads when looking for the rising edge. This makes it
+possible for the logic analyzer to "miss" a rising edge if that rising edge occurs the cycle the program jumps back to
+the top of the rising edge detection code. Fortunately, this is only likely to happen if the trace the logic analyzer
+is measuring changes at a frequency approaching the logic analyzer's scanning speed, and the tracing being measured is
+aperiodic (as otherwise even if the logic analyzer misses one edge, it will probably detect the next one). This was a
+reasonable limitation for us.
+
+Once the PIO state machine goes into a loop reading data, a DMA channel will get data requests to move data to an
+output buffer. When the amount of request data fills the buffer, the DMA channel ceases transfering data and the state
+machine is stopped. The data from the buffer is then queue to be sent to the host.
+
+<br>
+<br>
+<br> 
+
+## Logic Analyzer GUI
+We created a GUI for our logic analyzer in Python using [DearPyGui](https://github.com/hoffstadt/DearPyGui) and
+[pyusb](https://github.com/pyusb/pyusb). The GUI's main purpose is for live monitoring the logic analyzer's traces.
+The GUI starts a render thread and a polling thread. The render thread draws the current buffer to the screen every
+frame and handles user interaction. The polling thread periodically sends trace requests to the logic analyzer, and it
+updates the render thread's data with the responses.
+
+<figure>
+  <img src="logicanalyzer_oldGUI.png" alt="oldGUIsmall" style="max-width: 90%; height: auto; display:block; margin:auto;">
+  <figcaption>Our custom logic analyzer GUI</figcaption>
+</figure>
+
+The UI is rather simple. Due to time constraints, it doesn't support trigger requests or fancy analysis of the waveforms.
+However, the live display alone was quite helpful and we found ourselves reaching first to this prototype when
+debugging our other firmware (described below).
+
+<br>
+<br>
+<br>
+
+## SUMP Logic Analyzer
+
+After writing the GUI above, we noticed there exists an open logic analyzer software we could attempt to support called PulseView, part of the larger (sigrok)[https://sigrok.org] project. PulseView supports many different logic analyzer
+protocols, but we chose to partially implement the SUMP protocol due to its simplicity. In our discussion of SUMP, we
+will omit details we do not implement or not relevant to our discussion. This would be a good place to link to a proper
+description of the protocol, but we have not found one that is sufficiently thorough. The original spec is ill defined, and most other sources
+online simply copy the original spec word for word. 
+
+SUMP is built around triggers. The logic analyzer software first sends the logic analyzer up to four pairs of 32 bit
+bitstrings. Each pair is composed of a trigger mask and a trigger value. SUMP has two modes: serial mode and parallel
+mode. Of these, we support parallel mode. In parallel mode, when the logic analyzer is armed, it tries to match each
+pair of trigger value and mask in order. To match a pair, each trace is read at the same time. The ith trace is
+compared to the ith bit in the trigger value. If they compare equal or the ith bit of the trigger mask is zero, the
+bits are said to match; otherwise, they do not match. If every trace matches every trigger value, then the next pair of
+trigger value and trigger mask attempts to be matched against. Otherwise, the program must try and match the current
+pair again (it does not forget about previous matched pairs). Once all pairs are matched, the logic analyzer will begin
+reading the number of samples requested of it.
+
+The most difficult part of implementing this is supporting the variable trigger conditions while maintaining speed when
+reading from the traces. To do this, we
+[base our implementation on ula's trigger logic](https://github.com/dotcypress/ula/blob/40756c4199c9f2ac605a39bfed2eddcc7fe0324b/src/trigger.rs),
+a Rust implementation of a SUMP based logic analyzer. In particular, we generate PIO programs at runtime based on the
+trigger masks and trigger values received from the logic analyzer software. 
+
+```
+for (int i = 0; i < NUM_STAGES; i++) {
+  int stage_offset = static_pc;
+  if (bitset_is_empty(&trigger_mask[i])) {
+    continue;
+  }
+
+  uint32_t mask = bitset_get_raw(&trigger_mask[i]);
+  uint32_t value = bitset_get_raw(&trigger_value[i]);
+
+  prog[static_pc++] = pio_encode_mov_reverse(pio_osr, pio_pins);
+  while (mask) {
+    int mask_zeros = trailing_zeros(mask);
+    if (mask_zeros) {
+      prog[static_pc++] = pio_encode_out(pio_null, mask_zeros);
+      mask >>= mask_zeros;
+      value >>= mask_zeros;
+    }
+    int mask_ones = MIN(trailing_ones(mask), 5);
+    if (mask_ones) {
+      prog[static_pc++] = pio_encode_out(pio_x, mask_ones);
+      prog[static_pc++] =
+          pio_encode_set(pio_y, value & ((1 << mask_ones) - 1));
+      prog[static_pc++] = pio_encode_jmp_x_ne_y(stage_offset);
+      mask >>= mask_ones;
+      value >>= mask_ones;
+    }
+  }
+}
+
+prog[static_pc++] = pio_encode_in(pio_pins, 16);
+```
+
+We generate one PIO program from all four value-mask pairs. Each pair gets a section of the program which starts with a
+read, then checks the read bits, and then either branches back to the initial read or falls through to the next section
+for the program. Concretely, each section starts with a `mov` instruction from the pins to the output status register.
+The program then differs based on the mask. For every zero in the mask, the program inserts an `out` instruction
+shifting one bit from the pin read stored in the osr into null. For every one in the mask, the program uses an `out`
+instruction to shift a one bit into the x scratch register. It then uses a `set` intruction to set the y scratch
+register to the corresponding bit of the trigger value. If these bits compare equal, the program falls through to
+the next comparison, else it jumps to to the begining of that pair's section. If there are no more comparisons, the
+program falls through to the next pair's section or simply to the loop reading data from the pins to the isr.
+
+This technique has a few pitfalls. It takes a variable number of cycles to do each trigger check, and the amount of
+cycles it takes to perform a trigger check is significantly longer than the cycles it takes to read from the pins.
+This means some data is lost from between when the trigger matches the trace data and when the logic analyzer begins to
+poll the traces. We found this to be visible when polling high frequency signals. 
+
+We believe this is a fundamental limitation of using the PIO state machines, as they cannot perform large bitwise operations letting us account for the
+trigger mask. In addition, it's possible for the generated PIO programs to exceed the 32 instruction limit. We have yet to find a solution, and believe this too is a fundamental limitation of attempting to use a single PIO state machine.
+Using multiple state machines additionally doesn't work, because they would have to communicate with cycle-precision
+to maintain the speed we have. It may be possible to get close using DMA channels to transfer bits between the state
+machines' FIFOs, but this doesn't have the same consistent, precise timing guarantee that having the program on a
+single PIO state machine gives, exacerbating the first problem.
+
+Overall though, we found this technique to be functional enough, and the only way we could find to conform to SUMP.
+The evaluation above suggests it may simply be that SUMP is too complex of a protocol to be able to effectively support with the
+RP2350's state machines.
+
+<br>
+<br>
+<br>
+
+## Discussion of AI Use
+Though permitted to use AI on this assignment with proper documentation of prompt logs, our team did not use AI in any capacity.
+All code other than that taken from examples online were written by members of our team. 
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<hr>
+# Results
+<hr>
+
+At a high level, the logic analyzer we designed met its baseline goal of interpreting digital signals well into the MHz range and
+rendering that on a GUI supporting burst capture.
+
+<figure>
+    <img src="logicanalyzer_oldGUIsmall.png" id="oldGUIsmall" alt="oldGUIsmall" style="max-width: 70%; height: auto; display:block; margin:auto;">
+  </figure>
+  <figure>
+    <img src="logicanalyzer_GUI.png" id="newGUI" alt="newGUI" style="max-width: 70%; height: auto; display:block; margin:auto;">
+    <figcaption>Our team's custom GUI (top) and PulseView (bottom), both compatible with laft</figcaption>
+  </figure>
+
+Our design achieved polling traces once per cycle. With overclocking, this amounted to polling at 300MHz. However, we
+were unable to bring this same guarantee to trigger detection; hardcoded assembly programs let edge triggers begin
+polling the cycle after a trigger is detected, and they started detecting triggers at worst once every three cycles.
+Using three out of phase state machines this could be improved to be cycle precise. However, we were not able to provide
+the same guarentees for the more complicated trigger conditions required by SUMP. The runtime assembly generator
+creates programs which run in variable time based on the trigger condition. In the case of a rising edge trigger on a
+single trace, it lead to a delay of four cycle between detecting the trigger condition and starting collecting data.
+This gets worse for more complicated trigger conditons. In practice this meant we could collect good data from traces
+less than around 50MHz for simple SUMP trigger conditions, and roughly 100MHz for simple edge trigger conditions.
+
+Our logic analyzer design is able to reliably pass signals from 1.8V to 5.0V and convert them to 3.3V logic for the Pico, indicating good
+accuracy at the hardware level.
+
+Safety was not a major concern for the hardware used in this project, as it is relatively low-power. There was just one small safety consideration
+made in designing the optional external power circuit, as a Schottky diode was included (in accordance with the Pico 2 datasheet) as a diode-OR between
+external battery power (into VSYS) and on-board power (VBUS). This essentially serves as protection to prevent back-powering from one to the other.
+
+For usability, the logic analyzer is very accommodating to unix-like systems. It could simply be plugged in,
+the relevant software could be started up (either our GUI or PulseView) and the design would simply work. Usability is
+limited by software limitations mentioned earlier like missed traces or disconnecting from the UI. These often required restarting the design to return
+to stable operation.
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<hr>
+# Conclusion
+<hr>
+
+Our design met some expectations and failed others. At a base level, it works as a logic analyzer and can read data
+from high frequency traces using both PulseView and our own GUI. However, we found that SUMP
+does not seem to be a protocol well fit for logic analyzers built with the RP2350. When you also account for bugs in our software and
+possibly even bugs in PulseView, the user experience did not meet expectations. The user experience in our homemade GUI is much better, though it is
+limited by the GUI itself. In retrospect, spending more effort there instead of rewriting our software to support SUMP
+would likely have created a much better user experience but may have limited its compatibility with existing logic analyzer tools.
+
+<br>
+<br>
+<br>
+
+### Obstacles Faced In Development
+There were a number of issues we encountered throughout the development process that hindered progress or which limit the operation of the
+final design. Here, we detail some of those issues, split between hardware and software:
+<ul>
+- **Hardware Problems**
+  <ul>
+  - **Short Circuits and Faulty Power-Up:** at some point during the development process, one of the level shifters that was soldered to our PCB experienced internal damage; when 5V signals were then fed into the input pins and the corresponding rail was driven to 5V, lots of odd behavior ensued. The output-enable pin was forced high despite the Pico actively trying to drive the pin low, preventing any signals from being level shifted. Furthermore, the 3.3V rail (connected directly to the Pico) was forced above 4V. This eventually resulted in the Pico failing to power up, breaking all flashing functionality and forcing our team to solder an entirely new PCB.
+  - **Fabrication Issues:** when first ordering our boards, we encountered fabrication issues having to do with the open-source Altium footprints we took from Ultra Librarian online. The level shifters in particular had a number of problems with solder pads. On top of the pads for each pin missing soldermask (which caused a hold-up in fabrication on the order of several days), the footprint also contained "ghost pads" which should have never been placed on the board. These were not caught until after boards came in, although these did not prove to be much of an issue as long as caution was taken while soldering.
+  </ul>
+<br>
+<figure>
+  <img src="logicanalyzer_faultypad.png" alt="fabrication issue" style="max-width: 40%; height: auto; display:block; margin:auto;">
+  <figcaption>Example of a fabrication issue w/ floating pads</figcaption>
+</figure>
+<br>
+- **Software Problems**
+  <ul>
+  - **SUMP an Unclear and Unfit Specification**: the specification for SUMP is relatively poor, which required us to read other projects using SUMP and experiment to figure out the specification. After figuring out this specification, we realized some features are difficult to implement fully on the RP2350 and a different protocol may have been better suited for the project.
+  - **Inconsistent PIO State Machines**: PIO state machines will sometimes stall waiting for triggers when run multiple times. We never figured out the reason for this even after talking with professors, and have no real working theory to go off of.
+  - **PulseView Dropping Packets**: we believe PulseView occasionally drops packets, causing data being sent over to be corrupted. We found data corruption consistent with this hypothesis when testing with PulseView but could never reproduce similar issues when testing combinations of requests using our own test script.
+  </ul>
+</ul>
+
+<br>
+<br>
+<br>
+  
+### Intellectual Property Considerations
+All code drawn from other designs and Python libraries we used are provided under open licenses which we followed in each case. Some examples include:
+<ul>
+- [dev_lowlevel Example Code](https://github.com/raspberrypi/pico-examples/tree/4c3a3dc0196dd426fddd709616d0da984e027bab/usb/device/dev_lowlevel)
+- [DearPyGUI](https://github.com/hoffstadt/DearPyGui)
+- [pyusb](https://github.com/pyusb/pyusb)
+</ul>
+The implementation of our logic analyzer does not draw any concerns over intellectual property, did not entail any sort of NDA or reverse-engineering,
+and does not present any real patent opportunities.
+
+<br>
+<br>
+<br>
+
+### Further Improvements
+<ul>
+- **Trigger Logic Changes:** currently, flawed trigger logic is the most significant hurdle to usability. 
+  <ul>
+  - Trigger logic fails inconsistently, warranting a number of bug fixes.
+  - Currently, the trigger logic can only record data after a trigger. This is because we do not have a PIO state machine constantly reading from the traces. A potential solution is to redesign the trigger logic as follows: a PIO state machine will constantly fill a ring buffer with data from the traces, and separately, a different PIO state machine will detect triggers as described above. Once it receives a trigger, it will send an interupt to the CPU which will stop both PIOs, copy the data from the ring buffer into a separate buffer, and restart the state machines. If the ring buffer is large enough, the PIO state machine filling the ring buffer will not have overwritten the bits matching the trigger by the time the data is copied. The CPU can then iterate over the copy of the data to find the bits matching the trigger with no timing pressure. This lets the CPU find data both before and after the trigger, alleviating the limitation in which the logic analyzer could not view samples directly after a trigger condition.
+  </ul>
+- **Adding Timeouts:** putting a timeout on trigger conditions would avoid stalling from the logic analyzer when it doesn't see trigger conditions for a long time.
+- **Allow the Logic Analyzer to Perform as a WCID Device:** would make it so that Windows users do not have to install drivers (such as Zadig) for the device to use it.
+- **Improvements to GUI:** allow better signal analysis by allowing the user to add markers to the colleced traces or annotate traces.
+</ul>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+# Appendix
+<hr>
+### Appendix A - Permissions
+<hr>
+
+**Project on Course Page:** The group approves this report for inclusion on the course website.
+<br>
+**Project on YouTube:** The group did not record a video for inclusion on the course youtube channel.
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<hr>
+### Appendix B - Code
+<hr>
+
+```
+<pre><code>
+./laft/main.py
+import argparse
+import queue
+import threading
+from array import array
+import usb.core
+import sys
+
+import dearpygui.dearpygui as dpg
+
+# constants for colored output
+GRAY = "\033[0;30m"
+CYAN = "\033[0;36m"
+RED = "\033[1;31m"
+BLUE = "\033[0;34m"
+YELLOW = "\033[0;33m"
+GREEN = "\033[1;32m"
+ENDCOLOR = "\033[0m"
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
+VID = 0x8F83
+PID = 0x2309
+
+NUM_TRACES = 16
+
+
+def connect(vid: int, pid: int) -> usb.core.Device:
+    dev = usb.core.find(idVendor=VID, idProduct=PID)
+    if dev is None:
+        raise RuntimeError(f"device {vid:04x}:{pid:04x} not found.")
+    return dev
+
+
+def read_data_request(size: int, ep_in, timeout: int = 1000) -> list[list[int]]:
+    # read response packets
+    resp = []
+    for i in range(0, (63 + size * NUM_TRACES // 8) // 64):
+        resp += list(ep_in.read(64, timeout=timeout))
+
+    out = [[] for i in range(16)]
+    # unflatten the flattened list
+    for i in range(size):
+        b1 = i * 2
+        b2 = i * 2 + 1
+
+        for i in range(8):
+            out[i].append(resp[b1] & 1 << i)
+        for i in range(8):
+            out[i + 8].append(resp[b2] & 1 << i)
+    return out
+
+
+def trace_request(size: int) -> array:
+    return array("B", [0x01, 0x00, (size & 0xFF00) >> 8, size & 0x00FF] + 4 * [0])
+
+
+def trace_request_tx(size: int, ep_in, ep_out) -> list[list[int]]:
+    # send request
+    req = trace_request(size)
+    ep_out.write(req)
+
+    return read_data_request(size, ep_in)
+
+
+def rising_edge_trigger_request(size: int, pin: int) -> array:
+    return array("B", [0x04, pin & 0x0F, size & 0xFF00, size & 0x00FF] + 4 * [0])
+
+
+def rising_edge_trigger_request_tx(
+    size: int, pin: int, ep_in, ep_out
+) -> list[list[int]]:
+    # Send req.
+    req = rising_edge_trigger_request(size, pin)
+    ep_out.write(req)
+
+    return read_data_request(size, ep_in, timeout=10000)
+
+
+def freq_request(freq: int) -> array:
+    assert freq < (1 << 32)
+    return array(
+        "B",
+        [
+            0x02,
+            0x00,
+            0x00,
+            0x00,
+            0x000000FF & freq,
+            (0x0000FF00 & freq) >> 8,
+            (0x00FF0000 & freq) >> 16,
+            (0xFF000000 & freq) >> 24,
+        ],
+    )
+
+
+def freq_request_tx(freq: int, ep_in, ep_out):
+    req = freq_request(freq)
+    ep_out.write(req)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="laft",
+        description="Interact with the logic analyzer built with a raspberry pi pico 2 and buddy boards",
+        epilog=f"{RED}<3{ENDCOLOR}",
+    )
+
+    parser.add_argument(
+        "-s",
+        "--size",
+        type=int,
+        help="the number of bits to read from each trace",
+        required=False,
+    )
+
+    parser.add_argument(
+        "-f",
+        "--frequency",
+        type=int,
+        help="set the sampling frequency of the logic analyzer",
+        required=False,
+    )
+
+    parser.add_argument(
+        "-p",
+        "--pin",
+        type=int,
+        help="set the pin to trigger on",
+        required=False,
+    )
+
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="run send an individual request instead of running as a gui",
+        required=False,
+    )
+
+    args = parser.parse_args()
+
+    try:
+        # Set up a USB Connection.
+        dev = connect(VID, PID)
+
+        if not dev.get_active_configuration():
+            dev.set_configuration()
+        cfg = dev.get_active_configuration()
+
+        intf = cfg[(0, 0)]
+        ep_in = usb.util.find_descriptor(
+            intf,
+            custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
+            == usb.util.ENDPOINT_IN,
+        )
+        ep_out = usb.util.find_descriptor(
+            intf,
+            custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
+            == usb.util.ENDPOINT_OUT,
+        )
+    except usb.core.USBError as e:
+        eprint(f"error: {e}")
+        sys.exit(1)
+    except RuntimeError as e:
+        eprint(f"error: {e}")
+        sys.exit(1)
+
+    if args.headless:
+        # We a command line tool
+        # Set the frequency to listen at if it exist, else this will be just the default on the MCU
+        if args.frequency is not None:
+            freq_request_tx(args.frequency, ep_in, ep_out)
+
+        # Request the data from the trigger condition
+        if args.pin is not None:
+            resp = rising_edge_trigger_request_tx(args.size, args.pin, ep_in, ep_out)
+        else:
+            resp = trace_request_tx(args.size, ep_in, ep_out)
+
+        print(resp)
+    else:
+        # We running the GUI
+        dpg.create_context()
+        dpg.create_viewport(title="laft", width=600, height=600)
+
+        SAMPLES = [500]
+        new_samples = [SAMPLES[0]]
+        EXPAND = 50
+        update = [True]
+        freq = [100000000]
+
+        def toggle_update():
+            update[0] = not update[0]
+            if update[0]:
+                dpg.set_item_label("update_button", "Stop Capture")
+                dpg.configure_item("update_config_button", enabled=False)
+            else:
+                dpg.set_item_label("update_button", "Start Capture")
+                dpg.configure_item("update_config_button", enabled=True)
+
+        def set_freq(sender):
+            freq[0] = dpg.get_value(sender)
+
+        def set_samples(sender):
+            new_samples[0] = dpg.get_value(sender)
+
+        def update_config():
+            freq_request_tx(freq[0], ep_in, ep_out)
+            SAMPLES[0] = new_samples[0]
+
+        def update_data(resp):
+            for i in range(16):
+                xaxis = [j for j in range(SAMPLES[0] * EXPAND)]
+                yaxis = [0 for j in range(SAMPLES[0] * EXPAND)]
+                for j in range(SAMPLES[0]):
+                    for k in range(EXPAND):
+                        yaxis[j * EXPAND + k] = resp[i][j]
+                dpg.set_value(f"series_{i}", [xaxis, yaxis])
+
+        with dpg.window(tag="laft"):
+            dpg.add_button(
+                label="Stop Capture", tag="update_button", callback=toggle_update
+            )
+
+            dpg.add_input_int(
+                label="Read Frequency (Hz)",
+                callback=set_freq,
+                min_value=1,
+                default_value=125_000_000,
+                step=0,
+            )
+            dpg.add_input_int(
+                label="Number of Samples to Collect",
+                callback=set_samples,
+                min_value=0,
+                max_value=65535,
+                default_value=500,
+                step=0,
+            )
+            dpg.add_button(
+                label="Update Config",
+                tag="update_config_button",
+                enabled=False,
+                callback=update_config,
+            )
+
+            for i in range(16):
+                # plot for a waveform
+                with dpg.plot(
+                    label=f"Waveform {i}",
+                    height=50,
+                    width=-1,
+                    no_frame=True,
+                    no_title=True,
+                    no_mouse_pos=True,
+                    no_menus=True,
+                ):
+                    dpg.add_plot_axis(
+                        dpg.mvXAxis,
+                        label="x",
+                        no_label=True,
+                        tag=f"xaxis_{i}",
+                        no_highlight=True,
+                        no_tick_marks=True,
+                        no_tick_labels=True,
+                    )
+                    dpg.add_plot_axis(
+                        dpg.mvYAxis,
+                        tag=f"yaxis_{i}",
+                        no_label=True,
+                        no_highlight=True,
+                        no_tick_labels=True,
+                        no_tick_marks=True,
+                        no_gridlines=True,
+                        lock_min=True,
+                        lock_max=True,
+                    )
+                    dpg.set_axis_limits_constraints(
+                        f"xaxis_{i}", 0, SAMPLES[0] * EXPAND
+                    )
+
+                    # series 1
+                    dpg.add_line_series(
+                        [j for j in range(SAMPLES[0] * EXPAND)],
+                        [0 for j in range(SAMPLES[0] * EXPAND)],
+                        parent=f"yaxis_{i}",
+                        tag=f"series_{i}",
+                        shaded=True,
+                    )
+
+        dpg.setup_dearpygui()
+        dpg.show_viewport()
+        dpg.set_primary_window("laft", True)
+
+        dataq = queue.Queue()
+        cmdq = queue.Queue()
+
+        # The worker is controlled by commands passed by cmdq
+        # 0 is shutdown, 1 is get data, 2 is wait
+        def populate_q_worker():
+            while True:
+                cmd = cmdq.get()
+                if cmd == 0:
+                    break
+                elif cmd == 1:
+                    if dataq.empty():
+                        print("capturing")
+                        resp = trace_request_tx(SAMPLES[0], ep_in, ep_out)
+                        dataq.put(resp)
+                elif cmd == 2:
+                    pass
+
+        worker = threading.Thread(target=populate_q_worker, daemon=True)
+        worker.start()
+        while dpg.is_dearpygui_running():
+            if update[0]:
+                try:
+                    resp = dataq.get_nowait()
+                    update_data(resp)
+                except queue.Empty:
+                    cmdq.put(1)
+            else:
+                cmdq.put(2)
+            dpg.render_dearpygui_frame()
+        cmdq.put(0)
+        worker.join()
+        dpg.destroy_context()
+
+
+if __name__ == "__main__":
+    main()
+</code></pre>
+<pre><code>
+./laft/serial_debug.py
+import serial
+import time
+
+# USER SETTINGS Jeremy Change for Weird Linux Stuff
+PORT = "/dev/ttyACM0"
+BAUD = 115200
+TIMEOUT = 0.5
+
+
+ser = serial.Serial(PORT, baudrate=BAUD)
+
+S1 = ["--    ", "    --", "------", "      "]
+S2 = ["  \\   ", "   /  ", "      ", "      "]
+S3 = ["   \\  ", "  /   ", "      ", "      "]
+S4 = ["    --", "--    ", "      ", "------"]
+
+
+def pretty_print_waveform(data):
+    for S in [S1, S2, S3, S4]:
+        for i in range(len(data)):
+            if i == len(data) - 1:
+                if data[i] == 0:
+                    print(S[3][:3], end="")
+                else:
+                    print(S[2][:3], end="")
+            else:
+                d1, d2 = data[i], data[i + 1]
+                if d1 == d2:
+                    if d1 == 0:
+                        print(S[3], end="")
+                    else:
+                        print(S[2], end="")
+                else:
+                    if d1 == 0:
+                        print(S[1], end="")
+                    else:
+                        print(S[0], end="")
+        print()
+
+
+def get_channel_n(data, n):
+    out = []
+    for i in range(len(data) // 4):
+        if n < 8:
+            out.append((data[4 * i] & (1 << n)) >> n)
+        else:
+            out.append((data[4 * i + 1] & (1 << n)) >> n)
+    return out
+
+
+def send(cmd_bytes):
+    """
+    Send raw command bytes to SUMP device.
+    """
+    ser.write(cmd_bytes)
+    ser.flush()
+
+
+print("Connected to SUMP device.")
+
+# 0x00 = RESET
+print("Sending 0x00 = RESET")
+send(b"\x00")
+
+# 0x02 = ID
+print("Requesting DEVICE ID...")
+send(b"\x02")
+# data = ser.read(4)
+# print(data[::-1])
+
+
+# Trigger configuration example
+print("\nConfiguring Stage 0")
+
+# Stage 0 mask
+send(bytes([0xC0, 0x80, 0x00, 0x00, 0x00]))
+
+# Stage 0 value
+send(bytes([0xC1, 0x80, 0x00, 0x00, 0xA5]))
+
+# Stage 0 config
+send(bytes([0xC2, 0x00, 0x00, 0x00, 0x01]))
+
+# Stage 1 mask
+send(bytes([0xC4, 0x00, 0x00, 0x00, 0x00]))
+
+# Stage 2 mask
+send(bytes([0xC8, 0x00, 0x00, 0x00, 0x00]))
+
+# Stage 3 mask
+send(bytes([0xCC, 0x00, 0x00, 0x00, 0x00]))
+
+
+# Set sample count 0x81, request 4096 samples
+sample_count = 16
+cnt_bytes = sample_count.to_bytes(2, "little")
+
+print(f"Setting sample count to {sample_count}...")
+send(b"\x81" + cnt_bytes + cnt_bytes)
+
+print("\nSetting divider to 4...")
+send(b"\x80\x04\x00\x00\x60")
+
+# Set flags
+
+# send(b"\x82\xff\xff\xff\x7f")
+
+# Arm the capture again
+
+# print("\nRUN capture...")
+# send(b"\x01")
+#
+# data = ser.read(sample_count * 4)
+# c0 = get_channel_n(data, 0)
+# pretty_print_waveform(c0)
+
+print("\nTrigger on falling edge")
+# Stage 1 mask
+send(bytes([0xC4, 0x00, 0x00, 0x00, 0x00]))
+
+# Stage 1 value
+send(bytes([0xC5, 0x00, 0x00, 0x00, 0x00]))
+
+# Stage 1 config
+send(bytes([0xC6, 0x00, 0x00, 0x00, 0x01]))
+
+print("\nRUN capture...")
+send(b"\x01")
+
+data = ser.read(sample_count * 4)
+c0 = get_channel_n(data, 0)
+pretty_print_waveform(c0)
+
+print("\nDone.")
+ser.close()
+</code></pre>
+<pre><code>
+./mcu/src/bitset.c
+#include "bitset.h"
+#include <stdbool.h>
+
+Bitset32 bitset_from_uint32(uint32_t value) {
+  Bitset32 out = {.data = value};
+  return out;
+}
+
+void bitset_set(Bitset32 *self, int idx, bool value) {
+  self->data |= value << idx;
+}
+
+bool bitset_get(Bitset32 *self, int idx) {
+  return (self->data & (1 << idx)) >> idx;
+}
+
+uint32_t bitset_get_raw(Bitset32 *self) { return self->data; }
+
+bool bitset_is_empty(Bitset32 *self) { return self->data == 0; }
+</code></pre>
+<pre><code>
+./mcu/src/logic_analyzer.c
+#include <hardware/dma.h>
+#include <hardware/pio.h>
+#include <hardware/pio_instructions.h>
+#include <pico/stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "debug.h"
+
+#include "logic_analyzer.h"
+
+static volatile LogicAnalyzer *la;
+static volatile bool triggered = false;
+
+const uint8_t LOGIC_ANALYZR_ID[] = {'1', 'A', 'L', 'S'};
+const uint8_t SUMP_ID_LEN = 4;
+
+void dma_irq_0_handler() {
+  triggered = true;
+  dma_hw->ints0 = 1u << la->buf.dma;
+}
+
+void la_set_paused(LogicAnalyzer *self, bool paused) { self->paused = paused; }
+
+void la_init(LogicAnalyzer *self, uint base_pin, PIO pio, uint sm, uint dma) {
+  cb_init(&self->buf, base_pin, pio, sm, dma);
+  la = self;
+  irq_set_exclusive_handler(DMA_IRQ_0, dma_irq_0_handler);
+  irq_set_enabled(DMA_IRQ_0, true);
+  for (int i = 0; i < NUM_STAGES; i++) {
+    self->trigger_mask[i] = bitset_from_uint32(0);
+    self->trigger_value[i] = bitset_from_uint32(0);
+  }
+  self->paused = false;
+  self->clock_div = 1;
+  self->read_count = 0;
+  self->delay_count = 0;
+}
+
+void la_reset(LogicAnalyzer *self) {
+  for (int i = 0; i < NUM_STAGES; i++) {
+    self->trigger_mask[i] = bitset_from_uint32(0);
+    self->trigger_value[i] = bitset_from_uint32(0);
+  }
+  self->paused = false;
+  self->clock_div = 1;
+  self->read_count = 0;
+  self->delay_count = 0;
+}
+
+uint8_t *la_get_id(LogicAnalyzer *self) { return (uint8_t *)LOGIC_ANALYZR_ID; }
+
+uint8_t reverse_byte(uint8_t b) {
+  uint8_t out = 0;
+  for (int i = 0; i < 8; i++) {
+    out <<= 1;
+    out |= b & 1;
+    b >>= 1;
+  }
+}
+
+void la_arm(LogicAnalyzer *self) {
+  int read_count = self->read_count;
+  cb_arm_to_start_collecting(&self->buf, self->trigger_mask,
+                             self->trigger_value, self->trigger_config,
+                             self->clock_div, self->read_count);
+  while (!triggered) {
+#ifdef DEBUG
+    printf("gpio8: %d\n", gpio_get(8));
+    printf("transfer count: %d\n", dma_hw->ch[self->buf.dma].transfer_count);
+    printf("pio pc: %d\n", self->buf.pio->sm[self->buf.sm].addr);
+    printf("pio insn: %x\n", self->buf.pio->sm[self->buf.sm].instr);
+#endif
+  }
+  triggered = false;
+#ifdef DEBUG
+  printf("triggered\n");
+#endif
+  for (int i = 0; i < read_count; i++) {
+    uint8_t to_put = self->buf.buf[i];
+#ifndef DEBUG
+    putchar(0x00FF & to_put);
+    putchar((0xFF00 & to_put) >> 8);
+    putchar(0);
+    putchar(0);
+#endif
+#ifdef DEBUG
+    printf("i: %d\n", i);
+    printf("%d%d\n", 0x00FF & self->buf.buf[i], 0xFF00 & self->buf.buf[i]);
+#endif
+  }
+}
+
+void la_set_trigger_mask(LogicAnalyzer *self, Bitset32 mask, int stage) {
+  self->trigger_mask[stage] = mask;
+}
+
+void la_set_trigger_value(LogicAnalyzer *self, Bitset32 value, int stage) {
+  self->trigger_value[stage] = value;
+}
+
+void la_set_trigger_config(LogicAnalyzer *self, TriggerConfiguration config,
+                           int stage) {
+  self->trigger_config[stage] = config;
+}
+
+void la_set_clock_divider(LogicAnalyzer *self, uint32_t clock_div) {
+  self->clock_div = clock_div;
+}
+
+void la_set_read_count(LogicAnalyzer *self, uint16_t read_count) {
+  self->read_count = read_count;
+}
+
+void la_set_delay_count(LogicAnalyzer *self, uint16_t delay_count) {
+  self->delay_count = delay_count;
+}
+
+void la_set_flags(LogicAnalyzer *self, LogicAnalyzerFlags flags) {
+  self->flags = flags;
+}
+
+void transmit_buf(uint8_t *buf, int len) {
+  for (int i = 0; i < len; i++) {
+    putchar(buf[i]);
+  }
+}
+
+uint32_t reverse_bits(uint32_t bits) {
+  uint32_t out = 0;
+  while (bits) {
+    out <<= 1;
+    out |= bits & 1;
+    bits >>= 1;
+  }
+  return out;
+}
+
+void la_exec_command(LogicAnalyzer *self, SumpCommand *cmd) {
+  switch (sc_get_ty(cmd)) {
+    int stage;
+  case Reset:
+#ifdef DEBUG
+    printf("Reset\n");
+#endif
+    la_set_paused(self, false);
+    break;
+  case Run:
+    la_arm(self);
+    break;
+  case Id:;
+#ifdef DEBUG
+    printf("Id\n");
+#endif
+    uint8_t *buf = la_get_id(self);
+    transmit_buf(buf, SUMP_ID_LEN);
+    break;
+  case Xon:
+#ifdef DEBUG
+    printf("Xon\n");
+#endif
+    la_set_paused(self, false);
+    break;
+  case Xoff:
+#ifdef DEBUG
+    printf("Xoff\n");
+#endif
+    la_set_paused(self, true);
+    break;
+  case SetTriggerMaskStage0:
+  case SetTriggerMaskStage1:
+  case SetTriggerMaskStage2:
+  case SetTriggerMaskStage3:
+    stage = sc_get_stage(cmd);
+    Bitset32 mask = sc_get_mask(cmd);
+#ifdef DEBUG
+    printf("mask: %x\n", mask.data);
+#endif
+    la_set_trigger_mask(self, mask, stage);
+    break;
+  case SetTriggerValueStage0:
+  case SetTriggerValueStage1:
+  case SetTriggerValueStage2:
+  case SetTriggerValueStage3:
+    stage = sc_get_stage(cmd);
+    Bitset32 value = sc_get_value(cmd);
+#ifdef DEBUG
+    printf("value: %x\n", value.data);
+#endif
+    la_set_trigger_value(self, value, stage);
+    break;
+  case SetTriggerConfigStage0:
+  case SetTriggerConfigStage1:
+  case SetTriggerConfigStage2:
+  case SetTriggerConfigStage3:
+    stage = sc_get_stage(cmd);
+    TriggerConfiguration config = sc_get_trigger_configuration(cmd);
+#ifdef DEBUG
+    printf("(delay, channel, level, serial, start): (%hd, %hhd, %hhd, %d, %d)",
+           config.delay, config.channel, config.level, config.serial,
+           config.start);
+#endif
+    la_set_trigger_config(self, config, stage);
+    break;
+  case SetDivider:;
+    uint32_t div = sc_get_clock_div(cmd);
+#ifdef DEBUG
+    printf("div: %d\n", div);
+#endif
+    la_set_clock_divider(self, div);
+    break;
+  case SetReadAndDelayCount:
+#ifdef DEBUG
+    printf("(read, delay): (%d, %d)\n", sc_get_read_count(cmd),
+           sc_get_delay_count(cmd));
+#endif
+    la_set_read_count(self, sc_get_read_count(cmd));
+    la_set_delay_count(self, sc_get_delay_count(cmd));
+    break;
+  case SetFlags:;
+    LogicAnalyzerFlags flags = sc_get_flags(cmd);
+#ifdef DEBUG
+    printf("(dmux, filter, channel groups, external, inverted): (%d, %d, %d, "
+           "%d, %d)\n",
+           flags.demux, flags.filter, flags.channel_groups, flags.external,
+           flags.inverted);
+#endif
+    la_set_flags(self, flags);
+    break;
+  default:
+#ifdef DEBUG
+    printf("Unknown\n");
+#endif
+    break;
+  }
+}
+
+SumpCommandType sc_get_ty(SumpCommand *self) { return self->ty; }
+
+uint32_t le_to_be(uint32_t num) {
+  uint32_t b0 = (num & 0x000000FF) << 24;
+  uint32_t b1 = (num & 0x0000FF00) << 8;
+  uint32_t b2 = (num & 0x00FF0000) >> 8;
+  uint32_t b3 = (num & 0xFF000000) >> 24;
+  return b0 | b1 | b2 | b3;
+}
+
+Bitset32 sc_get_mask(SumpCommand *self) {
+  return bitset_from_uint32(le_to_be(self->data));
+}
+
+Bitset32 sc_get_value(SumpCommand *self) {
+  return bitset_from_uint32(le_to_be(self->data));
+}
+
+int sc_get_stage(SumpCommand *self) {
+  SumpCommandType ty = sc_get_ty(self);
+  return (ty & 0b00001100) >> 2;
+}
+
+TriggerConfiguration sc_get_trigger_configuration(SumpCommand *self) {
+  TriggerConfiguration out;
+  uint32_t data = reverse_bits(self->data);
+  out.delay = ((0xFF000000 & data) >> 24) | ((0x00FF0000 & data) >> 16);
+  out.channel = ((0x0000F000 & data) >> 12) | ((0x1 & data) << 4);
+  out.level = (data >> 4) & 0x3;
+  out.serial = (data >> 2) & 0x1;
+  out.start = (data >> 3) & 0x1;
+  return out;
+}
+
+uint32_t sc_get_clock_div(SumpCommand *self) {
+  return (0x00FFFFFF & self->data) + 1;
+}
+
+uint16_t sc_get_read_count(SumpCommand *self) { return self->data & 0xFFFF; }
+
+uint16_t sc_get_delay_count(SumpCommand *self) { return self->data >> 16; }
+
+LogicAnalyzerFlags sc_get_flags(SumpCommand *self) {
+  uint8_t flag_byte = self->data;
+  LogicAnalyzerFlags out;
+  out.demux = flag_byte & 0b00000001;
+  out.filter = (flag_byte & 0b00000010) >> 1;
+  out.channel_groups = (flag_byte & 0b00111100) >> 2;
+  out.external = (flag_byte & 0b01000000) >> 6;
+  out.inverted = (flag_byte & 0b10000000) >> 7;
+  return out;
+}
+
+bool is_short_cmd(SumpCommandType ty) {
+  switch (ty) {
+  case Reset:
+  case Run:
+  case Id:
+  case Xon:
+  case Xoff:
+    return true;
+    break;
+  case SetTriggerMaskStage0:
+  case SetTriggerMaskStage1:
+  case SetTriggerMaskStage2:
+  case SetTriggerMaskStage3:
+  case SetTriggerValueStage0:
+  case SetTriggerValueStage1:
+  case SetTriggerValueStage2:
+  case SetTriggerValueStage3:
+  case SetTriggerConfigStage0:
+  case SetTriggerConfigStage1:
+  case SetTriggerConfigStage2:
+  case SetTriggerConfigStage3:
+  case SetDivider:
+  case SetReadAndDelayCount:
+  case SetFlags:
+    return false;
+    break;
+  }
+}
+
+SumpCommand sc_read_from_stdin() {
+  SumpCommand out;
+#ifdef DEBUG
+  printf("starting the getchar\n");
+#endif
+  out.ty = getchar();
+#ifdef DEBUG
+  printf("finished the getchar\n");
+#endif
+  if (is_short_cmd(out.ty)) {
+    return out;
+  }
+  out.data = 0;
+  for (int i = 0; i < 4; i++) {
+    out.data |= getchar() << (8 * i);
+  }
+  return out;
+}
+
+void cb_init(CircularBuffer *self, uint base_pin, PIO pio, uint sm, uint dma) {
+  self->pio = pio;
+  self->sm = sm;
+  self->dma = dma;
+  self->base_pin = base_pin;
+
+  // Disable the PIO so the DMA channel doesn't read nonsense.
+  pio_sm_set_enabled(pio, sm, false);
+}
+
+int trailing_zeros(uint32_t n) {
+  int c = 0;
+  while (!(n & 1) && c < 32) {
+    c++;
+    n >>= 1;
+  }
+  return c;
+}
+
+int trailing_ones(uint32_t n) {
+  int c = 0;
+  while (n & 1) {
+    c++;
+    n >>= 1;
+  }
+  return c;
+}
+
+void cb_arm_to_start_collecting(CircularBuffer *self,
+                                Bitset32 trigger_mask[NUM_STAGES],
+                                Bitset32 trigger_value[NUM_STAGES],
+                                TriggerConfiguration trigger_config[NUM_STAGES],
+                                uint32_t clock_div, int transfer_count) {
+  // This implementation is heavily inspired by the implementation of
+  // [this](https://github.com/dotcypress/ula/blob/40756c4199c9f2ac605a39bfed2eddcc7fe0324b/src/trigger.rs#L65)
+  // function in ula, a logic analyzer implemented for the pico.
+  //
+  // Generate the program for the PIO.
+  pio_sm_set_enabled(self->pio, self->sm, false);
+
+  uint16_t prog[32];
+  memset(prog, 0, sizeof prog);
+  int static_pc = 0;
+  for (int i = 0; i < NUM_STAGES; i++) {
+    int stage_offset = static_pc;
+    if (bitset_is_empty(&trigger_mask[i])) {
+      continue;
+    }
+
+    uint32_t mask = bitset_get_raw(&trigger_mask[i]);
+    uint32_t value = bitset_get_raw(&trigger_value[i]);
+
+#ifdef DEBUG
+    printf("mask: %x\n", mask);
+    printf("value: %x\n", value);
+#endif
+
+    prog[static_pc++] = pio_encode_mov_reverse(pio_osr, pio_pins);
+#ifdef DEBUG
+    printf("mov osr, pins\n");
+#endif
+    while (mask) {
+      int mask_zeros = trailing_zeros(mask);
+      if (mask_zeros) {
+        prog[static_pc++] = pio_encode_out(pio_null, mask_zeros);
+#ifdef DEBUG
+        printf("out null, %d\n", mask_zeros);
+#endif
+        mask >>= mask_zeros;
+        value >>= mask_zeros;
+      }
+
+      int mask_ones = MIN(trailing_ones(mask), 5);
+      if (mask_ones) {
+        prog[static_pc++] = pio_encode_out(pio_x, mask_ones);
+#ifdef DEBUG
+        printf("out x, %d\n", mask_ones);
+#endif
+        prog[static_pc++] =
+            pio_encode_set(pio_y, value & ((1 << mask_ones) - 1));
+#ifdef DEBUG
+        printf("set y, %d\n", value & ((1 << mask_ones) - 1));
+#endif
+        prog[static_pc++] = pio_encode_jmp_x_ne_y(stage_offset);
+#ifdef DEBUG
+        printf("jmp x != y, %d\n", stage_offset);
+#endif
+        mask >>= mask_ones;
+        value >>= mask_ones;
+      }
+    }
+  }
+  prog[static_pc++] = pio_encode_in(pio_pins, 16);
+#ifdef DEBUG
+  printf("in pins, 16\n");
+#endif
+
+#ifdef DEBUG
+  printf("program length: %d\n", static_pc);
+#endif
+
+  // Assign the PIO program to the state machine
+  struct pio_program capture_prog = {
+      .instructions = prog, .length = static_pc, .origin = -1};
+  int offset = pio_add_program(self->pio, &capture_prog);
+  pio_sm_config capture_config = pio_get_default_sm_config();
+  sm_config_set_wrap(&capture_config, offset + static_pc - 1,
+                     offset + static_pc - 1);
+  sm_config_set_in_pin_base(&capture_config, self->base_pin);
+  sm_config_set_in_pin_count(&capture_config, 16);
+  sm_config_set_in_shift(&capture_config, false, true, 16);
+  sm_config_set_clkdiv(&capture_config, clock_div);
+  pio_sm_init(self->pio, self->sm, offset, &capture_config);
+  pio_sm_restart(self->pio, self->sm);
+
+  // Sets the DMA channel to copy from the PIO to the circular buffer.
+  dma_set_irq0_channel_mask_enabled(1 << self->dma, true);
+  dma_channel_config dma_data_config =
+      dma_channel_get_default_config(self->dma);
+  channel_config_set_read_increment(&dma_data_config, false);
+  channel_config_set_write_increment(&dma_data_config, true);
+  channel_config_set_transfer_data_size(&dma_data_config, DMA_SIZE_16);
+  channel_config_set_dreq(&dma_data_config,
+                          pio_get_dreq(self->pio, self->sm, false));
+#ifdef DEBUG
+  printf("binding to buf: %p\n", self->buf);
+#endif
+  dma_channel_configure(self->dma, &dma_data_config, self->buf, self->pio->rxf,
+                        dma_encode_transfer_count(transfer_count), true);
+
+  // Enable after DMA so we don't use bits to autopush
+  pio_sm_set_enabled(self->pio, self->sm, true);
+  pio_sm_exec(self->pio, self->sm, pio_encode_jmp(0));
+}
+
+void cb_stop_buf_population(CircularBuffer *self) {
+  pio_sm_set_enabled(self->pio, self->sm, false);
+}
+
+void cb_start_buf_population(CircularBuffer *self) {
+  pio_sm_set_enabled(self->pio, self->sm, true);
+}
+</code></pre>
+<pre><code>
+./mcu/src/main.c
+#include "debug.h"
+#include <hardware/dma.h>
+#include <stdio.h>
+
+// For memcpy
+#include <string.h>
+
+#include <hardware/clocks.h>
+#include <hardware/gpio.h>
+#include <hardware/pwm.h>
+#include <pico/stdio.h>
+
+#include "logic_analyzer.h"
+
+const int PICO_CLOCK_SPEED = 125000000;
+
+int main() {
+#ifdef ECHO
+  static char buf[1000];
+  set_sys_clock_hz(PICO_CLOCK_SPEED, true);
+  printf("start\n");
+  // Set the LED
+  gpio_init(25);
+  gpio_set_dir_out_masked(1 << 25);
+  gpio_put(25, 1);
+  stdio_init_all();
+  while (1) {
+    scanf("%s\n", buf);
+    printf("%s\n", buf);
+  }
+#endif
+#ifndef ECHO
+  set_sys_clock_hz(PICO_CLOCK_SPEED, true);
+  stdio_init_all();
+
+  // Set the LED
+  gpio_init(25);
+  gpio_set_dir_out_masked(1 << 25);
+  gpio_put(25, 1);
+
+  // Initialize GPIOS
+  for (int i = 8; i < 8 + 15; i++) {
+    gpio_init(i);
+    gpio_set_dir_in_masked(1 << i);
+  }
+
+  gpio_init(26);
+  gpio_set_dir_in_masked(1 << 26);
+
+  gpio_init(5);
+  gpio_set_dir_out_masked(1 << 5);
+  gpio_put(5, 0);
+
+  // Initialize the logic analyzer
+  LogicAnalyzer la;
+  la_init(&la, 8, pio0, pio_claim_unused_sm(pio0, true),
+          dma_claim_unused_channel(true));
+
+  // Flicker GPIO 27 which is connected to GPIO 8 so we can read a signal.
+  gpio_set_function(27, GPIO_FUNC_PWM);
+  uint slice_num = pwm_gpio_to_slice_num(27);
+  pwm_set_wrap(slice_num, 3);
+  pwm_set_chan_level(slice_num, PWM_CHAN_B, 3);
+  pwm_set_enabled(slice_num, true);
+
+#ifdef DEBUG
+  printf("configured pwm, spinning forever now!");
+#endif
+  // Everything is interrupt driven so just loop here
+  while (1) {
+#ifdef DEBUG
+    printf("reading command\n");
+#endif
+    SumpCommand cmd = sc_read_from_stdin();
+#ifdef DEBUG
+    printf("executing command\n");
+#endif
+    la_exec_command(&la, &cmd);
+  }
+#endif
+}
+
+./mcu/src/read_rising_edge.pio
+.program read_rising_edge
+
+; This reads a rising edge and upon doing so will begin reading from input pins forever
+
+top:
+  jmp pin, top
+  jmp pin, read
+  jmp top
+read:
+.wrap_target
+  in pins, 16
+.wrap
+</code></pre>
+
+(Other MCU code)
+<pre><code>
+./mcu/src/request_queue.c
+#include "request_queue.h"
+#include <stdbool.h>
+
+void reset_queue(request_queue *q) {
+  q->tail = 0;
+  q->head = 0;
+  q->size = 0;
+}
+
+void push_queue(request_queue *q, struct usb_endpoint_configuration *ep,
+                uint8_t *buf, uint16_t len) {
+  q->size++;
+  int i = q->tail++;
+  q->tail %= REQUEST_QUEUE_BUFFER_SIZE;
+  q->buf[i].len = len;
+  for (int j = 0; j < len; j++) {
+    q->buf[i].buf[j] = buf[j];
+  }
+  q->buf[i].ep = ep;
+}
+
+request *pop_front_queue(request_queue *q) {
+  q->size--;
+  int i = q->head++;
+  q->head %= REQUEST_QUEUE_BUFFER_SIZE;
+  return &q->buf[i];
+}
+
+bool is_empty_queue(request_queue *q) { return q->size == 0; }
+
+./mcu/src/request_queue.h
+#include <stdbool.h>
+#include <stdint.h>
+
+typedef struct {
+  uint8_t buf[64];
+  uint16_t len;
+  struct usb_endpoint_configuration *ep;
+} request;
+
+#define REQUEST_QUEUE_BUFFER_SIZE 100
+
+typedef struct {
+  request buf[REQUEST_QUEUE_BUFFER_SIZE];
+  int tail;
+  int head;
+  int size;
+} request_queue;
+
+void reset_queue(request_queue *q);
+void push_queue(request_queue *q, struct usb_endpoint_configuration *ep,
+                uint8_t *buf, uint16_t len);
+request *pop_front_queue(request_queue *q);
+bool is_empty_queue(request_queue *q);
+</code></pre>
+<pre><code>
+./mcu/src/main.c
+/**
+ * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
+#include <stdio.h>
+
+// Pico
+#include "pico/stdlib.h"
+
+// For memcpy
+#include <string.h>
+
+// Include descriptor struct definitions
+#include "usb_common.h"
+// USB register definitions from pico-sdk
+#include "hardware/regs/usb.h"
+// USB hardware struct definitions from pico-sdk
+#include "hardware/structs/usb.h"
+// For interrupt enable and numbers
+#include "hardware/irq.h"
+// For resetting the USB controller
+#include "hardware/clocks.h"
+#include "hardware/dma.h"
+#include "hardware/gpio.h"
+#include "hardware/pio.h"
+#include "hardware/pwm.h"
+#include "hardware/resets.h"
+
+// Device descriptors
+#include "usb.h"
+
+// Request queue
+#include "request_queue.h"
+
+// The pio
+#include "read_rising_edge.pio.h"
+
+#define usb_hw_set ((usb_hw_t *)hw_set_alias_untyped(usb_hw))
+#define usb_hw_clear ((usb_hw_t *)hw_clear_alias_untyped(usb_hw))
+
+// Function prototypes for our device specific endpoint handlers defined
+// later on
+void ep0_in_handler(uint8_t *buf, uint16_t len);
+void ep0_out_handler(uint8_t *buf, uint16_t len);
+void ep1_out_handler(uint8_t *buf, uint16_t len);
+void ep2_in_handler(uint8_t *buf, uint16_t len);
+void respond_to_trace_request();
+void respond_to_freq_request();
+void respond_to_rising_edge_trigger_request();
+
+#define TRACES 16
+#define MAX_BITS 1000
+#define CLK 125000000
+
+// Request queue
+static request_queue req_queue;
+static uint8_t data0[TRACES * MAX_BITS];
+static uint8_t data1[TRACES * MAX_BITS];
+static uint8_t *read_buf = data0;
+static uint8_t *write_buf = data1;
+static uint8_t cmd_buf[8];
+struct usb_endpoint_configuration *cmd_ep;
+
+// Offsets for the PIO programs
+static uint trigger_whenever_offset;
+static uint trigger_on_rising_edge_offset;
+
+// Global device address
+static bool should_set_address = false;
+static uint8_t dev_addr = 0;
+static volatile bool configured = false;
+
+// Global data buffer for EP0
+static uint8_t ep0_buf[64];
+
+// Struct defining the device configuration
+static struct usb_device_configuration dev_config = {
+    .device_descriptor = &device_descriptor,
+    .interface_descriptor = &interface_descriptor,
+    .config_descriptor = &config_descriptor,
+    .lang_descriptor = lang_descriptor,
+    .descriptor_strings = descriptor_strings,
+    .endpoints = {{
+                      .descriptor = &ep0_out,
+                      .handler = &ep0_out_handler,
+                      .endpoint_control = NULL, // NA for EP0
+                      .buffer_control = &usb_dpram->ep_buf_ctrl[0].out,
+                      // EP0 in and out share a data buffer
+                      .data_buffer = &usb_dpram->ep0_buf_a[0],
+                  },
+                  {
+                      .descriptor = &ep0_in,
+                      .handler = &ep0_in_handler,
+                      .endpoint_control = NULL, // NA for EP0,
+                      .buffer_control = &usb_dpram->ep_buf_ctrl[0].in,
+                      // EP0 in and out share a data buffer
+                      .data_buffer = &usb_dpram->ep0_buf_a[0],
+                  },
+                  {
+                      .descriptor = &ep1_out,
+                      .handler = &ep1_out_handler,
+                      // EP1 starts at offset 0 for endpoint control
+                      .endpoint_control = &usb_dpram->ep_ctrl[0].out,
+                      .buffer_control = &usb_dpram->ep_buf_ctrl[1].out,
+                      // First free EPX buffer
+                      .data_buffer = &usb_dpram->epx_data[0 * 64],
+                  },
+                  {
+                      .descriptor = &ep2_in,
+                      .handler = &ep2_in_handler,
+                      .endpoint_control = &usb_dpram->ep_ctrl[1].in,
+                      .buffer_control = &usb_dpram->ep_buf_ctrl[2].in,
+                      // Second free EPX buffer
+                      .data_buffer = &usb_dpram->epx_data[1 * 64],
+                  }}};
+
+/**
+ * @brief Given an endpoint address, return the usb_endpoint_configuration of
+ * that endpoint. Returns NULL if an endpoint of that address is not found.
+ *
+ * @param addr
+ * @return struct usb_endpoint_configuration*
+ */
+struct usb_endpoint_configuration *
+usb_get_endpoint_configuration(uint8_t addr) {
+  struct usb_endpoint_configuration *endpoints = dev_config.endpoints;
+  for (int i = 0; i < USB_NUM_ENDPOINTS; i++) {
+    if (endpoints[i].descriptor &&
+        (endpoints[i].descriptor->bEndpointAddress == addr)) {
+      return &endpoints[i];
+    }
+  }
+  return NULL;
+}
+
+/**
+ * @brief Given a C string, fill the EP0 data buf with a USB string descriptor
+ * for that string.
+ *
+ * @param C string you would like to send to the USB host
+ * @return the length of the string descriptor in EP0 buf
+ */
+uint8_t usb_prepare_string_descriptor(const unsigned char *str) {
+  // 2 for bLength + bDescriptorType + strlen * 2 because string is unicode.
+  // i.e. other byte will be 0
+  uint8_t bLength = 2 + (strlen((const char *)str) * 2);
+  static const uint8_t bDescriptorType = 0x03;
+
+  volatile uint8_t *buf = &ep0_buf[0];
+  *buf++ = bLength;
+  *buf++ = bDescriptorType;
+
+  uint8_t c;
+
+  do {
+    c = *str++;
+    *buf++ = c;
+    *buf++ = 0;
+  } while (c != '\0');
+
+  return bLength;
+}
+
+/**
+ * @brief Take a buffer pointer located in the USB RAM and return as an offset
+ * of the RAM.
+ *
+ * @param buf
+ * @return uint32_t
+ */
+static inline uint32_t usb_buffer_offset(volatile uint8_t *buf) {
+  return (uint32_t)buf ^ (uint32_t)usb_dpram;
+}
+
+/**
+ * @brief Set up the endpoint control register for an endpoint (if applicable.
+ * Not valid for EP0).
+ *
+ * @param ep
+ */
+void usb_setup_endpoint(const struct usb_endpoint_configuration *ep) {
+  printf("Set up endpoint 0x%x with buffer address 0x%p\n",
+         ep->descriptor->bEndpointAddress, ep->data_buffer);
+
+  // EP0 doesn't have one so return if that is the case
+  if (!ep->endpoint_control) {
+    return;
+  }
+
+  // Get the data buffer as an offset of the USB controller's DPRAM
+  uint32_t dpram_offset = usb_buffer_offset(ep->data_buffer);
+  uint32_t reg = EP_CTRL_ENABLE_BITS | EP_CTRL_INTERRUPT_PER_BUFFER |
+                 (ep->descriptor->bmAttributes << EP_CTRL_BUFFER_TYPE_LSB) |
+                 dpram_offset;
+  *ep->endpoint_control = reg;
+}
+
+/**
+ * @brief Set up the endpoint control register for each endpoint.
+ *
+ */
+void usb_setup_endpoints() {
+  const struct usb_endpoint_configuration *endpoints = dev_config.endpoints;
+  for (int i = 0; i < USB_NUM_ENDPOINTS; i++) {
+    if (endpoints[i].descriptor && endpoints[i].handler) {
+      usb_setup_endpoint(&endpoints[i]);
+    }
+  }
+}
+
+/**
+ * @brief Set up the USB controller in device mode, clearing any previous state.
+ *
+ */
+void usb_device_init() {
+  // Reset usb controller
+  reset_unreset_block_num_wait_blocking(RESET_USBCTRL);
+
+  // Clear any previous state in dpram just in case
+  memset(usb_dpram, 0, sizeof(*usb_dpram)); // <1>
+
+  // Enable USB interrupt at processor
+  irq_set_enabled(USBCTRL_IRQ, true);
+
+  // Mux the controller to the onboard usb phy
+  usb_hw->muxing = USB_USB_MUXING_TO_PHY_BITS | USB_USB_MUXING_SOFTCON_BITS;
+
+  // Force VBUS detect so the device thinks it is plugged into a host
+  usb_hw->pwr =
+      USB_USB_PWR_VBUS_DETECT_BITS | USB_USB_PWR_VBUS_DETECT_OVERRIDE_EN_BITS;
+
+  // Enable the USB controller in device mode.
+  usb_hw->main_ctrl = USB_MAIN_CTRL_CONTROLLER_EN_BITS;
+
+  // Enable an interrupt per EP0 transaction
+  usb_hw->sie_ctrl = USB_SIE_CTRL_EP0_INT_1BUF_BITS; // <2>
+
+  // Enable interrupts for when a buffer is done, when the bus is reset,
+  // and when a setup packet is received
+  usb_hw->inte = USB_INTS_BUFF_STATUS_BITS | USB_INTS_BUS_RESET_BITS |
+                 USB_INTS_SETUP_REQ_BITS;
+
+  // Set up endpoints (endpoint control registers)
+  // described by device configuration
+  usb_setup_endpoints();
+
+  // Present full speed device by enabling pull up on DP
+  usb_hw_set->sie_ctrl = USB_SIE_CTRL_PULLUP_EN_BITS;
+}
+
+/**
+ * @brief Given an endpoint configuration, returns true if the endpoint
+ * is transmitting data to the host (i.e. is an IN endpoint)
+ *
+ * @param ep, the endpoint configuration
+ * @return true
+ * @return false
+ */
+static inline bool ep_is_tx(struct usb_endpoint_configuration *ep) {
+  return ep->descriptor->bEndpointAddress & USB_DIR_IN;
+}
+
+/**
+ * @brief Starts a transfer on a given endpoint.
+ *
+ * @param ep, the endpoint configuration.
+ * @param buf, the data buffer to send. Only applicable if the endpoint is TX
+ * @param len, the length of the data in buf (this example limits max len to one
+ * packet - 64 bytes)
+ */
+void usb_start_transfer(struct usb_endpoint_configuration *ep, uint8_t *buf,
+                        uint16_t len) {
+  // We are asserting that the length is <= 64 bytes for simplicity of the
+  // example. For multi packet transfers see the tinyusb port.
+  assert(len <= 64);
+
+  printf("Start transfer of len %d on ep addr 0x%x\n", len,
+         ep->descriptor->bEndpointAddress);
+
+  // Prepare buffer control register value
+  uint32_t val = len | USB_BUF_CTRL_AVAIL;
+
+  if (ep_is_tx(ep)) {
+    // Need to copy the data from the user buffer to the usb memory
+    memcpy((void *)ep->data_buffer, (void *)buf, len);
+    // Mark as full
+    val |= USB_BUF_CTRL_FULL;
+  }
+
+  // Set pid and flip for next transfer
+  val |= ep->next_pid ? USB_BUF_CTRL_DATA1_PID : USB_BUF_CTRL_DATA0_PID;
+  ep->next_pid ^= 1u;
+
+  *ep->buffer_control = val;
+}
+
+/**
+ * @brief Send device descriptor to host
+ *
+ */
+void usb_handle_device_descriptor(volatile struct usb_setup_packet *pkt) {
+  const struct usb_device_descriptor *d = dev_config.device_descriptor;
+  // EP0 in
+  struct usb_endpoint_configuration *ep =
+      usb_get_endpoint_configuration(EP0_IN_ADDR);
+  // Always respond with pid 1
+  ep->next_pid = 1;
+  usb_start_transfer(ep, (uint8_t *)d,
+                     MIN(sizeof(struct usb_device_descriptor), pkt->wLength));
+}
+
+/**
+ * @brief Send the configuration descriptor (and potentially the configuration
+ * and endpoint descriptors) to the host.
+ *
+ * @param pkt, the setup packet received from the host.
+ */
+void usb_handle_config_descriptor(volatile struct usb_setup_packet *pkt) {
+  uint8_t *buf = &ep0_buf[0];
+
+  // First request will want just the config descriptor
+  const struct usb_configuration_descriptor *d = dev_config.config_descriptor;
+  memcpy((void *)buf, d, sizeof(struct usb_configuration_descriptor));
+  buf += sizeof(struct usb_configuration_descriptor);
+
+  // If we more than just the config descriptor copy it all
+  if (pkt->wLength >= d->wTotalLength) {
+    memcpy((void *)buf, dev_config.interface_descriptor,
+           sizeof(struct usb_interface_descriptor));
+    buf += sizeof(struct usb_interface_descriptor);
+    const struct usb_endpoint_configuration *ep = dev_config.endpoints;
+
+    // Copy all the endpoint descriptors starting from EP1
+    for (uint i = 2; i < USB_NUM_ENDPOINTS; i++) {
+      if (ep[i].descriptor) {
+        memcpy((void *)buf, ep[i].descriptor,
+               sizeof(struct usb_endpoint_descriptor));
+        buf += sizeof(struct usb_endpoint_descriptor);
+      }
+    }
+  }
+
+  // Send data
+  // Get len by working out end of buffer subtract start of buffer
+  uint32_t len = (uint32_t)buf - (uint32_t)&ep0_buf[0];
+  usb_start_transfer(usb_get_endpoint_configuration(EP0_IN_ADDR), &ep0_buf[0],
+                     MIN(len, pkt->wLength));
+}
+
+/**
+ * @brief Handle a BUS RESET from the host by setting the device address back to
+ * 0.
+ *
+ */
+void usb_bus_reset(void) {
+  // Set address back to 0
+  dev_addr = 0;
+  should_set_address = false;
+  usb_hw->dev_addr_ctrl = 0;
+  configured = false;
+}
+
+/**
+ * @brief Send the requested string descriptor to the host.
+ *
+ * @param pkt, the setup packet from the host.
+ */
+void usb_handle_string_descriptor(volatile struct usb_setup_packet *pkt) {
+  uint8_t i = pkt->wValue & 0xff;
+  uint8_t len = 0;
+
+  if (i == 0) {
+    len = 4;
+    memcpy(&ep0_buf[0], dev_config.lang_descriptor, len);
+  } else {
+    // Prepare fills in ep0_buf
+    len = usb_prepare_string_descriptor(dev_config.descriptor_strings[i - 1]);
+  }
+
+  usb_start_transfer(usb_get_endpoint_configuration(EP0_IN_ADDR), &ep0_buf[0],
+                     MIN(len, pkt->wLength));
+}
+
+/**
+ * @brief Sends a zero length status packet back to the host.
+ */
+void usb_acknowledge_out_request(void) {
+  usb_start_transfer(usb_get_endpoint_configuration(EP0_IN_ADDR), NULL, 0);
+}
+
+/**
+ * @brief Handles a SET_ADDR request from the host. The actual setting of the
+ * device address in hardware is done in ep0_in_handler. This is because we have
+ * to acknowledge the request first as a device with address zero.
+ *
+ * @param pkt, the setup packet from the host.
+ */
+void usb_set_device_address(volatile struct usb_setup_packet *pkt) {
+  // Set address is a bit of a strange case because we have to send a 0 length
+  // status packet first with address 0
+  dev_addr = (pkt->wValue & 0xff);
+  printf("Set address %d\r\n", dev_addr);
+  // Will set address in the callback phase
+  should_set_address = true;
+  usb_acknowledge_out_request();
+}
+
+/**
+ * @brief Handles a SET_CONFIGRUATION request from the host. Assumes one
+ * configuration so simply sends a zero length status packet back to the host.
+ *
+ * @param pkt, the setup packet from the host.
+ */
+void usb_set_device_configuration(volatile struct usb_setup_packet *pkt) {
+  // Only one configuration so just acknowledge the request
+  printf("Device Enumerated\r\n");
+  usb_acknowledge_out_request();
+  configured = true;
+}
+
+/**
+ * @brief Respond to a setup packet from the host.
+ *
+ */
+void usb_handle_setup_packet(void) {
+  volatile struct usb_setup_packet *pkt =
+      (volatile struct usb_setup_packet *)&usb_dpram->setup_packet;
+  uint8_t req_direction = pkt->bmRequestType;
+  uint8_t req = pkt->bRequest;
+
+  // Reset PID to 1 for EP0 IN
+  usb_get_endpoint_configuration(EP0_IN_ADDR)->next_pid = 1u;
+
+  if (req_direction == USB_DIR_OUT) {
+    if (req == USB_REQUEST_SET_ADDRESS) {
+      usb_set_device_address(pkt);
+    } else if (req == USB_REQUEST_SET_CONFIGURATION) {
+      usb_set_device_configuration(pkt);
+    } else {
+      usb_acknowledge_out_request();
+      printf("Other OUT request (0x%x)\r\n", pkt->bRequest);
+    }
+  } else if (req_direction == USB_DIR_IN) {
+    if (req == USB_REQUEST_GET_DESCRIPTOR) {
+      uint16_t descriptor_type = pkt->wValue >> 8;
+
+      switch (descriptor_type) {
+      case USB_DT_DEVICE:
+        usb_handle_device_descriptor(pkt);
+        printf("GET DEVICE DESCRIPTOR\r\n");
+        break;
+
+      case USB_DT_CONFIG:
+        usb_handle_config_descriptor(pkt);
+        printf("GET CONFIG DESCRIPTOR\r\n");
+        break;
+
+      case USB_DT_STRING:
+        usb_handle_string_descriptor(pkt);
+        printf("GET STRING DESCRIPTOR\r\n");
+        break;
+
+      default:
+        printf("Unhandled GET_DESCRIPTOR type 0x%x\r\n", descriptor_type);
+      }
+    } else {
+      printf("Other IN request (0x%x)\r\n", pkt->bRequest);
+    }
+  }
+}
+
+/**
+ * @brief Notify an endpoint that a transfer has completed.
+ *
+ * @param ep, the endpoint to notify.
+ */
+static void usb_handle_ep_buff_done(struct usb_endpoint_configuration *ep) {
+  uint32_t buffer_control = *ep->buffer_control;
+  // Get the transfer length for this endpoint
+  uint16_t len = buffer_control & USB_BUF_CTRL_LEN_MASK;
+
+  // Call that endpoints buffer done handler
+  ep->handler((uint8_t *)ep->data_buffer, len);
+}
+
+/**
+ * @brief Find the endpoint configuration for a specified endpoint number and
+ * direction and notify it that a transfer has completed.
+ *
+ * @param ep_num
+ * @param in
+ */
+static void usb_handle_buff_done(uint ep_num, bool in) {
+  uint8_t ep_addr = ep_num | (in ? USB_DIR_IN : 0);
+  printf("EP %d (in = %d) done\n", ep_num, in);
+  for (uint i = 0; i < USB_NUM_ENDPOINTS; i++) {
+    struct usb_endpoint_configuration *ep = &dev_config.endpoints[i];
+    if (ep->descriptor && ep->handler) {
+      if (ep->descriptor->bEndpointAddress == ep_addr) {
+        usb_handle_ep_buff_done(ep);
+        return;
+      }
+    }
+  }
+}
+
+/**
+ * @brief Handle a "buffer status" irq. This means that one or more
+ * buffers have been sent / received. Notify each endpoint where this
+ * is the case.
+ */
+static void usb_handle_buff_status() {
+  uint32_t buffers = usb_hw->buf_status;
+  uint32_t remaining_buffers = buffers;
+
+  uint bit = 1u;
+  for (uint i = 0; remaining_buffers && i < USB_NUM_ENDPOINTS * 2; i++) {
+    if (remaining_buffers & bit) {
+      // clear this in advance
+      usb_hw_clear->buf_status = bit;
+      // IN transfer for even i, OUT transfer for odd i
+      usb_handle_buff_done(i >> 1u, !(i & 1u));
+      remaining_buffers &= ~bit;
+    }
+    bit <<= 1u;
+  }
+}
+
+/**
+ * @brief USB interrupt handler
+ *
+ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+/// \tag::isr_setup_packet[]
+void isr_usbctrl(void) {
+  // USB interrupt handler
+  uint32_t status = usb_hw->ints;
+  uint32_t handled = 0;
+
+  // Setup packet received
+  if (status & USB_INTS_SETUP_REQ_BITS) {
+    handled |= USB_INTS_SETUP_REQ_BITS;
+    usb_hw_clear->sie_status = USB_SIE_STATUS_SETUP_REC_BITS;
+    usb_handle_setup_packet();
+  }
+  /// \end::isr_setup_packet[]
+
+  // Buffer status, one or more buffers have completed
+  if (status & USB_INTS_BUFF_STATUS_BITS) {
+    handled |= USB_INTS_BUFF_STATUS_BITS;
+    usb_handle_buff_status();
+  }
+
+  // Bus is reset
+  if (status & USB_INTS_BUS_RESET_BITS) {
+    printf("BUS RESET\n");
+    handled |= USB_INTS_BUS_RESET_BITS;
+    usb_hw_clear->sie_status = USB_SIE_STATUS_BUS_RESET_BITS;
+    usb_bus_reset();
+  }
+
+  if (status ^ handled) {
+    panic("Unhandled IRQ 0x%x\n", (uint)(status ^ handled));
+  }
+}
+#ifdef __cplusplus
+}
+#endif
+
+/**
+ * @brief EP0 in transfer complete. Either finish the SET_ADDRESS process, or
+ * receive a zero length status packet from the host.
+ *
+ * @param buf the data that was sent
+ * @param len the length that was sent
+ */
+void ep0_in_handler(uint8_t *buf, uint16_t len) {
+  if (should_set_address) {
+    // Set actual device address in hardware
+    usb_hw->dev_addr_ctrl = dev_addr;
+    should_set_address = false;
+  } else {
+    // Receive a zero length status packet from the host on EP0 OUT
+    struct usb_endpoint_configuration *ep =
+        usb_get_endpoint_configuration(EP0_OUT_ADDR);
+    usb_start_transfer(ep, NULL, 0);
+  }
+}
+
+void ep0_out_handler(uint8_t *buf, uint16_t len) {}
+
+// Device specific functions
+void ep1_out_handler(uint8_t *buf, uint16_t len) {
+  printf("RX %d bytes from host\n", len);
+  // Send data back to host
+  struct usb_endpoint_configuration *ep =
+      usb_get_endpoint_configuration(EP2_IN_ADDR);
+
+  for (int i = 0; i < 8; i++) {
+    cmd_buf[i] = buf[i];
+  }
+  cmd_ep = ep;
+
+  switch (buf[0]) {
+  case 1:
+    printf("responding to trace request\n");
+    respond_to_trace_request();
+    break;
+  case 2:
+    printf("responding to freq request\n");
+    respond_to_freq_request();
+    break;
+  case 4:
+    printf("responding to rising edge trigger request\n");
+    respond_to_rising_edge_trigger_request();
+    break;
+  default:
+    break;
+  }
+
+  if (!is_empty_queue(&req_queue)) {
+    request *r = pop_front_queue(&req_queue);
+    usb_start_transfer(r->ep, r->buf, r->len);
+  }
+}
+
+void ep2_in_handler(uint8_t *buf, uint16_t len) {
+  printf("Sent %d bytes to host\n", len);
+  // Get ready to rx again from host
+  if (!is_empty_queue(&req_queue)) {
+    request *r = pop_front_queue(&req_queue);
+    usb_start_transfer(r->ep, r->buf, r->len);
+  } else {
+    usb_start_transfer(usb_get_endpoint_configuration(EP1_OUT_ADDR), NULL, 64);
+  }
+}
+
+void dma_irq_0_handler() {
+  static uint8_t out_buf[64];
+
+  dma_hw->ints0 = 1u << 0;
+
+  // Swap the buffers.
+  uint8_t *tmp = read_buf;
+  read_buf = write_buf;
+  write_buf = tmp;
+
+  int bits = (cmd_buf[2] << 8) + cmd_buf[3];
+  printf("bits: %d\n", bits);
+  int bytes = bits * TRACES / 8;
+  int cnt = 0;
+  for (int i = 0; i < bytes; i++) {
+    if (cnt == 64) {
+      cnt = 0;
+      push_queue(&req_queue, cmd_ep, out_buf, 64);
+    }
+    out_buf[cnt++] = read_buf[i];
+  }
+  if (cnt != 0) {
+    push_queue(&req_queue, cmd_ep, out_buf, 64);
+  }
+
+  printf("IRQ run\n");
+  // Start transmitting over USB.
+  if (!is_empty_queue(&req_queue)) {
+    printf("actually strating a req\n");
+    request *r = pop_front_queue(&req_queue);
+    usb_start_transfer(r->ep, r->buf, r->len);
+  }
+}
+
+void init_the_pio(pio_sm_config *c, uint offset, pio_hw_t *pio) {
+  sm_config_set_in_pins(c, 8);
+  sm_config_set_jmp_pin(c, 8);
+  sm_config_set_in_shift(c, true, true, 32);
+  pio_sm_init(pio, 0, offset, c);
+}
+
+void pio_dma_init() {
+  uint16_t capture_prog_instr = pio_encode_in(pio_pins, 16);
+  struct pio_program capture_prog = {
+      .instructions = &capture_prog_instr, .length = 1, .origin = -1};
+  trigger_whenever_offset = pio_add_program(pio0, &capture_prog);
+  pio_sm_config c0 = pio_get_default_sm_config();
+  sm_config_set_wrap(&c0, trigger_whenever_offset, trigger_whenever_offset);
+  init_the_pio(&c0, trigger_whenever_offset, pio0);
+
+  trigger_on_rising_edge_offset =
+      pio_add_program(pio1, &read_rising_edge_program);
+  pio_sm_config c1 = read_rising_edge_program_get_default_config(
+      trigger_on_rising_edge_offset);
+  init_the_pio(&c1, trigger_on_rising_edge_offset, pio1);
+
+  irq_set_exclusive_handler(DMA_IRQ_0, dma_irq_0_handler);
+  irq_set_enabled(DMA_IRQ_0, true);
+}
+
+// This sets up a PIO state machine which constantly reads gipos 8-15. It then
+// takes a DMA channel which will
+void pio_dma_arm(uint8_t *out_buf, pio_hw_t *pio) {
+  printf("arming\n");
+  pio_sm_set_enabled(pio0, 0, false);
+  pio_sm_set_enabled(pio1, 0, false);
+  pio_sm_clear_fifos(pio, 0);
+  pio_sm_restart(pio, 0);
+  if (pio == pio1) {
+    pio_sm_exec(pio, 0, pio_encode_jmp(trigger_on_rising_edge_offset));
+  } else if (pio == pio0) {
+    pio_sm_exec(pio, 0, pio_encode_jmp(trigger_whenever_offset));
+  }
+
+  dma_channel_config c = dma_channel_get_default_config(0);
+  channel_config_set_read_increment(&c, false);
+  channel_config_set_write_increment(&c, true);
+  channel_config_set_dreq(&c, pio_get_dreq(pio, 0, false));
+
+  dma_channel_configure(0, &c,
+                        out_buf,                // Destination pointer
+                        &pio->rxf[0],           // Source pointer
+                        TRACES * MAX_BITS / 32, // Number of transfers
+                        true                    // Start immediately
+  );
+
+  dma_channel_set_irq0_enabled(0, true);
+  pio_sm_set_enabled(pio, 0, true);
+
+  printf("armed\n");
+}
+
+void respond_to_trace_request() { pio_dma_arm(write_buf, pio0); }
+
+void respond_to_freq_request() {
+  uint32_t target = ((uint32_t *)cmd_buf)[1];
+  printf("target: %d\n", target);
+  float div = (float)CLK / target;
+  pio_sm_set_clkdiv(pio0, 0, div);
+  pio_sm_set_clkdiv(pio1, 0, div);
+  push_queue(&req_queue, usb_get_endpoint_configuration(EP1_OUT_ADDR), NULL,
+             64);
+}
+
+void respond_to_rising_edge_trigger_request() { pio_dma_arm(write_buf, pio1); }
+
+int main(void) {
+  set_sys_clock_hz(CLK, true);
+  stdio_init_all();
+  usb_device_init();
+  reset_queue(&req_queue);
+  pio_dma_init();
+
+  for (int i = 8; i < 8 + 15; i++) {
+    gpio_init(i);
+    gpio_set_dir_in_masked(1 << i);
+  }
+
+  gpio_init(26);
+  gpio_set_dir_in_masked(1 << 26);
+
+  gpio_init(5);
+  gpio_set_dir_out_masked(1 << 5);
+  gpio_put(5, 0);
+  gpio_init(28);
+  gpio_set_dir_out_masked(1 << 28);
+  gpio_put(28, 0);
+
+  for (int i = 0; i < TRACES * MAX_BITS; i++) {
+    read_buf[i] = i;
+  }
+
+  // Wait until configured
+  while (!configured) {
+    tight_loop_contents();
+  }
+
+  // Get ready to rx from host
+  usb_start_transfer(usb_get_endpoint_configuration(EP1_OUT_ADDR), NULL, 64);
+
+  printf("configured, usb, starting pwm!\n");
+
+  // Flicker GPIO 27 which is connected to GPIO 8 so we can read a signal.
+  gpio_set_function(27, GPIO_FUNC_PWM);
+  uint slice_num = pwm_gpio_to_slice_num(27);
+  pwm_set_wrap(slice_num, 3);
+  pwm_set_chan_level(slice_num, PWM_CHAN_B, 3);
+  pwm_set_enabled(slice_num, true);
+
+  printf("configured pwm, spinning forever now!");
+  // Everything is interrupt driven so just loop here
+  while (1) {
+    tight_loop_contents();
+  }
+}
+</code></pre>
+<pre><code>
+./mcu/include/usb.h
+/**
+ * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
+#ifndef USB_H_
+#define USB_H_
+
+#include "usb_common.h"
+
+typedef void (*usb_ep_handler)(uint8_t *buf, uint16_t len);
+
+// Struct in which we keep the endpoint configuration
+struct usb_endpoint_configuration {
+  const struct usb_endpoint_descriptor *descriptor;
+  usb_ep_handler handler;
+
+  // Pointers to endpoint + buffer control registers
+  // in the USB controller DPSRAM
+  volatile uint32_t *endpoint_control;
+  volatile uint32_t *buffer_control;
+  volatile uint8_t *data_buffer;
+
+  // Toggle after each packet (unless replying to a SETUP)
+  uint8_t next_pid;
+};
+
+// Struct in which we keep the device configuration
+struct usb_device_configuration {
+  const struct usb_device_descriptor *device_descriptor;
+  const struct usb_interface_descriptor *interface_descriptor;
+  const struct usb_configuration_descriptor *config_descriptor;
+  const unsigned char *lang_descriptor;
+  const unsigned char **descriptor_strings;
+  // USB num endpoints is 16
+  struct usb_endpoint_configuration endpoints[USB_NUM_ENDPOINTS];
+};
+
+#define EP0_IN_ADDR (USB_DIR_IN | 0)
+#define EP0_OUT_ADDR (USB_DIR_OUT | 0)
+#define EP1_OUT_ADDR (USB_DIR_OUT | 1)
+#define EP2_IN_ADDR (USB_DIR_IN | 2)
+
+// EP0 IN and OUT
+static const struct usb_endpoint_descriptor ep0_out = {
+    .bLength = sizeof(struct usb_endpoint_descriptor),
+    .bDescriptorType = USB_DT_ENDPOINT,
+    .bEndpointAddress =
+        EP0_OUT_ADDR, // EP number 0, OUT from host (rx to device)
+    .bmAttributes = USB_TRANSFER_TYPE_CONTROL,
+    .wMaxPacketSize = 64,
+    .bInterval = 0};
+
+static const struct usb_endpoint_descriptor ep0_in = {
+    .bLength = sizeof(struct usb_endpoint_descriptor),
+    .bDescriptorType = USB_DT_ENDPOINT,
+    .bEndpointAddress =
+        EP0_IN_ADDR, // EP number 0, OUT from host (rx to device)
+    .bmAttributes = USB_TRANSFER_TYPE_CONTROL,
+    .wMaxPacketSize = 64,
+    .bInterval = 0};
+
+// Descriptors
+static const struct usb_device_descriptor device_descriptor = {
+    .bLength = sizeof(struct usb_device_descriptor),
+    .bDescriptorType = USB_DT_DEVICE,
+    .bcdUSB = 0x0110,       // USB 1.1 device
+    .bDeviceClass = 0,      // Specified in interface descriptor
+    .bDeviceSubClass = 0,   // No subclass
+    .bDeviceProtocol = 0,   // No protocol
+    .bMaxPacketSize0 = 64,  // Max packet size for ep0
+    .idVendor = 0x8F83,     // Your vendor id
+    .idProduct = 0x2309,    // Your product ID
+    .bcdDevice = 0,         // No device revision number
+    .iManufacturer = 1,     // Manufacturer string index
+    .iProduct = 2,          // Product string index
+    .iSerialNumber = 0,     // No serial number
+    .bNumConfigurations = 1 // One configuration
+};
+
+static const struct usb_interface_descriptor interface_descriptor = {
+    .bLength = sizeof(struct usb_interface_descriptor),
+    .bDescriptorType = USB_DT_INTERFACE,
+    .bInterfaceNumber = 0,
+    .bAlternateSetting = 0,
+    .bNumEndpoints = 2,      // Interface has 2 endpoints
+    .bInterfaceClass = 0xff, // Vendor specific endpoint
+    .bInterfaceSubClass = 0,
+    .bInterfaceProtocol = 0,
+    .iInterface = 0};
+
+static const struct usb_endpoint_descriptor ep1_out = {
+    .bLength = sizeof(struct usb_endpoint_descriptor),
+    .bDescriptorType = USB_DT_ENDPOINT,
+    .bEndpointAddress =
+        EP1_OUT_ADDR, // EP number 1, OUT from host (rx to device)
+    .bmAttributes = USB_TRANSFER_TYPE_BULK,
+    .wMaxPacketSize = 64,
+    .bInterval = 0};
+
+static const struct usb_endpoint_descriptor ep2_in = {
+    .bLength = sizeof(struct usb_endpoint_descriptor),
+    .bDescriptorType = USB_DT_ENDPOINT,
+    .bEndpointAddress =
+        EP2_IN_ADDR, // EP number 2, IN from host (tx from device)
+    .bmAttributes = USB_TRANSFER_TYPE_BULK,
+    .wMaxPacketSize = 64,
+    .bInterval = 0};
+
+static const struct usb_configuration_descriptor config_descriptor = {
+    .bLength = sizeof(struct usb_configuration_descriptor),
+    .bDescriptorType = USB_DT_CONFIG,
+    .wTotalLength = (sizeof(config_descriptor) + sizeof(interface_descriptor) +
+                     sizeof(ep1_out) + sizeof(ep2_in)),
+    .bNumInterfaces = 1,
+    .bConfigurationValue = 1, // Configuration 1
+    .iConfiguration = 0,      // No string
+    .bmAttributes = 0xc0,     // attributes: self powered, no remote wakeup
+    .bMaxPower = 0x32         // 100ma
+};
+
+static const unsigned char lang_descriptor[] = {
+    4,         // bLength
+    0x03,      // bDescriptorType == String Descriptor
+    0x09, 0x04 // language id = us english
+};
+
+static const unsigned char *descriptor_strings[] = {
+    (unsigned char *)"Cornell University",    // Vendor
+    (unsigned char *)"Laft" // Product
+};
+
+#endif
+</code></pre>
+<pre><code>
+./mcu/include/usb_common.h
+/*
+ * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
+#ifndef _USB_COMMON_H
+#define _USB_COMMON_H
+
+#include "hardware/structs/usb.h"
+#include "pico/types.h"
+
+// bmRequestType bit definitions
+#define USB_REQ_TYPE_STANDARD 0x00u
+#define USB_REQ_TYPE_TYPE_MASK 0x60u
+#define USB_REQ_TYPE_TYPE_CLASS 0x20u
+#define USB_REQ_TYPE_TYPE_VENDOR 0x40u
+
+#define USB_REQ_TYPE_RECIPIENT_MASK 0x1fu
+#define USB_REQ_TYPE_RECIPIENT_DEVICE 0x00u
+#define USB_REQ_TYPE_RECIPIENT_INTERFACE 0x01u
+#define USB_REQ_TYPE_RECIPIENT_ENDPOINT 0x02u
+
+#define USB_DIR_OUT 0x00u
+#define USB_DIR_IN 0x80u
+
+#define USB_TRANSFER_TYPE_CONTROL 0x0
+#define USB_TRANSFER_TYPE_ISOCHRONOUS 0x1
+#define USB_TRANSFER_TYPE_BULK 0x2
+#define USB_TRANSFER_TYPE_INTERRUPT 0x3
+#define USB_TRANSFER_TYPE_BITS 0x3
+
+// Descriptor types
+#define USB_DT_DEVICE 0x01
+#define USB_DT_CONFIG 0x02
+#define USB_DT_STRING 0x03
+#define USB_DT_INTERFACE 0x04
+#define USB_DT_ENDPOINT 0x05
+
+#define USB_REQUEST_GET_STATUS 0x0
+#define USB_REQUEST_CLEAR_FEATURE 0x01
+#define USB_REQUEST_SET_FEATURE 0x03
+#define USB_REQUEST_SET_ADDRESS 0x05
+#define USB_REQUEST_GET_DESCRIPTOR 0x06
+#define USB_REQUEST_SET_DESCRIPTOR 0x07
+#define USB_REQUEST_GET_CONFIGURATION 0x08
+#define USB_REQUEST_SET_CONFIGURATION 0x09
+#define USB_REQUEST_GET_INTERFACE 0x0a
+#define USB_REQUEST_SET_INTERFACE 0x0b
+#define USB_REQUEST_SYNC_FRAME 0x0c
+
+#define USB_REQUEST_MSC_GET_MAX_LUN 0xfe
+#define USB_REQUEST_MSC_RESET 0xff
+
+#define USB_FEAT_ENDPOINT_HALT 0x00
+#define USB_FEAT_DEVICE_REMOTE_WAKEUP 0x01
+#define USB_FEAT_TEST_MODE 0x02
+
+#define USB_DESCRIPTOR_TYPE_ENDPOINT 0x05
+
+struct usb_setup_packet {
+  uint8_t bmRequestType;
+  uint8_t bRequest;
+  uint16_t wValue;
+  uint16_t wIndex;
+  uint16_t wLength;
+} __packed;
+
+struct usb_descriptor {
+  uint8_t bLength;
+  uint8_t bDescriptorType;
+};
+
+struct usb_device_descriptor {
+  uint8_t bLength;
+  uint8_t bDescriptorType;
+  uint16_t bcdUSB;
+  uint8_t bDeviceClass;
+  uint8_t bDeviceSubClass;
+  uint8_t bDeviceProtocol;
+  uint8_t bMaxPacketSize0;
+  uint16_t idVendor;
+  uint16_t idProduct;
+  uint16_t bcdDevice;
+  uint8_t iManufacturer;
+  uint8_t iProduct;
+  uint8_t iSerialNumber;
+  uint8_t bNumConfigurations;
+} __packed;
+
+struct usb_configuration_descriptor {
+  uint8_t bLength;
+  uint8_t bDescriptorType;
+  uint16_t wTotalLength;
+  uint8_t bNumInterfaces;
+  uint8_t bConfigurationValue;
+  uint8_t iConfiguration;
+  uint8_t bmAttributes;
+  uint8_t bMaxPower;
+} __packed;
+
+struct usb_interface_descriptor {
+  uint8_t bLength;
+  uint8_t bDescriptorType;
+  uint8_t bInterfaceNumber;
+  uint8_t bAlternateSetting;
+  uint8_t bNumEndpoints;
+  uint8_t bInterfaceClass;
+  uint8_t bInterfaceSubClass;
+  uint8_t bInterfaceProtocol;
+  uint8_t iInterface;
+} __packed;
+
+struct usb_endpoint_descriptor {
+  uint8_t bLength;
+  uint8_t bDescriptorType;
+  uint8_t bEndpointAddress;
+  uint8_t bmAttributes;
+  uint16_t wMaxPacketSize;
+  uint8_t bInterval;
+} __packed;
+
+struct usb_endpoint_descriptor_long {
+  uint8_t bLength;
+  uint8_t bDescriptorType;
+  uint8_t bEndpointAddress;
+  uint8_t bmAttributes;
+  uint16_t wMaxPacketSize;
+  uint8_t bInterval;
+  uint8_t bRefresh;
+  uint8_t bSyncAddr;
+} __attribute__((packed));
+
+#endif
+```
+</code></pre>
+
+<hr>
+### Appendix C - Schematics
+<hr>
+
+<figure>
+  <img src="logicanalyzer_fullschematic.png" alt="fullschematic" style="max-width: 80%; height: auto; display:block; margin:auto;">
+  <figcaption>Full schematic of logic analyzer PCB</figcaption>
+</figure>
+
+<br>
+
+<figure>
+  <img src="logicanalyzer_RP2350.png" alt="RP2350 circuit" style="max-width: 70%; height: auto; display:block; margin:auto;">
+  <figcaption>RP2350 connections for the logic analyzer</figcaption>
+</figure>
+
+<br>
+
+<figure>
+  <img src="logicanalyzer_levelshifters.png" alt="Level shifter circuit" style="max-width: 70%; height: auto; display:block; margin:auto;">
+  <figcaption>Level shifter circuit for the logic analyzer</figcaption>
+</figure>
+
+<br>
+
+<figure>
+  <img src="logicanalyzer_headers.png" alt="Header circuit" style="max-width: 70%; height: auto; display:block; margin:auto;">
+  <figcaption>Headers on the PCB</figcaption>
+</figure>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<hr>
+### Appendix D - Task Distribution
+<hr>
+
+<ul>
+- **Colin Muessig** (cjm369)
+  <ul>
+  - Designed the PCB used for our logic analyzer in Altium
+  - Soldered PCB and debugged faulty behavior; validated logic analyzer at the hardware level (level shifter operation, passage of signals, etc.)
+  </ul>
+  <br>
+  - **Jeremy Ku-Benjet** (jk2582)
+  <ul> 
+  - Implemented SUMP trigger logic and protocol parsing
+  - Implemented GUI
+  - Implemented vendor-specific USB device firmware
+  </ul>
+  <br>
+- **Matthew Hurford** (mlh348)
+  <ul>
+  - Wrote test cases in software to comprehensively test logic analyzer functionality
+  - Debugged a number of major SUMP issues
+  - Assisted in board routing and SMD soldering
+  </ul>
+</ul>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<hr>
+### Appendix E - References
+<hr>
+
+<ul>
+- **Datasheets**
+  <ul>
+  - [Raspberry Pi Pico 2 Datasheet](https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf)
+  - [Level Shifter Datasheet](https://www.ti.com/lit/ds/symlink/sn74lvc8t245.pdf?ts=1765867829527)
+  </ul>
+  <br>
+  - **Code / Designs Borrowed From Others**
+  <ul>
+  - [Level Shifter Altium Footprint](https://app.ultralibrarian.com/details/165e9ff7-103f-11e9-ab3a-0a3560a4cccc/Texas-Instruments/SN74LVC8T245DBR?uid=668960&exports=41&open=exports)
+  - [Raspberry Pi Pico 2 Altium Footprint](https://github.com/amgsus/RPi-Pico-Altium)
+  - [16-Pin Header Altium Footprint](https://app.ultralibrarian.com/details/edb9d735-103e-11e9-ab3a-0a3560a4cccc/TE-Connectivity/5102153-3?uid=39437029)
+  - [3-Pin Header Altium Footprint](https://app.ultralibrarian.com/details/425a797b-1081-11e9-ab3a-0a3560a4cccc/Samtec-Inc/TSW-103-15-T-S?uid=12085636)
+  - [2-Pin Header Altium Footprint](https://app.ultralibrarian.com/details/42530aaf-1081-11e9-ab3a-0a3560a4cccc/Samtec-Inc/TSW-102-06-S-S?uid=271997)
+  - [dev_lowlevel Example Code](https://github.com/raspberrypi/pico-examples/tree/4c3a3dc0196dd426fddd709616d0da984e027bab/usb/device/dev_lowlevel)
+  - [DearPyGUI](https://github.com/hoffstadt/DearPyGui)
+  - [pyusb](https://github.com/pyusb/pyusb)
+  - [Micro Logic Analyzer on RP2040](https://github.com/dotcypress/ula)
+  - [can-explorer Visualization Tool](https://github.com/Tbruno25/can-explorer)
+</ul>
+  <br>
+- **Background Sites / Papers**
+  <ul>
+  - [SUMP Protocol](https://sump.org/projects/analyzer/protocol/)
+  - [Keysight Logic Analyzers Page](https://www.keysight.com/us/en/products/logic-analyzers.html)
+  </ul>
+  <br>
+</ul>
+
+<br>
+<br>
+<br>
+
+</script>
+
+<head>
+    <link rel="stylesheet" href="template.css" type="text/css">
+    <link rel="icon" href="favicon.ico">
+</head>
+<body>
+    </div>
+    <div id="main">
+        <div id="title_block">
+          <h1>LAFT Logic Analyzer</h1>
+          <h2>ECE 4760/5730 Final Project</h2>
+          <br>
+          <div class="subtitle">
+            Colin Muessig (cjm369) · Jeremy Ku-Benjet (jk2582) · Matthew Hurford (mlh348)
+          </div>
+          <br>
+          <figure>
+            <img src="BuddyCombo.png" id="buddycombo" alt="Project mascot (dog)" style="max-width: 70%; height: auto; display:block; margin:auto;">
+          </figure>
+          <figcaption class="figcaption">Buddy — Chief Debugging Officer</figcaption>
+    </div>
+        <fieldset id="markdown">
+        </fieldset>
+    </div>
+</body>
+<script>
+markdown_text = document.getElementById("markdown_text").textContent
+
+//   MIT License
+// 
+// Copyright (c) 2025 Fgaoxing
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+class MiniGFM{constructor(t){this.options=t||{}}parse(t){if("string"!=typeof t)return"";let s=[],n=[];return t=this.t(this.i(t.replace(/(?:^|\n)[^\\]?(`{3,4})[ ]*(\w*?)\n([\s\S]*?)\n\1/g,(t,e,r,n)=>(s.push({lang:r.trim(),code:n.trim()}),`<!----CODEBLOCK${s.length-1}---->`)).replace(/([^\\])`([^`]+)`/g,(t,e,r)=>(n.push(this.l(r)),`${e}<!----CODEINLINE${n.length-1}---->`)).replace(/\\([\\*_{}[\]()#+\-.!`])/g,(t,e)=>"&#"+e.charCodeAt(0)).replace(/%%[\n ][^%]+[\n ]%%/g,""))).replace(/<!----CODEINLINE(\d+)---->/g,(t,e)=>n[e]?`<code>${n[e]}</code>`:"").replace(/<!----CODEBLOCK(\d+)---->/g,(t,e)=>{if(!s[e])return"";var{lang:e,code:r}=s[e];let n=r;if(this.options.hljs)try{n=(e?this.options.hljs.highlight(r,{language:e}):this.options.hljs.highlightAuto(r)).value}catch{}return e?`<pre lang="${e}"><code class="hljs ${e} lang-${e}">${n}</code></pre>`:`<pre><code>${n}</code></pre>`}),this.options.unsafe?t:this.$(t)}i(t){return t.replace(/^[^\\]?\s*(#{1,6}) ([^\n]+)$/gm,(t,e,r)=>`<h${e.length}>${r}</h${e.length}>`).replace(/^[ \t]*[-\*\+][ \t]+\[([ ]*[ xX]?)\]\s([^\n]+)$/gm,(t,e,r)=>`<li><input type="checkbox" ${"x"===e.trim().toLowerCase()?"checked":""} disabled> ${r}</li>`).replace(/^[ \t]*[-\*\+] ([^\n]+)$/gm,"<li>$1</li>").replace(/^[ \t]*(\d+\.) ([^\n]+)$/gm,"<li>$1 $2</li>").replace(/^ {0,3}(([*_-])( *\2 *){2,})(?:\s*$|$)/gm,()=>"<hr/>").replace(/^[ \t]*((?:\>[ \t]*)+)([^\n]*)$/gm,(t,e,r)=>{e=e.length/2;return""===r.trim()?"":"<blockquote>".repeat(e)+r+"</blockquote>".repeat(e)}).replace(/^([^\n]*\|[^\n]*)\n([-:| ]+\|)+[-\| ]*\n((?:[^\n]*\|[^\n]*(?:\n|$))*)/gm,(t,e,r,n)=>this.g(e,r,n)).split(/\n{2,}|\\\n/g).map(t=>/^<(\w+)/.test(t)?t:`<p>${t}</p>`).join("<br />")}g(t,e,r){let n=t.split("|").map(t=>t.trim()).filter(Boolean),s=this.o(e);t=r.trim().split("\n").reduce((t,e)=>{if(e.includes("|")){let r=e.split("|").slice(1,-1).map(t=>t.trim());t.push(n.map((t,e)=>r[e]||""))}return t},[]);let a=["<table>","<thead><tr>"];return n.forEach((t,e)=>{a.push(`<th${s[e]?` align="${s[e]}"`:""}>${t}</th>`)}),a.push("</tr></thead>"),t.length&&(a.push("<tbody>"),t.forEach(t=>{a.push("<tr>",...t.map((t,e)=>`<td${s[e]?` align="${s[e]}"`:""}>${t}</td>`),"</tr>")}),a.push("</tbody>")),[...a,"</table>"].join("")}o(t){return t.split("|").map(t=>t.trim()).filter(Boolean).map(t=>{var e=t.startsWith(":"),t=t.endsWith(":");return e&&t?"center":e?"left":t?"right":null})}t(t){return t.replace(/[\*\_]{2}(.+?)[\*\_]{2}/g,"<strong>$1</strong>").replace(/(?<!\*)_(.+?)_(?!\*)|(?<!\*)\*(.+?)\*(?!\*)/,(t,e,r)=>`<em>${e||r}</em>`).replace(/~~(.+?)~~/g,"<del>$1</del>").replace(/\<([^\s@\>]+@[^\s@\>]+\.[^\s@\>]+)\>/g,'<a href="mailto:$1">$1</a>').replace(/\<((?:https?:\/\/|ftp:\/\/|mailto:|tel:)[^\>\s]+)\>/g,'<a href="$1">$1</a>').replace(/\!\[([^\]]*)\]\(([^\)]+)\)/g,'<img src="$2" alt="$1"/>').replace(/\[([^\]]+)\]\(([^\) ]+)[ ]?(\"[^\)\"]+\")?\)/g,(t,e,r,n)=>`<a href="${r}"${n?" title="+n:""}>${e}</a>`)}l(t){return t.replace(/[&<>"']/g,t=>"&#"+t.charCodeAt(0))}$(t){return t.replace(/<(\/?)\s*(script|iframe|object|embed|frame|link|meta|style|svg|math)[^>]*>/gi,t=>this.l(t)).replace(/\s(?!data-)[\w-]+=\s*["'\s]*(javascript:|data:|expression:)[^"'\s>]*/gi,"").replace(/\<[^\>]+\>/g,t=>t.replace(/\s+on\w+\s*=\s*["']?[^"'\\]*["']?/gi,""))}}"object"==typeof exports&&(module.exports={MiniGFM:MiniGFM});
+const md = new MiniGFM();
+parsed = '<div>' + md.parse(markdown_text) + '</div>'
+var doc = new DOMParser().parseFromString(parsed, "text/html");
+document.getElementById("markdown").appendChild(doc.body.firstChild)
+</script>
