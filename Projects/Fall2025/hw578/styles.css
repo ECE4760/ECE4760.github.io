@@ -1,0 +1,140 @@
+#title-block-header {
+  display: none !important;
+}
+
+#quarto-document-content,
+main.content {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+body {
+  color: black;
+  padding-top: 0 !important;
+}
+
+/* FIGURE CAPTIONS: center align all figure captions */
+figcaption {
+  text-align: center;
+  width: 100%;
+}
+
+/* INTRODUCTION SECTION: adds spacing at top */
+#introduction {
+  padding-top: 1em;
+}
+
+/* Center and size the video only */
+#vid-demo .quarto-video {
+  width: 30%;
+  margin: 0 auto;
+}
+
+/* Adjust video caption style */
+#vid-demo figcaption {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.fig-opt img {
+  margin-left: 12%;
+}
+
+/* HERO CONTAINER: defines a full-screen section */
+.hero {
+  position: relative;    /* allows children to be positioned relative to this box */
+  height: 100vh;         /* hero takes full screen height */
+  overflow: hidden;      /* anything outside hero gets clipped */
+
+  display: flex;         /* enables easy alignment of the card */
+  align-items: center;   /* vertical center */
+  justify-content: flex-start; /* put card on center */
+  padding-left: 1vw;     /* spacing from left edge */
+
+  /* Full-width breakout (removes white margins from theme container) */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+
+/* VIDEO BACKGROUND: fills the hero container */
+.hero-video {
+  position: absolute;  /* take it out of normal flow so it can be a background */
+  inset: 0;            /* shorthand: top:0 right:0 bottom:0 left:0 */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;   /* crop to fill without stretching */
+  z-index: 0;          /* behind everything */
+}
+
+/* OVERLAY: dark layer above video for readability */
+.hero::before {
+  content: "";               /* required for pseudo-element */
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.421); /* darkness */
+  z-index: 1;                /* above video, below card */
+}
+
+/* CARD: sits above overlay */
+.hero-card {
+  position: relative;   /* keep it in normal flow but allow z-index */
+  z-index: 2;           /* above overlay */
+  /*width: min(520px, 85vw); /* responsive: max 520px but shrink on small screens */
+  width: 45%;
+  padding: 34px 36px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+/* TEXT STYLES */
+.hero-title {
+  margin: 0;
+  font-size: clamp(2.4rem, 2.5vw, 4.2rem); /* responsive font scaling */
+  font-weight: 800;
+}
+
+.hero-subtitle {
+  margin-top: 0.6rem;
+  font-size: 1.25rem;
+  opacity: 0.95;
+}
+
+.hero-authors {
+  margin-top: 0.4rem;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.hero-authors a {
+  color: #ffffff;
+}
+
+.hero-authors a:hover {
+  color: rgb(30, 0, 255);
+}
+
+/* Sticky top navbar, black + transparent */
+.navbar {
+  background: rgba(0, 0, 0, 0.65) !important; /* black w/ transparency */
+  backdrop-filter: blur(8px);                 /* optional: frosted glass */
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Navbar text style */
+.navbar .nav-link,
+.navbar-brand {
+  color: rgba(255,255,255,0.92) !important;
+}
+
+.navbar .nav-link:hover {
+  color: #ffffff !important;
+}
+
+/* Prevent the navbar covering your headings when jumping */
+section[id] {
+  scroll-margin-top: 80px; /* adjust if your navbar height differs */
+}

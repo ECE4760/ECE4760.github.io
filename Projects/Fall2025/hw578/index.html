@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>ECE 5730 Final Project Report</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-ad05cf3b0d969654a1dcd69f04a11bdd.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-contrib/videojs/video.min.js"></script>
+<link href="site_libs/quarto-contrib/videojs/video-js.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<script>
+
+  // Fix anchor navigation for file:// protocol
+
+  document.addEventListener('DOMContentLoaded', function() {
+
+    // Handle anchor clicks - works with both #id and ./#id formats
+
+    document.querySelectorAll('a[href*="#"]').forEach(function(link) {
+
+      link.addEventListener('click', function(e) {
+
+        const href = this.getAttribute('href');
+
+        // Extract the hash part (everything after #)
+
+        const hashMatch = href.match(/#(.+)$/);
+
+        if (hashMatch) {
+
+          e.preventDefault();
+
+          const targetId = hashMatch[1];
+
+          const target = document.getElementById(targetId);
+
+          if (target) {
+
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Update URL hash
+
+            window.location.hash = targetId;
+
+          }
+
+        }
+
+      });
+
+    });
+
+    
+
+    // Handle page load with hash
+
+    if (window.location.hash) {
+
+      const targetId = window.location.hash.substring(1);
+
+      const target = document.getElementById(targetId);
+
+      if (target) {
+
+        setTimeout(function() {
+
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        }, 100);
+
+      }
+
+    }
+
+
+
+    // Force video autoplay (Safari fix)
+
+    const videos = document.querySelectorAll('video[autoplay]');
+
+    videos.forEach(function(video) {
+
+      // Set playback to start
+
+      video.currentTime = 0;
+
+      // Use play() promise to handle autoplay policy
+
+      const playPromise = video.play();
+
+      if (playPromise !== undefined) {
+
+        playPromise.catch(function(error) {
+
+          // Autoplay was prevented - this is expected on some browsers
+
+          console.log('Autoplay prevented:', error);
+
+        });
+
+      }
+
+    });
+
+  });
+
+</script>
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">ECE 5730 Final Project Report</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./#introduction"> 
+<span class="menu-text">Introduction</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./#high-level-design"> 
+<span class="menu-text">High Level Design</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./#program-design"> 
+<span class="menu-text">Program Design</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./#hardware-deisgn"> 
+<span class="menu-text">Hardware Design</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./#optimization"> 
+<span class="menu-text">Performance Optimizations</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./#conclusions"> 
+<span class="menu-text">Conclusions</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./#appendices"> 
+<span class="menu-text">Appendices</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content column-page" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
+
+
+
+<div class="hero">
+  <video class="hero-video" autoplay="" muted="" loop="" playsinline="" preload="auto">
+    <source src="videos/hero.mp4" type="video/mp4">
+  </video>
+
+  <div class="hero-card">
+    <div class="hero-title">Real-Time Julia Set Visualization via Parallel Computing and Customized Multi-Slave SPI Bus</div>
+    <div class="hero-subtitle">ECE 5730 Final Project</div>
+    <div class="hero-authors">Han Wang (hw578@cornell.edu · 
+      <a href="https://www.linkedin.com/in/han-wang-510107264/" target="_blank" rel="noopener">
+      LinkedIn</a>)
+    </div>
+  </div>
+</div>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<section id="real-time-interactive-julia-set-rendering-running-on-dual-core-rtos-leveraging-parallel-computing-clusters-of-rp2040s-with-a-custom-interrupt-driven-multi-slave-spi-communication-protocol" class="level5">
+<h5 class="anchored" data-anchor-id="real-time-interactive-julia-set-rendering-running-on-dual-core-rtos-leveraging-parallel-computing-clusters-of-rp2040s-with-a-custom-interrupt-driven-multi-slave-spi-communication-protocol"><strong>“Real-Time, Interactive Julia Set Rendering Running on Dual-Core RTOS Leveraging Parallel Computing Clusters of RP2040s with a Custom Interrupt-Driven, Multi-Slave SPI Communication Protocol”</strong></h5>
+<hr>
+</section>
+<section id="project-overview-tldr" class="level3">
+<h3 class="anchored" data-anchor-id="project-overview-tldr">Project overview (TL;DR)</h3>
+<p>This project implements a real-time, interactive Julia set visualization system using a distributed cluster of RP2040 microcontrollers. A single RP2040 master handles VGA signal generation, frame composition, and user input, while 7 RP2040-based slave nodes form a parallel compute fabric, each leveraging both cores to compute disjoint regions of the fractal. In total, <strong>14 compute cores</strong> operate concurrently. To scale computation and communication efficiently, the system introduces a <strong>custom SPI protocol</strong> featuring <strong>slave-initiated, interrupt-driven transfers, explicit handshaking, and dynamic MISO tri-stating</strong> to prevent bus contention. On the master, <strong>FreeRTOS SMP</strong> (symmetric mulitprocessing) coordinates SPI servicing, rendering, and sensor input across <strong>both cores</strong>, enabling deterministic frame updates and smooth real-time interaction. The result is a tightly integrated system that combines <strong>parallel computing, RTOS scheduling, and low-level protocol design</strong> to push interactive graphics performance on microcontroller-class hardware.</p>
+</section>
+<section id="live-demonstration" class="level3">
+<h3 class="anchored" data-anchor-id="live-demonstration">Live Demonstration</h3>
+<!-- :::{#vid-demo}
+ 
+
+Real-time julia set visualization via adjusting MPU position
+::: -->
+<div id="vid-demo" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-vid figure">
+<div aria-describedby="vid-demo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-video"><video id="video_shortcode_videojs_video2" class="video-js vjs-default-skin vjs-fluid" controls="" preload="auto" data-setup="{}" title=""><source src="videos/demo.mp4"></video></div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-vid" id="vid-demo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Video&nbsp;1: Real-time julia set visualization via adjusting MPU position
+</figcaption>
+</figure>
+</div>
+<p>The demo video showcases real-time interaction with the Julia set using an <strong>MPU6050 inertial sensor</strong>. Rotating the device along the <strong>X and Y axes</strong> continuously updates the complex parameter <span class="math inline">\(c = c_{re} + i·c_{im}\)</span>, causing the fractal structure to morph smoothly in real time. Each motion-triggered update forces a full parallel recomputation across all slave nodes, highlighting the system’s low-latency communication pipeline, stable frame timing, and responsiveness under dynamic workloads.</p>
+</section>
+<section id="julia-fractals" class="level3">
+<h3 class="anchored" data-anchor-id="julia-fractals">Julia Fractals</h3>
+<p>A <em>Julia set</em> is a fractal generated by iterating a complex-valued function of the form: <span class="math display">\[ z_{n+1} = z_n^2 + c \]</span></p>
+<p>where <span class="math inline">\(z\)</span> and <span class="math inline">\(c\)</span> are complex numbers. For each pixel on the screen, its cooridinate on screen <span class="math inline">\((x,y)\)</span> is corresponded to a cooridinate (<span class="math inline">\(z_0\)</span> = x+ y*i) in the complex plane. The system repeatedly applies the equation and tracks whether the sequence diverges or remains bounded. The <strong>number of iterations before divergence</strong> (<span class="math inline">\(\|z\| \geq 2\)</span>) determines the pixel’s color.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/julia_set.JPG" class="img-fluid figure-img" style="width:40.0%"></p>
+<figcaption>Julia Set and Mandelbrot set (Photo Credit: https://www.karlsims.com/julia.html)</figcaption>
+</figure>
+</div>
+<p>Unlike the Mandelbrot set (which varies <span class="math inline">\(c\)</span>), a Julia set fixes <span class="math inline">\(c\)</span> and visualizes how different starting values <span class="math inline">\(z_0\)</span> evolve. Small changes in <span class="math inline">\(c\)</span> can dramatically alter the global structure, making Julia sets highly sensitive and visually rich—an ideal target for real-time, interactive exploration.</p>
+</section>
+</section>
+<section id="high-level-design" class="level2">
+<h2 class="anchored" data-anchor-id="high-level-design">High Level Design</h2>
+<p>This project implements a <strong>real-time Julia set visualization system</strong> using a distributed cluster of RP2040 microcontrollers. A single RP2040 operates as the master, responsible for VGA signal generation, SPI data receive and service, MPU sensor interaction, and system coordination, while <strong>seven RP2040-based slave nodes</strong> form a parallel computing cluster. Each slave exploits both cores to compute disjoint columns of the Julia set in parallel, yielding <strong>14 concurrent compute cores</strong> dedicated exclusively to fractal generation.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/1.png" class="img-fluid figure-img" style="width:60.0%"></p>
+<figcaption>Overview of System Architecture</figcaption>
+</figure>
+</div>
+<p>At the system level, computation and rendering are decoupled through a <strong>customized multi-slave SPI bus</strong> augmented with a dedicated <strong>interrupt line per slave</strong>. Rather than master polling or enforcing rigid transfer schedules, slaves independently signal completion of computation via interrupts and let master initate data transfer. These data-ready signals are aggregated on the master side and serviced by a dedicated <strong>SPI service task</strong>, enabling <strong>slave-initiated, interrupt-driven data transfers</strong>. <strong>Explicit handshaking commands</strong> and <strong>dynamic MISO tri-stating</strong> ensure that only the active slave RP2040 drives the SPI bus at any time, eliminating contention and allowing the bus to scale safely across multiple active devices.</p>
+<p>On the master, <strong>FreeRTOS SMP</strong> orchestrates task execution across <strong>both cores</strong>. A high-priority task (MPU read) continuously reads inertial data from an MPU6050 at certain interval, and broadcasts updated Julia c values to all slaves <strong>spontaneously</strong> via SPI bus. A mid-priority task (SPI service) responds to aggregated slave interrupts, retrieves computed pixel blocks via SPI bus, and enqueues them into a <strong>ring-based draw job buffer</strong>. A lower-priority task asynchronously (VGA draw) consumes these draw jobs by unpacking pixel data and updating the VGA frame buffer. The color data in VGA frame buffer was then translated to VGA screen pattern with a <strong>DMA + PIO</strong> based VGA driver. This task-level separation enables SPI communication, sensor input, and rendering to proceed concurrently with minimal blocking, maintaining deterministic frame timing and smooth real-time interaction.</p>
+</section>
+<section id="program-design" class="level2">
+<h2 class="anchored" data-anchor-id="program-design">Program Design</h2>
+<section id="part-i.-slave-initiated-multi-slave-spi-bus" class="level3">
+<h3 class="anchored" data-anchor-id="part-i.-slave-initiated-multi-slave-spi-bus">Part I. Slave-Initiated Multi-Slave SPI Bus</h3>
+<section id="design-challenges" class="level4">
+<h4 class="anchored" data-anchor-id="design-challenges"><strong>Design Challenges</strong></h4>
+<p>Designing a scalable, real-time communication layer between a single SPI master and multiple active Raspberry Pi slaves exposed several fundamental limitations of conventional SPI usage and the Raspberry Pi C-SDK. These challenges motivated a complete redesign of the SPI protocol.</p>
+<p>Key challenges include:</p>
+<ul>
+<li><p><strong>Limited SPI slave support in the Raspberry Pi C-SDK</strong><br>
+The SDK’s SPI APIs are primarily designed for master operation and <strong>assume control over CS and SCK</strong>. As a result:</p>
+<ul>
+<li><code>spi_write()</code> cannot be safely used by a slave.</li>
+<li><code>spi_read()</code> must be tightly coupled to the master’s <code>spi_write()</code>.</li>
+<li>There is no built-in support for multi-slave Raspberry Pi coordination.</li>
+</ul></li>
+<li><p><strong>Lack of slave-initiated communication</strong><br>
+Standard SPI is strictly master-driven. Slaves cannot signal read-ready or request transfers, forcing inefficient polling or rigid scheduling on SPI master — both unacceptable for real-time parallel workloads.</p></li>
+<li><p><strong>Bus contention on shared SPI MISO lines</strong><br>
+RP2040 SPI peripheral continues to <strong>drive MISO low even when peripheral is idle</strong>; Empirical tests show C-SDK’s slave output disable (SOD) bit does not tri-state the MISO pin. So with multiple slaves on a shared MISO line, idle devices cause bus contention and corrupt active transfers.</p></li>
+<li><p><strong>FIFO timing and synchronization hazards</strong><br>
+SPI is sensitive to <strong>TX/RX FIFO timing</strong>. For example, if the master clocks data before the slave has preloaded the FIFO, the master reads invalid or stale data. These hazards are amplified in <strong>half-duplex transmission and interrupt-driven system</strong> where things occur asynchronously.</p></li>
+<li><p><strong>Need for asynchronous data reception</strong><br>
+Slaves must be able to receive parameter updates (e.g., Julia set constants) at any time—without blocking computation or requiring explicit polling loops.</p></li>
+</ul>
+<p>These constraints make a naïve SPI-based multi-slave architecture unreliable and non-scalable this application.</p>
+<hr>
+</section>
+<section id="protocol-overview" class="level4">
+<h4 class="anchored" data-anchor-id="protocol-overview"><strong>Protocol Overview</strong></h4>
+<p>To address these challenges, this project implements a <strong>customized, slave-initiated, multi-slave SPI protocol</strong>, illustrated in the diagram below, that redefines the traditional SPI control flow while preserving hardware compatibility.</p>
+<p>At a high level, the design augments the standard 4-wire SPI interface with an additional <strong>per-slave interrupt (INT) line</strong>, forming a <strong>5-wire SPI bus</strong>:<br>
+<strong>SCK, CS, MOSI, MISO, INT</strong>.</p>
+<ol type="1">
+<li><strong>Slave-initiated data transfer (INT + MISO path)</strong>
+<ul>
+<li>After completing computation for a block of image rows, a slave <strong>asserts its interrupt line</strong>, signaling data readiness.</li>
+<li>The master aggregates these interrupts from mulitple slaves and schedules servicing via a dedicated SPI service task.</li>
+<li>When master is ready to perform SPI servicing to a particular slave, the master sends an explicit <strong>send-grant command</strong> to that slave. Then starts SPI tramission.</li>
+</ul></li>
+<li><strong>Explicit handshake and FIFO-safe timing control</strong>
+<ul>
+<li>Slave will first pull the interrupt line high to indicate data ready for transfer. But it only start the transfer sequence (shown below) after receiving the send-grant (<code>CMD_SEND_DATA</code>) from master.
+<ol type="1">
+<li>Preloads its SPI TX FIFO with the first data word to help with timing control, so that master won’t clock meaningless data.</li>
+<li><strong>Dynamically reconnects its MISO pin</strong> to the SPI peripheral by <code>gpio_set_function()</code>.</li>
+<li>Waits for CS assertion before clocking out data.</li>
+<li>Streams packed pixel data to the master.</li>
+<li>Disconnects MISO (set gpio function to <code>GPIO_FUNC_NULL</code>) and drains RX FIFO after completion.</li>
+</ol></li>
+</ul></li>
+<li><strong>Hardware-level contention avoidance</strong>
+<ul>
+<li>When idle, each slave places its MISO pin in <strong>high-impedance</strong> (<code>GPIO_FUNC_NULL</code>) mode.</li>
+<li>Only the actively granted slave drives MISO, guaranteeing contention-free operation even with multiple connected slaves.</li>
+</ul></li>
+<li><strong>Asynchronous master-to-slave updates (MOSI path)</strong>
+<ul>
+<li>The master broadcasts updated Julia parameters using a fixed <strong>data header</strong> (<code>MASTER_DATA_HEADER</code>).</li>
+<li>On each slave, SPI RX is handled <strong>inside an interrupt service routine</strong>, triggered on the <strong>CS rising edge</strong>.</li>
+<li>The ISR validates the header and either:
+<ul>
+<li>Updates the complex parameter <span class="math inline">\(c\)</span>, or</li>
+<li>Interprets as a send-grant command.</li>
+</ul></li>
+<li>Slave can now also receive data anytime the master sends it <strong>without calling</strong> <code>spi_read_blocking()</code>, enabling <strong>real-time data update</strong>.</li>
+</ul></li>
+</ol>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/2.png" class="img-fluid figure-img" style="width:60.0%"></p>
+<figcaption>Architecture of slave-initated multi-slave SPI bus</figcaption>
+</figure>
+</div>
+</section>
+<section id="implementation-notes" class="level4">
+<h4 class="anchored" data-anchor-id="implementation-notes"><strong>Implementation Notes</strong></h4>
+<ul>
+<li>The slave SPI receive path is implemented in an ISR to capture incoming data <strong>without blocking computation</strong>.</li>
+<li>The send-grant handshake ensures the master is fully prepared to clock data before the slave writes to its TX FIFO.</li>
+<li>Timeouts and FIFO resets are used to recover safely from stalled or missed transfers.</li>
+<li>The protocol operates in a <strong>half-duplex, message-oriented mode</strong>, rather than conventional full-duplex SPI framing, enabling deterministic timing and clear ownership of the bus.</li>
+</ul>
+<p>Completely reconstructed <code>spi_write()</code> C-SDK function <strong>designed for RP2040 slaves</strong> is referenced below:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource c number-lines code-with-copy"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1"></a><span class="co">// Modified C-SDK SPI function for slave able to initate data transfer to master with timeout</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="dt">int</span> __not_in_flash_func<span class="op">(</span>spi_slave_write16_blocking<span class="op">)(</span>spi_inst_t <span class="op">*</span>spi<span class="op">,</span> <span class="dt">const</span> <span class="dt">uint16_t</span> <span class="op">*</span>src<span class="op">,</span> <span class="dt">size_t</span> len<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a>    invalid_params_if<span class="op">(</span>HARDWARE_SPI<span class="op">,</span> <span class="dv">0</span> <span class="op">&gt;</span> <span class="op">(</span><span class="dt">int</span><span class="op">)</span>len<span class="op">);</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a>    <span class="dt">size_t</span> sent <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a></span>
+<span id="cb1-6"><a href="#cb1-6"></a>    gpio_put<span class="op">(</span>SIGNAL_PIN<span class="op">,</span> <span class="dv">1</span><span class="op">);</span> <span class="co">// Signal master that slave has data and is ready to send</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a></span>
+<span id="cb1-8"><a href="#cb1-8"></a>    <span class="co">// Wait until master grants permission to start data transfer with timeout</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a>    absolute_time_t timeout_time <span class="op">=</span> make_timeout_time_ms<span class="op">(</span><span class="dv">5000</span><span class="op">);</span> <span class="co">// 5s timeout</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a>    <span class="cf">while</span><span class="op">(!</span>spi_tx_grant<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-11"><a href="#cb1-11"></a>        <span class="cf">if</span> <span class="op">(</span>absolute_time_diff_us<span class="op">(</span>get_absolute_time<span class="op">(),</span> timeout_time<span class="op">)</span> <span class="op">&lt;=</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-12"><a href="#cb1-12"></a>            <span class="co">// Timeout occurred - master didn't respond</span></span>
+<span id="cb1-13"><a href="#cb1-13"></a>            gpio_put<span class="op">(</span>SIGNAL_PIN<span class="op">,</span> <span class="dv">0</span><span class="op">);</span> <span class="co">// Clear interrupt signal</span></span>
+<span id="cb1-14"><a href="#cb1-14"></a>            spi_hardware_reset<span class="op">(</span>spi<span class="op">);</span> <span class="co">// Reset FIFOs to clear any staled data in TX FIFO</span></span>
+<span id="cb1-15"><a href="#cb1-15"></a>            <span class="cf">return</span> <span class="op">(</span><span class="dt">int</span><span class="op">)-</span><span class="dv">1</span><span class="op">;</span> <span class="co">// Return error code to indicate timeout</span></span>
+<span id="cb1-16"><a href="#cb1-16"></a>        <span class="op">}</span></span>
+<span id="cb1-17"><a href="#cb1-17"></a>        tight_loop_contents<span class="op">();</span></span>
+<span id="cb1-18"><a href="#cb1-18"></a>    <span class="op">}</span></span>
+<span id="cb1-19"><a href="#cb1-19"></a>    spi_tx_grant <span class="op">=</span> <span class="kw">false</span><span class="op">;</span> <span class="co">// Clear grant flag for next transfer</span></span>
+<span id="cb1-20"><a href="#cb1-20"></a>    gpio_put<span class="op">(</span>SIGNAL_PIN<span class="op">,</span> <span class="dv">0</span><span class="op">);</span> <span class="co">// Clear data ready signal</span></span>
+<span id="cb1-21"><a href="#cb1-21"></a></span>
+<span id="cb1-22"><a href="#cb1-22"></a>    gpio_set_function<span class="op">(</span>PIN_MISO<span class="op">,</span> GPIO_FUNC_SPI<span class="op">);</span> <span class="co">// Reconnect MISO pin to SPI peripheral to enable TX from slave to master</span></span>
+<span id="cb1-23"><a href="#cb1-23"></a></span>
+<span id="cb1-24"><a href="#cb1-24"></a>    <span class="co">// Preload first data word to TX FIFO to help with FIFO timing</span></span>
+<span id="cb1-25"><a href="#cb1-25"></a>    <span class="co">// Reason: After CS/interrupt pin goes low, master start clocking out data a little (one data cycle) quicker </span></span>
+<span id="cb1-26"><a href="#cb1-26"></a>    <span class="co">// than slave exit the while loop and move ahead to the first write, so this preload compensate that</span></span>
+<span id="cb1-27"><a href="#cb1-27"></a>    spi_get_hw<span class="op">(</span>spi<span class="op">)-&gt;</span>dr <span class="op">=</span> <span class="op">(</span><span class="dt">uint32_t</span><span class="op">)</span>src<span class="op">[</span>sent<span class="op">++];</span></span>
+<span id="cb1-28"><a href="#cb1-28"></a></span>
+<span id="cb1-29"><a href="#cb1-29"></a>    <span class="co">// CS still high, waiting for master to start clocking</span></span>
+<span id="cb1-30"><a href="#cb1-30"></a>    <span class="cf">while</span><span class="op">(</span>gpio_get<span class="op">(</span>INTERRUPT_PIN<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb1-31"><a href="#cb1-31"></a>        tight_loop_contents<span class="op">();</span></span>
+<span id="cb1-32"><a href="#cb1-32"></a>    <span class="op">}</span></span>
+<span id="cb1-33"><a href="#cb1-33"></a></span>
+<span id="cb1-34"><a href="#cb1-34"></a>    <span class="co">// Keep sending data to master until all data is sent</span></span>
+<span id="cb1-35"><a href="#cb1-35"></a>    <span class="cf">while</span><span class="op">(</span>sent <span class="op">&lt;</span> len<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-36"><a href="#cb1-36"></a>        <span class="cf">if</span> <span class="op">(</span>spi_is_writable<span class="op">(</span>spi<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb1-37"><a href="#cb1-37"></a>            spi_get_hw<span class="op">(</span>spi<span class="op">)-&gt;</span>dr <span class="op">=</span> <span class="op">(</span><span class="dt">uint32_t</span><span class="op">)</span>src<span class="op">[</span>sent<span class="op">++];</span></span>
+<span id="cb1-38"><a href="#cb1-38"></a>        <span class="op">}</span></span>
+<span id="cb1-39"><a href="#cb1-39"></a>    <span class="op">}</span></span>
+<span id="cb1-40"><a href="#cb1-40"></a></span>
+<span id="cb1-41"><a href="#cb1-41"></a>    <span class="co">// Wait until SPI is not busy anymore to ensure all data goes into slave RX FIFO</span></span>
+<span id="cb1-42"><a href="#cb1-42"></a>    <span class="co">// This is needed since when slave finishes sending data, master may still be clocking out the last few words in slave's TX FIFO</span></span>
+<span id="cb1-43"><a href="#cb1-43"></a>    <span class="cf">while</span><span class="op">(</span>spi_is_busy<span class="op">(</span>spi<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb1-44"><a href="#cb1-44"></a>        tight_loop_contents<span class="op">();</span></span>
+<span id="cb1-45"><a href="#cb1-45"></a>    <span class="op">};</span></span>
+<span id="cb1-46"><a href="#cb1-46"></a></span>
+<span id="cb1-47"><a href="#cb1-47"></a>    <span class="co">// Disconnect MISO pin from SPI peripheral again to avoid bus contention</span></span>
+<span id="cb1-48"><a href="#cb1-48"></a>    gpio_set_function<span class="op">(</span>PIN_MISO<span class="op">,</span> GPIO_FUNC_NULL<span class="op">);</span></span>
+<span id="cb1-49"><a href="#cb1-49"></a>    gpio_set_dir<span class="op">(</span>PIN_MISO<span class="op">,</span> GPIO_IN<span class="op">);</span></span>
+<span id="cb1-50"><a href="#cb1-50"></a>    gpio_disable_pulls<span class="op">(</span>PIN_MISO<span class="op">);</span> </span>
+<span id="cb1-51"><a href="#cb1-51"></a></span>
+<span id="cb1-52"><a href="#cb1-52"></a>    <span class="co">// Drain RX FIFO dummy data received after transfer finishes</span></span>
+<span id="cb1-53"><a href="#cb1-53"></a>    <span class="cf">while</span> <span class="op">(</span>spi_is_readable<span class="op">(</span>spi<span class="op">))</span> <span class="op">{</span> </span>
+<span id="cb1-54"><a href="#cb1-54"></a>        <span class="op">(</span><span class="dt">void</span><span class="op">)</span>spi_get_hw<span class="op">(</span>spi<span class="op">)-&gt;</span>dr<span class="op">;</span></span>
+<span id="cb1-55"><a href="#cb1-55"></a>    <span class="op">}</span></span>
+<span id="cb1-56"><a href="#cb1-56"></a></span>
+<span id="cb1-57"><a href="#cb1-57"></a>    <span class="co">// Don't leave overrun flag set</span></span>
+<span id="cb1-58"><a href="#cb1-58"></a>    spi_get_hw<span class="op">(</span>spi<span class="op">)-&gt;</span>icr <span class="op">=</span> SPI_SSPICR_RORIC_BITS<span class="op">;</span></span>
+<span id="cb1-59"><a href="#cb1-59"></a></span>
+<span id="cb1-60"><a href="#cb1-60"></a>    <span class="cf">return</span> <span class="op">(</span><span class="dt">int</span><span class="op">)</span>len<span class="op">;</span></span>
+<span id="cb1-61"><a href="#cb1-61"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="part-ii.-dual-core-freertos-system-design" class="level3">
+<h3 class="anchored" data-anchor-id="part-ii.-dual-core-freertos-system-design">Part II. Dual-Core FreeRTOS System Design</h3>
+<p>The RP2040 master employs <strong>FreeRTOS SMP</strong> to coordinate real-time sensor input, SPI communication, and VGA rendering across both cores. Rather than relying on a single-threaded control loop, the system is decomposed into multiple cooperating tasks with carefully chosen priorities and execution roles. This design enables sensing, communication, and rendering to proceed concurrently while maintaining deterministic timing behavior.</p>
+<section id="task-decomposition" class="level4">
+<h4 class="anchored" data-anchor-id="task-decomposition"><strong>Task Decomposition</strong></h4>
+<p>The master firmware is structured around three primary FreeRTOS tasks, each responsible for a distinct subsystem:</p>
+<ul>
+<li><p><strong>MPU Read Task (High Priority)</strong><br>
+This task continuously samples inertial data from the MPU6050 at a pre-defined rate and maps device orientation (angle x, y) to the Julia set parameter <span class="math inline">\(c = c_{re} + i·c_{im}\)</span>. Updated parameters are broadcast to all slave nodes via SPI, forcing a full recomputation of the fractal. High priority ensures <strong>low-latency response</strong> to user motion and stable interactive behavior.</p></li>
+<li><p><strong>SPI Service Task (Medium Priority)</strong><br>
+This task manages all SPI communication with the slave cluster. Slave-generated GPIO interrupts are captured by a lightweight ISR and forwarded to this task using <strong>bitmask-based task notifications</strong>. The SPI service task retrieves computed pixel blocks from requesting slaves and enqueues them into a shared draw-job buffer for asynchronous rendering.</p></li>
+<li><p><strong>VGA Draw Task (Low Priority)</strong><br>
+This task is responsible for unpacking received pixel data, updating the VGA frame buffer, and mirroring the computed upper half of the image to the lower half. By operating at a lower priority, rendering never blocks sensor updates or SPI communication, allowing new color data to be updated promptly.</p></li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource c number-lines code-with-copy"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1"></a>xTaskCreate<span class="op">(</span>VGA_draw_thread<span class="op">,</span> <span class="st">"Draw Thread"</span><span class="op">,</span> <span class="dv">512</span><span class="op">,</span> NULL<span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">&amp;</span>drawTaskHandle<span class="op">);</span> <span class="co">// Low prority</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a>xTaskCreate<span class="op">(</span>spi_service_thread<span class="op">,</span> <span class="st">"SPI Thread"</span><span class="op">,</span> <span class="dv">512</span><span class="op">,</span> NULL<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="op">&amp;</span>spiTaskHandle<span class="op">);</span> <span class="co">// Mid prority</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a>xTaskCreate<span class="op">(</span>mpu_read_thread<span class="op">,</span> <span class="st">"MPU Thread"</span><span class="op">,</span> <span class="dv">512</span><span class="op">,</span> NULL<span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="op">&amp;</span>mpuTaskHandle<span class="op">);</span> <span class="co">// High prority</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="isr-to-task-communication-model" class="level4">
+<h4 class="anchored" data-anchor-id="isr-to-task-communication-model"><strong>ISR-to-Task Communication Model</strong></h4>
+<p>All slave interrupt signals are handled by a <strong>minimal GPIO ISR</strong> whose sole responsibility is to record which slave has requested service. The ISR does not perform SPI operations or modify shared state directly. Instead, it forwards a bitmask notification to the SPI service task.</p>
+<p>This approach ensures:</p>
+<ul>
+<li>Bounded ISR execution time (as short as possible)</li>
+<li>No SPI access from interrupt context<br>
+</li>
+<li>Clean separation between interrupt events and SPI tranmission handling</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource c number-lines code-with-copy"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1"></a><span class="dt">void</span> spi_slave_writeReq_irq<span class="op">(</span>uint gpio<span class="op">,</span> <span class="dt">uint32_t</span> events<span class="op">)</span> <span class="op">{</span>  </span>
+<span id="cb3-2"><a href="#cb3-2"></a>    BaseType_t xHigherPriorityTaskWoken <span class="op">=</span> pdFALSE<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3"></a>    <span class="dt">uint32_t</span> slaveRequestBitMask <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4"></a></span>
+<span id="cb3-5"><a href="#cb3-5"></a>    <span class="cf">switch</span> <span class="op">(</span>gpio<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-6"><a href="#cb3-6"></a>        <span class="cf">case</span> MASTER_IRQ_1<span class="op">:</span></span>
+<span id="cb3-7"><a href="#cb3-7"></a>            slaveRequestBitMask <span class="op">=</span> <span class="op">(</span><span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb3-8"><a href="#cb3-8"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb3-9"><a href="#cb3-9"></a>        <span class="cf">case</span> MASTER_IRQ_2<span class="op">:</span></span>
+<span id="cb3-10"><a href="#cb3-10"></a>            slaveRequestBitMask <span class="op">=</span> <span class="op">(</span><span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb3-11"><a href="#cb3-11"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb3-12"><a href="#cb3-12"></a>        <span class="cf">case</span> MASTER_IRQ_3<span class="op">:</span></span>
+<span id="cb3-13"><a href="#cb3-13"></a>            slaveRequestBitMask <span class="op">=</span> <span class="op">(</span><span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb3-14"><a href="#cb3-14"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb3-15"><a href="#cb3-15"></a>        <span class="cf">case</span> MASTER_IRQ_4<span class="op">:</span></span>
+<span id="cb3-16"><a href="#cb3-16"></a>            slaveRequestBitMask <span class="op">=</span> <span class="op">(</span><span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb3-17"><a href="#cb3-17"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb3-18"><a href="#cb3-18"></a>        <span class="cf">case</span> MASTER_IRQ_5<span class="op">:</span></span>
+<span id="cb3-19"><a href="#cb3-19"></a>            slaveRequestBitMask <span class="op">=</span> <span class="op">(</span><span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">4</span><span class="op">);</span></span>
+<span id="cb3-20"><a href="#cb3-20"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb3-21"><a href="#cb3-21"></a>        <span class="cf">case</span> MASTER_IRQ_6<span class="op">:</span></span>
+<span id="cb3-22"><a href="#cb3-22"></a>            slaveRequestBitMask <span class="op">=</span> <span class="op">(</span><span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">5</span><span class="op">);</span></span>
+<span id="cb3-23"><a href="#cb3-23"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb3-24"><a href="#cb3-24"></a>        <span class="cf">case</span> MASTER_IRQ_7<span class="op">:</span></span>
+<span id="cb3-25"><a href="#cb3-25"></a>            slaveRequestBitMask <span class="op">=</span> <span class="op">(</span><span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">6</span><span class="op">);</span></span>
+<span id="cb3-26"><a href="#cb3-26"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb3-27"><a href="#cb3-27"></a>    <span class="op">}</span></span>
+<span id="cb3-28"><a href="#cb3-28"></a></span>
+<span id="cb3-29"><a href="#cb3-29"></a>    xTaskNotifyFromISR<span class="op">(</span>spiTaskHandle<span class="op">,</span> slaveRequestBitMask<span class="op">,</span> eSetBits<span class="op">,</span> <span class="op">&amp;</span>xHigherPriorityTaskWoken<span class="op">);</span></span>
+<span id="cb3-30"><a href="#cb3-30"></a>    portYIELD_FROM_ISR<span class="op">(</span>xHigherPriorityTaskWoken<span class="op">);</span></span>
+<span id="cb3-31"><a href="#cb3-31"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="shared-resource-protection" class="level4">
+<h4 class="anchored" data-anchor-id="shared-resource-protection"><strong>Shared Resource Protection</strong></h4>
+<p>Because multiple FreeRTOS tasks interact with the same hardware peripherals, explicit protection is required to prevent race conditions and data corruption. In particular, the <strong>SPI peripheral</strong> is a shared resource accessed by both the SPI service task and the MPU read task.</p>
+<p>To enforce exclusive access, a <strong>mutex-based synchronization strategy</strong> is used around all SPI transactions. Any task that initiates an SPI transfer must first acquire the SPI mutex, ensuring that only one task can configure the SPI peripheral and perform a transaction at a time.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource c number-lines code-with-copy"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1"></a><span class="co">// Mutex for protecting spi0 from being used by both spi_service and mpu thread spontaneously and cause spi corruption</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a>xSemaphoreTake<span class="op">(</span>spiMutex<span class="op">,</span> portMAX_DELAY<span class="op">);</span></span>
+<span id="cb4-3"><a href="#cb4-3"></a><span class="co">// Directly read data into job queue to save time</span></span>
+<span id="cb4-4"><a href="#cb4-4"></a>spi_master_read16_blocking<span class="op">(</span>spi0<span class="op">,</span> gpio<span class="op">,</span> job<span class="op">-&gt;</span>data<span class="op">,</span> slave_data_size<span class="op">[</span>job<span class="op">-&gt;</span>slaveID<span class="op">])</span> <span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a>xSemaphoreGive<span class="op">(</span>spiMutex<span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Here, all SPI access is serialized explicitly at the task level, while interrupts are used solely as notification mechanisms. So that interrupt and peripheral handling are separated at different levels for better concurrency.</p>
+</section>
+<section id="job-queue-and-flow-control" class="level4">
+<h4 class="anchored" data-anchor-id="job-queue-and-flow-control"><strong>Job Queue and Flow Control</strong></h4>
+<p>To decouple SPI throughput from rendering speed, received pixel blocks are placed into a <strong>ring-based draw job queue</strong>. The SPI service task acts as a <strong>producer</strong>, while the VGA draw task acts as a <strong>consumer</strong>. This buffer is <strong>protected by counting semaphores</strong>, preventing buffer overflow and uncontrolled memory growth.</p>
+<p>This producer–consumer structure allows SPI transfers and VGA rendering to progress independently while preserving system stability and data integrity under varying workloads.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource c number-lines code-with-copy"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1"></a><span class="co">// Globally:</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a><span class="dt">static</span> SemaphoreHandle_t jobItems <span class="op">=</span> NULL<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a></span>
+<span id="cb5-4"><a href="#cb5-4"></a><span class="co">// Inside main():</span></span>
+<span id="cb5-5"><a href="#cb5-5"></a>jobItems <span class="op">=</span> xSemaphoreCreateCounting<span class="op">(</span>JOB_QUEUE_LENGTH<span class="op">,</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-6"><a href="#cb5-6"></a></span>
+<span id="cb5-7"><a href="#cb5-7"></a><span class="co">// Inside VGA_draw task:</span></span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="co">// If there is a job in the queue, process it</span></span>
+<span id="cb5-9"><a href="#cb5-9"></a>xSemaphoreTake<span class="op">(</span>jobItems<span class="op">,</span> portMAX_DELAY<span class="op">);</span></span>
+<span id="cb5-10"><a href="#cb5-10"></a></span>
+<span id="cb5-11"><a href="#cb5-11"></a>xSemaphoreTake<span class="op">(</span>queueMutex<span class="op">,</span> portMAX_DELAY<span class="op">);</span></span>
+<span id="cb5-12"><a href="#cb5-12"></a>DrawJob <span class="op">*</span>job <span class="op">=</span> <span class="op">&amp;</span>jobQueue<span class="op">[</span>job_head<span class="op">];</span> <span class="co">// Save current job's job_head</span></span>
+<span id="cb5-13"><a href="#cb5-13"></a>job_head <span class="op">=</span> <span class="op">(</span>job_head <span class="op">+</span> <span class="dv">1</span><span class="op">)</span> <span class="op">%</span> JOB_QUEUE_LENGTH<span class="op">;</span> <span class="co">// Move job_head to next job</span></span>
+<span id="cb5-14"><a href="#cb5-14"></a>xSemaphoreGive<span class="op">(</span>queueMutex<span class="op">);</span></span>
+<span id="cb5-15"><a href="#cb5-15"></a></span>
+<span id="cb5-16"><a href="#cb5-16"></a>draw_packed_pixels<span class="op">(</span>job<span class="op">-&gt;</span>data<span class="op">,</span> job<span class="op">-&gt;</span>line_base<span class="op">,</span> job<span class="op">-&gt;</span>slaveID<span class="op">);</span></span>
+<span id="cb5-17"><a href="#cb5-17"></a>draw_times_text<span class="op">++;</span></span>
+<span id="cb5-18"><a href="#cb5-18"></a><span class="co">// Release one free space after current draw job is processed</span></span>
+<span id="cb5-19"><a href="#cb5-19"></a>xSemaphoreGive<span class="op">(</span>jobSpaces<span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="dual-core-execution-and-task-affinity" class="level4">
+<h4 class="anchored" data-anchor-id="dual-core-execution-and-task-affinity"><strong>Dual-Core Execution and Task Affinity</strong></h4>
+<p>Core affinity configuration (pin mpu task and spi task to core 0, vga task to core 1) is used as a <strong>concurrency optimization</strong> strategy during testing in bare-metal environment. However, after testing, the system remains smooth correct without core pinning for dual-core SMP situation, where scheduler assigns which task goes to which core according to the execution status of the task.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource c number-lines code-with-copy"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1"></a><span class="co">// (Optional) Pin spi and mpu task to core 0, draw task tp core 1 (better pipelining when tested under bare-metal environment)</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a>UBaseType_t core0Mask <span class="op">=</span> <span class="op">(</span><span class="dv">1</span><span class="bu">U</span> <span class="op">&lt;&lt;</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a>UBaseType_t core1Mask <span class="op">=</span> <span class="op">(</span><span class="dv">1</span><span class="bu">U</span> <span class="op">&lt;&lt;</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a>vTaskCoreAffinitySet<span class="op">(</span>spiTaskHandle<span class="op">,</span> core0Mask<span class="op">);</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a>vTaskCoreAffinitySet<span class="op">(</span>mpuTaskHandle<span class="op">,</span> core0Mask<span class="op">);</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a>vTaskCoreAffinitySet<span class="op">(</span>drawTaskHandle<span class="op">,</span> core1Mask<span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+</section>
+<section id="hardware-deisgn" class="level2">
+<h2 class="anchored" data-anchor-id="hardware-deisgn">Hardware Design</h2>
+<p>The complete hardware setup of the system is shown below, illustrating the physical realization of the master–slave compute cluster, customized SPI bus, and peripheral interfaces. The design consists of <strong>one RP2040 master</strong> and <strong>seven RP2040 slave boards</strong>, all mounted on solderless breadboards and powered independently via USB. Despite the prototype form factor, the wiring and signal topology closely mirror a scalable embedded system backplane.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/3.png" class="img-fluid figure-img" style="width:55.0%"></p>
+<figcaption>Schematic of Hardware Layout</figcaption>
+</figure>
+</div>
+<p>The <strong>master Pico</strong> is located at the top-left of the assembly and serves as the central controller. It interfaces with two external peripherals: an <strong>MPU6050 inertial measurement unit</strong> (used for real-time interaction) and a <strong>VGA adapter board</strong> that converts GPIO signals into analog RGB, HSYNC, and VSYNC outputs for display. These peripherals are intentionally kept close to the master to minimize signal routing complexity and timing skew.</p>
+<p>All <strong>seven slave Picos</strong> are connected to the master through a <strong>shared SPI bus</strong>, consisting of common MOSI, MISO, and SCK lines, along with <strong>individual chip-select (CS) and interrupt lines per slave</strong>. This wiring implements the customized <strong>5-wire SPI architecture (SCK, CS, MOSI, MISO, INT)</strong> described in the Program Design section. The use of per-slave interrupt lines enables slaves to asynchronously signal data readiness without polling, while individual CS lines allow precise transaction control.</p>
+<p>Color-coded wiring is used throughout the assembly to improve readability and debugging: power and ground rails are clearly separated, SPI signals are grouped by function, and interrupt lines are visually distinct. This organization proved essential during development and validation of the multi-slave SPI protocol, where signal integrity and timing relationships were critical.</p>
+</section>
+<section id="optimization" class="level2">
+<h2 class="anchored" data-anchor-id="optimization">Performance Optimizations (Bare-Metal Environment)</h2>
+<p>Speed optimization is performed under bare-metal condition prior to the integration of RTOS for better visualization of performance change. The performance is measured by total time needed to complete the computation + data transfer + pixel drawing of one julia set frame. The c values choosen for this particular julia set frame is <span class="math inline">\(C_{re} = -0.79,C_{im} = 0.15\)</span>.</p>
+<section id="overview" class="level3">
+<h3 class="anchored" data-anchor-id="overview">Overview</h3>
+<p>The major optimizations fall into three complementary categories:</p>
+<p><strong>Algorithmic Optimizations</strong></p>
+<ul>
+<li>Exploit vertical symmetry of the Julia set by computing <strong>only the upper half</strong> of the screen and mirroring the result.</li>
+<li>Encode pixel values using a <strong>highly packed SPI format</strong>, transmitting 4 pixel data (4-bit char) per SPI word (16-bit).</li>
+<li>Avoid transmitting unnecessary columns over SPI.</li>
+</ul>
+<p><strong>Data Transfer &amp; Memory Optimizations</strong></p>
+<ul>
+<li><strong>Overclock</strong> ARM cortex M0+ from 125MHz to 250MHz on computional picos.</li>
+<li>Batch multiple pixel lines into a single SPI transfer to amortize protocol overhead.</li>
+<li>Perform pixel unpacking and mirroring using <strong>direct memory manipulation</strong> instead of per-pixel drawing calls.</li>
+<li>Stream SPI data directly into a ring buffer, eliminating intermediate copies.</li>
+</ul>
+<p><strong>Concurrency Optimizations</strong></p>
+<ul>
+<li>Slaves compute <strong>interleaved pixel columns</strong> on the screen. Due to the assymetric nature of Julia set along x axis, this arrangement better averages workload between slaves. Avoiding performance bottleneck caused by the slowest slave.</li>
+<li>On each slave, use both cores to compute in parallel, synchronizing data between two cores only at pixel line block boundaries to <strong>minimize synchronization overhead</strong>.</li>
+<li>On the master, try to overlap the time cost between <strong>SPI reception (Core 0)</strong> and execution <strong>VGA rendering (Core 1)</strong> execution by tuning SPI data packet size.</li>
+</ul>
+<p>Together, these optimizations transform the system from a computation-bound pipeline into a balanced, overlap-heavy real-time system for <strong>interactive &amp; high FPS VGA display</strong>.</p>
+</section>
+<section id="overall-performance-scaling" class="level3">
+<h3 class="anchored" data-anchor-id="overall-performance-scaling">Overall Performance Scaling</h3>
+<div class="fig-opt">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/4.png" class="img-fluid figure-img" style="width:65.0%"></p>
+<figcaption>Optimization of SPI transmission time, computation time, and total time of finishing one Julia set frame with increasing number of computation picos</figcaption>
+</figure>
+</div>
+</div>
+<p>The figure above shows the evolution of <strong>SPI transmission time</strong>, <strong>computation time</strong>, and <strong>total frame time</strong> as the number of compute-enabled slave Picos increases.</p>
+<p>Several key trends are visible:</p>
+<ul>
+<li>As additional slave nodes are added, <strong>computation time drops sharply</strong>, reflecting effective parallel scaling of the Julia set algorithm.</li>
+<li>SPI transmission time initially dominates but flattens after data packing and pixel lines batch-sending are applied.</li>
+<li>The total frame time difference between master and slave converges toward a regime where <strong>SPI communication and rendering almost overlap</strong>, rather than serially accumulating. This is also</li>
+</ul>
+<p>This figure highlights the central design goal of the system: not minimizing any single component in isolation, but <strong>maximizing overlap across the full frame pipeline</strong>.</p>
+</section>
+<section id="concurrency-optimizations" class="level3">
+<h3 class="anchored" data-anchor-id="concurrency-optimizations">Concurrency Optimizations</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/7.png" class="img-fluid figure-img" style="width:60.0%"></p>
+<figcaption>Concurrency optimization with increasing number of computation picos</figcaption>
+</figure>
+</div>
+<p>The figure above illustrates the impact of <strong>concurrency-aware scheduling</strong> as the number of computation nodes increases. Note that overlapping SPI transfers with VGA drawing greatly readuce the idle periods on the master. Minimizing the time difference between master and slave frame time.</p>
+<p>As a result, the system transitions from a mostly serial pipeline to a <strong>deeply overlapped execution model</strong>, where computation, communication, and rendering proceed concurrently. This concurrency optimization is critical to sustaining real-time performance as system scale increases.</p>
+</section>
+<section id="computation-optimizations" class="level3">
+<h3 class="anchored" data-anchor-id="computation-optimizations">Computation Optimizations</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/6.png" class="img-fluid figure-img" style="width:35.0%"></p>
+<figcaption>Comparison between observed computation time and ideal computation time for one julia set frame</figcaption>
+</figure>
+</div>
+<p>The figure above compares the <strong>observed computation time</strong> for generating a full Julia set frame against an <strong>idealized linear scaling model</strong>.</p>
+<p>Key observations:</p>
+<ul>
+<li>Observed performance closely tracks the ideal curve at lower node counts, confirming effective parallelization.</li>
+<li>Small deviations from ideal scaling at higher node counts arise from synchronization overhead and memory contention, which is later corrected by more efficient synchronization strategy.</li>
+</ul>
+<p>This result demonstrates that the system is fundamentally <strong>compute-efficient</strong>, with remaining performance limits driven by coordination and communication rather than algorithmic inefficiency.</p>
+</section>
+<section id="optimization-results" class="level3">
+<h3 class="anchored" data-anchor-id="optimization-results">Optimization Results</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/5.png" class="img-fluid figure-img" style="width:60.0%"></p>
+<figcaption>Comparison between observed complete time (master side finished) and ideal comeplete time if truly parallel</figcaption>
+</figure>
+</div>
+<p>The plot above shows the <strong>total time required to complete one Julia set frame</strong> (master side finished) as the number of computation Picos increases, versus the ideal finish time if system operates nicely parallel (numbers with underline). The intermediate stages highlighting how individual optimizations shift system bottlenecks, with the red numbers being the final results of each optimzation stage.</p>
+<p>Several key results stand out:</p>
+<ul>
+<li><strong>Large step-function improvements</strong> occur when major architectural optimizations are introduced (at 3 picos). In particular, avoid unnecessary data sending and aggressive SPI data packing dramatically reduce the total execution time, avoid SPI transmission from being the performance bottleneck.</li>
+<li>Beyond a certain scale, performance becomes dominated not by raw computation or SPI transmission, but by <strong>concurrency between data transmission and rendering</strong>. Subsequent gains come primarily from concurrency optimizations — overlapping SPI reception with VGA drawing and synchronizing slave cores at block granularity.</li>
+<li>The final optimized system achieves an <strong>order-of-magnitude reduction in frame time</strong> compared to the initial baseline, converging toward a regime where computation, communication, and rendering are largely overlapped rather than serialized.</li>
+</ul>
+</section>
+</section>
+<section id="conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="conclusions">Conclusions</h2>
+<p>This project demonstrates how <strong>parallel computation, real-time operating systems, and custom low-level communication protocols</strong> can be combined to achieve responsive, real-time graphics on microcontroller-class hardware. By designing a slave-initiated, interrupt-driven multi-slave SPI bus, exploiting dual-core parallelism on both master and slave nodes, and carefully overlapping computation, communication, and rendering, the system transforms a computationally intensive fractal workload into a scalable, pipeline-balanced execution model. While Julia set visualization serves as a concrete and visually intuitive application, the underlying techniques—custom protocol design, FIFO-safe data movement, RTOS-based task decomposition, and concurrency-aware optimization—are broadly applicable to high-throughput embedded systems that demand low latency, determinism, and efficient resource utilization.</p>
+</section>
+<section id="appendices" class="level2">
+<h2 class="anchored" data-anchor-id="appendices">Appendices</h2>
+<section id="appendix-a-permissions" class="level3">
+<h3 class="anchored" data-anchor-id="appendix-a-permissions">Appendix A – Permissions</h3>
+<p>The project owner (Han Wang) approves this report for inclusion on the course website and approves the video for inclusion on the course YouTube channel.</p>
+</section>
+<section id="appendix-b-commented-program-code" class="level3">
+<h3 class="anchored" data-anchor-id="appendix-b-commented-program-code">Appendix B – Commented Program Code</h3>
+<p><a href="files/ECE5730_final_project_Han_Wang_hw578.rar">⬇ Download Full Project Code (.rar)</a></p>
+</section>
+<section id="appendix-c-references" class="level3">
+<h3 class="anchored" data-anchor-id="appendix-c-references">Appendix C – References</h3>
+<p><a href="https://pip-assets.raspberrypi.com/categories/814-rp2040/documents/RP-008371-DS-1-rp2040-datasheet.pdf?disposition=inline">RP2040 Data Sheet - SPI peripheral part</a></p>
+<p><a href="https://github.com/Bodmer/TFT_eSPI/discussions/2432">RP2040 (Pico): Over-clocking and SPI maximum frequency</a></p>
+<p><a href="https://vanhunteradams.com/Pico/VGA/mandelbrot.zip">ECE5730 Course Demo Code for computing Mandelbrot sets</a></p>
+<p><a href="https://vanhunteradams.com/DE1/Mandelbrot/Mandelbrot.html">ECE5760 Mandelbrot Set Visualizer</a></p>
+<p><a href="https://en.wikipedia.org/wiki/Julia_set#Quadratic_polynomials">Julia Set - Wikipedia</a></p>
+<p><a href="https://www.karlsims.com/julia.html">Understanding Julia and Mandelbrot Sets</a></p>
+<p><a href="https://vanhunteradams.com/Pico/VGA/VGA.html">PIO Assembly VGA Driver for RP2040</a></p>
+<p><a href="https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf">MPU-6050 Product Specification</a></p>
+<p><a href="https://www.freertos.org/Documentation/02-Kernel/02-Kernel-features/03-Direct-to-task-notifications/02-As-binary-semaphore">RTOS Task Notifications</a></p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<script>videojs(video_shortcode_videojs_video1);</script>
+<script>videojs(video_shortcode_videojs_video2);</script>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
